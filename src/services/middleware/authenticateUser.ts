@@ -1,6 +1,6 @@
-import { RequestHandler } from "express";
-import passport from "passport";
+import { RequestHandler } from 'express';
+import passport from 'passport';
 
-export const authenticateUser: RequestHandler = passport.authenticate("jwt", {
-    session: false,
-})
+export const authenticateUser: RequestHandler = passport.authenticate('jwt', {
+  session: false,
+});
