@@ -21,7 +21,7 @@ const initPostgres_DB = (): void => {
     },
     ssl: true,
   });
+  initUserModel(sequelize);
 };
-initUserModel(sequelize);
 
 export { initPostgres_DB, sequelize, User };
