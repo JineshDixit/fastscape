@@ -13,7 +13,14 @@ import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
 
 /**
- * Register a new user
+ * Registers a new user and generates a token pair
+ * 
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * 
+ * @returns {Promise<void>} - Promise that resolves with no value
+ * 
+ * @throws {Error} - If there is an internal server error
  */
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -94,7 +101,33 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 };
 
 /**
- * Login user
+ * Login user and generate new access and refresh tokens
+ * 
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Promise resolving to void
+ * 
+ * Request body must contain the following fields:
+ * - `email`: User email
+ * - `password`: User password
+ * 
+ * Response will contain the following fields:
+ * - `success`: Boolean indicating success of the operation
+ * - `message`: String describing the result of the operation
+ * - `data`: Object containing user data and tokens
+ * 
+ * User data will contain the following fields:
+ * - `id`: User ID
+ * - `fullName`: User full name
+ * - `email`: User email
+ * - `phone`: User phone number
+ * - `nationality`: User nationality
+ * 
+ * Tokens will contain the following fields:
+ * - `accessToken`: Access token
+ * - `refreshToken`: Refresh token
+ * - `accessTokenExpiresAt`: Expiration date of the access token
+ * - `refreshTokenExpiresAt`: Expiration date of the refresh token
  */
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -185,7 +218,25 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 };
 
 /**
- * Refresh access token
+ * Refresh access and refresh tokens
+ * 
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Promise resolving to void
+ * 
+ * Request body must contain the following fields:
+ * - `refreshToken`: Refresh token
+ * 
+ * Response will contain the following fields:
+ * - `success`: Boolean indicating success of the operation
+ * - `message`: String describing the result of the operation
+ * - `data`: Object containing new access and refresh tokens
+ * 
+ * Tokens will contain the following fields:
+ * - `accessToken`: Access token
+ * - `refreshToken`: Refresh token
+ * - `accessTokenExpiresAt`: Expiration date of the access token
+ * - `refreshTokenExpiresAt`: Expiration date of the refresh token
  */
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -283,7 +334,18 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 };
 
 /**
- * Logout user (revoke refresh token)
+ * Logout user and revoke the refresh token
+ * 
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @returns {Promise<void>} - Promise resolving to void
+ * 
+ * Request body must contain the following fields:
+ * - `refreshToken`: Refresh token
+ * 
+ * Response will contain the following fields:
+ * - `success`: Boolean indicating success of the operation
+ * - `message`: String describing the result of the operation
  */
 export const logoutUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -317,7 +379,18 @@ export const logoutUser = async (req: Request, res: Response): Promise<void> => 
 };
 
 /**
- * Logout from all devices (revoke all refresh tokens for user)
+ * Logout user from all devices
+ * 
+ * Revokes all refresh tokens for the user and logs them out from all devices
+ * 
+ * @param {AuthenticatedRequest} req - Express request object with user authentication
+ * @param {Response} res - Express response object
+ * 
+ * @returns {Promise<void>} - Promise resolving to void
+ * 
+ * Response will contain the following fields:
+ * - `success`: Boolean indicating success of the operation
+ * - `message`: String describing the result of the operation
  */
 export const logoutAllDevices = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
