@@ -1,12 +1,12 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class User extends Model {
-  public id!: number;
+  public id!: string;
   public fullName!: string;
   public dateOfBirth!: Date;
   public nationality!: string;
   public email!: string;
-  public phone!: number;
+  public phone!: string;
   public passwordHash!: string;
   public homeAddress!: string;
   public isBlocked!: boolean;
@@ -17,7 +17,7 @@ export const initUserModel = (sequelize: Sequelize) => {
     {
       id: {
         type: DataTypes.UUID,
-        defaultValue: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
       fullName: DataTypes.STRING(150),
@@ -43,7 +43,7 @@ export const initUserModel = (sequelize: Sequelize) => {
       updatedAt: true,
       underscored: true,
       tableName: 'users',
-      modelName: 'users',
+      modelName: 'User',
     },
   );
 };

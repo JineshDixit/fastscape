@@ -1,4 +1,4 @@
-export default {
+export const dbEnums = {
   VEHICLE_BODY_TYPE: ['SUV', 'Sedan', 'Coupe', 'Supercar', 'Pickup', 'Hatchback'],
   TRANSMISSION_TYPE: ['Automatic', 'Manual'],
   DRIVETRAIN_TYPE: ['AWD', 'RWD', 'FWD', '4x4'],
@@ -8,4 +8,4 @@ export default {
   PAYMENT_STATUS: ['UNPAID', 'PAID', 'REFUNDED'],
   PAYMENT_TYPE: ['DEPOSIT', 'BALANCE', 'REFUND'],
   STRIPE_PAYMENT_STATUS: ['PENDING', 'SUCCEEDED', 'FAILED', 'REFUNDED'],
-};
+} as const;
