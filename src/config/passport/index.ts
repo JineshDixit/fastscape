@@ -1,7 +1,7 @@
 import '../env/envConfig';
 import { ExtractJwt, Strategy as JwtStrategy, StrategyOptions } from 'passport-jwt';
 import passport from 'passport';
-import { User } from '../../common/models';
+import { User } from '../../models';
 import { JwtPayload } from '../../common/types/jwtTypes';
 
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;

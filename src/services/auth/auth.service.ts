@@ -1,4 +1,4 @@
-import { User, RefreshToken } from '../../common/models';
+import { User, RefreshToken } from '../../models';
 import { 
   LoginRequest, 
   RegisterRequest, 

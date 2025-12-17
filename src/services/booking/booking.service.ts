@@ -1,5 +1,5 @@
 import { CreateBookingData, UpdateBookingData } from '../../common/types/bookingTypes';
-import { Booking, Vehicle } from '../../common/models';
+import { Booking, Vehicle } from '../../models';
 import { createError } from '../middleware/errorHandler';
 
 /**

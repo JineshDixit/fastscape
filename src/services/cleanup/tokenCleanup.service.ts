@@ -1,4 +1,4 @@
-import { RefreshToken } from '../../common/models';
+import { RefreshToken } from '../../models';
 import { Op } from 'sequelize';
 
 /**

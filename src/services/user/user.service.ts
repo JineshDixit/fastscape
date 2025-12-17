@@ -1,4 +1,4 @@
-import { User, RefreshToken } from '../../common/models';
+import { User, RefreshToken } from '../../models';
 import { userModelType } from '../../common/types/userTypes';
 import { createError } from '../middleware/errorHandler';
 import { hashPassword } from '../../utils/password.utils';

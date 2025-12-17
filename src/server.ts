@@ -2,7 +2,7 @@ import './config/env/envConfig';
 import express from 'express';
 import cors from 'cors';
 import passport from 'passport';
-import { initPostgres_DB, sequelize } from './common/models';
+import { initPostgres_DB, sequelize } from './models';
 import { configPassport } from './config/passport';
 import routes from './routes';
 import { securityHeaders, sanitizeInput, preventParameterPollution } from './services/middleware/security';

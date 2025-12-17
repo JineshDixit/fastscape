@@ -1,5 +1,5 @@
 import { Sequelize } from 'sequelize';
-import dbConfig from '../../config/database/dbConfig';
+import dbConfig from '../config/database/dbConfig';
 import { initUserModel, User } from './user.model';
 import { initUserIdentityDocumentModel, UserIdentityDocument } from './userIdentityDocument.model';
 import { initUserDrivingInfoModel, UserDrivingInfo } from './userDrivingInfo.model';

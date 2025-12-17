@@ -1,5 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-import { dbEnums } from '../enum/dbEnums';
+import { dbEnums } from '../common/enum/dbEnums';
 
 export class Payment extends Model {
   public id!: string;

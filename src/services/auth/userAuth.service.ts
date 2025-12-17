@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../../common/types/expressTypes';
-import { User, RefreshToken } from '../../common/models';
+import { User, RefreshToken } from '../../models';
 import { 
   LoginRequest, 
   RegisterRequest, 

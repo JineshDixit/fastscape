@@ -1,5 +1,5 @@
 import { VehicleFilters } from '../../common/types/vehicalType';
-import { Vehicle, VehicleMedia, Booking } from '../../common/models';
+import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op } from 'sequelize';
 
