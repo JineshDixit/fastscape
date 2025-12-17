@@ -2,7 +2,11 @@ import { RefreshToken } from '../../common/models';
 import { Op } from 'sequelize';
 
 /**
- * Clean up expired refresh tokens
+ * Clean up expired refresh tokens from the database. This function
+ * deletes all refresh tokens that have expired or have been
+ * revoked.
+ * 
+ * @returns {Promise<void>} - Promise resolving to void
  */
 export const cleanupExpiredTokens = async (): Promise<void> => {
   try {
@@ -22,7 +26,11 @@ export const cleanupExpiredTokens = async (): Promise<void> => {
 };
 
 /**
- * Clean up old revoked tokens (older than 30 days)
+ * Clean up revoked refresh tokens that are older than 30 days.
+ * This function is used to periodically clean up old revoked tokens
+ * from the database to prevent database bloat.
+ * 
+ * @returns {Promise<void>} - Promise resolving to void
  */
 export const cleanupOldRevokedTokens = async (): Promise<void> => {
   try {
@@ -42,8 +50,12 @@ export const cleanupOldRevokedTokens = async (): Promise<void> => {
   }
 };
 
+
 /**
- * Start periodic cleanup job
+ * Starts a job to periodically clean up expired and revoked refresh tokens
+ * 
+ * The job will run every hour to clean up expired tokens and once a day to clean up
+ * old revoked tokens. This is done to prevent database bloat.
  */
 export const startTokenCleanupJob = (): void => {
   // Run cleanup every hour

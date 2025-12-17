@@ -13,14 +13,38 @@ import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
 
 /**
- * Registers a new user and generates a token pair
- * 
+ * Registers a new user
+ *
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
- * 
- * @returns {Promise<void>} - Promise that resolves with no value
- * 
- * @throws {Error} - If there is an internal server error
+ * @returns {Promise<void>} - Promise resolving to void
+ *
+ * Request body must contain the following fields:
+ * - `fullName`: User full name
+ * - `dateOfBirth`: User date of birth (ISO string)
+ * - `nationality`: User nationality
+ * - `email`: User email
+ * - `phone`: User phone number
+ * - `password`: User password
+ * - `homeAddress`: User home address (optional)
+ *
+ * Response will contain the following fields:
+ * - `success`: Boolean indicating success of the operation
+ * - `message`: String describing the result of the operation
+ * - `data`: Object containing user data and tokens
+ *
+ * User data will contain the following fields:
+ * - `id`: User ID
+ * - `fullName`: User full name
+ * - `email`: User email
+ * - `phone`: User phone number
+ * - `nationality`: User nationality
+ *
+ * Tokens will contain the following fields:
+ * - `accessToken`: Access token
+ * - `refreshToken`: Refresh token
+ * - `accessTokenExpiresAt`: Expiration date of the access token
+ * - `refreshTokenExpiresAt`: Expiration date of the refresh token
  */
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {

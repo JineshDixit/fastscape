@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
+import vehicleRoutes from './vehicle.routes';
+import bookingRoutes from './booking.routes';
 import { generalLimiter } from '../services/middleware/rateLimiter';
 
 const router = Router();
@@ -11,6 +13,8 @@ router.use(generalLimiter);
 // Mount route modules
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
+router.use('/vehicles', vehicleRoutes);
+router.use('/bookings', bookingRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {
