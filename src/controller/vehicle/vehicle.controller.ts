@@ -1,11 +1,16 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response } from 'express';
 import * as vehicleService from '../../services/vehicle/vehicle.service';
+import * as vehicleMediaService from '../../services/vehicle/vehicleMedia.service';
+import { BaseController } from '../../utils/controller.utils';
+import { sendSuccess } from '../../utils/response.utils';
+import { validateRequiredFields } from '../../utils/validation.utils';
+import { AuthenticatedRequest } from 'expressTypes';
 
-/**
- * Get all available vehicles
- */
-export const getAvailableVehicles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
+class VehicleController extends BaseController {
+  /**
+   * Get all available vehicles with structured images
+   */
+  getAvailableVehicles = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { startDate, endDate, bodyType, fuelType, minPrice, maxPrice } = req.query;
     
     const filters = {
@@ -17,50 +22,58 @@ export const getAvailableVehicles = async (req: Request, res: Response, next: Ne
       maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
     };
     
-    const vehicles = await vehicleService.getAvailableVehicles(filters);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Available vehicles retrieved successfully',
-      data: vehicles,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    const vehicles = await vehicleService.getVehiclesWithImages(filters);
+    sendSuccess(res, 'Available vehicles retrieved successfully', vehicles);
+  });
 
-/**
- * Get vehicle by ID
- */
-export const getVehicleById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const { vehicleId } = req.params;
+  /**
+   * Get vehicle by ID with structured images
+   */
+  getVehicleById = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const vehicleId = this.getValidatedId(req, 'vehicleId');
     const vehicle = await vehicleService.getVehicleById(vehicleId);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Vehicle retrieved successfully',
-      data: vehicle,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    const transformedVehicle = vehicleService.transformVehicleWithImages(vehicle);
+    sendSuccess(res, 'Vehicle retrieved successfully', transformedVehicle);
+  });
 
-/**
- * Search vehicles
- */
-export const searchVehicles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
+  /**
+   * Search vehicles with structured images
+   */
+  searchVehicles = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const { query, ...filters } = req.query;
-    const vehicles = await vehicleService.searchVehicles(query as string, filters);
     
-    res.status(200).json({
-      success: true,
-      message: 'Vehicle search completed successfully',
-      data: vehicles,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    validateRequiredFields({ query }, ['query']);
+    
+    const vehicles = await vehicleService.searchVehicles(query as string, filters);
+    const transformedVehicles = vehicles.map(vehicleService.transformVehicleWithImages);
+    sendSuccess(res, 'Vehicle search completed successfully', transformedVehicles);
+  });
+
+  /**
+   * Get vehicle images
+   */
+  getVehicleImages = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const vehicleId = this.getValidatedId(req, 'vehicleId');
+    const result = await vehicleService.getVehicleImages(vehicleId);
+    res.status(200).json(result);
+  });
+
+  /**
+   * Get vehicle image statistics
+   */
+  getVehicleImageStats = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const vehicleId = this.getValidatedId(req, 'vehicleId');
+    const result = await vehicleMediaService.getVehicleImageStats(vehicleId);
+    sendSuccess(res, 'Vehicle image statistics retrieved successfully', result);
+  });
+}
+
+const vehicleController = new VehicleController();
+
+export const {
+  getAvailableVehicles,
+  getVehicleById,
+  searchVehicles,
+  getVehicleImages,
+  getVehicleImageStats
+} = vehicleController;

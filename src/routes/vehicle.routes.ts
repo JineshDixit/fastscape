@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as vehicleController from '../controller/vehicle/vehicle.controller';
-import { query } from 'express-validator';
+import { query, param } from 'express-validator';
 import { handleValidationErrors } from '../services/middleware/validation';
 
 const router = Router();
@@ -28,5 +28,25 @@ router.get('/search',
 
 // Get vehicle by ID
 router.get('/:vehicleId', vehicleController.getVehicleById);
+
+// ===== Vehicle Image Read-Only Routes =====
+
+// Get all images for a vehicle
+router.get('/:vehicleId/images', 
+  [
+    param('vehicleId').isUUID().withMessage('Valid vehicle ID is required'),
+    handleValidationErrors,
+  ],
+  vehicleController.getVehicleImages
+);
+
+// Get vehicle image statistics
+router.get('/:vehicleId/images/stats',
+  [
+    param('vehicleId').isUUID().withMessage('Valid vehicle ID is required'),
+    handleValidationErrors,
+  ],
+  vehicleController.getVehicleImageStats
+);
 
 export default router;

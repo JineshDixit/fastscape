@@ -1,113 +1,67 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../../common/types/expressTypes';
 import * as bookingService from '../../services/booking/booking.service';
-import { createError } from '../../services/middleware/errorHandler';
+import { BaseController } from '../../utils/controller.utils';
+import { sendSuccess, sendCreated } from '../../utils/response.utils';
 
-/**
- * Create a new booking
- */
-export const createBooking = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    if (!req.user?.id) {
-      throw createError('Unauthorized', 401);
-    }
-    
-    const bookingData = { ...req.body, userId: req.user.id };
+class BookingController extends BaseController {
+  /**
+   * Create a new booking
+   */
+  createBooking = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookingData = { ...req.body, userId };
     const booking = await bookingService.createBooking(bookingData);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Booking created successfully',
-      data: booking,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    sendCreated(res, 'Booking created successfully', booking);
+  });
 
-/**
- * Get user bookings
- */
-export const getUserBookings = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    if (!req.user?.id) {
-      throw createError('Unauthorized', 401);
-    }
-    
-    const bookings = await bookingService.getUserBookings(req.user.id);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Bookings retrieved successfully',
-      data: bookings,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+  /**
+   * Get user bookings
+   */
+  getUserBookings = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookings = await bookingService.getUserBookings(userId);
+    sendSuccess(res, 'Bookings retrieved successfully', bookings);
+  });
 
-/**
- * Get booking by ID
- */
-export const getBookingById = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    if (!req.user?.id) {
-      throw createError('Unauthorized', 401);
-    }
-    
-    const { bookingId } = req.params;
-    const booking = await bookingService.getBookingById(bookingId, req.user.id);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Booking retrieved successfully',
-      data: booking,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+  /**
+   * Get booking by ID
+   */
+  getBookingById = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const booking = await bookingService.getBookingById(bookingId, userId);
+    sendSuccess(res, 'Booking retrieved successfully', booking);
+  });
 
-/**
- * Update booking
- */
-export const updateBooking = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    if (!req.user?.id) {
-      throw createError('Unauthorized', 401);
-    }
-    
-    const { bookingId } = req.params;
+  /**
+   * Update booking
+   */
+  updateBooking = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookingId = this.getValidatedId(req, 'bookingId');
     const updateData = req.body;
-    const booking = await bookingService.updateBooking(bookingId, req.user.id, updateData);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Booking updated successfully',
-      data: booking,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+    const booking = await bookingService.updateBooking(bookingId, userId, updateData);
+    sendSuccess(res, 'Booking updated successfully', booking);
+  });
 
-/**
- * Cancel booking
- */
-export const cancelBooking = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    if (!req.user?.id) {
-      throw createError('Unauthorized', 401);
-    }
-    
-    const { bookingId } = req.params;
-    await bookingService.cancelBooking(bookingId, req.user.id);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Booking cancelled successfully',
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+  /**
+   * Cancel booking
+   */
+  cancelBooking = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    await bookingService.cancelBooking(bookingId, userId);
+    sendSuccess(res, 'Booking cancelled successfully');
+  });
+}
+
+const bookingController = new BookingController();
+
+export const {
+  createBooking,
+  getUserBookings,
+  getBookingById,
+  updateBooking,
+  cancelBooking
+} = bookingController;

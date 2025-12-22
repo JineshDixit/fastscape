@@ -17,6 +17,8 @@ export class Vehicle extends Model {
   public fuelType!: typeof dbEnums.FUEL_TYPE[number];
   public fuelConsumption!: string;
   public pricePerDay!: number;
+  public delayChargePerHour!: number;
+  public depositPercentage!: number;
   public currency!: string;
   public isAvailable!: boolean;
 }
@@ -42,8 +44,27 @@ export const initVehicleModel = (sequelize: Sequelize) => {
       horsepower: DataTypes.INTEGER,
       fuelType: DataTypes.ENUM(...dbEnums.FUEL_TYPE),
       fuelConsumption: DataTypes.STRING,
-      pricePerDay: DataTypes.DECIMAL(10, 2),
-      currency: DataTypes.STRING,
+      pricePerDay: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      delayChargePerHour: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Hourly charge for late return',
+      },
+      depositPercentage: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 20.00,
+        comment: 'Default deposit percentage for this vehicle',
+      },
+      currency: {
+        type: DataTypes.STRING(3),
+        allowNull: false,
+        defaultValue: 'USD',
+      },
       isAvailable: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,

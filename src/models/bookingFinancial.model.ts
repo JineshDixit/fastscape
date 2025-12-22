@@ -4,12 +4,20 @@ export class BookingFinancial extends Model {
   public id!: string;
   public bookingId!: string;
   public baseAmount!: number;
+  public chauffeurAmount!: number;
+  public chauffeurHours!: number;
   public depositAmount!: number;
+  public balanceAmount!: number;
+  public delayChargeAmount!: number;
+  public delayChargeRate!: number;
   public taxAmount!: number;
   public totalAmount!: number;
+  public paidAmount!: number;
+  public remainingAmount!: number;
   public currency!: string;
   public refundPolicy!: string;
-  public refundable_until!: Date;
+  public refundableUntil!: Date;
+  public depositPercentage!: number;
 }
 
 export const initBookingFinancialModel = (sequelize: Sequelize) => {
@@ -28,13 +36,76 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
           key: 'id',
         },
       },
-      baseAmount: DataTypes.DECIMAL(10, 2),
-      depositAmount: DataTypes.DECIMAL(10, 2),
-      taxAmount: DataTypes.DECIMAL(10, 2),
-      totalAmount: DataTypes.DECIMAL(10, 2),
-      currency: DataTypes.STRING(3),
-      refundPolicy: DataTypes.TEXT,
-      refundable_until: DataTypes.DATE,
+      baseAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      chauffeurAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Total cost for chauffeur service',
+      },
+      chauffeurHours: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Total hours of chauffeur service',
+      },
+      depositAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      balanceAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+      },
+      delayChargeAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+      },
+      delayChargeRate: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        comment: 'Charge per hour for delay',
+      },
+      taxAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+      },
+      totalAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      paidAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+      },
+      remainingAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      currency: {
+        type: DataTypes.STRING(3),
+        allowNull: false,
+        defaultValue: 'USD',
+      },
+      refundPolicy: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      refundableUntil: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      depositPercentage: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 20.00,
+        comment: 'Percentage of base amount for deposit',
+      },
     },
     {
       sequelize,

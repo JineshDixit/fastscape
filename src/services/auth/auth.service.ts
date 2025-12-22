@@ -9,22 +9,52 @@ import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
 import { createError } from '../middleware/errorHandler';
+import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
+
+/**
+ * Create and store refresh token
+ */
+const createRefreshToken = async (userId: string, token: string, expiresAt: Date): Promise<void> => {
+  await RefreshToken.create({
+    userId,
+    token,
+    expiresAt,
+    isRevoked: false,
+  });
+};
+
+/**
+ * Revoke user's refresh tokens
+ */
+const revokeUserTokens = async (userId: string): Promise<void> => {
+  await RefreshToken.update(
+    { isRevoked: true },
+    { where: { userId, isRevoked: false } }
+  );
+};
+
+/**
+ * Format user response (exclude sensitive data)
+ */
+const formatUserResponse = (user: User) => ({
+  id: user.id,
+  fullName: user.fullName,
+  email: user.email,
+  phone: user.phone,
+  nationality: user.nationality,
+});
 
 /**
  * Registers a new user
- * @param {RegisterRequest} registerData - User registration data
- * @returns {Promise<AuthResponse>} - Promise resolving to a user object (excluding password hash) and tokens
- * @throws {Error} - All required fields must be provided
- * @throws {Error} - User with this email already exists
  */
 export const registerUser = async (registerData: RegisterRequest): Promise<AuthResponse> => {
   const { fullName, dateOfBirth, nationality, email: rawEmail, phone, password, homeAddress } = registerData;
-  const email = sanitizeEmail(rawEmail);
 
   // Validate required fields
-  if (!fullName || !dateOfBirth || !nationality || !email || !phone || !password) {
-    throw createError('All required fields must be provided', 400);
-  }
+  validateRequiredFields(registerData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'password']);
+
+  const email = sanitizeEmail(rawEmail);
+  validateEmail(email);
 
   // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });
@@ -53,42 +83,26 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
     email: user.email,
   });
 
-  // Store refresh token in database
-  await RefreshToken.create({
-    userId: user.id,
-    token: tokenPair.refreshToken,
-    expiresAt: tokenPair.refreshTokenExpiresAt,
-    isRevoked: false,
-  });
+  // Store refresh token
+  await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
 
   return {
-    user: {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      nationality: user.nationality,
-    },
+    user: formatUserResponse(user),
     tokens: tokenPair,
   };
 };
 
 /**
  * Logs in a user and generates a new access and refresh token pair
- * @param {LoginRequest} loginData - Login data containing email and password
- * @returns {Promise<AuthResponse>} - Promise resolving to an object containing user data and tokens
- * @throws {Error} - Email and password are required
- * @throws {Error} - Invalid credentials
- * @throws {Error} - Account is blocked. Please contact support.
  */
 export const loginUser = async (loginData: LoginRequest): Promise<AuthResponse> => {
   const { email: rawEmail, password } = loginData;
-  const email = sanitizeEmail(rawEmail);
 
   // Validate required fields
-  if (!email || !password) {
-    throw createError('Email and password are required', 400);
-  }
+  validateRequiredFields(loginData, ['email', 'password']);
+
+  const email = sanitizeEmail(rawEmail);
+  validateEmail(email);
 
   // Find user by email
   const user = await User.findOne({ where: { email } });
@@ -108,10 +122,7 @@ export const loginUser = async (loginData: LoginRequest): Promise<AuthResponse> 
   }
 
   // Revoke existing refresh tokens for security
-  await RefreshToken.update(
-    { isRevoked: true },
-    { where: { userId: user.id, isRevoked: false } }
-  );
+  await revokeUserTokens(user.id);
 
   // Generate new tokens
   const tokenPair = generateTokenPair({
@@ -120,33 +131,16 @@ export const loginUser = async (loginData: LoginRequest): Promise<AuthResponse> 
   });
 
   // Store new refresh token
-  await RefreshToken.create({
-    userId: user.id,
-    token: tokenPair.refreshToken,
-    expiresAt: tokenPair.refreshTokenExpiresAt,
-    isRevoked: false,
-  });
+  await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
 
   return {
-    user: {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      nationality: user.nationality,
-    },
+    user: formatUserResponse(user),
     tokens: tokenPair,
   };
 };
 
 /**
  * Refresh access token
- * @param {string} token - Refresh token
- * @returns {Promise<RefreshTokenResponse>} - Promise resolving to a new access and refresh token pair
- * @throws {Error} - Refresh token is required
- * @throws {Error} - Invalid or expired refresh token
- * @throws {Error} - Refresh token not found or revoked
- * @throws {Error} - User not found or blocked
  */
 export const refreshAccessToken = async (token: string): Promise<RefreshTokenResponse> => {
   if (!token) {
@@ -176,7 +170,6 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
 
   // Check if token is expired
   if (storedToken.expiresAt < new Date()) {
-    // Mark as revoked
     await storedToken.update({ isRevoked: true });
     throw createError('Refresh token expired', 401);
   }
@@ -197,22 +190,13 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
   });
 
   // Store new refresh token
-  await RefreshToken.create({
-    userId: user.id,
-    token: newTokenPair.refreshToken,
-    expiresAt: newTokenPair.refreshTokenExpiresAt,
-    isRevoked: false,
-  });
+  await createRefreshToken(user.id, newTokenPair.refreshToken, newTokenPair.refreshTokenExpiresAt);
 
   return newTokenPair;
 };
 
 /**
  * Logout user (revoke refresh token)
- * Revokes the refresh token and logs the user out from the current device
- * @param {string} token - Refresh token
- * @throws {Error} - Refresh token is required
- * @returns {Promise<void>} - Promise resolving to void
  */
 export const logoutUser = async (token: string): Promise<void> => {
   if (!token) {
@@ -227,22 +211,12 @@ export const logoutUser = async (token: string): Promise<void> => {
 };
 
 /**
- * Logs out user from all devices by revoking all their refresh tokens.
- * This method is used to log out a user from all devices when their account
- * is compromised or when they want to log out from all devices at once.
- *
- * @param {string} userId - User ID
- * @throws {Error} - User ID is required
- * @returns {Promise<void>} - Promise resolving to void
+ * Logs out user from all devices by revoking all their refresh tokens
  */
 export const logoutAllDevices = async (userId: string): Promise<void> => {
   if (!userId) {
     throw createError('User ID is required', 400);
   }
 
-  // Revoke all refresh tokens for the user
-  await RefreshToken.update(
-    { isRevoked: true },
-    { where: { userId, isRevoked: false } }
-  );
+  await revokeUserTokens(userId);
 };

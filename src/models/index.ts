@@ -9,6 +9,8 @@ import { initBookingModel, Booking } from './booking.model';
 import { initBookingFinancialModel, BookingFinancial } from './bookingFinancial.model';
 import { initPaymentModel, Payment } from './payment.model';
 import { initRefreshTokenModel, RefreshToken } from './refreshToken.model';
+import { initChauffeurModel, Chauffeur } from './chauffeur.model';
+import { initChauffeurReviewModel, ChauffeurReview } from './chauffeurReview.model';
 
 let sequelize: Sequelize;
 
@@ -45,6 +47,8 @@ const initPostgres_DB = (): void => {
   initBookingFinancialModel(sequelize);
   initPaymentModel(sequelize);
   initRefreshTokenModel(sequelize);
+  initChauffeurModel(sequelize);
+  initChauffeurReviewModel(sequelize);
 
   //Associations
   User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
@@ -52,17 +56,29 @@ const initPostgres_DB = (): void => {
   User.hasMany(Booking, { foreignKey: 'userId' });
   User.hasMany(Payment, { foreignKey: 'userId' });
   User.hasMany(RefreshToken, { foreignKey: 'userId' });
+  User.hasMany(ChauffeurReview, { foreignKey: 'userId' });
 
   Vehicle.hasMany(VehicleMedia, { foreignKey: 'vehicleId' });
   Vehicle.hasMany(Booking, { foreignKey: 'vehicleId' });
 
+  Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId' });
+  Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId' });
+
   Booking.belongsTo(User, { foreignKey: 'userId' });
   Booking.belongsTo(Vehicle, { foreignKey: 'vehicleId' });
-  Booking.hasMany(BookingFinancial, { foreignKey: 'bookingId' });
+  Booking.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
+  Booking.hasOne(BookingFinancial, { foreignKey: 'bookingId' });
   Booking.hasMany(Payment, { foreignKey: 'bookingId' });
+  Booking.hasOne(ChauffeurReview, { foreignKey: 'bookingId' });
+
+  BookingFinancial.belongsTo(Booking, { foreignKey: 'bookingId' });
 
   Payment.belongsTo(Booking, { foreignKey: 'bookingId' });
   Payment.belongsTo(User, { foreignKey: 'userId' });
+
+  ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
+  ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
+  ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
 
   RefreshToken.belongsTo(User, { foreignKey: 'userId' });
 };
@@ -79,4 +95,6 @@ export {
   BookingFinancial,
   Payment,
   RefreshToken,
+  Chauffeur,
+  ChauffeurReview,
 };

@@ -1,32 +1,20 @@
 import { CreateBookingData, UpdateBookingData } from '../../common/types/bookingTypes';
-import { Booking, Vehicle } from '../../models';
+import { Booking, Vehicle, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
+import { validateRequiredFields, validateDateRange } from '../../utils/validation.utils';
+import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
 
 /**
  * Create a new booking
- * @param {CreateBookingData} bookingData - All required fields must be provided
- * @returns {Promise<Booking>} - Newly created booking
- * @throws {Error} - If required fields are missing, dates are invalid, vehicle is not available, or if there is a conflicting booking
  */
 export const createBooking = async (bookingData: CreateBookingData): Promise<Booking> => {
   const { userId, vehicleId, startDatetime, endDatetime, pickupLocation, dropoffLocation } = bookingData;
 
   // Validate required fields
-  if (!userId || !vehicleId || !startDatetime || !endDatetime || !pickupLocation || !dropoffLocation) {
-    throw createError('All required fields must be provided', 400);
-  }
+  validateRequiredFields(bookingData, ['userId', 'vehicleId', 'startDatetime', 'endDatetime', 'pickupLocation', 'dropoffLocation']);
 
   // Validate dates
-  const start = new Date(startDatetime);
-  const end = new Date(endDatetime);
-  
-  if (start >= end) {
-    throw createError('End date must be after start date', 400);
-  }
-  
-  if (start < new Date()) {
-    throw createError('Start date cannot be in the past', 400);
-  }
+  const { start, end } = validateDateRange(startDatetime, endDatetime);
 
   // Check if vehicle exists and is available
   const vehicle = await Vehicle.findByPk(vehicleId);
@@ -39,7 +27,6 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
   }
 
   // Use transaction to prevent race conditions
-  const { sequelize } = require('../../common/models');
   const transaction = await sequelize.transaction();
 
   try {
@@ -48,24 +35,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
       where: {
         vehicleId,
         bookingStatus: ['PENDING', 'CONFIRMED'],
-        [require('sequelize').Op.or]: [
-          {
-            startDatetime: {
-              [require('sequelize').Op.between]: [start, end]
-            }
-          },
-          {
-            endDatetime: {
-              [require('sequelize').Op.between]: [start, end]
-            }
-          },
-          {
-            [require('sequelize').Op.and]: [
-              { startDatetime: { [require('sequelize').Op.lte]: start } },
-              { endDatetime: { [require('sequelize').Op.gte]: end } }
-            ]
-          }
-        ]
+        ...buildDateConflictConditions(start, end)
       },
       transaction,
       lock: true // Add row-level locking
@@ -98,9 +68,6 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
 
 /**
  * Retrieves all bookings for a given user ID
- * @param {string} userId - User ID
- * @returns {Promise<Booking[]>} - Promise resolving to an array of booking objects
- * @throws {Error} - User ID is required
  */
 export const getUserBookings = async (userId: string): Promise<Booking[]> => {
   if (!userId) {
@@ -109,10 +76,11 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
 
   const bookings = await Booking.findAll({
     where: { userId },
+    attributes: BOOKING_ATTRIBUTES,
     include: [
       {
         model: Vehicle,
-        attributes: ['id', 'make', 'model', 'year', 'pricePerDay']
+        attributes: VEHICLE_LIST_ATTRIBUTES
       }
     ],
     order: [['createdAt', 'DESC']]
@@ -123,11 +91,6 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
 
 /**
  * Retrieves a booking by ID and user ID
- * @param {string} bookingId - Booking ID
- * @param {string} userId - User ID
- * @returns {Promise<Booking>} - Promise resolving to a booking object
- * @throws {Error} - Booking ID and User ID are required
- * @throws {Error} - Booking not found
  */
 export const getBookingById = async (bookingId: string, userId: string): Promise<Booking> => {
   if (!bookingId || !userId) {
@@ -136,10 +99,11 @@ export const getBookingById = async (bookingId: string, userId: string): Promise
 
   const booking = await Booking.findOne({
     where: { id: bookingId, userId },
+    attributes: BOOKING_ATTRIBUTES,
     include: [
       {
         model: Vehicle,
-        attributes: ['id', 'make', 'model', 'year', 'pricePerDay', 'exteriorColor']
+        attributes: [...VEHICLE_LIST_ATTRIBUTES, 'exteriorColor']
       }
     ]
   });
@@ -153,15 +117,6 @@ export const getBookingById = async (bookingId: string, userId: string): Promise
 
 /**
  * Updates a booking by ID and user ID with the provided data
- * @param {string} bookingId - Booking ID
- * @param {string} userId - User ID
- * @param {UpdateBookingData} updateData - Data to update the booking with
- * @returns {Promise<Booking>} - Promise resolving to the updated booking object
- * @throws {Error} - Booking ID and User ID are required
- * @throws {Error} - Booking not found
- * @throws {Error} - Cannot update cancelled or completed booking
- * @throws {Error} - End date must be after start date
- * @throws {Error} - Start date cannot be in the past
  */
 export const updateBooking = async (bookingId: string, userId: string, updateData: UpdateBookingData): Promise<Booking> => {
   if (!bookingId || !userId) {
@@ -186,13 +141,7 @@ export const updateBooking = async (bookingId: string, userId: string, updateDat
     const start = updateData.startDatetime ? new Date(updateData.startDatetime) : booking.startDatetime;
     const end = updateData.endDatetime ? new Date(updateData.endDatetime) : booking.endDatetime;
     
-    if (start >= end) {
-      throw createError('End date must be after start date', 400);
-    }
-    
-    if (start < new Date()) {
-      throw createError('Start date cannot be in the past', 400);
-    }
+    validateDateRange(start, end);
   }
 
   // Update booking
@@ -203,13 +152,6 @@ export const updateBooking = async (bookingId: string, userId: string, updateDat
 
 /**
  * Cancels a booking by ID and user ID
- * @param {string} bookingId - Booking ID
- * @param {string} userId - User ID
- * @returns {Promise<void>} - Promise resolving to void
- * @throws {Error} - Booking ID and User ID are required
- * @throws {Error} - Booking not found
- * @throws {Error} - Booking is already cancelled
- * @throws {Error} - Cannot cancel completed booking
  */
 export const cancelBooking = async (bookingId: string, userId: string): Promise<void> => {
   if (!bookingId || !userId) {

@@ -9,6 +9,10 @@ export class User extends Model {
   public phone!: string;
   public passwordHash!: string;
   public homeAddress!: string;
+  public city!: string;
+  public state!: string;
+  public zipCode!: string;
+  public country!: string;
   public isBlocked!: boolean;
 }
 
@@ -20,16 +24,55 @@ export const initUserModel = (sequelize: Sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      fullName: DataTypes.STRING(150),
-      dateOfBirth: DataTypes.DATEONLY,
-      nationality: DataTypes.STRING(100),
+      fullName: {
+        type: DataTypes.STRING(150),
+        allowNull: false,
+      },
+      dateOfBirth: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+      },
+      nationality: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
       email: {
         type: DataTypes.STRING(150),
         unique: true,
+        allowNull: false,
+        validate: {
+          isEmail: true,
+        },
       },
-      phone: DataTypes.STRING(20),
-      passwordHash: DataTypes.TEXT,
-      homeAddress: DataTypes.TEXT,
+      phone: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      passwordHash: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      homeAddress: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: 'Detailed street address',
+      },
+      city: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      state: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      zipCode: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      },
+      country: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
       isBlocked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
@@ -44,6 +87,24 @@ export const initUserModel = (sequelize: Sequelize) => {
       underscored: true,
       tableName: 'users',
       modelName: 'User',
+      indexes: [
+        {
+          fields: ['email'],
+          unique: true,
+        },
+        {
+          fields: ['phone'],
+        },
+        {
+          fields: ['city', 'state'],
+        },
+        {
+          fields: ['country'],
+        },
+        {
+          fields: ['is_blocked'],
+        },
+      ],
     },
   );
 };

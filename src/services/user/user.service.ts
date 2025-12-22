@@ -3,13 +3,12 @@ import { userModelType } from '../../common/types/userTypes';
 import { createError } from '../middleware/errorHandler';
 import { hashPassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
+import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
+import { USER_SAFE_ATTRIBUTES } from '../../utils/database.utils';
+import { Op } from 'sequelize';
 
 /**
  * Retrieves a user by ID (excluding password hash)
- * @param {string} userId - User ID
- * @returns {Promise<Partial<User>>} - Promise resolving to a user object (excluding password hash)
- * @throws {Error} - User ID is required
- * @throws {Error} - User not found
  */
 export const getUserById = async (userId: string): Promise<Partial<User>> => {
   if (!userId) {
@@ -17,7 +16,7 @@ export const getUserById = async (userId: string): Promise<Partial<User>> => {
   }
 
   const user = await User.findByPk(userId, {
-    attributes: { exclude: ['passwordHash'] }
+    attributes: USER_SAFE_ATTRIBUTES
   });
 
   if (!user) {
@@ -29,9 +28,6 @@ export const getUserById = async (userId: string): Promise<Partial<User>> => {
 
 /**
  * Retrieves a user by email
- * @param {string} email - User email
- * @returns {Promise<User | null>} - Promise resolving to a user object or null if not found
- * @throws {Error} - Email is required
  */
 export const getUserByEmail = async (email: string): Promise<User | null> => {
   if (!email) {
@@ -44,12 +40,6 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 
 /**
  * Updates a user by ID with the provided data
- * @param {string} userId - User ID
- * @param {Partial<userModelType>} updateData - Data to update the user with
- * @returns {Promise<Partial<User>>} - Promise resolving to the updated user object
- * @throws {Error} - User ID is required
- * @throws {Error} - User not found
- * @throws {Error} - Email is already taken by another user
  */
 export const updateUser = async (userId: string, updateData: Partial<userModelType>): Promise<Partial<User>> => {
   if (!userId) {
@@ -62,16 +52,17 @@ export const updateUser = async (userId: string, updateData: Partial<userModelTy
     throw createError('User not found', 404);
   }
 
-  // Sanitize email if provided
+  // Sanitize and validate email if provided
   if (updateData.email) {
+    validateEmail(updateData.email);
     updateData.email = sanitizeEmail(updateData.email);
     
     // Check if email is already taken by another user
-    const existingUser = await User.findOne({ 
-      where: { 
+    const existingUser = await User.findOne({
+      where: {
         email: updateData.email,
-        id: { [require('sequelize').Op.ne]: userId }
-      } 
+        id: { [Op.ne]: userId },
+      },
     });
     
     if (existingUser) {
@@ -92,7 +83,7 @@ export const updateUser = async (userId: string, updateData: Partial<userModelTy
 
   // Return updated user without password
   const updatedUser = await User.findByPk(userId, {
-    attributes: { exclude: ['passwordHash'] }
+    attributes: USER_SAFE_ATTRIBUTES
   });
 
   return updatedUser!.toJSON();
@@ -100,10 +91,6 @@ export const updateUser = async (userId: string, updateData: Partial<userModelTy
 
 /**
  * Deletes a user by ID
- * @param {string} userId - User ID
- * @returns {Promise<void>} - Promise resolving to void
- * @throws {Error} - User ID is required
- * @throws {Error} - User not found
  */
 export const deleteUser = async (userId: string): Promise<void> => {
   if (!userId) {
@@ -127,19 +114,15 @@ export const deleteUser = async (userId: string): Promise<void> => {
 
 /**
  * Creates a new user
- * @param {userModelType} userData - User data to create user with
- * @returns {Promise<Partial<User>>} - Promise resolving to a user object (excluding password hash)
- * @throws {Error} - All required fields must be provided
- * @throws {Error} - User with this email already exists
  */
 export const createUser = async (userData: userModelType): Promise<Partial<User>> => {
   const { fullName, dateOfBirth, nationality, email: rawEmail, phone, passwordHash, homeAddress } = userData;
 
-  if (!fullName || !dateOfBirth || !nationality || !rawEmail || !phone || !passwordHash) {
-    throw createError('All required fields must be provided', 400);
-  }
+  // Validate required fields
+  validateRequiredFields(userData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'passwordHash']);
 
   const email = sanitizeEmail(rawEmail);
+  validateEmail(email);
 
   // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });
