@@ -50,9 +50,7 @@ server.listen(PORT, () => {
 (async () => {
   try {
     initPostgres_DB();
-    await sequelize.sync();
     
-    // Start token cleanup job
     startTokenCleanupJob();
     
     console.log('Database initialized successfully');
