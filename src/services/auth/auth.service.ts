@@ -1,0 +1,295 @@
+import { AdminUser, AdminRefreshToken } from '../../models';
+import { 
+  AdminLoginRequest, 
+  AdminRegisterRequest, 
+  AdminAuthResponse, 
+  RefreshTokenResponse,
+  AdminUserResponse 
+} from '../../common/types/authTypes';
+import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
+import { hashPassword, comparePassword } from '../../utils/password.utils';
+import { sanitizeEmail } from '../../utils/security.utils';
+import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '../../utils/adminUser.utils';
+import { createError } from '../middleware/errorHandler';
+import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
+
+/**
+ * Create and store refresh token
+ */
+const storeRefreshToken = async (
+  adminUserId: number, 
+  token: string, 
+  expiresAt: Date,
+  deviceInfo?: string,
+  ipAddress?: string
+): Promise<void> => {
+  await AdminRefreshToken.create({
+    adminUserId,
+    token,
+    expiresAt,
+    isRevoked: false,
+    deviceInfo,
+    ipAddress,
+  });
+};
+
+/**
+ * Revoke all refresh tokens for admin user
+ */
+const revokeAllRefreshTokens = async (adminUserId: number): Promise<void> => {
+  await AdminRefreshToken.update(
+    { isRevoked: true },
+    { where: { adminUserId, isRevoked: false } }
+  );
+};
+
+/**
+ * Register new admin user
+ */
+export const register = async (
+  registerData: AdminRegisterRequest,
+  deviceInfo?: string,
+  ipAddress?: string
+): Promise<AdminAuthResponse> => {
+  const { firstName, lastName, email: rawEmail, password } = registerData;
+
+  // Validate required fields
+  validateRequiredFields(registerData, ['firstName', 'lastName', 'email', 'password']);
+
+  const email = sanitizeEmail(rawEmail);
+  validateEmail(email);
+
+  // Check if admin user already exists
+  const existingUser = await AdminUser.findOne({ where: { email } });
+  if (existingUser) {
+    throw createError('Admin user with this email already exists', 409);
+  }
+
+  // Hash password
+  const passwordHash = await hashPassword(password);
+
+  // Create admin user
+  const user = await AdminUser.create({
+    firstName,
+    lastName,
+    email,
+    passwordHash,
+    isActive: true,
+  });
+
+  // Generate tokens
+  const tokenPair = generateTokenPair({
+    userId: user.id,
+    email: user.email,
+  });
+
+  // Store refresh token
+  await storeRefreshToken(
+    user.id, 
+    tokenPair.refreshToken, 
+    tokenPair.refreshTokenExpiresAt,
+    deviceInfo,
+    ipAddress
+  );
+
+  // Get user with permissions for response
+  const userWithPermissions = await getAdminUserWithRolesAndPermissions(user.id);
+
+  return {
+    user: formatAdminUserResponse(userWithPermissions || user),
+    tokens: tokenPair,
+  };
+};
+
+/**
+ * Login admin user
+ */
+export const login = async (
+  loginData: AdminLoginRequest,
+  deviceInfo?: string,
+  ipAddress?: string
+): Promise<AdminAuthResponse> => {
+  const { email: rawEmail, password } = loginData;
+
+  // Validate required fields
+  validateRequiredFields(loginData, ['email', 'password']);
+
+  const email = sanitizeEmail(rawEmail);
+  validateEmail(email);
+
+  // Find admin user by email
+  const user = await AdminUser.findOne({ where: { email } });
+  if (!user) {
+    throw createError('Invalid credentials', 401);
+  }
+
+  // Check if admin user is active
+  if (!user.isActive) {
+    throw createError('Account is deactivated. Please contact administrator.', 403);
+  }
+
+  // Verify password
+  const isPasswordValid = await comparePassword(password, user.passwordHash);
+  if (!isPasswordValid) {
+    throw createError('Invalid credentials', 401);
+  }
+
+  // Revoke existing refresh tokens for security
+  await revokeAllRefreshTokens(user.id);
+
+  // Generate new tokens
+  const tokenPair = generateTokenPair({
+    userId: user.id,
+    email: user.email,
+  });
+
+  // Store new refresh token
+  await storeRefreshToken(
+    user.id, 
+    tokenPair.refreshToken, 
+    tokenPair.refreshTokenExpiresAt,
+    deviceInfo,
+    ipAddress
+  );
+
+  // Get user with permissions for response
+  const userWithPermissions = await getAdminUserWithRolesAndPermissions(user.id);
+
+  return {
+    user: formatAdminUserResponse(userWithPermissions || user),
+    tokens: tokenPair,
+  };
+};
+
+/**
+ * Refresh access token
+ */
+export const refreshToken = async (token: string): Promise<RefreshTokenResponse> => {
+  if (!token) {
+    throw createError('Refresh token is required', 400);
+  }
+
+  // Verify refresh token
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(token);
+  } catch (error) {
+    throw createError('Invalid or expired refresh token', 401);
+  }
+
+  // Check if refresh token exists in database and is not revoked
+  const storedToken = await AdminRefreshToken.findOne({
+    where: {
+      token,
+      adminUserId: decoded.userId,
+      isRevoked: false,
+    },
+  });
+
+  if (!storedToken) {
+    throw createError('Refresh token not found or revoked', 401);
+  }
+
+  // Check if token is expired
+  if (storedToken.expiresAt < new Date()) {
+    await storedToken.update({ isRevoked: true });
+    throw createError('Refresh token expired', 401);
+  }
+
+  // Get admin user details
+  const user = await AdminUser.findByPk(decoded.userId);
+  if (!user || !user.isActive) {
+    throw createError('Admin user not found or deactivated', 401);
+  }
+
+  // Revoke old refresh token
+  await storedToken.update({ isRevoked: true });
+
+  // Generate new token pair
+  const newTokenPair = generateTokenPair({
+    userId: user.id,
+    email: user.email,
+  });
+
+  // Store new refresh token
+  await storeRefreshToken(
+    user.id, 
+    newTokenPair.refreshToken, 
+    newTokenPair.refreshTokenExpiresAt,
+    storedToken.deviceInfo,
+    storedToken.ipAddress
+  );
+
+  return newTokenPair;
+};
+
+/**
+ * Logout admin user
+ */
+export const logout = async (token: string): Promise<void> => {
+  if (!token) {
+    throw createError('Refresh token is required', 400);
+  }
+
+  // Revoke the refresh token
+  await AdminRefreshToken.update(
+    { isRevoked: true },
+    { where: { token, isRevoked: false } }
+  );
+};
+
+/**
+ * Logout from all devices
+ */
+export const logoutFromAllDevices = async (adminUserId: number): Promise<void> => {
+  if (!adminUserId) {
+    throw createError('Admin User ID is required', 400);
+  }
+
+  await revokeAllRefreshTokens(adminUserId);
+};
+
+/**
+ * Get current admin user profile
+ */
+export const getCurrentProfile = async (adminUserId: number): Promise<AdminUserResponse> => {
+  const user = await getAdminUserWithRolesAndPermissions(adminUserId);
+  
+  if (!user) {
+    throw createError('Admin user not found', 404);
+  }
+
+  if (!user.isActive) {
+    throw createError('Admin user account is deactivated', 403);
+  }
+
+  return formatAdminUserResponse(user);
+};
+
+/**
+ * Check if admin user has specific permission
+ */
+export const checkPermission = async (adminUserId: number, permission: string): Promise<boolean> => {
+  const user = await getAdminUserWithRolesAndPermissions(adminUserId);
+  
+  if (!user || !user.isActive) {
+    return false;
+  }
+
+  const userResponse = formatAdminUserResponse(user);
+  return userResponse.permissions?.includes(permission) || false;
+};
+
+/**
+ * Check if admin user has any of the specified permissions
+ */
+export const checkAnyPermission = async (adminUserId: number, permissions: string[]): Promise<boolean> => {
+  const user = await getAdminUserWithRolesAndPermissions(adminUserId);
+  
+  if (!user || !user.isActive) {
+    return false;
+  }
+
+  const userResponse = formatAdminUserResponse(user);
+  return permissions.some(permission => userResponse.permissions?.includes(permission)) || false;
+};

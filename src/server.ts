@@ -1,9 +1,74 @@
+import './config/env/envConfig';
 import express from 'express';
-import "./config/env/envConfig";
+import cors from 'cors';
+import passport from 'passport';
+import {
+  preventParameterPollution,
+  sanitizeInput,
+  securityHeaders,
+} from './services/middleware/security';
+import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
+import { initPostgres_DB } from './models';
+import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
+import { configPassport } from './config/passport';
+import apiRoutes from './routes';
 
-const serverr = express();
-const PORT = process.env.PORT || 3000;
+const server = express();
+const PORT = process.env.PORT || 3001;
 
-serverr.listen(PORT, () => {
+// Security middleware
+server.use(securityHeaders);
+server.use(preventParameterPollution);
+
+server.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173/',
+  credentials: true,
+  optionsSuccessStatus: 200,
+}));
+
+// Body parsing middleware
+server.use(express.json({ limit: '10mb' }));
+server.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization
+server.use(sanitizeInput);
+
+// Initialize Passport for admin authentication
+server.use(passport.initialize());
+configPassport();
+
+// Health check endpoint
+server.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Admin API is healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+// API routes
+server.use('/api', apiRoutes);
+
+// 404 handler
+server.use(notFoundHandler);
+
+// Global error handler
+server.use(errorHandler);
+
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+(async () => {
+  try {
+    initPostgres_DB();
+    
+    startTokenCleanupJob();
+    
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.log('Failed to initialize database', error);
+    process.exit(1);
+  }
+})();
