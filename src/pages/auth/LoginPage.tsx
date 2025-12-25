@@ -1,29 +1,51 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import logo from "../../assets/Logo.png";
+import logo from "@/assets/Logo.png";
+import { useAuth } from "@/api/hooks/useAuth";
+import { isAuthenticated, authCookies } from "@/api";
 import type { FormErrors } from "@/common/interface/loginInterface";
+import { Spinner } from "@/components/ui/spinner";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login, isLoading, error, clearError } = useAuth();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    if (error) {
+      clearError();
+    }
+  }, [email, password, clearError]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
     if (!email.trim()) {
       newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!password.trim()) {
       newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     setErrors(newErrors);
@@ -37,18 +59,18 @@ const LoginPage = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await login({ email, password });
       
-      console.log({ email, password, rememberMe });
+      if (rememberMe) {
+        authCookies.setRememberMe(true);
+      } else {
+        authCookies.setRememberMe(false);
+      }
       
-      setErrors({});
-    } catch (error) {
-      setErrors({ email: "Invalid email or password" });
-    } finally {
-      setIsSubmitting(false);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Login error:', err);
     }
   };
 
@@ -64,6 +86,10 @@ const LoginPage = () => {
     if (errors.password) {
       setErrors(prev => ({ ...prev, password: undefined }));
     }
+  };
+
+  const handleForgotPassword = () => {
+    navigate('/forgot-password');
   };
 
   return (
@@ -88,6 +114,16 @@ const LoginPage = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Display API error */}
+            {error && (
+              <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  {error}
+                </p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -97,16 +133,17 @@ const LoginPage = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="kai.doe@strapi.com"
+                    placeholder="kai.doe@gmail.com"
                     value={email}
                     onChange={handleEmailChange}
                     className={`h-11 ${errors.email ? 'border-destructive focus-visible:border-destructive' : ''}`}
                     aria-invalid={!!errors.email}
+                    disabled={isLoading}
                   />
                 </div>
                 {errors.email && (
                   <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3 " />
+                    <AlertCircle className="h-3 w-3" />
                     {errors.email}
                   </p>
                 )}
@@ -119,7 +156,9 @@ const LoginPage = () => {
                   </Label>
                   <button
                     type="button"
+                    onClick={handleForgotPassword}
                     className="text-sm text-primary hover:text-primary/80 transition-colors"
+                    disabled={isLoading}
                   >
                     Forgot password?
                   </button>
@@ -132,12 +171,14 @@ const LoginPage = () => {
                     onChange={handlePasswordChange}
                     className={`h-11 pr-20 ${errors.password ? 'border-destructive focus-visible:border-destructive' : ''}`}
                     aria-invalid={!!errors.password}
+                    disabled={isLoading}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={isLoading}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -162,6 +203,7 @@ const LoginPage = () => {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-2 focus:ring-offset-0"
+                  disabled={isLoading}
                 />
                 <Label htmlFor="remember" className="text-sm text-foreground cursor-pointer">
                   Remember me
@@ -172,8 +214,9 @@ const LoginPage = () => {
                 type="submit" 
                 className="w-full h-11 text-base font-medium"
                 size="lg"
-                disabled={isSubmitting}
+                disabled={isLoading}
               >
+                {isLoading && <Spinner />}
                 Login
               </Button>
             </form>
