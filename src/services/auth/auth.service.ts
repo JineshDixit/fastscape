@@ -5,7 +5,7 @@ import {
   AdminAuthResponse, 
   RefreshTokenResponse,
   AdminUserResponse 
-} from '../../common/types/authTypes';
+} from '../../common/interfaces/authTypes';
 import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';

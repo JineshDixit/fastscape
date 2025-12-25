@@ -1,5 +1,5 @@
 import { AdminUserRole, AdminUser, Role } from '../../models';
-import { AssignRoleRequest, AdminUserResponse, RoleResponse } from '../../common/types/authTypes';
+import { AssignRoleRequest, AdminUserResponse, RoleResponse } from '../../common/interfaces/authTypes';
 import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '../../utils/adminUser.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields } from '../../utils/validation.utils';

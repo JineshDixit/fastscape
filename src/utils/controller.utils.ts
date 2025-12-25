@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from '../common/types/expressTypes';
+import { AuthenticatedRequest } from '../common/interfaces/expressTypes';
 import { createError } from '../services/middleware/errorHandler';
 import { sendSuccess, sendCreated, sendSuccessWithPagination } from './response.utils';
 import { validateUUID } from './validation.utils';

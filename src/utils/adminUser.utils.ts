@@ -1,5 +1,5 @@
 import { AdminUser, Role, Policy } from '../models';
-import { AdminUserResponse } from '../common/types/authTypes';
+import { AdminUserResponse } from '../common/interfaces/authTypes';
 
 /**
  * Format admin user response with roles and permissions

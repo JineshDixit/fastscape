@@ -1,5 +1,5 @@
 import { AdminUser, Role, Policy } from '../../models';
-import { AdminUserResponse, AdminRegisterRequest } from '../../common/types/authTypes';
+import { AdminUserResponse, AdminRegisterRequest } from '../../common/interfaces/authTypes';
 import { hashPassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
 import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '../../utils/adminUser.utils';

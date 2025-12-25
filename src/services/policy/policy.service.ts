@@ -1,5 +1,5 @@
 import { Policy, Role } from '../../models';
-import { CreatePolicyRequest, UpdatePolicyRequest, PolicyResponse } from '../../common/types/authTypes';
+import { CreatePolicyRequest, UpdatePolicyRequest, PolicyResponse } from '../../common/interfaces/authTypes';
 import { formatPolicyResponse, getPolicyWithRoles } from '../../utils/role.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateArrayLength } from '../../utils/validation.utils';

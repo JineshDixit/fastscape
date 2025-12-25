@@ -1,5 +1,5 @@
 import { Role, Policy } from '../models';
-import { RoleResponse, PolicyResponse } from '../common/types/authTypes';
+import { RoleResponse, PolicyResponse } from '../common/interfaces/authTypes';
 
 /**
  * Format role response
