@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading, error, clearError } = useAuth();
   
   const [showPassword, setShowPassword] = useState(false);
@@ -20,12 +21,14 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  
+  const from = location.state?.from || '/dashboard';
 
   useEffect(() => {
     if (isAuthenticated()) {
-      navigate('/dashboard');
+      navigate(from, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, from]);
 
   useEffect(() => {
     if (error) {
@@ -68,7 +71,8 @@ const LoginPage = () => {
         authCookies.setRememberMe(false);
       }
       
-      navigate('/dashboard');
+      // Redirect to the original page they were trying to access
+      navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
     }

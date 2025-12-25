@@ -1,5 +1,8 @@
 import LoginPage from "@/pages/auth/LoginPage";
-import DashboardLayout from "@/components/layout/DashboardLayout";
+import Layout from "@/components/layout/Layout";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import PublicRoute from "@/components/auth/PublicRoute";
+import RoleGuard from "@/components/auth/RoleGuard";
 import Dashboard from "@/pages/Dashboard";
 import Bookings from "@/pages/Bookings";
 import Units from "@/pages/Units";
@@ -16,11 +19,19 @@ export const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <LoginPage />
+    element: (
+      <PublicRoute>
+        <LoginPage />
+      </PublicRoute>
+    )
   },
   {
     path: '/',
-    element: <DashboardLayout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: 'dashboard',
@@ -44,7 +55,14 @@ export const router = createBrowserRouter([
       },
       {
         path: 'financials',
-        element: <Financials />
+        element: (
+          <RoleGuard 
+            requiredPermissions={['admin.content.read']}
+            fallbackPath="/dashboard"
+          >
+            <Financials />
+          </RoleGuard>
+        )
       }
     ]
   },

@@ -14,7 +14,7 @@ const pageTitles: Record<string, string> = {
 };
 
 // Inner layout component that uses the context
-const DashboardLayoutInner = () => {
+const LayoutInner = () => {
   const location = useLocation();
   const { isMobile, isOpen, closeSidebar } = useSidebar();
   
@@ -50,12 +50,12 @@ const DashboardLayoutInner = () => {
 };
 
 // Main layout component with provider
-const DashboardLayout = () => {
+const Layout = () => {
   return (
     <SidebarProvider defaultCollapsed={false}>
-      <DashboardLayoutInner />
+      <LayoutInner />
     </SidebarProvider>
   );
 };
 
-export default DashboardLayout;
+export default Layout;
