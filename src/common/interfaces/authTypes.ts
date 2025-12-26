@@ -16,7 +16,7 @@ export interface AdminAuthResponse {
 }
 
 export interface AdminUserResponse {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
   fullName: string;
@@ -27,14 +27,14 @@ export interface AdminUserResponse {
 }
 
 export interface RoleResponse {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   isActive: boolean;
 }
 
 export interface PolicyResponse {
-  id: number;
+  id: string;
   name: string;
   permissions: string[];
   description?: string;
@@ -58,7 +58,7 @@ export interface RefreshTokenResponse {
 export interface CreateRoleRequest {
   name: string;
   description?: string;
-  policyIds?: number[];
+  policyIds?: string[];
 }
 
 export interface UpdateRoleRequest {
@@ -81,11 +81,11 @@ export interface UpdatePolicyRequest {
 }
 
 export interface AssignRoleRequest {
-  adminUserId: number;
-  roleId: number;
+  adminUserId: string;
+  roleId: string;
 }
 
 export interface AssignPolicyToRoleRequest {
-  roleId: number;
-  policyId: number;
+  roleId: string;
+  policyId: string;
 }

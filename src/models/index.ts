@@ -6,6 +6,8 @@ import { initPolicyModel, Policy } from './Policy';
 import { initRolePolicyModel, RolePolicy } from './RolePolicy';
 import { initAdminUserRoleModel, AdminUserRole } from './AdminUserRole';
 import { initAdminRefreshTokenModel, AdminRefreshToken } from './AdminRefreshToken';
+import { initVehicleModel, Vehicle } from './vehicle.model';
+import { initVehicleMediaModel, VehicleMedia } from './vehicleMedia.model';
 
 let sequelize: Sequelize;
 
@@ -40,6 +42,8 @@ const initPostgres_DB = (): void => {
   initRolePolicyModel(sequelize);
   initAdminUserRoleModel(sequelize);
   initAdminRefreshTokenModel(sequelize);
+  initVehicleModel(sequelize);
+  initVehicleMediaModel(sequelize);
 
   // Associations
   AdminUser.belongsToMany(Role, { 
@@ -81,6 +85,17 @@ const initPostgres_DB = (): void => {
   
   RolePolicy.belongsTo(Role, { foreignKey: 'roleId' });
   RolePolicy.belongsTo(Policy, { foreignKey: 'policyId' });
+  
+  // Vehicle associations
+  Vehicle.hasMany(VehicleMedia, { 
+    foreignKey: 'vehicleId',
+    as: 'media'
+  });
+  
+  VehicleMedia.belongsTo(Vehicle, { 
+    foreignKey: 'vehicleId',
+    as: 'vehicle'
+  });
 };
 
 export {
@@ -92,4 +107,6 @@ export {
   RolePolicy,
   AdminUserRole,
   AdminRefreshToken,
+  Vehicle,
+  VehicleMedia
 };

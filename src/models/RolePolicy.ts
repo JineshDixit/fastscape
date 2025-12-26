@@ -1,9 +1,9 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class RolePolicy extends Model {
-  public id!: number;
-  public roleId!: number;
-  public policyId!: number;
+  public id!: string;
+  public roleId!: string;
+  public policyId!: string;
   public readonly createdAt!: Date;
 }
 

@@ -1,8 +1,8 @@
 import { Optional } from "sequelize";
 
 export interface AdminRefreshTokenAttributes {
-  id: number;
-  adminUserId: number;
+  id: string;
+  adminUserId: string;
   token: string;
   expiresAt: Date;
   isRevoked: boolean;

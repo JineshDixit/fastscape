@@ -60,13 +60,8 @@ export const removeRoleFromUser = async (req: Request, res: Response, next: Next
 export const getAdminUserRoles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { adminUserId } = req.params;
-    const adminUserIdNum = parseInt(adminUserId);
 
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    const result = await getUserRoles(adminUserIdNum);
+    const result = await getUserRoles(adminUserId);
 
     sendSuccess(res, 'Admin user roles retrieved successfully', result);
   } catch (error) {
@@ -80,13 +75,8 @@ export const getAdminUserRoles = async (req: Request, res: Response, next: NextF
 export const getRoleAdminUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { roleId } = req.params;
-    const roleIdNum = parseInt(roleId);
 
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await getRoleUsers(roleIdNum);
+    const result = await getRoleUsers(roleId);
 
     sendSuccess(res, 'Role admin users retrieved successfully', result);
   } catch (error) {
@@ -100,13 +90,8 @@ export const getRoleAdminUsers = async (req: Request, res: Response, next: NextF
 export const getAdminUserPermissions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { adminUserId } = req.params;
-    const adminUserIdNum = parseInt(adminUserId);
 
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    const result = await getUserPermissions(adminUserIdNum);
+    const result = await getUserPermissions(adminUserId);
 
     sendSuccess(res, 'Admin user permissions retrieved successfully', result);
   } catch (error) {
@@ -120,14 +105,8 @@ export const getAdminUserPermissions = async (req: Request, res: Response, next:
 export const checkUserHasRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { adminUserId, roleId } = req.params;
-    const adminUserIdNum = parseInt(adminUserId);
-    const roleIdNum = parseInt(roleId);
 
-    if (isNaN(adminUserIdNum) || isNaN(roleIdNum)) {
-      throw createError('Invalid admin user ID or role ID', 400);
-    }
-
-    const result = await hasRole(adminUserIdNum, roleIdNum);
+    const result = await hasRole(adminUserId, roleId);
 
     sendSuccess(res, 'Role check completed', { hasRole: result });
   } catch (error) {
@@ -142,17 +121,12 @@ export const checkUserHasAnyRole = async (req: Request, res: Response, next: Nex
   try {
     const { adminUserId } = req.params;
     const { roleIds } = req.body;
-    const adminUserIdNum = parseInt(adminUserId);
-
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
 
     if (!Array.isArray(roleIds) || roleIds.length === 0) {
       throw createError('Role IDs array is required', 400);
     }
 
-    const result = await hasAnyRole(adminUserIdNum, roleIds);
+    const result = await hasAnyRole(adminUserId, roleIds);
 
     sendSuccess(res, 'Role check completed', { hasAnyRole: result });
   } catch (error) {
@@ -166,17 +140,12 @@ export const checkUserHasAnyRole = async (req: Request, res: Response, next: Nex
 export const checkUserHasPermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { adminUserId, permission } = req.params;
-    const adminUserIdNum = parseInt(adminUserId);
-
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
 
     if (!permission) {
       throw createError('Permission is required', 400);
     }
 
-    const result = await hasPermission(adminUserIdNum, permission);
+    const result = await hasPermission(adminUserId, permission);
 
     sendSuccess(res, 'Permission check completed', { hasPermission: result });
   } catch (error) {
@@ -191,17 +160,12 @@ export const checkUserHasAnyPermission = async (req: Request, res: Response, nex
   try {
     const { adminUserId } = req.params;
     const { permissions } = req.body;
-    const adminUserIdNum = parseInt(adminUserId);
-
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
 
     if (!Array.isArray(permissions) || permissions.length === 0) {
       throw createError('Permissions array is required', 400);
     }
 
-    const result = await hasAnyPermission(adminUserIdNum, permissions);
+    const result = await hasAnyPermission(adminUserId, permissions);
 
     sendSuccess(res, 'Permission check completed', { hasAnyPermission: result });
   } catch (error) {
@@ -216,18 +180,13 @@ export const bulkAssignRolesToUser = async (req: Request, res: Response, next: N
   try {
     const { adminUserId } = req.params;
     const { roleIds } = req.body;
-    const adminUserIdNum = parseInt(adminUserId);
     const assignedBy = (req as any).user?.userId; // Get from authenticated user
-
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
 
     if (!Array.isArray(roleIds) || roleIds.length === 0) {
       throw createError('Role IDs array is required', 400);
     }
 
-    const result = await bulkAssignRoles(adminUserIdNum, roleIds, assignedBy);
+    const result = await bulkAssignRoles(adminUserId, roleIds, assignedBy);
 
     sendSuccess(res, 'Roles assigned to admin user successfully', result);
   } catch (error) {
@@ -241,13 +200,8 @@ export const bulkAssignRolesToUser = async (req: Request, res: Response, next: N
 export const removeAllRolesFromUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { adminUserId } = req.params;
-    const adminUserIdNum = parseInt(adminUserId);
-
-    if (isNaN(adminUserIdNum)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    const result = await removeAllRoles(adminUserIdNum);
+    
+    const result = await removeAllRoles(adminUserId);
 
     sendSuccess(res, 'All roles removed from admin user successfully', result);
   } catch (error) {

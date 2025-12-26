@@ -1,7 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class Policy extends Model {
-  public id!: number;
+  public id!: string;
   public name!: string;
   public permissions!: string[];
   public description?: string;

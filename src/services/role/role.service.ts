@@ -53,7 +53,7 @@ export const create = async (roleData: CreateRoleRequest): Promise<RoleResponse>
 /**
  * Get role by ID
  */
-export const getById = async (roleId: number): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
+export const getById = async (roleId: string): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   const role = await getRoleWithPolicies(roleId);
   
   if (!role) {
@@ -120,7 +120,7 @@ export const getAll = async (
  * Update role
  */
 export const update = async (
-  roleId: number,
+  roleId: string,
   updateData: UpdateRoleRequest
 ): Promise<RoleResponse> => {
   const role = await Role.findByPk(roleId);
@@ -152,7 +152,7 @@ export const update = async (
 /**
  * Delete role (soft delete by deactivating)
  */
-export const remove = async (roleId: number): Promise<void> => {
+export const remove = async (roleId: string): Promise<void> => {
   const role = await Role.findByPk(roleId);
   
   if (!role) {
@@ -181,7 +181,7 @@ export const remove = async (roleId: number): Promise<void> => {
 /**
  * Activate role
  */
-export const activate = async (roleId: number): Promise<RoleResponse> => {
+export const activate = async (roleId: string): Promise<RoleResponse> => {
   const role = await Role.findByPk(roleId);
   
   if (!role) {
@@ -195,7 +195,7 @@ export const activate = async (roleId: number): Promise<RoleResponse> => {
 /**
  * Deactivate role
  */
-export const deactivate = async (roleId: number): Promise<RoleResponse> => {
+export const deactivate = async (roleId: string): Promise<RoleResponse> => {
   const role = await Role.findByPk(roleId);
   
   if (!role) {
@@ -209,7 +209,7 @@ export const deactivate = async (roleId: number): Promise<RoleResponse> => {
 /**
  * Check if role exists
  */
-export const exists = async (roleId: number): Promise<boolean> => {
+export const exists = async (roleId: string): Promise<boolean> => {
   const role = await Role.findByPk(roleId);
   return !!role;
 };
@@ -217,7 +217,7 @@ export const exists = async (roleId: number): Promise<boolean> => {
 /**
  * Check if role is active
  */
-export const isActive = async (roleId: number): Promise<boolean> => {
+export const isActive = async (roleId: string): Promise<boolean> => {
   const role = await Role.findByPk(roleId);
   return role?.isActive || false;
 };

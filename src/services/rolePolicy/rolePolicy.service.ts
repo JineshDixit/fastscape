@@ -53,8 +53,8 @@ export const assignPolicy = async (assignData: AssignPolicyToRoleRequest): Promi
  * Remove policy from role
  */
 export const removePolicy = async (
-  roleId: number,
-  policyId: number
+  roleId: string,
+  policyId: string
 ): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   // Check if assignment exists
   const assignment = await RolePolicy.findOne({
@@ -81,7 +81,7 @@ export const removePolicy = async (
 /**
  * Get all policies assigned to a role
  */
-export const getRolePolicies = async (roleId: number): Promise<PolicyResponse[]> => {
+export const getRolePolicies = async (roleId: string): Promise<PolicyResponse[]> => {
   const role = await getRoleWithPolicies(roleId);
 
   if (!role) {
@@ -95,7 +95,7 @@ export const getRolePolicies = async (roleId: number): Promise<PolicyResponse[]>
 /**
  * Get all roles that have a specific policy
  */
-export const getPolicyRoles = async (policyId: number): Promise<RoleResponse[]> => {
+export const getPolicyRoles = async (policyId: string): Promise<RoleResponse[]> => {
   const policy = await Policy.findByPk(policyId, {
     include: [
       {
@@ -124,7 +124,7 @@ export const getPolicyRoles = async (policyId: number): Promise<RoleResponse[]> 
 /**
  * Check if role has specific policy
  */
-export const hasPolicy = async (roleId: number, policyId: number): Promise<boolean> => {
+export const hasPolicy = async (roleId: string, policyId: string): Promise<boolean> => {
   const assignment = await RolePolicy.findOne({
     where: { roleId, policyId }
   });
@@ -135,7 +135,7 @@ export const hasPolicy = async (roleId: number, policyId: number): Promise<boole
 /**
  * Check if role has any of the specified policies
  */
-export const hasAnyPolicy = async (roleId: number, policyIds: number[]): Promise<boolean> => {
+export const hasAnyPolicy = async (roleId: string, policyIds: string[]): Promise<boolean> => {
   const assignments = await RolePolicy.findAll({
     where: { 
       roleId,
@@ -149,7 +149,7 @@ export const hasAnyPolicy = async (roleId: number, policyIds: number[]): Promise
 /**
  * Get all permissions for a role (from all assigned policies)
  */
-export const getRolePermissions = async (roleId: number): Promise<string[]> => {
+export const getRolePermissions = async (roleId: string): Promise<string[]> => {
   const role = await getRoleWithPolicies(roleId);
 
   if (!role) {
@@ -172,7 +172,7 @@ export const getRolePermissions = async (roleId: number): Promise<string[]> => {
 /**
  * Check if role has specific permission
  */
-export const hasPermission = async (roleId: number, permission: string): Promise<boolean> => {
+export const hasPermission = async (roleId: string, permission: string): Promise<boolean> => {
   const permissions = await getRolePermissions(roleId);
   return permissions.includes(permission);
 };
@@ -180,7 +180,7 @@ export const hasPermission = async (roleId: number, permission: string): Promise
 /**
  * Check if role has any of the specified permissions
  */
-export const hasAnyPermission = async (roleId: number, permissions: string[]): Promise<boolean> => {
+export const hasAnyPermission = async (roleId: string, permissions: string[]): Promise<boolean> => {
   const rolePermissions = await getRolePermissions(roleId);
   return permissions.some(permission => rolePermissions.includes(permission));
 };
@@ -189,8 +189,8 @@ export const hasAnyPermission = async (roleId: number, permissions: string[]): P
  * Bulk assign policies to role
  */
 export const bulkAssignPolicies = async (
-  roleId: number,
-  policyIds: number[]
+  roleId: string,
+  policyIds: string[]
 ): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   // Check if role exists and is active
   const role = await Role.findOne({ 
@@ -235,7 +235,7 @@ export const bulkAssignPolicies = async (
 /**
  * Remove all policies from role
  */
-export const removeAllPolicies = async (roleId: number): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
+export const removeAllPolicies = async (roleId: string): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   // Remove all assignments
   await RolePolicy.destroy({
     where: { roleId }

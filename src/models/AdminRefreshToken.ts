@@ -2,8 +2,8 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 import { AdminRefreshTokenCreationAttributes, AdminRefreshTokenAttributes } from '../common/interfaces/modelInterfaces';
 
 class AdminRefreshToken extends Model<AdminRefreshTokenAttributes, AdminRefreshTokenCreationAttributes> implements AdminRefreshTokenAttributes {
-  public id!: number;
-  public adminUserId!: number;
+  public id!: string;
+  public adminUserId!: string;
   public token!: string;
   public expiresAt!: Date;
   public isRevoked!: boolean;

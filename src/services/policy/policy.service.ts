@@ -61,7 +61,7 @@ export const create = async (policyData: CreatePolicyRequest): Promise<PolicyRes
 /**
  * Get policy by ID
  */
-export const getById = async (policyId: number): Promise<PolicyResponse> => {
+export const getById = async (policyId: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
   
   if (!policy) {
@@ -113,7 +113,7 @@ export const getAll = async (
  * Update policy
  */
 export const update = async (
-  policyId: number,
+  policyId: string,
   updateData: UpdatePolicyRequest
 ): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
@@ -150,7 +150,7 @@ export const update = async (
 /**
  * Delete policy (soft delete by deactivating)
  */
-export const remove = async (policyId: number): Promise<void> => {
+export const remove = async (policyId: string): Promise<void> => {
   const policy = await Policy.findByPk(policyId);
   
   if (!policy) {
@@ -180,7 +180,7 @@ export const remove = async (policyId: number): Promise<void> => {
  * Add permission to policy
  */
 export const addPermission = async (
-  policyId: number, 
+  policyId: string, 
   permission: string
 ): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
@@ -211,7 +211,7 @@ export const addPermission = async (
  * Remove permission from policy
  */
 export const removePermission = async (
-  policyId: number, 
+  policyId: string, 
   permission: string
 ): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
@@ -240,7 +240,7 @@ export const removePermission = async (
 /**
  * Get roles that have this policy
  */
-export const getRoles = async (policyId: number): Promise<any[]> => {
+export const getRoles = async (policyId: string): Promise<any[]> => {
   const policy = await getPolicyWithRoles(policyId);
   
   if (!policy) {
@@ -260,7 +260,7 @@ export const getRoles = async (policyId: number): Promise<any[]> => {
 /**
  * Activate policy
  */
-export const activate = async (policyId: number): Promise<PolicyResponse> => {
+export const activate = async (policyId: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
   
   if (!policy) {
@@ -274,7 +274,7 @@ export const activate = async (policyId: number): Promise<PolicyResponse> => {
 /**
  * Deactivate policy
  */
-export const deactivate = async (policyId: number): Promise<PolicyResponse> => {
+export const deactivate = async (policyId: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
   
   if (!policy) {
@@ -288,7 +288,7 @@ export const deactivate = async (policyId: number): Promise<PolicyResponse> => {
 /**
  * Check if policy exists
  */
-export const exists = async (policyId: number): Promise<boolean> => {
+export const exists = async (policyId: string): Promise<boolean> => {
   const policy = await Policy.findByPk(policyId);
   return !!policy;
 };
@@ -296,7 +296,7 @@ export const exists = async (policyId: number): Promise<boolean> => {
 /**
  * Check if policy is active
  */
-export const isActive = async (policyId: number): Promise<boolean> => {
+export const isActive = async (policyId: string): Promise<boolean> => {
   const policy = await Policy.findByPk(policyId);
   return policy?.isActive || false;
 };

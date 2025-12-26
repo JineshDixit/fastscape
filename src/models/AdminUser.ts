@@ -1,7 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class AdminUser extends Model {
-  public id!: number;
+  public id!: string;
   public firstName!: string;
   public lastName!: string;
   public email!: string;

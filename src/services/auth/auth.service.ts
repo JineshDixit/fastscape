@@ -17,7 +17,7 @@ import { validateRequiredFields, validateEmail } from '../../utils/validation.ut
  * Create and store refresh token
  */
 const storeRefreshToken = async (
-  adminUserId: number, 
+  adminUserId: string, 
   token: string, 
   expiresAt: Date,
   deviceInfo?: string,
@@ -36,7 +36,7 @@ const storeRefreshToken = async (
 /**
  * Revoke all refresh tokens for admin user
  */
-const revokeAllRefreshTokens = async (adminUserId: number): Promise<void> => {
+const revokeAllRefreshTokens = async (adminUserId: string): Promise<void> => {
   await AdminRefreshToken.update(
     { isRevoked: true },
     { where: { adminUserId, isRevoked: false } }
@@ -241,7 +241,7 @@ export const logout = async (token: string): Promise<void> => {
 /**
  * Logout from all devices
  */
-export const logoutFromAllDevices = async (adminUserId: number): Promise<void> => {
+export const logoutFromAllDevices = async (adminUserId: string): Promise<void> => {
   if (!adminUserId) {
     throw createError('Admin User ID is required', 400);
   }
@@ -252,7 +252,7 @@ export const logoutFromAllDevices = async (adminUserId: number): Promise<void> =
 /**
  * Get current admin user profile
  */
-export const getCurrentProfile = async (adminUserId: number): Promise<AdminUserResponse> => {
+export const getCurrentProfile = async (adminUserId: string): Promise<AdminUserResponse> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
   
   if (!user) {
@@ -269,7 +269,7 @@ export const getCurrentProfile = async (adminUserId: number): Promise<AdminUserR
 /**
  * Check if admin user has specific permission
  */
-export const checkPermission = async (adminUserId: number, permission: string): Promise<boolean> => {
+export const checkPermission = async (adminUserId: string, permission: string): Promise<boolean> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
   
   if (!user || !user.isActive) {
@@ -283,7 +283,7 @@ export const checkPermission = async (adminUserId: number, permission: string): 
 /**
  * Check if admin user has any of the specified permissions
  */
-export const checkAnyPermission = async (adminUserId: number, permissions: string[]): Promise<boolean> => {
+export const checkAnyPermission = async (adminUserId: string, permissions: string[]): Promise<boolean> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
   
   if (!user || !user.isActive) {

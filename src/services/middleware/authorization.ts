@@ -6,15 +6,15 @@ import { createError } from './errorHandler';
  */
 interface AuthenticatedRequest extends Request {
   user?: {
-    userId: number;
-    id: number;
+    userId: string;
+    id: string;
     firstName: string;
     lastName: string;
     fullName: string;
     email: string;
     isActive: boolean;
     roles: Array<{
-      id: number;
+      id: string;
       name: string;
       description: string;
       isActive: boolean;
@@ -186,7 +186,7 @@ export const requireOwnershipOrRole = (roleForBypass: string) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
       const user = req.user;
-      const targetUserId = parseInt(req.params.id || req.params.adminUserId || req.body.adminUserId);
+      const targetUserId = req.params.id || req.params.adminUserId || req.body.adminUserId;
 
       if (!user) {
         throw createError('Authentication required', 401);

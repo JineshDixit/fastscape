@@ -8,6 +8,7 @@ import {
   securityHeaders,
 } from './services/middleware/security';
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
+import { serveStaticFiles, handleImageNotFound } from './services/middleware/staticFiles';
 import { initPostgres_DB } from './models';
 import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
 import { configPassport } from './config/passport';
@@ -37,6 +38,9 @@ server.use(sanitizeInput);
 server.use(passport.initialize());
 configPassport();
 
+// Serve static files (uploaded images)
+server.use('/uploads', serveStaticFiles());
+
 // Health check endpoint
 server.get('/health', (req, res) => {
   res.json({
@@ -49,6 +53,9 @@ server.get('/health', (req, res) => {
 
 // API routes
 server.use('/api', apiRoutes);
+
+// Handle image not found
+server.use(handleImageNotFound);
 
 // 404 handler
 server.use(notFoundHandler);

@@ -57,8 +57,8 @@ export const assignRole = async (
  * Remove role from admin user
  */
 export const removeRole = async (
-  adminUserId: number,
-  roleId: number
+  adminUserId: string,
+  roleId: string
 ): Promise<AdminUserResponse> => {
   // Check if assignment exists
   const assignment = await AdminUserRole.findOne({
@@ -85,7 +85,7 @@ export const removeRole = async (
 /**
  * Get all roles assigned to an admin user
  */
-export const getUserRoles = async (adminUserId: number): Promise<RoleResponse[]> => {
+export const getUserRoles = async (adminUserId: string): Promise<RoleResponse[]> => {
   const adminUser = await AdminUser.findByPk(adminUserId, {
     include: [
       {
@@ -114,7 +114,7 @@ export const getUserRoles = async (adminUserId: number): Promise<RoleResponse[]>
 /**
  * Get all admin users assigned to a role
  */
-export const getRoleUsers = async (roleId: number): Promise<AdminUserResponse[]> => {
+export const getRoleUsers = async (roleId: string): Promise<AdminUserResponse[]> => {
   const role = await Role.findByPk(roleId, {
     include: [
       {
@@ -145,7 +145,7 @@ export const getRoleUsers = async (roleId: number): Promise<AdminUserResponse[]>
 /**
  * Get admin user permissions (from all assigned roles)
  */
-export const getUserPermissions = async (adminUserId: number): Promise<string[]> => {
+export const getUserPermissions = async (adminUserId: string): Promise<string[]> => {
   const adminUser = await getAdminUserWithRolesAndPermissions(adminUserId);
 
   if (!adminUser) {
@@ -159,7 +159,7 @@ export const getUserPermissions = async (adminUserId: number): Promise<string[]>
 /**
  * Check if admin user has specific role
  */
-export const hasRole = async (adminUserId: number, roleId: number): Promise<boolean> => {
+export const hasRole = async (adminUserId: string, roleId: string): Promise<boolean> => {
   const assignment = await AdminUserRole.findOne({
     where: { adminUserId, roleId }
   });
@@ -170,7 +170,7 @@ export const hasRole = async (adminUserId: number, roleId: number): Promise<bool
 /**
  * Check if admin user has any of the specified roles
  */
-export const hasAnyRole = async (adminUserId: number, roleIds: number[]): Promise<boolean> => {
+export const hasAnyRole = async (adminUserId: string, roleIds: string[]): Promise<boolean> => {
   const assignments = await AdminUserRole.findAll({
     where: { 
       adminUserId,
@@ -184,7 +184,7 @@ export const hasAnyRole = async (adminUserId: number, roleIds: number[]): Promis
 /**
  * Check if admin user has specific permission
  */
-export const hasPermission = async (adminUserId: number, permission: string): Promise<boolean> => {
+export const hasPermission = async (adminUserId: string, permission: string): Promise<boolean> => {
   const permissions = await getUserPermissions(adminUserId);
   return permissions.includes(permission);
 };
@@ -192,7 +192,7 @@ export const hasPermission = async (adminUserId: number, permission: string): Pr
 /**
  * Check if admin user has any of the specified permissions
  */
-export const hasAnyPermission = async (adminUserId: number, permissions: string[]): Promise<boolean> => {
+export const hasAnyPermission = async (adminUserId: string, permissions: string[]): Promise<boolean> => {
   const userPermissions = await getUserPermissions(adminUserId);
   return permissions.some(permission => userPermissions.includes(permission));
 };
@@ -201,8 +201,8 @@ export const hasAnyPermission = async (adminUserId: number, permissions: string[
  * Bulk assign roles to admin user
  */
 export const bulkAssignRoles = async (
-  adminUserId: number,
-  roleIds: number[],
+  adminUserId: string,
+  roleIds: string[],
   assignedBy?: number
 ): Promise<AdminUserResponse> => {
   // Check if admin user exists and is active
@@ -249,7 +249,7 @@ export const bulkAssignRoles = async (
 /**
  * Remove all roles from admin user
  */
-export const removeAllRoles = async (adminUserId: number): Promise<AdminUserResponse> => {
+export const removeAllRoles = async (adminUserId: string): Promise<AdminUserResponse> => {
   // Remove all assignments
   await AdminUserRole.destroy({
     where: { adminUserId }

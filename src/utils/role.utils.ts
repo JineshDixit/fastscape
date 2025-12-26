@@ -50,7 +50,7 @@ export const formatPolicyResponse = (policy: Policy): PolicyResponse => {
 /**
  * Get role with policies - centralized query
  */
-export const getRoleWithPolicies = async (roleId: number): Promise<Role | null> => {
+export const getRoleWithPolicies = async (roleId: string): Promise<Role | null> => {
   return await Role.findByPk(roleId, {
     include: [
       {
@@ -66,7 +66,7 @@ export const getRoleWithPolicies = async (roleId: number): Promise<Role | null> 
 /**
  * Get policy with roles - centralized query
  */
-export const getPolicyWithRoles = async (policyId: number): Promise<Policy | null> => {
+export const getPolicyWithRoles = async (policyId: string): Promise<Policy | null> => {
   return await Policy.findByPk(policyId, {
     include: [
       {

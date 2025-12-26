@@ -33,13 +33,8 @@ export const createRole = async (req: Request, res: Response, next: NextFunction
 export const getRoleById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const roleId = parseInt(id);
 
-    if (isNaN(roleId)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await getById(roleId);
+    const result = await getById(id);
 
     sendSuccess(res, 'Role retrieved successfully', result);
   } catch (error) {
@@ -79,15 +74,10 @@ export const getAllRoles = async (req: Request, res: Response, next: NextFunctio
 export const updateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const roleId = parseInt(id);
-
-    if (isNaN(roleId)) {
-      throw createError('Invalid role ID', 400);
-    }
 
     const { name, description, isActive } = req.body;
 
-    const result = await update(roleId, {
+    const result = await update(id, {
       name,
       description,
       isActive,
@@ -105,13 +95,8 @@ export const updateRole = async (req: Request, res: Response, next: NextFunction
 export const deleteRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const roleId = parseInt(id);
 
-    if (isNaN(roleId)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    await remove(roleId);
+    await remove(id);
 
     sendSuccess(res, 'Role deleted successfully');
   } catch (error) {
@@ -125,13 +110,8 @@ export const deleteRole = async (req: Request, res: Response, next: NextFunction
 export const activateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const roleId = parseInt(id);
 
-    if (isNaN(roleId)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await activate(roleId);
+    const result = await activate(id);
 
     sendSuccess(res, 'Role activated successfully', result);
   } catch (error) {
@@ -145,13 +125,8 @@ export const activateRole = async (req: Request, res: Response, next: NextFuncti
 export const deactivateRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const roleId = parseInt(id);
 
-    if (isNaN(roleId)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await deactivate(roleId);
+    const result = await deactivate(id);
 
     sendSuccess(res, 'Role deactivated successfully', result);
   } catch (error) {

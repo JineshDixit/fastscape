@@ -38,7 +38,7 @@ export const formatAdminUserResponse = (user: AdminUser): AdminUserResponse => {
 /**
  * Get admin user with roles and permissions - centralized query
  */
-export const getAdminUserWithRolesAndPermissions = async (adminUserId: number): Promise<AdminUser | null> => {
+export const getAdminUserWithRolesAndPermissions = async (adminUserId: string): Promise<AdminUser | null> => {
   return await AdminUser.findByPk(adminUserId, {
     include: [
       {

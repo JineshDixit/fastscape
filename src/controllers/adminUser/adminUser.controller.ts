@@ -33,13 +33,8 @@ export const createAdminUser = async (req: Request, res: Response, next: NextFun
 export const getAdminUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const adminUserId = parseInt(id);
 
-    if (isNaN(adminUserId)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    const result = await getById(adminUserId);
+    const result = await getById(id);
 
     sendSuccess(res, 'Admin user retrieved successfully', result);
   } catch (error) {
@@ -78,15 +73,10 @@ export const getAllAdminUsers = async (req: Request, res: Response, next: NextFu
 export const updateAdminUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const adminUserId = parseInt(id);
-
-    if (isNaN(adminUserId)) {
-      throw createError('Invalid admin user ID', 400);
-    }
 
     const { firstName, lastName, email, isActive } = req.body;
 
-    const result = await update(adminUserId, {
+    const result = await update(id, {
       firstName,
       lastName,
       email,
@@ -105,19 +95,13 @@ export const updateAdminUser = async (req: Request, res: Response, next: NextFun
 export const updateAdminUserPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const adminUserId = parseInt(id);
-
-    if (isNaN(adminUserId)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
     const { newPassword } = req.body;
 
     if (!newPassword) {
       throw createError('New password is required', 400);
     }
 
-    await updatePassword(adminUserId, newPassword);
+    await updatePassword(id, newPassword);
 
     sendSuccess(res, 'Password updated successfully');
   } catch (error) {
@@ -131,13 +115,8 @@ export const updateAdminUserPassword = async (req: Request, res: Response, next:
 export const activateAdminUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const adminUserId = parseInt(id);
 
-    if (isNaN(adminUserId)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    const result = await activate(adminUserId);
+    const result = await activate(id);
 
     sendSuccess(res, 'Admin user activated successfully', result);
   } catch (error) {
@@ -151,13 +130,8 @@ export const activateAdminUser = async (req: Request, res: Response, next: NextF
 export const deactivateAdminUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const adminUserId = parseInt(id);
 
-    if (isNaN(adminUserId)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    const result = await deactivate(adminUserId);
+    const result = await deactivate(id);
 
     sendSuccess(res, 'Admin user deactivated successfully', result);
   } catch (error) {
@@ -171,13 +145,8 @@ export const deactivateAdminUser = async (req: Request, res: Response, next: Nex
 export const deleteAdminUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const adminUserId = parseInt(id);
-
-    if (isNaN(adminUserId)) {
-      throw createError('Invalid admin user ID', 400);
-    }
-
-    await remove(adminUserId);
+    
+    await remove(id);
 
     sendSuccess(res, 'Admin user deleted successfully');
   } catch (error) {

@@ -1,9 +1,9 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class AdminUserRole extends Model {
-  public id!: number;
-  public adminUserId!: number;
-  public roleId!: number;
+  public id!: string;
+  public adminUserId!: string;
+  public roleId!: string;
   public readonly assignedAt!: Date;
   public assignedBy?: number;
 }

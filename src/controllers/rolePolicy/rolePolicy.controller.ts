@@ -59,13 +59,8 @@ export const removePolicyFromRole = async (req: Request, res: Response, next: Ne
 export const getRolePoliciesById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { roleId } = req.params;
-    const roleIdNum = parseInt(roleId);
 
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await getRolePolicies(roleIdNum);
+    const result = await getRolePolicies(roleId);
 
     sendSuccess(res, 'Role policies retrieved successfully', result);
   } catch (error) {
@@ -79,13 +74,8 @@ export const getRolePoliciesById = async (req: Request, res: Response, next: Nex
 export const getPolicyRolesById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { policyId } = req.params;
-    const policyIdNum = parseInt(policyId);
 
-    if (isNaN(policyIdNum)) {
-      throw createError('Invalid policy ID', 400);
-    }
-
-    const result = await getPolicyRoles(policyIdNum);
+    const result = await getPolicyRoles(policyId);
 
     sendSuccess(res, 'Policy roles retrieved successfully', result);
   } catch (error) {
@@ -98,15 +88,9 @@ export const getPolicyRolesById = async (req: Request, res: Response, next: Next
  */
 export const checkRoleHasPolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { roleId, policyId } = req.params;
-    const roleIdNum = parseInt(roleId);
-    const policyIdNum = parseInt(policyId);
+    const { roleId, policyId } = req.params
 
-    if (isNaN(roleIdNum) || isNaN(policyIdNum)) {
-      throw createError('Invalid role ID or policy ID', 400);
-    }
-
-    const result = await hasPolicy(roleIdNum, policyIdNum);
+    const result = await hasPolicy(roleId, policyId);
 
     sendSuccess(res, 'Policy check completed', { hasPolicy: result });
   } catch (error) {
@@ -121,17 +105,12 @@ export const checkRoleHasAnyPolicy = async (req: Request, res: Response, next: N
   try {
     const { roleId } = req.params;
     const { policyIds } = req.body;
-    const roleIdNum = parseInt(roleId);
-
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
 
     if (!Array.isArray(policyIds) || policyIds.length === 0) {
       throw createError('Policy IDs array is required', 400);
     }
 
-    const result = await hasAnyPolicy(roleIdNum, policyIds);
+    const result = await hasAnyPolicy(roleId, policyIds);
 
     sendSuccess(res, 'Policy check completed', { hasAnyPolicy: result });
   } catch (error) {
@@ -145,13 +124,7 @@ export const checkRoleHasAnyPolicy = async (req: Request, res: Response, next: N
 export const getRolePermissionsById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { roleId } = req.params;
-    const roleIdNum = parseInt(roleId);
-
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await getRolePermissions(roleIdNum);
+    const result = await getRolePermissions(roleId);
 
     sendSuccess(res, 'Role permissions retrieved successfully', result);
   } catch (error) {
@@ -165,17 +138,12 @@ export const getRolePermissionsById = async (req: Request, res: Response, next: 
 export const checkRoleHasPermission = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { roleId, permission } = req.params;
-    const roleIdNum = parseInt(roleId);
-
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
 
     if (!permission) {
       throw createError('Permission is required', 400);
     }
 
-    const result = await hasPermission(roleIdNum, permission);
+    const result = await hasPermission(roleId, permission);
 
     sendSuccess(res, 'Permission check completed', { hasPermission: result });
   } catch (error) {
@@ -190,17 +158,12 @@ export const checkRoleHasAnyPermission = async (req: Request, res: Response, nex
   try {
     const { roleId } = req.params;
     const { permissions } = req.body;
-    const roleIdNum = parseInt(roleId);
-
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
 
     if (!Array.isArray(permissions) || permissions.length === 0) {
       throw createError('Permissions array is required', 400);
     }
 
-    const result = await hasAnyPermission(roleIdNum, permissions);
+    const result = await hasAnyPermission(roleId, permissions);
 
     sendSuccess(res, 'Permission check completed', { hasAnyPermission: result });
   } catch (error) {
@@ -215,17 +178,12 @@ export const bulkAssignPoliciesToRole = async (req: Request, res: Response, next
   try {
     const { roleId } = req.params;
     const { policyIds } = req.body;
-    const roleIdNum = parseInt(roleId);
-
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
 
     if (!Array.isArray(policyIds) || policyIds.length === 0) {
       throw createError('Policy IDs array is required', 400);
     }
 
-    const result = await bulkAssignPolicies(roleIdNum, policyIds);
+    const result = await bulkAssignPolicies(roleId, policyIds);
 
     sendSuccess(res, 'Policies assigned to role successfully', result);
   } catch (error) {
@@ -239,13 +197,8 @@ export const bulkAssignPoliciesToRole = async (req: Request, res: Response, next
 export const removeAllPoliciesFromRole = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { roleId } = req.params;
-    const roleIdNum = parseInt(roleId);
 
-    if (isNaN(roleIdNum)) {
-      throw createError('Invalid role ID', 400);
-    }
-
-    const result = await removeAllPolicies(roleIdNum);
+    const result = await removeAllPolicies(roleId);
 
     sendSuccess(res, 'All policies removed from role successfully', result);
   } catch (error) {

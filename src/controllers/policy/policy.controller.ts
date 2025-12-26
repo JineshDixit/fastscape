@@ -37,13 +37,8 @@ export const createPolicy = async (req: Request, res: Response, next: NextFuncti
 export const getPolicyById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
 
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
-
-    const result = await getById(policyId);
+    const result = await getById(id);
 
     sendSuccess(res, 'Policy retrieved successfully', result);
   } catch (error) {
@@ -82,15 +77,10 @@ export const getAllPolicies = async (req: Request, res: Response, next: NextFunc
 export const updatePolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
-
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
 
     const { name, permissions, description, isActive } = req.body;
 
-    const result = await update(policyId, {
+    const result = await update(id, {
       name,
       permissions,
       description,
@@ -109,13 +99,8 @@ export const updatePolicy = async (req: Request, res: Response, next: NextFuncti
 export const deletePolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
 
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
-
-    await remove(policyId);
+    await remove(id);
 
     sendSuccess(res, 'Policy deleted successfully');
   } catch (error) {
@@ -129,11 +114,6 @@ export const deletePolicy = async (req: Request, res: Response, next: NextFuncti
 export const addPermissionToPolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
-
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
 
     const { permission } = req.body;
 
@@ -141,7 +121,7 @@ export const addPermissionToPolicy = async (req: Request, res: Response, next: N
       throw createError('Permission is required', 400);
     }
 
-    const result = await addPermission(policyId, permission);
+    const result = await addPermission(id, permission);
 
     sendSuccess(res, 'Permission added successfully', result);
   } catch (error) {
@@ -155,11 +135,6 @@ export const addPermissionToPolicy = async (req: Request, res: Response, next: N
 export const removePermissionFromPolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
-
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
 
     const { permission } = req.body;
 
@@ -167,7 +142,7 @@ export const removePermissionFromPolicy = async (req: Request, res: Response, ne
       throw createError('Permission is required', 400);
     }
 
-    const result = await removePermission(policyId, permission);
+    const result = await removePermission(id, permission);
 
     sendSuccess(res, 'Permission removed successfully', result);
   } catch (error) {
@@ -181,13 +156,8 @@ export const removePermissionFromPolicy = async (req: Request, res: Response, ne
 export const getPolicyRoles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
 
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
-
-    const result = await getRoles(policyId);
+    const result = await getRoles(id);
 
     sendSuccess(res, 'Policy roles retrieved successfully', result);
   } catch (error) {
@@ -201,13 +171,8 @@ export const getPolicyRoles = async (req: Request, res: Response, next: NextFunc
 export const activatePolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
 
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
-
-    const result = await activate(policyId);
+    const result = await activate(id);
 
     sendSuccess(res, 'Policy activated successfully', result);
   } catch (error) {
@@ -221,13 +186,8 @@ export const activatePolicy = async (req: Request, res: Response, next: NextFunc
 export const deactivatePolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const policyId = parseInt(id);
 
-    if (isNaN(policyId)) {
-      throw createError('Invalid policy ID', 400);
-    }
-
-    const result = await deactivate(policyId);
+    const result = await deactivate(id);
 
     sendSuccess(res, 'Policy deactivated successfully', result);
   } catch (error) {

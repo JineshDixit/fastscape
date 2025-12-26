@@ -43,7 +43,7 @@ export const create = async (userData: AdminRegisterRequest): Promise<AdminUserR
 /**
  * Get admin user by ID
  */
-export const getById = async (adminUserId: number): Promise<AdminUserResponse> => {
+export const getById = async (adminUserId: string): Promise<AdminUserResponse> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
   
   if (!user) {
@@ -146,7 +146,7 @@ export const getAll = async (
  * Update admin user
  */
 export const update = async (
-  adminUserId: number,
+  adminUserId: string,
   updateData: Partial<Pick<AdminUser, 'firstName' | 'lastName' | 'email' | 'isActive'>>
 ): Promise<AdminUserResponse> => {
   const user = await AdminUser.findByPk(adminUserId);
@@ -186,7 +186,7 @@ export const update = async (
  * Update admin user password
  */
 export const updatePassword = async (
-  adminUserId: number,
+  adminUserId: string,
   newPassword: string
 ): Promise<void> => {
   const user = await AdminUser.findByPk(adminUserId);
@@ -205,7 +205,7 @@ export const updatePassword = async (
 /**
  * Activate admin user
  */
-export const activate = async (adminUserId: number): Promise<AdminUserResponse> => {
+export const activate = async (adminUserId: string): Promise<AdminUserResponse> => {
   const user = await AdminUser.findByPk(adminUserId);
   
   if (!user) {
@@ -221,7 +221,7 @@ export const activate = async (adminUserId: number): Promise<AdminUserResponse> 
 /**
  * Deactivate admin user
  */
-export const deactivate = async (adminUserId: number): Promise<AdminUserResponse> => {
+export const deactivate = async (adminUserId: string): Promise<AdminUserResponse> => {
   const user = await AdminUser.findByPk(adminUserId);
   
   if (!user) {
@@ -237,7 +237,7 @@ export const deactivate = async (adminUserId: number): Promise<AdminUserResponse
 /**
  * Delete admin user (soft delete by deactivating)
  */
-export const remove = async (adminUserId: number): Promise<void> => {
+export const remove = async (adminUserId: string): Promise<void> => {
   const user = await AdminUser.findByPk(adminUserId);
   
   if (!user) {
@@ -251,7 +251,7 @@ export const remove = async (adminUserId: number): Promise<void> => {
 /**
  * Get admin users by role
  */
-export const getByRole = async (roleId: number): Promise<AdminUserResponse[]> => {
+export const getByRole = async (roleId: string): Promise<AdminUserResponse[]> => {
   const users = await AdminUser.findAll({
     include: [
       {
@@ -277,7 +277,7 @@ export const getByRole = async (roleId: number): Promise<AdminUserResponse[]> =>
 /**
  * Check if admin user exists
  */
-export const exists = async (adminUserId: number): Promise<boolean> => {
+export const exists = async (adminUserId: string): Promise<boolean> => {
   const user = await AdminUser.findByPk(adminUserId);
   return !!user;
 };
@@ -285,7 +285,7 @@ export const exists = async (adminUserId: number): Promise<boolean> => {
 /**
  * Check if admin user is active
  */
-export const isActive = async (adminUserId: number): Promise<boolean> => {
+export const isActive = async (adminUserId: string): Promise<boolean> => {
   const user = await AdminUser.findByPk(adminUserId);
   return user?.isActive || false;
 };
