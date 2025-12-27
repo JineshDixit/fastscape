@@ -88,10 +88,13 @@ export interface UseAuthReturn {
   logout: () => Promise<void>;
   register: (userData: any) => Promise<LoginResponse>;
   getProfile: () => Promise<User>;
-  getCurrentUser: () => User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
   clearError: () => void;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasRole: (roleName: string) => boolean;
 }
 
 export type TokenStatus = TokenInfo & {

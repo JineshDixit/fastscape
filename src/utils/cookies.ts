@@ -125,9 +125,6 @@ export const clearAllCookies = (): void => {
 export const COOKIE_NAMES = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
-  USER_DATA: 'user_data',
-  USER_PERMISSIONS: 'user_permissions',
-  USER_ROLES: 'user_roles',
   TOKEN_EXPIRES_AT: 'token_expires_at',
   REFRESH_EXPIRES_AT: 'refresh_expires_at',
   REMEMBER_ME: 'remember_me'
@@ -167,33 +164,6 @@ export const authCookies = {
     });
   },
 
-  // Set user data
-  setUserData: (userData: any) => {
-    setCookie(COOKIE_NAMES.USER_DATA, JSON.stringify(userData), {
-      expires: 7, // 7 days
-      secure: true,
-      sameSite: 'strict'
-    });
-  },
-
-  // Set user permissions
-  setUserPermissions: (permissions: string[]) => {
-    setCookie(COOKIE_NAMES.USER_PERMISSIONS, JSON.stringify(permissions), {
-      expires: 7, // 7 days
-      secure: true,
-      sameSite: 'strict'
-    });
-  },
-
-  // Set user roles
-  setUserRoles: (roles: any[]) => {
-    setCookie(COOKIE_NAMES.USER_ROLES, JSON.stringify(roles), {
-      expires: 7, // 7 days
-      secure: true,
-      sameSite: 'strict'
-    });
-  },
-
   // Set remember me
   setRememberMe: (remember: boolean) => {
     if (remember) {
@@ -210,18 +180,6 @@ export const authCookies = {
   // Get functions
   getAccessToken: () => getCookie(COOKIE_NAMES.ACCESS_TOKEN),
   getRefreshToken: () => getCookie(COOKIE_NAMES.REFRESH_TOKEN),
-  getUserData: () => {
-    const data = getCookie(COOKIE_NAMES.USER_DATA);
-    return data ? JSON.parse(data) : null;
-  },
-  getUserPermissions: () => {
-    const permissions = getCookie(COOKIE_NAMES.USER_PERMISSIONS);
-    return permissions ? JSON.parse(permissions) : [];
-  },
-  getUserRoles: () => {
-    const roles = getCookie(COOKIE_NAMES.USER_ROLES);
-    return roles ? JSON.parse(roles) : [];
-  },
   getTokenExpiresAt: () => getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT),
   getRefreshExpiresAt: () => getCookie(COOKIE_NAMES.REFRESH_EXPIRES_AT),
   getRememberMe: () => getCookie(COOKIE_NAMES.REMEMBER_ME) === 'true',

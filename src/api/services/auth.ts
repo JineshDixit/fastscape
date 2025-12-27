@@ -39,7 +39,6 @@ class AuthService extends BaseApiService {
     if (response.success && response.data) {
       this.storeAuthenticationData(response.data);
       this.startAutoRefresh();
-      this.logSuccessfulLogin(response.data);
     }
 
     return response;
@@ -83,7 +82,16 @@ class AuthService extends BaseApiService {
    * Store authentication data in cookies
    */
   private storeAuthenticationData(data: LoginResponse): void {
-    const { user, tokens } = data;
+    const { tokens } = data;
+
+    if (import.meta.env.DEV) {
+      console.log('Storing authentication data:', {
+        accessTokenLength: tokens.accessToken.length,
+        refreshTokenLength: tokens.refreshToken.length,
+        accessExpiresAt: tokens.accessTokenExpiresAt,
+        refreshExpiresAt: tokens.refreshTokenExpiresAt
+      });
+    }
 
     // Store tokens
     authCookies.setAccessToken(tokens.accessToken, tokens.accessTokenExpiresAt);
@@ -92,49 +100,9 @@ class AuthService extends BaseApiService {
       tokens.refreshTokenExpiresAt
     );
 
-    // Store user data
-    authCookies.setUserData({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: user.fullName,
-      email: user.email,
-      isActive: user.isActive,
-    });
-
-    // Store roles and permissions
-    authCookies.setUserRoles(user.roles);
-    authCookies.setUserPermissions(user.permissions);
-  }
-
-  /**
-   * Log successful login for debugging
-   */
-  private logSuccessfulLogin(data: LoginResponse): void {
     if (import.meta.env.DEV) {
-      console.log("Login successful - Data stored in cookies:", {
-        accessToken: "***" + data.tokens.accessToken.slice(-10),
-        refreshToken: "***" + data.tokens.refreshToken.slice(-10),
-        user: data.user.fullName,
-        roles: data.user.roles.map((r) => r.name),
-        permissions: data.user.permissions.length + " permissions",
-      });
+      console.log('Tokens stored successfully in cookies');
     }
-  }
-
-  // ===== USER PROFILE METHODS =====
-
-  /**
-   * Get current user profile from cookies (cached)
-   */
-  getCurrentUser(): User | null {
-    const userData = authCookies.getUserData();
-    if (!userData) return null;
-
-    const roles = authCookies.getUserRoles();
-    const permissions = authCookies.getUserPermissions();
-
-    return { ...userData, roles, permissions };
   }
 
   /**
@@ -148,30 +116,12 @@ class AuthService extends BaseApiService {
    * Update user profile and sync with cookies
    */
   async updateProfile(userData: Partial<User>): Promise<ApiResponse<User>> {
-    const response = await this.patch<User, Partial<User>>(
+    return this.patch<User, Partial<User>>(
       "/profile",
       userData
     );
-
-    if (response.success && response.data) {
-      this.syncUserDataToCookies(response.data);
-    }
-
-    return response;
   }
 
-  /**
-   * Sync updated user data to cookies
-   */
-  private syncUserDataToCookies(updatedUser: User): void {
-    const currentUser = authCookies.getUserData();
-    if (currentUser) {
-      authCookies.setUserData({
-        ...currentUser,
-        ...updatedUser,
-      });
-    }
-  }
 
   // ===== PASSWORD MANAGEMENT METHODS =====
 
@@ -490,55 +440,6 @@ class AuthService extends BaseApiService {
     };
   }
 
-  // ===== PERMISSION AND ROLE METHODS =====
-
-  /**
-   * Get user permissions from cookies
-   */
-  getUserPermissions(): string[] {
-    return authCookies.getUserPermissions();
-  }
-
-  /**
-   * Get user roles from cookies
-   */
-  getUserRoles(): any[] {
-    return authCookies.getUserRoles();
-  }
-
-  /**
-   * Check if user has specific permission
-   */
-  hasPermission(permission: string): boolean {
-    return this.getUserPermissions().includes(permission);
-  }
-
-  /**
-   * Check if user has any of the specified permissions
-   */
-  hasAnyPermission(permissions: string[]): boolean {
-    const userPermissions = this.getUserPermissions();
-    return permissions.some((permission) =>
-      userPermissions.includes(permission)
-    );
-  }
-
-  /**
-   * Check if user has all specified permissions
-   */
-  hasAllPermissions(permissions: string[]): boolean {
-    const userPermissions = this.getUserPermissions();
-    return permissions.every((permission) =>
-      userPermissions.includes(permission)
-    );
-  }
-
-  /**
-   * Check if user has specific role
-   */
-  hasRole(roleName: string): boolean {
-    return this.getUserRoles().some((role) => role.name === roleName);
-  }
 }
 
 // Create and export singleton instance

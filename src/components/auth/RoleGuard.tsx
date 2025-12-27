@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { authService } from '@/api/services/auth';
+import { useAuthContext } from '@/context/authContext';
 import type { RoleGuardProps } from '@/common/interface/routeInterface';
 
 /**
@@ -12,14 +12,20 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
   requireAll = false,
   fallbackPath = '/dashboard'
 }) => {
+  const { user, hasRole, hasPermission } = useAuthContext();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   // Check roles
   const hasRequiredRoles = () => {
     if (requiredRoles.length === 0) return true;
     
     if (requireAll) {
-      return requiredRoles.every(role => authService.hasRole(role));
+      return requiredRoles.every(role => hasRole(role));
     } else {
-      return requiredRoles.some(role => authService.hasRole(role));
+      return requiredRoles.some(role => hasRole(role));
     }
   };
 
@@ -28,9 +34,9 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
     if (requiredPermissions.length === 0) return true;
     
     if (requireAll) {
-      return authService.hasAllPermissions(requiredPermissions);
+      return requiredPermissions.every(permission => hasPermission(permission));
     } else {
-      return authService.hasAnyPermission(requiredPermissions);
+      return requiredPermissions.some(permission => hasPermission(permission));
     }
   };
 

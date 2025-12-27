@@ -1,15 +1,21 @@
 import { Bell, Settings, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { authCookies } from '@/utils/cookies';
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/context/sidebarContext";
+import { useAuthContext } from "@/context/authContext";
 import type { FC } from "react";
 import type { HeaderProps } from "@/common/interface/headerInterface";
 
 const Header: FC<HeaderProps> = ({ title }) => {
   const { toggleSidebar } = useSidebar();
-  const {getUserData, getUserRoles} = authCookies;
+  const { user } = useAuthContext();
+
+  const fullName = user?.fullName || "Guest User";
+  const initials = user?.firstName && user?.lastName 
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() 
+    : "GU";
+  const roleName = user?.roles?.[0]?.name || "No Role";
 
   return (
     <header className="px-6 pt-4.5">
@@ -43,16 +49,16 @@ const Header: FC<HeaderProps> = ({ title }) => {
 
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="/placeholder-avatar.jpg" alt="John Doe" />
+              <AvatarImage src="" alt={fullName} />
               <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-medium">
-                JD
+                {initials}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col items-start text-left pb-0.5">
               <span className="text-sm font-medium text-foreground">
-                {getUserData()?.fullName}
+                {fullName}
               </span>
-              <span className="text-xs text-foreground/50">{getUserRoles()[0]?.name}</span>
+              <span className="text-xs text-foreground/50">{roleName}</span>
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import logo from "@/assets/Logo.png";
 import { useSidebar } from "@/context/sidebarContext";
-import { authCookies } from '@/utils/cookies';
+import { useAuthContext } from "@/context/authContext";
 import type {
   SidebarItem,
 } from "@/common/interface/sidebarInterface";
@@ -56,9 +56,17 @@ const Sidebar = () => {
   const { isCollapsed, isMobile, isOpen, closeSidebar } =
     useSidebar();
 
-  const handleLogout = () => {
-    authCookies.clearAll();
-    navigate("/login");
+  const { logout } = useAuthContext();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Still navigate since cookies are cleared locally in authService.logout
+      navigate("/login");
+    }
   };
 
   const handleNavClick = () => {

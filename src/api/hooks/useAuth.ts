@@ -1,108 +1,61 @@
-import { useState, useCallback } from 'react';
-import { authService } from '../index';
+import { useCallback } from 'react';
+import { useAuthContext } from '@/context/authContext';
+import { authService } from '../services/auth';
 import type { LoginRequest, LoginResponse, UseAuthReturn, User } from '@/common/interface/authInterface';
 
 /**
- * Custom hook for authentication operations
+ * Custom hook for authentication operations, now using global AuthContext
  */
 export const useAuth = (): UseAuthReturn => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  const { 
+    isAuthenticated,
+    isLoading, 
+    error, 
+    login: contextLogin, 
+    logout: contextLogout,
+    clearError,
+    refreshProfile,
+    hasPermission,
+    hasAnyPermission,
+    hasRole
+  } = useAuthContext();
 
   const login = useCallback(async (credentials: LoginRequest): Promise<LoginResponse> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.login(credentials);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Login failed');
-      }
-      
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    return await contextLogin(credentials);
+  }, [contextLogin]);
 
   const logout = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await authService.logout();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Logout failed';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await contextLogout();
+  }, [contextLogout]);
 
   const register = useCallback(async (userData: any): Promise<LoginResponse> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.register(userData);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Registration failed');
-      }
-      
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    const response = await authService.register(userData);
+    if (!response.success) {
+      throw new Error(response.message || 'Registration failed');
     }
+    return response.data;
   }, []);
 
   const getProfile = useCallback(async (): Promise<User> => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.getProfile();
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to get profile');
-      }
-      
-      return response.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to get profile';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    await refreshProfile();
+    const response = await authService.getProfile();
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to get profile');
     }
-  }, []);
-
-  const getCurrentUser = useCallback((): User | null => {
-    return authService.getCurrentUser();
-  }, []);
+    return response.data;
+  }, [refreshProfile]);
 
   return {
     login,
     logout,
     register,
     getProfile,
-    getCurrentUser,
+    isAuthenticated,
     isLoading,
     error,
     clearError,
+    hasPermission,
+    hasAnyPermission,
+    hasRole
   };
 };

@@ -7,14 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useAuth } from "@/api/hooks/useAuth";
-import { isAuthenticated, authCookies } from "@/api";
+import { authCookies } from "@/api";
 import type { FormErrors } from "@/common/interface/loginInterface";
 import { Spinner } from "@/components/ui/spinner";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, isLoading, error, clearError, isAuthenticated: isAuth } = useAuth();
   
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -25,10 +25,10 @@ const LoginPage = () => {
   const from = location.state?.from || '/dashboard';
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (isAuth) {
       navigate(from, { replace: true });
     }
-  }, [navigate, from]);
+  }, [navigate, from, isAuth]);
 
   useEffect(() => {
     if (error) {

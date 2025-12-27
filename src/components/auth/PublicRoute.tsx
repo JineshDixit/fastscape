@@ -10,19 +10,7 @@ const PublicRoute: React.FC<PublicRouteProps> = ({
   children, 
   redirectTo = '/dashboard' 
 }) => {
-  const { isAuthenticated, isLoading } = useAuthGuard();
-
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  const { isAuthenticated } = useAuthGuard();
 
   // If authenticated, redirect to dashboard or specified route
   if (isAuthenticated) {

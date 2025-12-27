@@ -3,7 +3,7 @@ import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 // API configuration
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
-  timeout: 10000,
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,8 +15,11 @@ const apiClient: AxiosInstance = axios.create(API_CONFIG);
 // Request interceptor - Use auth service for all token operations
 apiClient.interceptors.request.use(
   async (config) => {
-    // Skip token handling for auth endpoints to avoid infinite loops
-    if (config.url?.includes('/auth/')) {
+    // Skip token handling for public auth endpoints
+    const publicEndpoints = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password'];
+    const isPublicEndpoint = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+    
+    if (isPublicEndpoint) {
       return config;
     }
 
@@ -32,7 +35,7 @@ apiClient.interceptors.request.use(
     
     // Log request in development
     if (import.meta.env.DEV) {
-      console.log('🚀 API Request:', {
+      console.log('API Request:', {
         method: config.method?.toUpperCase(),
         url: config.url,
         hasToken: !!validToken
@@ -42,7 +45,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('❌ Request Error:', error);
+    console.error('Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -52,7 +55,7 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     // Log response in development
     if (import.meta.env.DEV) {
-      console.log('✅ API Response:', {
+      console.log('API Response:', {
         status: response.status,
         url: response.config.url,
       });
@@ -62,8 +65,11 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     // Handle 401 errors by clearing tokens and redirecting
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/')) {
-      console.error('❌ 401 Unauthorized - Clearing tokens');
+    const publicEndpoints = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/forgot-password', '/auth/reset-password'];
+    const isPublicEndpoint = publicEndpoints.some(endpoint => error.config?.url?.includes(endpoint));
+
+    if (error.response?.status === 401 && !isPublicEndpoint) {
+      console.error('401 Unauthorized - Clearing tokens');
       
       // Import authService here to avoid circular dependency
       const { authService } = await import('./services/auth');
@@ -77,7 +83,7 @@ apiClient.interceptors.response.use(
     
     // Log other errors
     if (import.meta.env.DEV) {
-      console.error('❌ API Error:', {
+      console.error('API Error:', {
         status: error.response?.status,
         url: error.config?.url,
         message: error.message,
