@@ -1,27 +1,16 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { createError } from './errorHandler';
+import { AuthenticatedRequest } from '../../common/interfaces/authTypes';
 
 /**
- * Extended request interface with authenticated admin user
+ * Helper to ensure user is authenticated and return user object
  */
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId: string;
-    id: string;
-    firstName: string;
-    lastName: string;
-    fullName: string;
-    email: string;
-    isActive: boolean;
-    roles: Array<{
-      id: string;
-      name: string;
-      description: string;
-      isActive: boolean;
-    }>;
-    permissions: string[];
-  };
-}
+const ensureAuthenticated = (req: AuthenticatedRequest) => {
+  if (!req.user) {
+    throw createError('Authentication required', 401);
+  }
+  return req.user;
+};
 
 /**
  * Middleware to check if admin user has required role
@@ -29,13 +18,9 @@ interface AuthenticatedRequest extends Request {
 export const requireRole = (requiredRole: string) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = ensureAuthenticated(req);
 
-      if (!user) {
-        throw createError('Authentication required', 401);
-      }
-
-      if (!user.roles || user.roles.length === 0) {
+      if (!user.roles?.length) {
         throw createError('No roles assigned to user', 403);
       }
 
@@ -60,13 +45,9 @@ export const requireRole = (requiredRole: string) => {
 export const requireAnyRole = (requiredRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = ensureAuthenticated(req);
 
-      if (!user) {
-        throw createError('Authentication required', 401);
-      }
-
-      if (!user.roles || user.roles.length === 0) {
+      if (!user.roles?.length) {
         throw createError('No roles assigned to user', 403);
       }
 
@@ -91,19 +72,13 @@ export const requireAnyRole = (requiredRoles: string[]) => {
 export const requirePermission = (requiredPermission: string) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = ensureAuthenticated(req);
 
-      if (!user) {
-        throw createError('Authentication required', 401);
-      }
-
-      if (!user.permissions || user.permissions.length === 0) {
+      if (!user.permissions?.length) {
         throw createError('No permissions assigned to user', 403);
       }
 
-      const hasPermission = user.permissions.includes(requiredPermission);
-
-      if (!hasPermission) {
+      if (!user.permissions.includes(requiredPermission)) {
         throw createError(`Access denied. Required permission: ${requiredPermission}`, 403);
       }
 
@@ -120,13 +95,9 @@ export const requirePermission = (requiredPermission: string) => {
 export const requireAnyPermission = (requiredPermissions: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = ensureAuthenticated(req);
 
-      if (!user) {
-        throw createError('Authentication required', 401);
-      }
-
-      if (!user.permissions || user.permissions.length === 0) {
+      if (!user.permissions?.length) {
         throw createError('No permissions assigned to user', 403);
       }
 
@@ -151,13 +122,9 @@ export const requireAnyPermission = (requiredPermissions: string[]) => {
 export const requireAllPermissions = (requiredPermissions: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = ensureAuthenticated(req);
 
-      if (!user) {
-        throw createError('Authentication required', 401);
-      }
-
-      if (!user.permissions || user.permissions.length === 0) {
+      if (!user.permissions?.length) {
         throw createError('No permissions assigned to user', 403);
       }
 
@@ -185,22 +152,11 @@ export const requireAllPermissions = (requiredPermissions: string[]) => {
 export const requireOwnershipOrRole = (roleForBypass: string) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     try {
-      const user = req.user;
+      const user = ensureAuthenticated(req);
       const targetUserId = req.params.id || req.params.adminUserId || req.body.adminUserId;
 
-      if (!user) {
-        throw createError('Authentication required', 401);
-      }
-
-      // Allow if user is accessing their own resource
-      if (user.userId === targetUserId) {
-        return next();
-      }
-
-      // Allow if user has the bypass role
-      if (user.roles && user.roles.some(role => 
-        role.name === roleForBypass && role.isActive
-      )) {
+      // Allow if user is accessing their own resource or has bypass role
+      if (user.userId === targetUserId || (user.roles?.some(role => role.name === roleForBypass && role.isActive))) {
         return next();
       }
 
@@ -216,11 +172,7 @@ export const requireOwnershipOrRole = (roleForBypass: string) => {
  */
 export const requireActiveUser = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   try {
-    const user = req.user;
-
-    if (!user) {
-      throw createError('Authentication required', 401);
-    }
+    const user = ensureAuthenticated(req);
 
     if (!user.isActive) {
       throw createError('Account is inactive', 403);

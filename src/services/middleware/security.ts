@@ -77,3 +77,12 @@ export const preventParameterPollution = (req: Request, res: Response, next: Nex
   }
   next();
 };
+
+/**
+ * Grouped security middlewares for convenience
+ */
+export const applySecurityMiddlewares = [
+  securityHeaders,
+  preventParameterPollution,
+  sanitizeInput,
+];

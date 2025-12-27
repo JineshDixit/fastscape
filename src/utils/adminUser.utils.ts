@@ -1,31 +1,37 @@
-import { AdminUser, Role, Policy } from '../models';
+import { AdminUser } from '../models';
 import { AdminUserResponse } from '../common/interfaces/authTypes';
+import { AdminUserWithAssociations } from '../common/interfaces/userType';
+import { ADMIN_USER_ROLES_POLICIES_INCLUDE } from '../common/constants/constants';
 
 /**
- * Format admin user response with roles and permissions
+ * Format admin user response with roles and permissions.
+ * Industrial standard: Explicit type mapping and defensive coding for associations.
  */
-export const formatAdminUserResponse = (user: AdminUser): AdminUserResponse => {
-  const roles = (user as any).Roles || [];
+export const formatAdminUserResponse = (user: AdminUser | AdminUserWithAssociations): AdminUserResponse => {
+  const adminUser = user as AdminUserWithAssociations;
+  const roles = adminUser.Roles || [];
   const permissions = new Set<string>();
 
   // Collect all permissions from all roles
-  roles.forEach((role: any) => {
+  roles.forEach((role) => {
     const policies = role.Policies || [];
-    policies.forEach((policy: any) => {
-      policy.permissions.forEach((permission: string) => {
-        permissions.add(permission);
-      });
+    policies.forEach((policy) => {
+      if (Array.isArray(policy.permissions)) {
+        policy.permissions.forEach((permission: string) => {
+          permissions.add(permission);
+        });
+      }
     });
   });
 
   return {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    fullName: user.fullName,
-    email: user.email,
-    isActive: user.isActive,
-    roles: roles.map((role: any) => ({
+    id: adminUser.id,
+    firstName: adminUser.firstName,
+    lastName: adminUser.lastName,
+    fullName: adminUser.fullName,
+    email: adminUser.email,
+    isActive: adminUser.isActive,
+    roles: roles.map((role) => ({
       id: role.id,
       name: role.name,
       description: role.description,
@@ -36,25 +42,15 @@ export const formatAdminUserResponse = (user: AdminUser): AdminUserResponse => {
 };
 
 /**
- * Get admin user with roles and permissions - centralized query
+ * Get admin user with roles and permissions - centralized query.
+ * Industrial standard: encapsulate complex queries in helper functions.
  */
-export const getAdminUserWithRolesAndPermissions = async (adminUserId: string): Promise<AdminUser | null> => {
-  return await AdminUser.findByPk(adminUserId, {
-    include: [
-      {
-        model: Role,
-        through: { attributes: [] },
-        include: [
-          {
-            model: Policy,
-            through: { attributes: [] },
-            where: { isActive: true },
-            required: false,
-          }
-        ],
-        where: { isActive: true },
-        required: false,
-      }
-    ],
+export const getAdminUserWithRolesAndPermissions = async (
+  adminUserId: string,
+): Promise<AdminUserWithAssociations | null> => {
+  const user = await AdminUser.findByPk(adminUserId, {
+    include: ADMIN_USER_ROLES_POLICIES_INCLUDE,
   });
+
+  return user as AdminUserWithAssociations | null;
 };

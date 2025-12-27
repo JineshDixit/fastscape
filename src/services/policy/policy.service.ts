@@ -1,6 +1,10 @@
 import { Policy, Role } from '../../models';
 import { CreatePolicyRequest, UpdatePolicyRequest, PolicyResponse } from '../../common/interfaces/authTypes';
-import { formatPolicyResponse, getPolicyWithRoles } from '../../utils/role.utils';
+import { 
+  formatPolicyResponse, 
+  getPolicyWithRoles,
+  PolicyWithRoles 
+} from '../../utils/role.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateArrayLength } from '../../utils/validation.utils';
 import { Op } from 'sequelize';
@@ -242,14 +246,14 @@ export const removePermission = async (
  */
 export const getRoles = async (policyId: string): Promise<any[]> => {
   const policy = await getPolicyWithRoles(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
 
-  const roles = (policy as any).Roles || [];
-  
-  return roles.map((role: any) => ({
+  const roles = (policy as PolicyWithRoles).Roles || [];
+
+  return roles.map((role) => ({
     id: role.id,
     name: role.name,
     description: role.description,

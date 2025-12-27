@@ -1,6 +1,12 @@
 import { RolePolicy, Role, Policy } from '../../models';
 import { AssignPolicyToRoleRequest, RoleResponse, PolicyResponse } from '../../common/interfaces/authTypes';
-import { formatRoleWithPoliciesResponse, formatPolicyResponse, getRoleWithPolicies } from '../../utils/role.utils';
+import { 
+  formatRoleWithPoliciesResponse, 
+  formatPolicyResponse, 
+  getRoleWithPolicies,
+  RoleWithPolicies,
+  PolicyWithRoles
+} from '../../utils/role.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields } from '../../utils/validation.utils';
 
@@ -88,8 +94,8 @@ export const getRolePolicies = async (roleId: string): Promise<PolicyResponse[]>
     throw createError('Role not found', 404);
   }
 
-  const policies = (role as any).Policies || [];
-  return policies.map((policy: any) => formatPolicyResponse(policy));
+  const policies = (role as RoleWithPolicies).Policies || [];
+  return policies.map((policy) => formatPolicyResponse(policy));
 };
 
 /**
@@ -111,9 +117,9 @@ export const getPolicyRoles = async (policyId: string): Promise<RoleResponse[]> 
     throw createError('Policy not found', 404);
   }
 
-  const roles = (policy as any).Roles || [];
+  const roles = (policy as PolicyWithRoles).Roles || [];
   
-  return roles.map((role: any) => ({
+  return roles.map((role) => ({
     id: role.id,
     name: role.name,
     description: role.description,
@@ -156,11 +162,11 @@ export const getRolePermissions = async (roleId: string): Promise<string[]> => {
     throw createError('Role not found', 404);
   }
 
-  const policies = (role as any).Policies || [];
+  const policies = (role as RoleWithPolicies).Policies || [];
   const permissions = new Set<string>();
 
   // Collect all permissions from all policies
-  policies.forEach((policy: any) => {
+  policies.forEach((policy) => {
     policy.permissions.forEach((permission: string) => {
       permissions.add(permission);
     });

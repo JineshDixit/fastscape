@@ -3,121 +3,49 @@ import { Op } from 'sequelize';
 import { AdminRefreshToken } from '../../models';
 
 /**
- * Clean up expired refresh tokens
+ * Handle individual cleanup tasks to reduce redundancy
  */
-export const cleanupExpiredTokens = async (): Promise<void> => {
+const runCleanup = async (label: string, where: any) => {
   try {
-    const deletedCount = await AdminRefreshToken.destroy({
-      where: {
-        [Op.or]: [
-          {
-            expiresAt: {
-              [Op.lt]: new Date(),
-            },
-          },
-          {
-            isRevoked: true,
-            createdAt: {
-              [Op.lt]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days old
-            },
-          },
-        ],
-      },
-    });
-
+    const deletedCount = await AdminRefreshToken.destroy({ where });
     if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} expired/revoked refresh tokens`);
+      console.log(`[Cleanup] ${label}: Removed ${deletedCount} tokens`);
     }
   } catch (error) {
-    console.error('Error cleaning up expired refresh tokens:', error);
+    console.error(`[Cleanup] Error in ${label}:`, error);
   }
 };
 
 /**
- * Clean up old revoked tokens (older than 30 days)
+ * Clean up expired and old revoked refresh tokens (Consolidated)
  */
-export const cleanupOldRevokedTokens = async (): Promise<void> => {
-  try {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
-    const deletedCount = await AdminRefreshToken.destroy({
-      where: {
-        isRevoked: true,
-        updatedAt: {
-          [Op.lt]: thirtyDaysAgo,
-        },
-      },
-    });
+export const cleanupTokens = async (): Promise<void> => {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
-    if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} old revoked refresh tokens`);
-    }
-  } catch (error) {
-    console.error('Error cleaning up old revoked refresh tokens:', error);
-  }
-};
-
-/**
- * Clean up tokens for inactive users
- */
-export const cleanupInactiveUserTokens = async (): Promise<void> => {
-  try {
-    // This would require a join with User table
-    // For now, we'll implement a simpler version
-    const deletedCount = await AdminRefreshToken.destroy({
-      where: {
-        createdAt: {
-          [Op.lt]: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days old
-        },
-      },
-    });
-
-    if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} very old refresh tokens`);
-    }
-  } catch (error) {
-    console.error('Error cleaning up inactive user refresh tokens:', error);
-  }
+  await runCleanup('Expired/Revoked (30d)', {
+    [Op.or]: [
+      { expiresAt: { [Op.lt]: new Date() } },
+      { isRevoked: true, updatedAt: { [Op.lt]: thirtyDaysAgo } },
+      { createdAt: { [Op.lt]: ninetyDaysAgo } }
+    ]
+  });
 };
 
 /**
  * Get token statistics
  */
-export const getTokenStatistics = async (): Promise<{
-  total: number;
-  active: number;
-  expired: number;
-  revoked: number;
-}> => {
+export const getTokenStatistics = async () => {
   try {
     const now = new Date();
-    
-    const [total, active, expired, revoked] = await Promise.all([
+    const stats = await Promise.all([
       AdminRefreshToken.count(),
-      AdminRefreshToken.count({
-        where: {
-          isRevoked: false,
-          expiresAt: {
-            [Op.gt]: now,
-          },
-        },
-      }),
-      AdminRefreshToken.count({
-        where: {
-          isRevoked: false,
-          expiresAt: {
-            [Op.lt]: now,
-          },
-        },
-      }),
-      AdminRefreshToken.count({
-        where: {
-          isRevoked: true,
-        },
-      }),
+      AdminRefreshToken.count({ where: { isRevoked: false, expiresAt: { [Op.gt]: now } } }),
+      AdminRefreshToken.count({ where: { isRevoked: false, expiresAt: { [Op.lt]: now } } }),
+      AdminRefreshToken.count({ where: { isRevoked: true } }),
     ]);
 
-    return { total, active, expired, revoked };
+    return { total: stats[0], active: stats[1], expired: stats[2], revoked: stats[3] };
   } catch (error) {
     console.error('Error getting token statistics:', error);
     return { total: 0, active: 0, expired: 0, revoked: 0 };
@@ -128,22 +56,10 @@ export const getTokenStatistics = async (): Promise<{
  * Start the token cleanup job
  */
 export const startTokenCleanupJob = (): void => {
-  // Run cleanup every hour
+  // Run consolidated cleanup every hour
   cron.schedule('0 * * * *', async () => {
     console.log('Starting token cleanup job...');
-    await cleanupExpiredTokens();
-  });
-
-  // Run old revoked token cleanup daily at 2 AM
-  cron.schedule('0 2 * * *', async () => {
-    console.log('Starting old revoked token cleanup job...');
-    await cleanupOldRevokedTokens();
-  });
-
-  // Run inactive user token cleanup weekly on Sunday at 3 AM
-  cron.schedule('0 3 * * 0', async () => {
-    console.log('Starting inactive user token cleanup job...');
-    await cleanupInactiveUserTokens();
+    await cleanupTokens();
   });
 
   // Log token statistics daily at 1 AM
@@ -156,7 +72,7 @@ export const startTokenCleanupJob = (): void => {
 };
 
 /**
- * Stop all cleanup jobs (for testing or shutdown)
+ * Stop all cleanup jobs
  */
 export const stopTokenCleanupJob = (): void => {
   cron.getTasks().forEach(task => task.stop());

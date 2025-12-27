@@ -1,8 +1,12 @@
 import { AdminUserRole, AdminUser, Role } from '../../models';
 import { AssignRoleRequest, AdminUserResponse, RoleResponse } from '../../common/interfaces/authTypes';
-import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '../../utils/adminUser.utils';
+import { 
+  formatAdminUserResponse, 
+  getAdminUserWithRolesAndPermissions
+} from '../../utils/adminUser.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields } from '../../utils/validation.utils';
+import { AdminUserWithAssociations, RoleWithAdminUsers } from '../../common//interfaces/userType';
 
 /**
  * Assign role to admin user
@@ -101,9 +105,9 @@ export const getUserRoles = async (adminUserId: string): Promise<RoleResponse[]>
     throw createError('Admin user not found', 404);
   }
 
-  const roles = (adminUser as any).Roles || [];
-  
-  return roles.map((role: any) => ({
+  const roles = (adminUser as AdminUserWithAssociations).Roles || [];
+
+  return roles.map((role) => ({
     id: role.id,
     name: role.name,
     description: role.description,
@@ -130,9 +134,9 @@ export const getRoleUsers = async (roleId: string): Promise<AdminUserResponse[]>
     throw createError('Role not found', 404);
   }
 
-  const adminUsers = (role as any).AdminUsers || [];
-  
-  return adminUsers.map((user: any) => ({
+  const adminUsers = (role as RoleWithAdminUsers).AdminUsers || [];
+
+  return adminUsers.map((user: AdminUser) => ({
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,

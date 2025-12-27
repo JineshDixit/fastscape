@@ -1,20 +1,5 @@
 import { Response } from 'express';
-
-/**
- * Standard API Response Interface
- */
-export interface ApiResponse<T = any> {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-  pagination?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
+import { ApiResponse } from '../common/interfaces/responseType';
 
 /**
  * Send success response

@@ -3,9 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import passport from 'passport';
 import {
-  preventParameterPollution,
-  sanitizeInput,
-  securityHeaders,
+  applySecurityMiddlewares,
 } from './services/middleware/security';
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
 import { serveStaticFiles, handleImageNotFound } from './services/middleware/staticFiles';
@@ -18,8 +16,7 @@ const server = express();
 const PORT = process.env.PORT || 3001;
 
 // Security middleware
-server.use(securityHeaders);
-server.use(preventParameterPollution);
+server.use(applySecurityMiddlewares);
 
 server.use(cors({
   origin: process.env.FRONTEND_URL,
@@ -30,9 +27,6 @@ server.use(cors({
 // Body parsing middleware
 server.use(express.json({ limit: '10mb' }));
 server.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Input sanitization
-server.use(sanitizeInput);
 
 // Initialize Passport for admin authentication
 server.use(passport.initialize());

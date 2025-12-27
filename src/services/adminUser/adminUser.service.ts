@@ -6,6 +6,7 @@ import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '..
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
 import { Op } from 'sequelize';
+import { ADMIN_USER_ROLES_POLICIES_INCLUDE } from '../../common/constants/constants';
 
 /**
  * Create new admin user
@@ -62,22 +63,7 @@ export const getByEmail = async (email: string): Promise<AdminUserResponse> => {
 
   const user = await AdminUser.findOne({
     where: { email: sanitizedEmail },
-    include: [
-      {
-        model: Role,
-        through: { attributes: [] },
-        include: [
-          {
-            model: Policy,
-            through: { attributes: [] },
-            where: { isActive: true },
-            required: false,
-          }
-        ],
-        where: { isActive: true },
-        required: false,
-      }
-    ],
+    include: ADMIN_USER_ROLES_POLICIES_INCLUDE,
   });
   
   if (!user) {
@@ -114,22 +100,7 @@ export const getAll = async (
 
   const { rows: users, count: total } = await AdminUser.findAndCountAll({
     where: whereClause,
-    include: [
-      {
-        model: Role,
-        through: { attributes: [] },
-        include: [
-          {
-            model: Policy,
-            through: { attributes: [] },
-            where: { isActive: true },
-            required: false,
-          }
-        ],
-        where: { isActive: true },
-        required: false,
-      }
-    ],
+    include: ADMIN_USER_ROLES_POLICIES_INCLUDE,
     limit,
     offset,
     order: [['createdAt', 'DESC']],
@@ -253,21 +224,7 @@ export const remove = async (adminUserId: string): Promise<void> => {
  */
 export const getByRole = async (roleId: string): Promise<AdminUserResponse[]> => {
   const users = await AdminUser.findAll({
-    include: [
-      {
-        model: Role,
-        through: { attributes: [] },
-        where: { id: roleId },
-        include: [
-          {
-            model: Policy,
-            through: { attributes: [] },
-            where: { isActive: true },
-            required: false,
-          }
-        ],
-      }
-    ],
+    include: ADMIN_USER_ROLES_POLICIES_INCLUDE,
     where: { isActive: true },
   });
 

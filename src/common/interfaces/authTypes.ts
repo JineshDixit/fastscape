@@ -1,3 +1,5 @@
+import { Request } from "express";
+
 export interface AdminLoginRequest {
   email: string;
   password: string;
@@ -88,4 +90,23 @@ export interface AssignRoleRequest {
 export interface AssignPolicyToRoleRequest {
   roleId: string;
   policyId: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    userId: string;
+    id: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    email: string;
+    isActive: boolean;
+    roles: Array<{
+      id: string;
+      name: string;
+      description: string;
+      isActive: boolean;
+    }>;
+    permissions: string[];
+  };
 }
