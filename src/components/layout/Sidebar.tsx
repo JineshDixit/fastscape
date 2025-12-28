@@ -32,6 +32,7 @@ const sidebarItems: SidebarItem[] = [
     icon: Car,
     label: "Units",
     path: "/units",
+    
   },
   {
     icon: Users,
@@ -64,7 +65,6 @@ const Sidebar = () => {
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      // Still navigate since cookies are cleared locally in authService.logout
       navigate("/login");
     }
   };
@@ -78,9 +78,9 @@ const Sidebar = () => {
   return (
     <div
       className={cn(
-        "bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out",
-        isCollapsed && !isMobile ? "w-16" : "w-64",
-        isMobile ? "fixed inset-y-0 left-0 z-50" : "relative",
+        "bg-background border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out",
+        isCollapsed && !isMobile ? "w-18" : "w-64",
+        isMobile ? "h-screen fixed inset-y-0 left-0 z-50" : "relative",
         isMobile && !isOpen ? "-translate-x-full" : "translate-x-0"
       )}
     >
@@ -129,11 +129,11 @@ const Sidebar = () => {
           variant={"ghost"}
           onClick={handleLogout}
           className={cn(
-            "flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full",
+            "group flex items-center justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/65 hover:bg-gray-50 hover:text-foreground transition-colors w-full",
             isCollapsed && "justify-center"
           )}
         >
-          <LogOut className="h-5 w-5 shrink-0 text-gray-500" />
+          <LogOut className="h-5 w-5 shrink-0 text-foreground/65 group-hover:text-foreground" />
           {!isCollapsed && <span>Logout</span>}
         </Button>
       </div>

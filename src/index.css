@@ -120,28 +120,34 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   * {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  
+
   *::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
     background: transparent;
   }
-  
+
   *::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   *::-webkit-scrollbar-thumb {
     background: transparent;
   }
-  
+
   *::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  html,
+  body,
+  #root {
+    @apply size-full overflow-hidden;
   }
 }

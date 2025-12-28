@@ -1,10 +1,206 @@
+import React, { useEffect, useState } from "react";
+import { Search, LayoutGrid, CheckCircle2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import UnitCard from "@/components/units/UnitCard";
+import VehicleForm from "@/components/units/VehicleForm";
+import DataTablePagination from "@/components/shared/DataTablePagination";
+import { useVehicle } from "@/api/hooks/useVehicle";
+import type { Vehicle } from "@/common/interface/vehicleInterface";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import VehicleDetails from "@/components/units/VehicleDetails";
+
 const Units = () => {
+  const [pageSize, setPageSize] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showVehicleDetails, setShowVehicleDetails] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+
+  const navigate = useNavigate();
+
+  const {
+    vehicles,
+    vehicle,
+    isLoading,
+    fetchVehicles,
+    pagination,
+    createVehicle,
+    updateVehicle,
+    deleteVehicle,
+    fetchVehicleById
+  } = useVehicle();
+
+  useEffect(() => {
+    fetchVehicles({ page: currentPage, limit: pageSize });
+  }, [currentPage, pageSize]);
+
+  const handleAddVehicle = async (formData: FormData) => {
+    try {
+      if (selectedVehicle) {
+        // Edit mode
+        await updateVehicle(selectedVehicle.id, formData);
+        toast.success("Vehicle updated successfully!");
+      } else {
+        // Create mode
+        await createVehicle(formData);
+        toast.success("Vehicle created successfully!");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save vehicle");
+      throw error;
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setShowAddForm(false);
+    setSelectedVehicle(null);
+    // Refresh the list
+    fetchVehicles({ page: currentPage, limit: pageSize });
+  };
+
+  const handleFormCancel = () => {
+    setShowAddForm(false);
+    setSelectedVehicle(null);
+  };
+
+  const handleEdit = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowAddForm(true);
+  };
+
+  const handleVehicleDetails = (vehicleId: string) => {
+    navigate(`/units/${vehicleId}`);
+    setShowVehicleDetails(true);
+  };
+
+  const handleVehicleDetailsClose = () => {
+    navigate(`/units`);
+    setShowVehicleDetails(false);
+  };
+
+  const handleDelete = async (vehicleId: string) => {
+    try {
+      await deleteVehicle(vehicleId);
+      toast.success("Vehicle deleted successfully!");
+      // Refresh the list
+      fetchVehicles({ page: currentPage, limit: pageSize });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete vehicle");
+    }
+  };
+
+  // Show form view
+  if (showAddForm) {
+    return (
+      <VehicleForm
+        vehicle={selectedVehicle || undefined}
+        onCancel={handleFormCancel}
+        onSuccess={handleFormSuccess}
+        onSubmit={handleAddVehicle}
+        isLoading={isLoading}
+      />
+    );
+  }
+
+  if (showVehicleDetails) {
+    return (
+      <VehicleDetails
+        vehicle={vehicle}
+        onCancel={handleVehicleDetailsClose}
+        isLoading={isLoading}
+        getVehicleDetails={fetchVehicleById}
+      />
+    );
+  }
+
+  // Show list view
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Units Management</h2>
-        <p className="text-gray-600">This is the units page. Content will be implemented here.</p>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-[18px] text-foreground/50" />
+            <Input
+              placeholder="Search client name, car, etc"
+              className="pl-11 placeholder:text-foreground/50"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Select defaultValue="all-types">
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <div className="flex items-center gap-2">
+                  <LayoutGrid className="size-4 text-foreground/50" />
+                  <SelectValue placeholder="Car Type" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all-types">Car Type</SelectItem>
+                <SelectItem value="luxury">Luxury</SelectItem>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="suv">SUV</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select defaultValue="all-status">
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-foreground/50" />
+                  <SelectValue placeholder="Status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all-status">Status</SelectItem>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="unavailable">Unavailable</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Button onClick={() => setShowAddForm(true)}>Add Unit</Button>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {isLoading && vehicles.length === 0 ? (
+          <div className="col-span-full flex justify-center py-12">
+            <p className="text-muted-foreground">Loading vehicles...</p>
+          </div>
+        ) : vehicles.length > 0 ? (
+          vehicles.map((vehicle) => (
+            <UnitCard
+              key={vehicle.id}
+              vehicle={vehicle}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onDetails={handleVehicleDetails}
+            />
+          ))
+        ) : (
+          <div className="col-span-full flex justify-center py-12">
+            <p className="text-muted-foreground">No vehicles found.</p>
+          </div>
+        )}
+      </div>
+
+      <DataTablePagination
+        totalItems={pagination?.total || 0}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[10, 20, 30, 40, 50]}
+      />
     </div>
   );
 };

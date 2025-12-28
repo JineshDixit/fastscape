@@ -46,6 +46,10 @@ export const router = createBrowserRouter([
         element: <Units />
       },
       {
+        path: "units/:id",
+        element: <Units />
+      },
+      {
         path: 'clients',
         element: <Clients />
       },

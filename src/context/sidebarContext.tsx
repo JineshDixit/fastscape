@@ -13,7 +13,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
       const saved = localStorage.getItem(SIDE_BAR.SIDEBAR_STORAGE_KEY);
       return {
         isCollapsed: saved ? JSON.parse(saved) : defaultCollapsed,
-        isMobile: window.innerWidth < 768,
+        isMobile: window.innerWidth < 980,
         isOpen: false
       };
     }
@@ -27,7 +27,7 @@ export const SidebarProvider: React.FC<SidebarProviderProps> = ({
 
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 768;
+      const isMobile = window.innerWidth < 980;
       setSidebarStateInternal(prev => ({
         ...prev,
         isMobile,
