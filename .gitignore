@@ -1,6 +1,15 @@
 # Node.js dependencies
 node_modules/
 
+#local images upload
+uploads/
+
+#database seed files
+src/seeders/
+
+#postman collection
+postman/
+
 # Logs
 logs/
 *.log
