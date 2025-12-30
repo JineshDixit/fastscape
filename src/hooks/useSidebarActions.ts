@@ -4,16 +4,8 @@ import { useSidebar } from '@/context/sidebarContext';
  * Custom hook that provides common sidebar actions and utilities
  */
 export const useSidebarActions = () => {
-  const {
-    isCollapsed,
-    isMobile,
-    isOpen,
-    toggleSidebar,
-    collapseSidebar,
-    expandSidebar,
-    openSidebar,
-    closeSidebar
-  } = useSidebar();
+  const { isCollapsed, isMobile, isOpen, toggleSidebar, collapseSidebar, expandSidebar, openSidebar, closeSidebar } =
+    useSidebar();
 
   // Utility functions
   const handleMobileToggle = () => {
@@ -59,7 +51,7 @@ export const useSidebarActions = () => {
     isVisible,
     isFullWidth,
     showOverlay,
-    
+
     // Actions
     toggle: handleMobileToggle,
     toggleDesktop: handleDesktopToggle,
@@ -69,12 +61,12 @@ export const useSidebarActions = () => {
     close: closeSidebar,
     forceClose,
     forceOpen,
-    
+
     // Original actions
     toggleSidebar,
     collapseSidebar,
     expandSidebar,
     openSidebar,
-    closeSidebar
+    closeSidebar,
   };
 };

@@ -1,16 +1,16 @@
-import { BaseApiService } from "../base";
-import type { ApiResponse } from "@/common/interface/apiInterface";
+import { BaseApiService } from '../base';
+import type { ApiResponse } from '@/common/interface/apiInterface';
 import type {
   Vehicle,
   VehicleStats,
   VehicleEnums,
   VehicleFilters,
   VehicleBulkUpdateResponse,
-} from "@/common/interface/vehicleInterface";
+} from '@/common/interface/vehicleInterface';
 
 export class VehicleService extends BaseApiService {
   constructor() {
-    super("/vehicles");
+    super('/vehicles');
   }
 
   /**
@@ -26,14 +26,14 @@ export class VehicleService extends BaseApiService {
    * Get vehicle statistics
    */
   async getStats(): Promise<ApiResponse<VehicleStats>> {
-    return this.get<VehicleStats>("/stats");
+    return this.get<VehicleStats>('/stats');
   }
 
   /**
    * Get vehicle enums (dropdown options)
    */
   async getEnums(): Promise<ApiResponse<VehicleEnums>> {
-    return this.get<VehicleEnums>("/enums");
+    return this.get<VehicleEnums>('/enums');
   }
 
   /**
@@ -43,9 +43,9 @@ export class VehicleService extends BaseApiService {
   async createVehicle(data: FormData): Promise<ApiResponse<Vehicle>> {
     // We override the default create to handle FormData and specific headers if needed,
     // though axios handles FormData automatically.
-    return this.post<Vehicle, FormData>("", data, {
+    return this.post<Vehicle, FormData>('', data, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
     });
   }
@@ -55,13 +55,10 @@ export class VehicleService extends BaseApiService {
    * @param id Vehicle ID
    * @param data FormData object
    */
-  async updateVehicle(
-    id: string,
-    data: FormData
-  ): Promise<ApiResponse<Vehicle>> {
+  async updateVehicle(id: string, data: FormData): Promise<ApiResponse<Vehicle>> {
     return this.put<Vehicle, FormData>(`/${id}`, data, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        'Content-Type': 'multipart/form-data',
       },
     });
   }
@@ -76,11 +73,8 @@ export class VehicleService extends BaseApiService {
   /**
    * Bulk update vehicle availability
    */
-  async bulkUpdateAvailability(
-    ids: string[],
-    isAvailable: boolean
-  ): Promise<ApiResponse<VehicleBulkUpdateResponse>> {
-    return this.patch<VehicleBulkUpdateResponse>("/bulk/update-availability", {
+  async bulkUpdateAvailability(ids: string[], isAvailable: boolean): Promise<ApiResponse<VehicleBulkUpdateResponse>> {
+    return this.patch<VehicleBulkUpdateResponse>('/bulk/update-availability', {
       vehicleIds: ids,
       isAvailable,
     });

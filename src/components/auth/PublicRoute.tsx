@@ -6,10 +6,7 @@ import type { PublicRouteProps } from '@/common/interface/routeInterface';
  * PublicRoute component for routes that should only be accessible
  * when user is NOT authenticated (like login page)
  */
-const PublicRoute: React.FC<PublicRouteProps> = ({ 
-  children, 
-  redirectTo = '/dashboard' 
-}) => {
+const PublicRoute: React.FC<PublicRouteProps> = ({ children, redirectTo = '/dashboard' }) => {
   const { isAuthenticated } = useAuthGuard();
 
   // If authenticated, redirect to dashboard or specified route

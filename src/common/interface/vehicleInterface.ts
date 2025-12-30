@@ -1,14 +1,8 @@
-export type UnitStatus = "Available" | "Unavailable" | "Maintenance";
-export type TransmissionType = "Automatic" | "Manual";
-export type FuelType = "Petrol" | "Diesel" | "Hybrid" | "Electric";
-export type DrivetrainType = "FWD" | "RWD" | "AWD" | "4x4";
-export type BodyType =
-  | "SUV"
-  | "Sedan"
-  | "Coupe"
-  | "Supercar"
-  | "Pickup"
-  | "Hatchback";
+export type UnitStatus = 'Available' | 'Unavailable' | 'Maintenance';
+export type TransmissionType = 'Automatic' | 'Manual';
+export type FuelType = 'Petrol' | 'Diesel' | 'Hybrid' | 'Electric';
+export type DrivetrainType = 'FWD' | 'RWD' | 'AWD' | '4x4';
+export type BodyType = 'SUV' | 'Sedan' | 'Coupe' | 'Supercar' | 'Pickup' | 'Hatchback';
 
 export interface VehicleMedia {
   id: string;
@@ -82,8 +76,8 @@ export interface VehicleEnums {
 export interface VehicleFilters {
   page?: number;
   limit?: number;
-  sortBy?: keyof Vehicle | "createdAt" | "updatedAt";
-  sortOrder?: "ASC" | "DESC";
+  sortBy?: keyof Vehicle | 'createdAt' | 'updatedAt';
+  sortOrder?: 'ASC' | 'DESC';
   search?: string;
   make?: string;
   model?: string;

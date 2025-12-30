@@ -1,21 +1,21 @@
-import LoginPage from "@/pages/auth/LoginPage";
-import Layout from "@/components/layout/Layout";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import PublicRoute from "@/components/auth/PublicRoute";
-import RoleGuard from "@/components/auth/RoleGuard";
-import Dashboard from "@/pages/Dashboard";
-import Bookings from "@/pages/Bookings";
-import Units from "@/pages/Units";
-import Clients from "@/pages/Clients";
-import Drivers from "@/pages/Drivers";
-import Financials from "@/pages/Financials";
-import NotFound from "@/pages/NotFound";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import LoginPage from '@/pages/auth/LoginPage';
+import Layout from '@/components/layout/Layout';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import PublicRoute from '@/components/auth/PublicRoute';
+import RoleGuard from '@/components/auth/RoleGuard';
+import Dashboard from '@/pages/Dashboard';
+import Bookings from '@/pages/Bookings';
+import Units from '@/pages/Units';
+import Clients from '@/pages/Clients';
+import Drivers from '@/pages/Drivers';
+import Financials from '@/pages/Financials';
+import NotFound from '@/pages/NotFound';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />
+    element: <Navigate to="/dashboard" replace />,
   },
   {
     path: '/login',
@@ -23,7 +23,7 @@ export const router = createBrowserRouter([
       <PublicRoute>
         <LoginPage />
       </PublicRoute>
-    )
+    ),
   },
   {
     path: '/',
@@ -35,43 +35,40 @@ export const router = createBrowserRouter([
     children: [
       {
         path: 'dashboard',
-        element: <Dashboard />
+        element: <Dashboard />,
       },
       {
         path: 'bookings',
-        element: <Bookings />
+        element: <Bookings />,
       },
       {
         path: 'units',
-        element: <Units />
+        element: <Units />,
       },
       {
-        path: "units/:id",
-        element: <Units />
+        path: 'units/:id',
+        element: <Units />,
       },
       {
         path: 'clients',
-        element: <Clients />
+        element: <Clients />,
       },
       {
         path: 'drivers',
-        element: <Drivers />
+        element: <Drivers />,
       },
       {
         path: 'financials',
         element: (
-          <RoleGuard 
-            requiredPermissions={['admin.content.read']}
-            fallbackPath="/dashboard"
-          >
+          <RoleGuard requiredPermissions={['admin.content.read']} fallbackPath="/dashboard">
             <Financials />
           </RoleGuard>
-        )
-      }
-    ]
+        ),
+      },
+    ],
   },
   {
     path: '*',
-    element: <NotFound />
-  }
-])
+    element: <NotFound />,
+  },
+]);

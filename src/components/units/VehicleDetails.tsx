@@ -1,17 +1,11 @@
-import { Fragment, useEffect, type FC } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import type { Vehicle } from "@/common/interface/vehicleInterface";
-import { Card } from "@/components/ui/card";
-import { useParams } from "react-router-dom";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "../ui/carousel";
-import { AspectRatio } from "../ui/aspect-ratio";
+import { Fragment, useEffect, type FC } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import type { Vehicle } from '@/common/interface/vehicleInterface';
+import { Card } from '@/components/ui/card';
+import { useParams } from 'react-router-dom';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel';
+import { AspectRatio } from '../ui/aspect-ratio';
 
 interface VehicleFormProps {
   vehicle: Vehicle | null;
@@ -20,16 +14,11 @@ interface VehicleFormProps {
   isLoading?: boolean;
 }
 
-const VehicleDetails: FC<VehicleFormProps> = ({
-  vehicle,
-  isLoading,
-  onCancel,
-  getVehicleDetails,
-}) => {
+const VehicleDetails: FC<VehicleFormProps> = ({ vehicle, isLoading, onCancel, getVehicleDetails }) => {
   const { id } = useParams();
 
   const fetchImage = (imagePath: string) => {
-    return `http://localhost:3001/${imagePath.replace(/\\/g, "/")}`;
+    return `http://localhost:3001/${imagePath.replace(/\\/g, '/')}`;
   };
 
   const getVehicleImages = (media: any) => {
@@ -56,49 +45,37 @@ const VehicleDetails: FC<VehicleFormProps> = ({
 
   return (
     <Fragment>
-      <div className="flex items-center gap-1 mb-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
+      <div className="mb-2 flex items-center gap-1">
+        <Button type="button" variant="ghost" size="icon" onClick={onCancel} disabled={isLoading}>
           <ArrowLeft className="size-5" />
         </Button>
         <h2 className="text-xl font-semibold">Vehicle Details</h2>
       </div>
       <Card className="w-full overflow-clip">
-        <div className="w-full flex justify-center items-center">
+        <div className="flex w-full items-center justify-center">
           {vehicle?.media?.[0]?.leftSideImage && (
             <div className="w-full sm:max-w-sm md:max-w-md lg:max-w-lg">
               <AspectRatio ratio={16 / 9}>
                 <img
                   src={fetchImage(vehicle?.media?.[0]?.leftSideImage)}
                   alt="Vehicle main"
-                  className="w-full h-full object-cover rounded-md"
+                  className="h-full w-full rounded-md object-cover"
                 />
               </AspectRatio>
             </div>
           )}
         </div>
         <div className="px-15">
-          <Carousel opts={{ align: "start" }}>
+          <Carousel opts={{ align: 'start' }}>
             <CarouselContent>
               {getVehicleImages(vehicle?.media?.[0]).map((image, index) => (
-                <CarouselItem
-                  key={`${index}-${image}`}
-                  className="basis-1/4 md:basis-1/5 lg:basis-1/6"
-                >
-                  <AspectRatio
-                    ratio={16 / 9}
-                    className="rounded-md overflow-hidden"
-                  >
+                <CarouselItem key={`${index}-${image}`} className="basis-1/4 md:basis-1/5 lg:basis-1/6">
+                  <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-md">
                     <img
                       src={fetchImage(image)}
                       alt={`Thumbnail ${index + 1}`}
                       loading="lazy"
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   </AspectRatio>
                 </CarouselItem>

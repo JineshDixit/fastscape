@@ -101,4 +101,3 @@ export type TokenStatus = TokenInfo & {
   timeUntilExpiryFormatted: string | null;
   shouldLogout: boolean;
 };
-

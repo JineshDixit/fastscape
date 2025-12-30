@@ -11,7 +11,7 @@ export interface RoleGuardProps {
   children: React.ReactNode;
   requiredRoles?: string[];
   requiredPermissions?: string[];
-  requireAll?: boolean; 
+  requireAll?: boolean;
   fallbackPath?: string;
 }
 

@@ -15,12 +15,12 @@ export const useTokenStatus = (refreshInterval: number = 30000) => {
     refreshExpiresAt: null,
     timeUntilExpiry: null,
     timeUntilExpiryFormatted: null,
-    shouldLogout: false
+    shouldLogout: false,
   });
 
   const formatTimeUntilExpiry = (milliseconds: number | null): string | null => {
     if (!milliseconds || milliseconds <= 0) return null;
-    
+
     const seconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -40,11 +40,11 @@ export const useTokenStatus = (refreshInterval: number = 30000) => {
   const updateTokenStatus = () => {
     const info = authService.getTokenInfo();
     const shouldLogout = authService.shouldLogout();
-    
+
     setTokenStatus({
       ...info,
       timeUntilExpiryFormatted: formatTimeUntilExpiry(info.timeUntilExpiry),
-      shouldLogout
+      shouldLogout,
     });
 
     if (shouldLogout) {
@@ -83,6 +83,6 @@ export const useTokenStatus = (refreshInterval: number = 30000) => {
     ...tokenStatus,
     refreshToken,
     clearTokens,
-    refresh: updateTokenStatus
+    refresh: updateTokenStatus,
   };
 };

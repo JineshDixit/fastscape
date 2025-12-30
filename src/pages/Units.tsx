@@ -1,22 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { Search, LayoutGrid, CheckCircle2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import UnitCard from "@/components/units/UnitCard";
-import VehicleForm from "@/components/units/VehicleForm";
-import DataTablePagination from "@/components/shared/DataTablePagination";
-import { useVehicle } from "@/api/hooks/useVehicle";
-import type { Vehicle } from "@/common/interface/vehicleInterface";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import VehicleDetails from "@/components/units/VehicleDetails";
+import React, { useEffect, useState } from 'react';
+import { Search, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import UnitCard from '@/components/units/UnitCard';
+import VehicleForm from '@/components/units/VehicleForm';
+import DataTablePagination from '@/components/shared/DataTablePagination';
+import { useVehicle } from '@/api/hooks/useVehicle';
+import type { Vehicle } from '@/common/interface/vehicleInterface';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import VehicleDetails from '@/components/units/VehicleDetails';
 
 const Units = () => {
   const [pageSize, setPageSize] = React.useState(10);
@@ -36,7 +30,7 @@ const Units = () => {
     createVehicle,
     updateVehicle,
     deleteVehicle,
-    fetchVehicleById
+    fetchVehicleById,
   } = useVehicle();
 
   useEffect(() => {
@@ -48,14 +42,14 @@ const Units = () => {
       if (selectedVehicle) {
         // Edit mode
         await updateVehicle(selectedVehicle.id, formData);
-        toast.success("Vehicle updated successfully!");
+        toast.success('Vehicle updated successfully!');
       } else {
         // Create mode
         await createVehicle(formData);
-        toast.success("Vehicle created successfully!");
+        toast.success('Vehicle created successfully!');
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to save vehicle");
+      toast.error(error.message || 'Failed to save vehicle');
       throw error;
     }
   };
@@ -90,11 +84,11 @@ const Units = () => {
   const handleDelete = async (vehicleId: string) => {
     try {
       await deleteVehicle(vehicleId);
-      toast.success("Vehicle deleted successfully!");
+      toast.success('Vehicle deleted successfully!');
       // Refresh the list
       fetchVehicles({ page: currentPage, limit: pageSize });
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete vehicle");
+      toast.error(error.message || 'Failed to delete vehicle');
     }
   };
 
@@ -125,21 +119,18 @@ const Units = () => {
   // Show list view
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-6">
-        <div className="flex flex-col sm:flex-row items-center gap-4 flex-1">
+      <div className="flex flex-col items-stretch justify-between gap-6 xl:flex-row xl:items-center">
+        <div className="flex flex-1 flex-col items-center gap-4 sm:flex-row">
           <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-[18px] text-foreground/50" />
-            <Input
-              placeholder="Search client name, car, etc"
-              className="pl-11 placeholder:text-foreground/50"
-            />
+            <Search className="text-foreground/50 absolute top-1/2 left-4 size-[18px] -translate-y-1/2" />
+            <Input placeholder="Search client name, car, etc" className="placeholder:text-foreground/50 pl-11" />
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex w-full items-center gap-3 sm:w-auto">
             <Select defaultValue="all-types">
               <SelectTrigger className="w-full sm:w-[150px]">
                 <div className="flex items-center gap-2">
-                  <LayoutGrid className="size-4 text-foreground/50" />
+                  <LayoutGrid className="text-foreground/50 size-4" />
                   <SelectValue placeholder="Car Type" />
                 </div>
               </SelectTrigger>
@@ -154,7 +145,7 @@ const Units = () => {
             <Select defaultValue="all-status">
               <SelectTrigger className="w-full sm:w-[150px]">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-foreground/50" />
+                  <CheckCircle2 className="text-foreground/50 size-4" />
                   <SelectValue placeholder="Status" />
                 </div>
               </SelectTrigger>
@@ -171,7 +162,7 @@ const Units = () => {
         <Button onClick={() => setShowAddForm(true)}>Add Unit</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {isLoading && vehicles.length === 0 ? (
           <div className="col-span-full flex justify-center py-12">
             <p className="text-muted-foreground">Loading vehicles...</p>

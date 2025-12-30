@@ -1,6 +1,6 @@
-import { BaseApiService } from "../base";
-import type { ApiResponse } from "../../common/interface/apiInterface";
-import { authCookies } from "@/utils/cookies";
+import { BaseApiService } from '../base';
+import type { ApiResponse } from '../../common/interface/apiInterface';
+import { authCookies } from '@/utils/cookies';
 import type {
   LoginRequest,
   LoginResponse,
@@ -11,8 +11,8 @@ import type {
   PasswordChangeData,
   PasswordResetData,
   TokenInfo,
-} from "@/common/interface/authInterface";
-import { AUTH } from "@/common/constant/auth";
+} from '@/common/interface/authInterface';
+import { AUTH } from '@/common/constant/auth';
 
 /**
  * Authentication API service with optimized token management
@@ -22,7 +22,7 @@ class AuthService extends BaseApiService {
   private autoRefreshInterval: number | null = null;
 
   constructor() {
-    super("/auth");
+    super('/auth');
   }
 
   // ===== AUTHENTICATION METHODS =====
@@ -31,10 +31,7 @@ class AuthService extends BaseApiService {
    * Login user and store authentication data
    */
   async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
-    const response = await this.post<LoginResponse, LoginRequest>(
-      "/login",
-      credentials
-    );
+    const response = await this.post<LoginResponse, LoginRequest>('/login', credentials);
 
     if (response.success && response.data) {
       this.storeAuthenticationData(response.data);
@@ -47,10 +44,8 @@ class AuthService extends BaseApiService {
   /**
    * Register new user
    */
-  async register(
-    userData: RegisterRequest
-  ): Promise<ApiResponse<LoginResponse>> {
-    return this.post<LoginResponse, RegisterRequest>("/register", userData);
+  async register(userData: RegisterRequest): Promise<ApiResponse<LoginResponse>> {
+    return this.post<LoginResponse, RegisterRequest>('/register', userData);
   }
 
   /**
@@ -58,11 +53,11 @@ class AuthService extends BaseApiService {
    */
   async logout(): Promise<ApiResponse<void>> {
     try {
-      const response = await this.post<void>("/logout");
+      const response = await this.post<void>('/logout');
       this.clearTokens();
 
       if (import.meta.env.DEV) {
-        console.log("Logout successful - All cookies cleared");
+        console.log('Logout successful - All cookies cleared');
       }
 
       return response;
@@ -71,7 +66,7 @@ class AuthService extends BaseApiService {
       this.clearTokens();
 
       if (import.meta.env.DEV) {
-        console.log("Logout API failed but cookies cleared locally");
+        console.log('Logout API failed but cookies cleared locally');
       }
 
       throw error;
@@ -89,16 +84,13 @@ class AuthService extends BaseApiService {
         accessTokenLength: tokens.accessToken.length,
         refreshTokenLength: tokens.refreshToken.length,
         accessExpiresAt: tokens.accessTokenExpiresAt,
-        refreshExpiresAt: tokens.refreshTokenExpiresAt
+        refreshExpiresAt: tokens.refreshTokenExpiresAt,
       });
     }
 
     // Store tokens
     authCookies.setAccessToken(tokens.accessToken, tokens.accessTokenExpiresAt);
-    authCookies.setRefreshToken(
-      tokens.refreshToken,
-      tokens.refreshTokenExpiresAt
-    );
+    authCookies.setRefreshToken(tokens.refreshToken, tokens.refreshTokenExpiresAt);
 
     if (import.meta.env.DEV) {
       console.log('Tokens stored successfully in cookies');
@@ -109,19 +101,15 @@ class AuthService extends BaseApiService {
    * Get current user profile from API (fresh data)
    */
   async getProfile(): Promise<ApiResponse<User>> {
-    return this.get<User>("/profile");
+    return this.get<User>('/profile');
   }
 
   /**
    * Update user profile and sync with cookies
    */
   async updateProfile(userData: Partial<User>): Promise<ApiResponse<User>> {
-    return this.patch<User, Partial<User>>(
-      "/profile",
-      userData
-    );
+    return this.patch<User, Partial<User>>('/profile', userData);
   }
-
 
   // ===== PASSWORD MANAGEMENT METHODS =====
 
@@ -129,28 +117,28 @@ class AuthService extends BaseApiService {
    * Change user password
    */
   async changePassword(data: PasswordChangeData): Promise<ApiResponse<void>> {
-    return this.post<void>("/change-password", data);
+    return this.post<void>('/change-password', data);
   }
 
   /**
    * Request password reset email
    */
   async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
-    return this.post<void>("/forgot-password", { email });
+    return this.post<void>('/forgot-password', { email });
   }
 
   /**
    * Reset password with token
    */
   async resetPassword(data: PasswordResetData): Promise<ApiResponse<void>> {
-    return this.post<void>("/reset-password", data);
+    return this.post<void>('/reset-password', data);
   }
 
   /**
    * Verify email with token
    */
   async verifyEmail(token: string): Promise<ApiResponse<void>> {
-    return this.post<void>("/verify-email", { token });
+    return this.post<void>('/verify-email', { token });
   }
 
   // ===== TOKEN MANAGEMENT METHODS =====
@@ -172,7 +160,7 @@ class AuthService extends BaseApiService {
     try {
       return await this.refreshAccessToken();
     } catch (error) {
-      console.error("Failed to refresh token:", error);
+      console.error('Failed to refresh token:', error);
       this.handleRefreshTokenExpiry();
       return null;
     }
@@ -188,7 +176,7 @@ class AuthService extends BaseApiService {
 
     const refreshToken = authCookies.getRefreshToken();
     if (!refreshToken) {
-      throw new Error("No refresh token available");
+      throw new Error('No refresh token available');
     }
 
     this.refreshPromise = this.performTokenRefresh(refreshToken);
@@ -203,16 +191,14 @@ class AuthService extends BaseApiService {
   /**
    * Public refresh token method for external use
    */
-  async refreshToken(): Promise<
-    ApiResponse<{ accessToken: string; accessTokenExpiresAt: string }>
-  > {
+  async refreshToken(): Promise<ApiResponse<{ accessToken: string; accessTokenExpiresAt: string }>> {
     const newToken = await this.refreshAccessToken();
 
     return {
       success: true,
       data: {
         accessToken: newToken,
-        accessTokenExpiresAt: authCookies.getTokenExpiresAt() || "",
+        accessTokenExpiresAt: authCookies.getTokenExpiresAt() || '',
       },
     };
   }
@@ -222,23 +208,15 @@ class AuthService extends BaseApiService {
    */
   private async performTokenRefresh(refreshToken: string): Promise<string> {
     try {
-      const response = await this.post<
-        RefreshTokenResponse,
-        RefreshTokenRequest
-      >("/refresh", {
+      const response = await this.post<RefreshTokenResponse, RefreshTokenRequest>('/refresh', {
         refreshToken,
       });
 
       if (!response.success || !response.data) {
-        throw new Error("Invalid refresh response");
+        throw new Error('Invalid refresh response');
       }
 
-      const {
-        accessToken,
-        accessTokenExpiresAt,
-        refreshToken: newRefreshToken,
-        refreshTokenExpiresAt,
-      } = response.data;
+      const { accessToken, accessTokenExpiresAt, refreshToken: newRefreshToken, refreshTokenExpiresAt } = response.data;
 
       // Update tokens in cookies
       authCookies.setAccessToken(accessToken, accessTokenExpiresAt);
@@ -248,14 +226,14 @@ class AuthService extends BaseApiService {
       }
 
       if (import.meta.env.DEV) {
-        console.log("Token refreshed successfully");
+        console.log('Token refreshed successfully');
       }
 
       return accessToken;
     } catch (error: any) {
       if (this.isRefreshTokenError(error)) {
         this.handleRefreshTokenExpiry();
-        throw new Error("Refresh token expired");
+        throw new Error('Refresh token expired');
       }
       throw error;
     }
@@ -306,10 +284,10 @@ class AuthService extends BaseApiService {
       try {
         await this.refreshAccessToken();
         if (import.meta.env.DEV) {
-          console.log("Proactive token refresh completed");
+          console.log('Proactive token refresh completed');
         }
       } catch (error) {
-        console.error("Proactive token refresh failed:", error);
+        console.error('Proactive token refresh failed:', error);
         this.handleRefreshTokenExpiry();
       }
     } else if (this.isRefreshTokenExpired()) {
@@ -368,17 +346,14 @@ class AuthService extends BaseApiService {
    */
   private handleRefreshTokenExpiry(): void {
     if (import.meta.env.DEV) {
-      console.log("Refresh token expired - logging out user");
+      console.log('Refresh token expired - logging out user');
     }
 
     this.clearTokens();
 
     // Only redirect in browser environment and not already on login page
-    if (
-      typeof window !== "undefined" &&
-      window.location.pathname !== "/login"
-    ) {
-      window.location.href = "/login";
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      window.location.href = '/login';
     }
   }
 
@@ -387,7 +362,7 @@ class AuthService extends BaseApiService {
    */
   forceLogout(): void {
     if (import.meta.env.DEV) {
-      console.log("Force logout triggered due to refresh token expiry");
+      console.log('Force logout triggered due to refresh token expiry');
     }
     this.handleRefreshTokenExpiry();
   }
@@ -439,13 +414,12 @@ class AuthService extends BaseApiService {
       timeUntilExpiry,
     };
   }
-
 }
 
 // Create and export singleton instance
 export const authService = new AuthService();
 
 // Auto-start monitoring when module loads if user is authenticated
-if (typeof window !== "undefined" && authCookies.getAccessToken()) {
+if (typeof window !== 'undefined' && authCookies.getAccessToken()) {
   authService.startAutoRefresh();
 }

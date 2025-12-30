@@ -27,17 +27,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearError = useCallback(() => setError(null), []);
 
-  const hasPermission = useCallback((permission: string) => {
-    return user?.permissions?.includes(permission) || false;
-  }, [user]);
+  const hasPermission = useCallback(
+    (permission: string) => {
+      return user?.permissions?.includes(permission) || false;
+    },
+    [user],
+  );
 
-  const hasAnyPermission = useCallback((permissions: string[]) => {
-    return permissions.some(p => user?.permissions?.includes(p)) || false;
-  }, [user]);
+  const hasAnyPermission = useCallback(
+    (permissions: string[]) => {
+      return permissions.some((p) => user?.permissions?.includes(p)) || false;
+    },
+    [user],
+  );
 
-  const hasRole = useCallback((roleName: string) => {
-    return user?.roles?.some(r => r.name === roleName) || false;
-  }, [user]);
+  const hasRole = useCallback(
+    (roleName: string) => {
+      return user?.roles?.some((r) => r.name === roleName) || false;
+    },
+    [user],
+  );
 
   const refreshProfile = useCallback(async () => {
     const token = authCookies.getAccessToken();
@@ -59,9 +68,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err: any) {
       console.error('Failed to sync profile:', err);
       if (err.response?.status === 401) {
-         setIsAuthenticated(false);
-         setUser(null);
-         authService.clearTokens();
+        setIsAuthenticated(false);
+        setUser(null);
+        authService.clearTokens();
       }
     } finally {
       setIsLoading(false);
@@ -112,7 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     initAuth();
-    
+
     // Listen for storage events (e.g. logout from another tab)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === COOKIE_NAMES.ACCESS_TOKEN && !e.newValue) {
@@ -137,7 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearError,
         hasPermission,
         hasAnyPermission,
-        hasRole
+        hasRole,
       }}
     >
       {children}

@@ -1,21 +1,11 @@
-import { useState, type FC } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { GitFork, Fuel, Cog, Ellipsis } from "lucide-react";
-import type { Vehicle } from "@/common/interface/vehicleInterface";
-import { Badge } from "@/components/ui/badge";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "../ui/dropdown-menu";
+import { useState, type FC } from 'react';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { GitFork, Fuel, Cog, Ellipsis } from 'lucide-react';
+import type { Vehicle } from '@/common/interface/vehicleInterface';
+import { Badge } from '@/components/ui/badge';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from '../ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 interface UnitCardProps {
   vehicle: Vehicle;
@@ -52,7 +42,7 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
   };
 
   const fetchImage = (imagePath: string) => {
-    return `http://localhost:3001/${imagePath.replace(/\\/g, "/")}`;
+    return `http://localhost:3001/${imagePath.replace(/\\/g, '/')}`;
   };
 
   const getDisplayImage = () => {
@@ -63,27 +53,23 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
     if (imagePath) {
       return fetchImage(imagePath);
     }
-    return "/placeholder-car.png";
+    return '/placeholder-car.png';
   };
 
   return (
-    <Card className="py-4 overflow-hidden min-w-0">
-      <CardHeader className="px-5 flex items-start justify-between space-y-0">
+    <Card className="min-w-0 overflow-hidden py-4">
+      <CardHeader className="flex items-start justify-between space-y-0 px-5">
         <div className="space-y-1">
-          <h3 className="text-xl font-semibold text-foreground leading-tight tracking-normal">
+          <h3 className="text-foreground text-xl leading-tight font-semibold tracking-normal">
             {vehicle.make} {vehicle.model}
           </h3>
-          <p className="text-xs font-semibold text-foreground/50 tracking-wider">
-            {vehicle.bodyType}
-          </p>
+          <p className="text-foreground/50 text-xs font-semibold tracking-wider">{vehicle.bodyType}</p>
         </div>
         <div className="space-y-1">
-          <h3 className="text-xl font-semibold text-foreground leading-tight tracking-normal">
+          <h3 className="text-foreground text-xl leading-tight font-semibold tracking-normal">
             ${vehicle.pricePerDay}
           </h3>
-          <p className="text-xs font-semibold text-foreground/50 text-end tracking-wider">
-            /day
-          </p>
+          <p className="text-foreground/50 text-end text-xs font-semibold tracking-wider">/day</p>
         </div>
       </CardHeader>
 
@@ -93,9 +79,9 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
             <img
               src={getDisplayImage()}
               alt={`${vehicle.make} ${vehicle.model}`}
-              className="w-full h-full object-cover rounded-md"
+              className="h-full w-full rounded-md object-cover"
               onError={(e) => {
-                e.currentTarget.src = "/placeholder-car.png";
+                e.currentTarget.src = '/placeholder-car.png';
               }}
             />
           </AspectRatio>
@@ -107,35 +93,31 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
 
           <div className="grid grid-cols-3 gap-2">
             <div className="flex items-center justify-center gap-2">
-              <div className="p-1.5 bg-muted/90 rounded-md">
-                <Cog className="size-4 text-foreground/80" />
+              <div className="bg-muted/90 rounded-md p-1.5">
+                <Cog className="text-foreground/80 size-4" />
               </div>
-              <span className="text-sm text-foreground tracking-tight truncate w-full">
-                {vehicle.transmission}
-              </span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">{vehicle.transmission}</span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <div className="p-1.5 bg-muted/90 rounded-md">
-                <GitFork className="size-4 text-foreground/80" />
+              <div className="bg-muted/90 rounded-md p-1.5">
+                <GitFork className="text-foreground/80 size-4" />
               </div>
-              <span className="text-sm text-foreground tracking-tight truncate w-full">
-                {vehicle.drivetrain}
-              </span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">{vehicle.drivetrain}</span>
             </div>
             <div className="flex items-center justify-center gap-2">
-              <div className="p-1.5 bg-muted/90 rounded-md">
-                <Fuel className="size-4 text-foreground/80" />
+              <div className="bg-muted/90 rounded-md p-1.5">
+                <Fuel className="text-foreground/80 size-4" />
               </div>
-              <span className="text-sm text-foreground tracking-tight truncate w-full">
-                {vehicle.fuelType}
-              </span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">{vehicle.fuelType}</span>
             </div>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="px-5 flex gap-3">
-        <Button className="flex-1" onClick={() => onDetails?.(vehicle.id)}>View Details</Button>
+      <CardFooter className="flex gap-3 px-5">
+        <Button className="flex-1" onClick={() => onDetails?.(vehicle.id)}>
+          View Details
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
@@ -143,14 +125,11 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onClick={() => onEdit?.(vehicle)}
-            >
+            <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(vehicle)}>
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="cursor-pointer text-destructive hover:text-destructive! hover:bg-destructive/10!"
+              className="text-destructive hover:text-destructive! hover:bg-destructive/10! cursor-pointer"
               onClick={() => setShowDeleteDialog(true)}
             >
               Delete
@@ -164,8 +143,7 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Vehicle</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {vehicle.make} {vehicle.model}?
-              This action cannot be undone.
+              Are you sure you want to delete {vehicle.make} {vehicle.model}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

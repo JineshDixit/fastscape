@@ -1,19 +1,13 @@
-import { useState, useEffect, type FC, Fragment } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
-import { Spinner } from "@/components/ui/spinner";
-import ImageUpload from "@/components/ui/image-upload";
-import type { Vehicle } from "@/common/interface/vehicleInterface";
+import { useState, useEffect, type FC, Fragment } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import ImageUpload from '@/components/ui/image-upload';
+import type { Vehicle } from '@/common/interface/vehicleInterface';
 
 interface VehicleFormProps {
   vehicle?: Vehicle;
@@ -23,34 +17,28 @@ interface VehicleFormProps {
   isLoading?: boolean;
 }
 
-const VehicleForm: FC<VehicleFormProps> = ({
-  vehicle,
-  onCancel,
-  onSuccess,
-  onSubmit,
-  isLoading = false,
-}) => {
+const VehicleForm: FC<VehicleFormProps> = ({ vehicle, onCancel, onSuccess, onSubmit, isLoading = false }) => {
   const isEditMode = !!vehicle;
 
   const [formData, setFormData] = useState({
-    make: "",
-    model: "",
-    trim: "",
-    year: "",
-    exteriorColor: "",
-    interiorColor: "",
-    bodyType: "",
-    transmission: "",
-    drivetrain: "",
-    engine: "",
-    fuelType: "",
-    horsepower: "",
-    fuelConsumption: "",
-    pricePerDay: "",
-    delayChargePerHour: "",
-    depositPercentage: "",
-    currency: "USD",
-    isAvailable: "true",
+    make: '',
+    model: '',
+    trim: '',
+    year: '',
+    exteriorColor: '',
+    interiorColor: '',
+    bodyType: '',
+    transmission: '',
+    drivetrain: '',
+    engine: '',
+    fuelType: '',
+    horsepower: '',
+    fuelConsumption: '',
+    pricePerDay: '',
+    delayChargePerHour: '',
+    depositPercentage: '',
+    currency: 'USD',
+    isAvailable: 'true',
   });
 
   const [images, setImages] = useState<{
@@ -68,33 +56,32 @@ const VehicleForm: FC<VehicleFormProps> = ({
 
   useEffect(() => {
     if (vehicle) {
-      console.log("vehicle in edit", vehicle);
+      console.log('vehicle in edit', vehicle);
       setFormData({
-        make: vehicle.make || "",
-        model: vehicle.model || "",
-        trim: vehicle.trim || "",
-        year: vehicle.year?.toString() || "",
-        exteriorColor: vehicle.exteriorColor || "",
-        interiorColor: vehicle.interiorColor || "",
-        bodyType: vehicle.bodyType || "",
-        transmission: vehicle.transmission || "",
+        make: vehicle.make || '',
+        model: vehicle.model || '',
+        trim: vehicle.trim || '',
+        year: vehicle.year?.toString() || '',
+        exteriorColor: vehicle.exteriorColor || '',
+        interiorColor: vehicle.interiorColor || '',
+        bodyType: vehicle.bodyType || '',
+        transmission: vehicle.transmission || '',
         drivetrain: vehicle.drivetrain,
-        engine: vehicle.engine || "",
-        fuelType: vehicle.fuelType || "",
-        horsepower: vehicle.horsepower?.toString() || "",
-        fuelConsumption: vehicle.fuelConsumption || "",
-        pricePerDay: vehicle.pricePerDay || "",
-        delayChargePerHour: vehicle.delayChargePerHour || "",
-        depositPercentage: vehicle.depositPercentage || "",
-        currency: vehicle.currency || "USD",
-        isAvailable: vehicle.isAvailable?.toString() || "true",
+        engine: vehicle.engine || '',
+        fuelType: vehicle.fuelType || '',
+        horsepower: vehicle.horsepower?.toString() || '',
+        fuelConsumption: vehicle.fuelConsumption || '',
+        pricePerDay: vehicle.pricePerDay || '',
+        delayChargePerHour: vehicle.delayChargePerHour || '',
+        depositPercentage: vehicle.depositPercentage || '',
+        currency: vehicle.currency || 'USD',
+        isAvailable: vehicle.isAvailable?.toString() || 'true',
       });
     }
   }, [vehicle]);
 
   const getExistingImageUrl = (fieldName: string): string | undefined => {
-    if (!vehicle || !vehicle.media || vehicle.media.length === 0)
-      return undefined;
+    if (!vehicle || !vehicle.media || vehicle.media.length === 0) return undefined;
 
     const media = vehicle.media.find((m) => m.isPrimary) || vehicle.media[0];
     if (!media) return undefined;
@@ -115,7 +102,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
     const imagePath = imageMap[fieldName];
     if (!imagePath) return undefined;
 
-    return `http://localhost:3001/${imagePath.replace(/\\/g, "/")}`;
+    return `http://localhost:3001/${imagePath.replace(/\\/g, '/')}`;
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -147,43 +134,35 @@ const VehicleForm: FC<VehicleFormProps> = ({
       await onSubmit(data);
       onSuccess();
     } catch (error) {
-      console.error("Failed to create vehicle:", error);
+      console.error('Failed to create vehicle:', error);
     }
   };
 
   return (
     <Fragment>
-      <div className="flex items-center gap-1 mb-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
+      <div className="mb-2 flex items-center gap-1">
+        <Button type="button" variant="ghost" size="icon" onClick={onCancel} disabled={isLoading}>
           <ArrowLeft className="size-5" />
         </Button>
-        <h2 className="text-xl font-semibold">
-          {isEditMode ? "Edit Vehicle" : "Add New Vehicle"}
-        </h2>
+        <h2 className="text-xl font-semibold">{isEditMode ? 'Edit Vehicle' : 'Add New Vehicle'}</h2>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Vehicle Images</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
-              { id: "frontImage", label: "Front Image" },
-              { id: "backImage", label: "Back Image" },
-              { id: "leftSideImage", label: "Left Side Image" },
-              { id: "rightSideImage", label: "Right Side Image" },
-              { id: "frontLeftImage", label: "Front Left Image" },
-              { id: "frontRightImage", label: "Front Right Image" },
-              { id: "interiorFrontImage", label: "Interior Front Image" },
-              { id: "interiorBackImage", label: "Interior Back Image" },
-              { id: "dashboardImage", label: "Dashboard Image" },
-              { id: "engineImage", label: "Engine Image" },
+              { id: 'frontImage', label: 'Front Image' },
+              { id: 'backImage', label: 'Back Image' },
+              { id: 'leftSideImage', label: 'Left Side Image' },
+              { id: 'rightSideImage', label: 'Right Side Image' },
+              { id: 'frontLeftImage', label: 'Front Left Image' },
+              { id: 'frontRightImage', label: 'Front Right Image' },
+              { id: 'interiorFrontImage', label: 'Interior Front Image' },
+              { id: 'interiorBackImage', label: 'Interior Back Image' },
+              { id: 'dashboardImage', label: 'Dashboard Image' },
+              { id: 'engineImage', label: 'Engine Image' },
             ].map((image) => (
               <ImageUpload
                 key={image.id}
@@ -201,7 +180,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="make">
                 Make <span className="text-destructive">*</span>
@@ -209,7 +188,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="make"
                 value={formData.make}
-                onChange={(e) => handleInputChange("make", e.target.value)}
+                onChange={(e) => handleInputChange('make', e.target.value)}
                 placeholder="e.g., Toyota"
                 required
                 disabled={isLoading}
@@ -223,7 +202,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="model"
                 value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
+                onChange={(e) => handleInputChange('model', e.target.value)}
                 placeholder="e.g., Camry"
                 required
                 disabled={isLoading}
@@ -235,7 +214,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="trim"
                 value={formData.trim}
-                onChange={(e) => handleInputChange("trim", e.target.value)}
+                onChange={(e) => handleInputChange('trim', e.target.value)}
                 placeholder="e.g., XLE"
                 disabled={isLoading}
               />
@@ -249,7 +228,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
                 id="year"
                 type="number"
                 value={formData.year}
-                onChange={(e) => handleInputChange("year", e.target.value)}
+                onChange={(e) => handleInputChange('year', e.target.value)}
                 placeholder="e.g., 2023"
                 required
                 disabled={isLoading}
@@ -263,9 +242,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="exteriorColor"
                 value={formData.exteriorColor}
-                onChange={(e) =>
-                  handleInputChange("exteriorColor", e.target.value)
-                }
+                onChange={(e) => handleInputChange('exteriorColor', e.target.value)}
                 placeholder="e.g., White"
                 required
                 disabled={isLoading}
@@ -279,9 +256,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="interiorColor"
                 value={formData.interiorColor}
-                onChange={(e) =>
-                  handleInputChange("interiorColor", e.target.value)
-                }
+                onChange={(e) => handleInputChange('interiorColor', e.target.value)}
                 placeholder="e.g., Black"
                 required
                 disabled={isLoading}
@@ -294,14 +269,14 @@ const VehicleForm: FC<VehicleFormProps> = ({
           <CardHeader>
             <CardTitle>Specifications</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="bodyType">
                 Body Type <span className="text-destructive">*</span>
               </Label>
               <Select
                 value={formData.bodyType}
-                onValueChange={(value) => handleInputChange("bodyType", value)}
+                onValueChange={(value) => handleInputChange('bodyType', value)}
                 disabled={isLoading}
                 required
               >
@@ -325,9 +300,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               </Label>
               <Select
                 value={formData.transmission}
-                onValueChange={(value) =>
-                  handleInputChange("transmission", value)
-                }
+                onValueChange={(value) => handleInputChange('transmission', value)}
                 disabled={isLoading}
                 required
               >
@@ -347,14 +320,12 @@ const VehicleForm: FC<VehicleFormProps> = ({
               </Label>
               <Select
                 value={formData.drivetrain}
-                onValueChange={(value) =>
-                  handleInputChange("drivetrain", value)
-                }
+                onValueChange={(value) => handleInputChange('drivetrain', value)}
                 disabled={isLoading}
                 required
               >
                 <SelectTrigger className="w-full" id="drivetrain">
-                  <SelectValue placeholder="Select drivetrain"/>
+                  <SelectValue placeholder="Select drivetrain" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="AWD">AWD</SelectItem>
@@ -371,7 +342,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               </Label>
               <Select
                 value={formData.fuelType}
-                onValueChange={(value) => handleInputChange("fuelType", value)}
+                onValueChange={(value) => handleInputChange('fuelType', value)}
                 disabled={isLoading}
                 required
               >
@@ -394,7 +365,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="engine"
                 value={formData.engine}
-                onChange={(e) => handleInputChange("engine", e.target.value)}
+                onChange={(e) => handleInputChange('engine', e.target.value)}
                 placeholder="e.g., 2.5L 4-Cylinder"
                 required
                 disabled={isLoading}
@@ -409,9 +380,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
                 id="horsepower"
                 type="number"
                 value={formData.horsepower}
-                onChange={(e) =>
-                  handleInputChange("horsepower", e.target.value)
-                }
+                onChange={(e) => handleInputChange('horsepower', e.target.value)}
                 placeholder="e.g., 203"
                 required
                 disabled={isLoading}
@@ -425,9 +394,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="fuelConsumption"
                 value={formData.fuelConsumption}
-                onChange={(e) =>
-                  handleInputChange("fuelConsumption", e.target.value)
-                }
+                onChange={(e) => handleInputChange('fuelConsumption', e.target.value)}
                 placeholder="e.g., 8.5L/100km"
                 required
                 disabled={isLoading}
@@ -441,7 +408,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
           <CardHeader>
             <CardTitle>Pricing</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="pricePerDay">
                 Price Per Day <span className="text-destructive">*</span>
@@ -451,9 +418,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.pricePerDay}
-                onChange={(e) =>
-                  handleInputChange("pricePerDay", e.target.value)
-                }
+                onChange={(e) => handleInputChange('pricePerDay', e.target.value)}
                 placeholder="e.g., 89.99"
                 required
                 disabled={isLoading}
@@ -467,9 +432,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.delayChargePerHour}
-                onChange={(e) =>
-                  handleInputChange("delayChargePerHour", e.target.value)
-                }
+                onChange={(e) => handleInputChange('delayChargePerHour', e.target.value)}
                 placeholder="e.g., 15.00"
                 disabled={isLoading}
               />
@@ -482,9 +445,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.depositPercentage}
-                onChange={(e) =>
-                  handleInputChange("depositPercentage", e.target.value)
-                }
+                onChange={(e) => handleInputChange('depositPercentage', e.target.value)}
                 placeholder="e.g., 20.00"
                 disabled={isLoading}
               />
@@ -495,7 +456,7 @@ const VehicleForm: FC<VehicleFormProps> = ({
               <Input
                 id="currency"
                 value={formData.currency}
-                onChange={(e) => handleInputChange("currency", e.target.value)}
+                onChange={(e) => handleInputChange('currency', e.target.value)}
                 placeholder="e.g., USD"
                 disabled={isLoading}
               />
@@ -505,24 +466,19 @@ const VehicleForm: FC<VehicleFormProps> = ({
 
         {/* Form Actions */}
         <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Spinner className="size-4 mr-2" />
-                {isEditMode ? "Updating..." : "Creating..."}
+                <Spinner className="mr-2 size-4" />
+                {isEditMode ? 'Updating...' : 'Creating...'}
               </>
             ) : isEditMode ? (
-              "Update Vehicle"
+              'Update Vehicle'
             ) : (
-              "Create Vehicle"
+              'Create Vehicle'
             )}
           </Button>
         </div>

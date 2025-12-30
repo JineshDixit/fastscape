@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, type FC } from "react";
-import { X, Image as ImageIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "./badge";
+import { useState, useRef, useEffect, type FC } from 'react';
+import { X, Image as ImageIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from './badge';
 
 interface ImageUploadProps {
   id: string;
@@ -13,13 +13,7 @@ interface ImageUploadProps {
   disabled?: boolean;
 }
 
-const ImageUpload: FC<ImageUploadProps> = ({
-  id,
-  label,
-  existingImageUrl,
-  onChange,
-  disabled = false,
-}) => {
+const ImageUpload: FC<ImageUploadProps> = ({ id, label, existingImageUrl, onChange, disabled = false }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [isNewImage, setIsNewImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -56,7 +50,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
     if (disabled) return;
 
     const files = e.dataTransfer.files;
-    if (files && files[0] && files[0].type.startsWith("image/")) {
+    if (files && files[0] && files[0].type.startsWith('image/')) {
       handleFileChange(files[0]);
     }
   };
@@ -82,7 +76,7 @@ const ImageUpload: FC<ImageUploadProps> = ({
     e.stopPropagation();
     handleFileChange(undefined);
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -97,11 +91,11 @@ const ImageUpload: FC<ImageUploadProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-          "mt-2 relative border-2 border-dashed rounded-lg transition-all cursor-pointer",
-          "hover:border-primary/50 hover:bg-accent/50",
-          isDragging && "border-primary bg-accent",
-          disabled && "opacity-50 cursor-not-allowed",
-          preview ? "aspect-video" : "aspect-video"
+          'relative mt-2 cursor-pointer rounded-lg border-2 border-dashed transition-all',
+          'hover:border-primary/50 hover:bg-accent/50',
+          isDragging && 'border-primary bg-accent',
+          disabled && 'cursor-not-allowed opacity-50',
+          preview ? 'aspect-video' : 'aspect-video',
         )}
       >
         <input
@@ -115,13 +109,9 @@ const ImageUpload: FC<ImageUploadProps> = ({
         />
 
         {preview ? (
-          <div className="relative w-full h-full group">
-            <img
-              src={preview}
-              alt={label}
-              className="w-full h-full object-cover rounded-lg"
-            />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+          <div className="group relative h-full w-full">
+            <img src={preview} alt={label} className="h-full w-full rounded-lg object-cover" />
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
               <Button
                 type="button"
                 variant="destructive"
@@ -134,20 +124,16 @@ const ImageUpload: FC<ImageUploadProps> = ({
               </Button>
             </div>
             <Badge variant="default" className="absolute top-2 right-2">
-              {isNewImage ? "Uploaded" : "Current"}
+              {isNewImage ? 'Uploaded' : 'Current'}
             </Badge>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-            <div className="p-3 bg-muted rounded-full mb-3">
-              <ImageIcon className="size-6 text-muted-foreground" />
+          <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+            <div className="bg-muted mb-3 rounded-full p-3">
+              <ImageIcon className="text-muted-foreground size-6" />
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">
-              Click to upload or drag and drop
-            </p>
-            <p className="text-xs text-muted-foreground">
-              PNG, JPG, WEBP up to 10MB
-            </p>
+            <p className="text-foreground mb-1 text-sm font-medium">Click to upload or drag and drop</p>
+            <p className="text-muted-foreground text-xs">PNG, JPG, WEBP up to 10MB</p>
           </div>
         )}
       </div>

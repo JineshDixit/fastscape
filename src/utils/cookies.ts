@@ -1,13 +1,9 @@
-import type { CookieOptions } from "@/common/interface/cookieInterface";
+import type { CookieOptions } from '@/common/interface/cookieInterface';
 
 /**
  * Set a cookie with options
  */
-export const setCookie = (
-  name: string, 
-  value: string, 
-  options: CookieOptions = {}
-): void => {
+export const setCookie = (name: string, value: string, options: CookieOptions = {}): void => {
   let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
 
   if (options.expires) {
@@ -15,7 +11,7 @@ export const setCookie = (
     if (typeof options.expires === 'number') {
       // If number, treat as days from now
       expiresDate = new Date();
-      expiresDate.setTime(expiresDate.getTime() + (options.expires * 24 * 60 * 60 * 1000));
+      expiresDate.setTime(expiresDate.getTime() + options.expires * 24 * 60 * 60 * 1000);
     } else {
       expiresDate = options.expires;
     }
@@ -58,31 +54,27 @@ export const setCookie = (
 export const getCookie = (name: string): string | null => {
   const nameEQ = encodeURIComponent(name) + '=';
   const cookies = document.cookie.split(';');
-  
+
   for (let cookie of cookies) {
     let c = cookie.trim();
     if (c.indexOf(nameEQ) === 0) {
       return decodeURIComponent(c.substring(nameEQ.length));
     }
   }
-  
+
   return null;
 };
 
 /**
  * Delete a cookie
  */
-export const deleteCookie = (
-  name: string, 
-  path: string = '/', 
-  domain?: string
-): void => {
+export const deleteCookie = (name: string, path: string = '/', domain?: string): void => {
   let cookieString = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}`;
-  
+
   if (domain) {
     cookieString += `; domain=${domain}`;
   }
-  
+
   document.cookie = cookieString;
 };
 
@@ -98,16 +90,16 @@ export const cookieExists = (name: string): boolean => {
  */
 export const getAllCookies = (): Record<string, string> => {
   const cookies: Record<string, string> = {};
-  
+
   if (document.cookie) {
-    document.cookie.split(';').forEach(cookie => {
+    document.cookie.split(';').forEach((cookie) => {
       const [name, value] = cookie.trim().split('=');
       if (name && value) {
         cookies[decodeURIComponent(name)] = decodeURIComponent(value);
       }
     });
   }
-  
+
   return cookies;
 };
 
@@ -116,7 +108,7 @@ export const getAllCookies = (): Record<string, string> => {
  */
 export const clearAllCookies = (): void => {
   const cookies = getAllCookies();
-  Object.keys(cookies).forEach(name => {
+  Object.keys(cookies).forEach((name) => {
     deleteCookie(name);
   });
 };
@@ -127,7 +119,7 @@ export const COOKIE_NAMES = {
   REFRESH_TOKEN: 'refresh_token',
   TOKEN_EXPIRES_AT: 'token_expires_at',
   REFRESH_EXPIRES_AT: 'refresh_expires_at',
-  REMEMBER_ME: 'remember_me'
+  REMEMBER_ME: 'remember_me',
 } as const;
 
 /**
@@ -140,12 +132,12 @@ export const authCookies = {
     setCookie(COOKIE_NAMES.ACCESS_TOKEN, token, {
       expires: expiresDate,
       secure: true,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
     setCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
       secure: true,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
   },
 
@@ -155,12 +147,12 @@ export const authCookies = {
     setCookie(COOKIE_NAMES.REFRESH_TOKEN, token, {
       expires: expiresDate,
       secure: true,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
     setCookie(COOKIE_NAMES.REFRESH_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
       secure: true,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
   },
 
@@ -170,7 +162,7 @@ export const authCookies = {
       setCookie(COOKIE_NAMES.REMEMBER_ME, 'true', {
         expires: 30, // 30 days
         secure: true,
-        sameSite: 'strict'
+        sameSite: 'strict',
       });
     } else {
       deleteCookie(COOKIE_NAMES.REMEMBER_ME);
@@ -186,7 +178,7 @@ export const authCookies = {
 
   // Clear all auth cookies
   clearAll: () => {
-    Object.values(COOKIE_NAMES).forEach(cookieName => {
+    Object.values(COOKIE_NAMES).forEach((cookieName) => {
       deleteCookie(cookieName);
     });
   },
@@ -195,13 +187,13 @@ export const authCookies = {
   isAuthenticated: () => {
     const token = getCookie(COOKIE_NAMES.ACCESS_TOKEN);
     const expiresAt = getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT);
-    
+
     if (!token || !expiresAt) return false;
-    
+
     // Simple expiry check
     const now = new Date().getTime();
     const expires = new Date(expiresAt).getTime();
-    
+
     return now < expires;
-  }
+  },
 };

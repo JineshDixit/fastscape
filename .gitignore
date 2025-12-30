@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+.env.example
+.env
+.env.local
+.env.development
+.env.production
+
+#postman collection
+postman/
 
 # Editor directories and files
 .vscode/*

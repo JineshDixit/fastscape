@@ -15,89 +15,48 @@ export class BaseApiService {
   /**
    * GET request
    */
-  async get<T>(
-    path: string = '',
-    config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.get(
-      `${this.endpoint}${path}`,
-      config
-    );
+  async get<T>(path: string = '', config?: RequestConfig): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.get(`${this.endpoint}${path}`, config);
     return response.data;
   }
 
   /**
    * POST request
    */
-  async post<T, D = any>(
-    path: string = '',
-    data?: D,
-    config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.post(
-      `${this.endpoint}${path}`,
-      data,
-      config
-    );
+  async post<T, D = any>(path: string = '', data?: D, config?: RequestConfig): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.post(`${this.endpoint}${path}`, data, config);
     return response.data;
   }
 
   /**
    * PUT request
    */
-  async put<T, D = any>(
-    path: string = '',
-    data?: D,
-    config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.put(
-      `${this.endpoint}${path}`,
-      data,
-      config
-    );
+  async put<T, D = any>(path: string = '', data?: D, config?: RequestConfig): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.put(`${this.endpoint}${path}`, data, config);
     return response.data;
   }
 
   /**
    * PATCH request
    */
-  async patch<T, D = any>(
-    path: string = '',
-    data?: D,
-    config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.patch(
-      `${this.endpoint}${path}`,
-      data,
-      config
-    );
+  async patch<T, D = any>(path: string = '', data?: D, config?: RequestConfig): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.patch(`${this.endpoint}${path}`, data, config);
     return response.data;
   }
 
   /**
    * DELETE request
    */
-  async delete<T>(
-    path: string = '',
-    config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response: AxiosResponse<ApiResponse<T>> = await apiClient.delete(
-      `${this.endpoint}${path}`,
-      config
-    );
+  async delete<T>(path: string = '', config?: RequestConfig): Promise<ApiResponse<T>> {
+    const response: AxiosResponse<ApiResponse<T>> = await apiClient.delete(`${this.endpoint}${path}`, config);
     return response.data;
   }
 
   /**
    * Get all items with pagination
    */
-  async getAll<T>(
-    params?: Record<string, any>
-  ): Promise<PaginatedResponse<T>> {
-    const response: AxiosResponse<PaginatedResponse<T>> = await apiClient.get(
-      this.endpoint,
-      { params }
-    );
+  async getAll<T>(params?: Record<string, any>): Promise<PaginatedResponse<T>> {
+    const response: AxiosResponse<PaginatedResponse<T>> = await apiClient.get(this.endpoint, { params });
     return response.data;
   }
 
@@ -118,20 +77,14 @@ export class BaseApiService {
   /**
    * Update item by ID
    */
-  async update<T, D = any>(
-    id: string | number,
-    data: D
-  ): Promise<ApiResponse<T>> {
+  async update<T, D = any>(id: string | number, data: D): Promise<ApiResponse<T>> {
     return this.put<T, D>(`/${id}`, data);
   }
 
   /**
    * Partially update item by ID
    */
-  async partialUpdate<T, D = any>(
-    id: string | number,
-    data: D
-  ): Promise<ApiResponse<T>> {
+  async partialUpdate<T, D = any>(id: string | number, data: D): Promise<ApiResponse<T>> {
     return this.patch<T, D>(`/${id}`, data);
   }
 

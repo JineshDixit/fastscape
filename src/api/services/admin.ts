@@ -1,12 +1,12 @@
-import { BaseApiService } from "../base";
-import type { ApiResponse } from "@/common/interface/apiInterface";
+import { BaseApiService } from '../base';
+import type { ApiResponse } from '@/common/interface/apiInterface';
 
 /**
  * Service for Role management
  */
 export class RoleService extends BaseApiService {
   constructor() {
-    super("/roles");
+    super('/roles');
   }
 
   async activate(id: string): Promise<ApiResponse<any>> {
@@ -27,24 +27,18 @@ export class RoleService extends BaseApiService {
  */
 export class PolicyService extends BaseApiService {
   constructor() {
-    super("/policies");
+    super('/policies');
   }
 
   async getByName(name: string): Promise<ApiResponse<any>> {
     return this.get(`/name/${name}`);
   }
 
-  async addPermissions(
-    id: string,
-    permissions: string[]
-  ): Promise<ApiResponse<any>> {
+  async addPermissions(id: string, permissions: string[]): Promise<ApiResponse<any>> {
     return this.post(`/${id}/permissions`, { permissions });
   }
 
-  async removePermissions(
-    id: string,
-    permissions: string[]
-  ): Promise<ApiResponse<any>> {
+  async removePermissions(id: string, permissions: string[]): Promise<ApiResponse<any>> {
     return this.delete(`/${id}/permissions`, { data: { permissions } });
   }
 }

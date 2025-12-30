@@ -10,7 +10,7 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
   requiredRoles = [],
   requiredPermissions = [],
   requireAll = false,
-  fallbackPath = '/dashboard'
+  fallbackPath = '/dashboard',
 }) => {
   const { user, hasRole, hasPermission } = useAuthContext();
 
@@ -21,22 +21,22 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
   // Check roles
   const hasRequiredRoles = () => {
     if (requiredRoles.length === 0) return true;
-    
+
     if (requireAll) {
-      return requiredRoles.every(role => hasRole(role));
+      return requiredRoles.every((role) => hasRole(role));
     } else {
-      return requiredRoles.some(role => hasRole(role));
+      return requiredRoles.some((role) => hasRole(role));
     }
   };
 
   // Check permissions
   const hasRequiredPermissions = () => {
     if (requiredPermissions.length === 0) return true;
-    
+
     if (requireAll) {
-      return requiredPermissions.every(permission => hasPermission(permission));
+      return requiredPermissions.every((permission) => hasPermission(permission));
     } else {
-      return requiredPermissions.some(permission => hasPermission(permission));
+      return requiredPermissions.some((permission) => hasPermission(permission));
     }
   };
 

@@ -1,7 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import type { ProtectedRouteProps } from "@/common/interface/routeInterface";
-import { Spinner } from "@/components/ui/spinner";
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import type { ProtectedRouteProps } from '@/common/interface/routeInterface';
+import { Spinner } from '@/components/ui/spinner';
 
 /**
  * ProtectedRoute component that checks authentication status
@@ -14,8 +14,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <Spinner className="size-10 text-primary" />
+      <div className="bg-background flex h-screen w-full items-center justify-center">
+        <Spinner className="text-primary size-10" />
       </div>
     );
   }

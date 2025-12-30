@@ -7,22 +7,25 @@ import type { LoginRequest, LoginResponse, UseAuthReturn, User } from '@/common/
  * Custom hook for authentication operations, now using global AuthContext
  */
 export const useAuth = (): UseAuthReturn => {
-  const { 
+  const {
     isAuthenticated,
-    isLoading, 
-    error, 
-    login: contextLogin, 
+    isLoading,
+    error,
+    login: contextLogin,
     logout: contextLogout,
     clearError,
     refreshProfile,
     hasPermission,
     hasAnyPermission,
-    hasRole
+    hasRole,
   } = useAuthContext();
 
-  const login = useCallback(async (credentials: LoginRequest): Promise<LoginResponse> => {
-    return await contextLogin(credentials);
-  }, [contextLogin]);
+  const login = useCallback(
+    async (credentials: LoginRequest): Promise<LoginResponse> => {
+      return await contextLogin(credentials);
+    },
+    [contextLogin],
+  );
 
   const logout = useCallback(async (): Promise<void> => {
     await contextLogout();
@@ -56,6 +59,6 @@ export const useAuth = (): UseAuthReturn => {
     clearError,
     hasPermission,
     hasAnyPermission,
-    hasRole
+    hasRole,
   };
 };

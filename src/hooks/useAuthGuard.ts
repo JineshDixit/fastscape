@@ -10,6 +10,6 @@ export const useAuthGuard = () => {
   return {
     isAuthenticated,
     isLoading,
-    user
+    user,
   };
 };
