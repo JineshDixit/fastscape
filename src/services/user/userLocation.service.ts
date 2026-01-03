@@ -6,10 +6,7 @@ import { LocationSearchQuery, UserLocationData, UserWithLocation } from '../../c
 /**
  * Update user location information
  */
-export const updateUserLocation = async (
-  userId: string,
-  locationData: UserLocationData,
-): Promise<User> => {
+export const updateUserLocation = async (userId: string, locationData: UserLocationData): Promise<User> => {
   const user = await User.findByPk(userId);
 
   if (!user) {
@@ -23,9 +20,7 @@ export const updateUserLocation = async (
 /**
  * Get users by location
  */
-export const getUsersByLocation = async (
-  query: LocationSearchQuery,
-): Promise<UserWithLocation[]> => {
+export const getUsersByLocation = async (query: LocationSearchQuery): Promise<UserWithLocation[]> => {
   const { city, state, country } = query;
 
   const whereConditions: any = {
@@ -64,9 +59,7 @@ export const getUsersByLocation = async (
 
   return users.map((user) => ({
     ...user.toJSON(),
-    locationSummary: [user.city, user.state, user.country]
-      .filter(Boolean)
-      .join(', '),
+    locationSummary: [user.city, user.state, user.country].filter(Boolean).join(', '),
     addressCompleteness: getAddressCompleteness(user),
   }));
 };
@@ -95,12 +88,7 @@ export const getUsersInSameCity = async (userId: string): Promise<UserWithLocati
  */
 export const getLocationStatistics = async () => {
   const stats = await User.findAll({
-    attributes: [
-      'country',
-      'state',
-      'city',
-      [User.sequelize!.fn('COUNT', User.sequelize!.col('id')), 'userCount'],
-    ],
+    attributes: ['country', 'state', 'city', [User.sequelize!.fn('COUNT', User.sequelize!.col('id')), 'userCount']],
     where: {
       isBlocked: false,
     },
@@ -152,9 +140,7 @@ export const findUsersNearLocation = async (
   };
 
   // Exact city match first
-  whereConditions[Op.or] = [
-    { city: { [Op.iLike]: targetCity } },
-  ];
+  whereConditions[Op.or] = [{ city: { [Op.iLike]: targetCity } }];
 
   // If state provided, include state matches
   if (targetState) {
@@ -168,18 +154,7 @@ export const findUsersNearLocation = async (
 
   const users = await User.findAll({
     where: whereConditions,
-    attributes: [
-      'id',
-      'fullName',
-      'email',
-      'phone',
-      'homeAddress',
-      'city',
-      'state',
-      'zipCode',
-      'country',
-      'createdAt',
-    ],
+    attributes: ['id', 'fullName', 'email', 'phone', 'homeAddress', 'city', 'state', 'zipCode', 'country', 'createdAt'],
     order: [
       // Prioritize exact city matches
       [User.sequelize!.literal(`CASE WHEN city ILIKE '${targetCity}' THEN 0 ELSE 1 END`), 'ASC'],
@@ -190,9 +165,7 @@ export const findUsersNearLocation = async (
 
   return users.map((user) => ({
     ...user.toJSON(),
-    locationSummary: [user.city, user.state, user.country]
-      .filter(Boolean)
-      .join(', '),
+    locationSummary: [user.city, user.state, user.country].filter(Boolean).join(', '),
     addressCompleteness: getAddressCompleteness(user),
   }));
 };

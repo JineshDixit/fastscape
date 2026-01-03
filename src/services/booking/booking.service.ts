@@ -3,6 +3,7 @@ import { Booking, Vehicle, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateDateRange } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
+import Logger from '../../utils/logger';
 
 /**
  * Create a new booking
@@ -11,7 +12,14 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
   const { userId, vehicleId, startDatetime, endDatetime, pickupLocation, dropoffLocation } = bookingData;
 
   // Validate required fields
-  validateRequiredFields(bookingData, ['userId', 'vehicleId', 'startDatetime', 'endDatetime', 'pickupLocation', 'dropoffLocation']);
+  validateRequiredFields(bookingData, [
+    'userId',
+    'vehicleId',
+    'startDatetime',
+    'endDatetime',
+    'pickupLocation',
+    'dropoffLocation',
+  ]);
 
   // Validate dates
   const { start, end } = validateDateRange(startDatetime, endDatetime);
@@ -21,8 +29,9 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
   if (!vehicle) {
     throw createError('Vehicle not found', 404);
   }
-  
+
   if (!vehicle.isAvailable) {
+    Logger.warn('Booking attempted on unavailable vehicle', { vehicleId, userId });
     throw createError('Vehicle is not available', 400);
   }
 
@@ -35,33 +44,39 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
       where: {
         vehicleId,
         bookingStatus: ['PENDING', 'CONFIRMED'],
-        ...buildDateConflictConditions(start, end)
+        ...buildDateConflictConditions(start, end),
       },
       transaction,
-      lock: true // Add row-level locking
+      lock: true, // Add row-level locking
     });
 
     if (conflictingBooking) {
       await transaction.rollback();
+      Logger.warn('Booking conflict detected', { vehicleId, start, end });
       throw createError('Vehicle is already booked for the selected dates', 409);
     }
 
     // Create booking within transaction
-    const booking = await Booking.create({
-      userId,
-      vehicleId,
-      startDatetime: start,
-      endDatetime: end,
-      pickupLocation,
-      dropoffLocation,
-      bookingStatus: 'PENDING',
-      paymentStatus: 'UNPAID',
-    }, { transaction });
+    const booking = await Booking.create(
+      {
+        userId,
+        vehicleId,
+        startDatetime: start,
+        endDatetime: end,
+        pickupLocation,
+        dropoffLocation,
+        bookingStatus: 'PENDING',
+        paymentStatus: 'UNPAID',
+      },
+      { transaction },
+    );
 
     await transaction.commit();
+    Logger.info('Booking created successfully', { bookingId: booking.id, userId, vehicleId });
     return booking;
   } catch (error) {
     await transaction.rollback();
+    Logger.error('Booking transaction failed', { error });
     throw error;
   }
 };
@@ -80,10 +95,10 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
     include: [
       {
         model: Vehicle,
-        attributes: VEHICLE_LIST_ATTRIBUTES
-      }
+        attributes: VEHICLE_LIST_ATTRIBUTES,
+      },
     ],
-    order: [['createdAt', 'DESC']]
+    order: [['createdAt', 'DESC']],
   });
 
   return bookings;
@@ -103,9 +118,9 @@ export const getBookingById = async (bookingId: string, userId: string): Promise
     include: [
       {
         model: Vehicle,
-        attributes: [...VEHICLE_LIST_ATTRIBUTES, 'exteriorColor']
-      }
-    ]
+        attributes: [...VEHICLE_LIST_ATTRIBUTES, 'exteriorColor'],
+      },
+    ],
   });
 
   if (!booking) {
@@ -118,13 +133,17 @@ export const getBookingById = async (bookingId: string, userId: string): Promise
 /**
  * Updates a booking by ID and user ID with the provided data
  */
-export const updateBooking = async (bookingId: string, userId: string, updateData: UpdateBookingData): Promise<Booking> => {
+export const updateBooking = async (
+  bookingId: string,
+  userId: string,
+  updateData: UpdateBookingData,
+): Promise<Booking> => {
   if (!bookingId || !userId) {
     throw createError('Booking ID and User ID are required', 400);
   }
 
   const booking = await Booking.findOne({
-    where: { id: bookingId, userId }
+    where: { id: bookingId, userId },
   });
 
   if (!booking) {
@@ -140,13 +159,14 @@ export const updateBooking = async (bookingId: string, userId: string, updateDat
   if (updateData.startDatetime || updateData.endDatetime) {
     const start = updateData.startDatetime ? new Date(updateData.startDatetime) : booking.startDatetime;
     const end = updateData.endDatetime ? new Date(updateData.endDatetime) : booking.endDatetime;
-    
+
     validateDateRange(start, end);
   }
 
   // Update booking
   await booking.update(updateData);
 
+  Logger.info('Booking updated', { bookingId, updates: Object.keys(updateData) });
   return booking;
 };
 
@@ -159,7 +179,7 @@ export const cancelBooking = async (bookingId: string, userId: string): Promise<
   }
 
   const booking = await Booking.findOne({
-    where: { id: bookingId, userId }
+    where: { id: bookingId, userId },
   });
 
   if (!booking) {
@@ -170,11 +190,12 @@ export const cancelBooking = async (bookingId: string, userId: string): Promise<
   if (booking.bookingStatus === 'CANCELLED') {
     throw createError('Booking is already cancelled', 400);
   }
-  
+
   if (booking.bookingStatus === 'COMPLETED') {
     throw createError('Cannot cancel completed booking', 400);
   }
 
   // Update booking status
   await booking.update({ bookingStatus: 'CANCELLED' });
+  Logger.info('Booking cancelled', { bookingId, userId });
 };

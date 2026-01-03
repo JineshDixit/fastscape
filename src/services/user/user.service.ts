@@ -16,7 +16,7 @@ export const getUserById = async (userId: string): Promise<Partial<User>> => {
   }
 
   const user = await User.findByPk(userId, {
-    attributes: USER_SAFE_ATTRIBUTES
+    attributes: USER_SAFE_ATTRIBUTES,
   });
 
   if (!user) {
@@ -56,7 +56,7 @@ export const updateUser = async (userId: string, updateData: Partial<userModelTy
   if (updateData.email) {
     validateEmail(updateData.email);
     updateData.email = sanitizeEmail(updateData.email);
-    
+
     // Check if email is already taken by another user
     const existingUser = await User.findOne({
       where: {
@@ -64,7 +64,7 @@ export const updateUser = async (userId: string, updateData: Partial<userModelTy
         id: { [Op.ne]: userId },
       },
     });
-    
+
     if (existingUser) {
       throw createError('Email is already taken', 409);
     }
@@ -83,7 +83,7 @@ export const updateUser = async (userId: string, updateData: Partial<userModelTy
 
   // Return updated user without password
   const updatedUser = await User.findByPk(userId, {
-    attributes: USER_SAFE_ATTRIBUTES
+    attributes: USER_SAFE_ATTRIBUTES,
   });
 
   return updatedUser!.toJSON();
@@ -103,10 +103,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
   }
 
   // Revoke all refresh tokens before deleting user
-  await RefreshToken.update(
-    { isRevoked: true },
-    { where: { userId, isRevoked: false } }
-  );
+  await RefreshToken.update({ isRevoked: true }, { where: { userId, isRevoked: false } });
 
   // Delete user
   await user.destroy();

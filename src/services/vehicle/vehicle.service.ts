@@ -3,9 +3,6 @@ import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op } from 'sequelize';
 
-/**
- * Get vehicle by ID with media
- */
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
     include: [
@@ -23,9 +20,6 @@ export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   return vehicle;
 };
 
-/**
- * Get all vehicles with filtering and pagination
- */
 export const getVehicles = async (
   filters: VehicleFilterOptions = {},
   pagination: PaginationOptions = {},
@@ -40,7 +34,6 @@ export const getVehicles = async (
 
   const offset = (page - 1) * limit;
 
-  // Build where clause
   const whereClause: any = {};
 
   if (filters.make) {
@@ -112,9 +105,6 @@ export const getVehicles = async (
   };
 };
 
-/**
- * Get vehicle statistics
- */
 export const getVehicleStats = async (): Promise<{
   total: number;
   available: number;
@@ -127,7 +117,6 @@ export const getVehicleStats = async (): Promise<{
   const available = await Vehicle.count({ where: { isAvailable: true } });
   const unavailable = total - available;
 
-  // Get stats by body type
   const bodyTypeStats = await Vehicle.findAll({
     attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     group: ['body_type'],
@@ -139,7 +128,6 @@ export const getVehicleStats = async (): Promise<{
     byBodyType[stat.body_type] = parseInt(stat.count);
   });
 
-  // Get stats by fuel type
   const fuelTypeStats = await Vehicle.findAll({
     attributes: ['fuel_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     group: ['fuel_type'],
@@ -151,7 +139,6 @@ export const getVehicleStats = async (): Promise<{
     byFuelType[stat.fuel_type] = parseInt(stat.count);
   });
 
-  // Get average price
   const avgPriceResult = await Vehicle.findOne({
     attributes: [[Vehicle.sequelize!.fn('AVG', Vehicle.sequelize!.col('price_per_day')), 'avgPrice']],
     raw: true,
@@ -171,45 +158,69 @@ export const getVehicleStats = async (): Promise<{
 
 export const getVehicleBodyTypeSummary = async (): Promise<{ bodyType: string; count: number }[]> => {
   const results = await Vehicle.findAll({
-    attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    attributes: ['bodyType', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     where: { isAvailable: true },
-    group: ['body_type'],
+    group: ['bodyType'],
     raw: true,
   });
 
   return results.map((r: any) => ({
-    bodyType: r.body_type,
+    bodyType: r.bodyType,
     count: Number(r.count),
   }));
 };
 
-export const getBodyTypeFilterCounts = async () => {
-  const results = await Vehicle.findAll({
-    attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+export const getVehicleFilterMetadata = async () => {
+  const bodyTypeRaw = await Vehicle.findAll({
+    attributes: [
+      'bodyType',
+      'make',
+      'model',
+      [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count'],
+    ],
     where: { isAvailable: true },
-    group: ['body_type'],
+    group: ['bodyType', 'make', 'model'],
     raw: true,
   });
 
-  return results;
-};
-
-export const getBrandFilterCounts = async () => {
-  const results = await Vehicle.findAll({
+  const brandRaw = await Vehicle.findAll({
     attributes: ['make', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     where: { isAvailable: true },
     group: ['make'],
     raw: true,
   });
 
-  return results;
-};
+  const bodyTypeMap = new Map<string, { count: number; vehicles: Set<string> }>();
 
-export const getVehicleFilterMetadata = async () => {
-  const [bodyTypes, brands] = await Promise.all([getBodyTypeFilterCounts(), getBrandFilterCounts()]);
+  (bodyTypeRaw as any[]).forEach((item) => {
+    const { bodyType, make, model, count } = item;
+    const vehicleName = `${make} ${model}`;
+    const numCount = Number(count);
+
+    if (!bodyTypeMap.has(bodyType)) {
+      bodyTypeMap.set(bodyType, { count: 0, vehicles: new Set() });
+    }
+
+    const entry = bodyTypeMap.get(bodyType)!;
+    entry.count += numCount;
+    entry.vehicles.add(vehicleName);
+  });
+
+  // Format Body Type Output
+  const bodyTypes = Array.from(bodyTypeMap.entries()).map(([type, data]) => ({
+    bodyType: type,
+    count: data.count,
+    vehicles: Array.from(data.vehicles).sort(),
+  }));
+
+  // Format Brand Output
+  const brands = (brandRaw as any[]).map((item) => ({
+    make: item.make,
+    count: Number(item.count),
+  }));
 
   return {
-    bodyTypes,
-    brands,
+    bodyTypes: bodyTypes.sort((a, b) => b.count - a.count),
+    brands: brands.sort((a, b) => b.count - a.count),
   };
 };

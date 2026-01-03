@@ -103,7 +103,7 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
       depositPercentage: {
         type: DataTypes.DECIMAL(5, 2),
         allowNull: false,
-        defaultValue: 20.00,
+        defaultValue: 20.0,
         comment: 'Percentage of base amount for deposit',
       },
     },

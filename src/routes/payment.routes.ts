@@ -26,11 +26,7 @@ router.use(authenticateUser);
  */
 router.get(
   '/calculate/:bookingId',
-  [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
-  ],
+  [param('bookingId').isUUID().withMessage('Valid booking ID is required')],
   handleValidationErrors,
   calculatePayment,
 );
@@ -43,17 +39,12 @@ router.get(
 router.post(
   '/deposit/:bookingId',
   [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
     body('paymentMethod')
       .optional()
       .isIn(['PICKUP', 'DROPOFF', 'ONLINE'])
       .withMessage('Payment method must be PICKUP, DROPOFF, or ONLINE'),
-    body('stripePaymentIntentId')
-      .optional()
-      .isString()
-      .withMessage('Stripe payment intent ID must be a string'),
+    body('stripePaymentIntentId').optional().isString().withMessage('Stripe payment intent ID must be a string'),
   ],
   handleValidationErrors,
   processDeposit,
@@ -67,17 +58,12 @@ router.post(
 router.post(
   '/balance/:bookingId',
   [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
     body('paymentMethod')
       .optional()
       .isIn(['PICKUP', 'DROPOFF', 'ONLINE'])
       .withMessage('Payment method must be PICKUP, DROPOFF, or ONLINE'),
-    body('stripePaymentIntentId')
-      .optional()
-      .isString()
-      .withMessage('Stripe payment intent ID must be a string'),
+    body('stripePaymentIntentId').optional().isString().withMessage('Stripe payment intent ID must be a string'),
   ],
   handleValidationErrors,
   processBalance,
@@ -91,12 +77,8 @@ router.post(
 router.post(
   '/delay-charge/:bookingId',
   [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
-    body('actualDropoffTime')
-      .isISO8601()
-      .withMessage('Valid actual dropoff time is required'),
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('actualDropoffTime').isISO8601().withMessage('Valid actual dropoff time is required'),
   ],
   handleValidationErrors,
   applyDelayCharge,
@@ -109,11 +91,7 @@ router.post(
  */
 router.get(
   '/summary/:bookingId',
-  [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
-  ],
+  [param('bookingId').isUUID().withMessage('Valid booking ID is required')],
   handleValidationErrors,
   getBookingPaymentSummary,
 );
@@ -126,13 +104,8 @@ router.get(
 router.put(
   '/complete/:paymentId',
   [
-    param('paymentId')
-      .isUUID()
-      .withMessage('Valid payment ID is required'),
-    body('stripePaymentIntentId')
-      .optional()
-      .isString()
-      .withMessage('Stripe payment intent ID must be a string'),
+    param('paymentId').isUUID().withMessage('Valid payment ID is required'),
+    body('stripePaymentIntentId').optional().isString().withMessage('Stripe payment intent ID must be a string'),
   ],
   handleValidationErrors,
   completePayment,
@@ -146,13 +119,8 @@ router.put(
 router.put(
   '/pickup/:bookingId',
   [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
-    body('actualPickupTime')
-      .optional()
-      .isISO8601()
-      .withMessage('Valid pickup time is required'),
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('actualPickupTime').optional().isISO8601().withMessage('Valid pickup time is required'),
   ],
   handleValidationErrors,
   markVehiclePickedUp,
@@ -166,13 +134,8 @@ router.put(
 router.put(
   '/dropoff/:bookingId',
   [
-    param('bookingId')
-      .isUUID()
-      .withMessage('Valid booking ID is required'),
-    body('actualDropoffTime')
-      .optional()
-      .isISO8601()
-      .withMessage('Valid dropoff time is required'),
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('actualDropoffTime').optional().isISO8601().withMessage('Valid dropoff time is required'),
   ],
   handleValidationErrors,
   markVehicleDroppedOff,

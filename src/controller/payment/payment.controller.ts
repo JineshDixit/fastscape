@@ -21,10 +21,7 @@ class PaymentController extends BaseController {
     const bookingId = this.getValidatedId(req, 'bookingId');
     const { delayHours = 0 } = req.query;
 
-    const calculation = await calculatePaymentBreakdown(
-      bookingId,
-      Number(delayHours),
-    );
+    const calculation = await calculatePaymentBreakdown(bookingId, Number(delayHours));
 
     sendSuccess(res, 'Payment calculation completed', calculation);
   });
@@ -36,11 +33,7 @@ class PaymentController extends BaseController {
     const bookingId = this.getValidatedId(req, 'bookingId');
     const { paymentMethod = 'ONLINE', stripePaymentIntentId } = req.body;
 
-    const result = await processDepositPayment(
-      bookingId,
-      paymentMethod,
-      stripePaymentIntentId,
-    );
+    const result = await processDepositPayment(bookingId, paymentMethod, stripePaymentIntentId);
 
     sendSuccess(res, 'Deposit payment processed successfully', {
       payment: result.payment,
@@ -55,11 +48,7 @@ class PaymentController extends BaseController {
     const bookingId = this.getValidatedId(req, 'bookingId');
     const { paymentMethod = 'DROPOFF', stripePaymentIntentId } = req.body;
 
-    const result = await processBalancePayment(
-      bookingId,
-      paymentMethod,
-      stripePaymentIntentId,
-    );
+    const result = await processBalancePayment(bookingId, paymentMethod, stripePaymentIntentId);
 
     sendSuccess(res, 'Balance payment processed successfully', {
       payment: result.payment,
@@ -76,10 +65,7 @@ class PaymentController extends BaseController {
 
     validateRequiredFields({ actualDropoffTime }, ['actualDropoffTime']);
 
-    const result = await applyDelayCharges(
-      bookingId,
-      new Date(actualDropoffTime),
-    );
+    const result = await applyDelayCharges(bookingId, new Date(actualDropoffTime));
 
     const message = result.delayCharge
       ? 'Delay charges applied successfully'
@@ -154,10 +140,7 @@ class PaymentController extends BaseController {
     const { actualDropoffTime = new Date() } = req.body;
 
     // Apply delay charges if any
-    const result = await applyDelayCharges(
-      bookingId,
-      new Date(actualDropoffTime),
-    );
+    const result = await applyDelayCharges(bookingId, new Date(actualDropoffTime));
 
     // Update booking status
     await result.booking.update({
@@ -184,5 +167,5 @@ export const {
   completePayment,
   getOverduePaymentsList,
   markVehiclePickedUp,
-  markVehicleDroppedOff
+  markVehicleDroppedOff,
 } = paymentController;

@@ -9,11 +9,7 @@ const router = Router();
 router.get('/profile', authenticateUser, userController.getCurrentUser);
 
 // Update user profile
-router.put('/profile', 
-  authenticateUser,
-  validateUserUpdate,
-  userController.updateUserProfile
-);
+router.put('/profile', authenticateUser, validateUserUpdate, userController.updateUserProfile);
 
 // Delete user account
 router.delete('/profile', authenticateUser, userController.deleteUserAccount);

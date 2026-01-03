@@ -1,31 +1,34 @@
 import { AppError } from '../../common/types/errorType';
-import '../../config/env/envConfig'
+import '../../config/env/envConfig';
 import { Request, Response, NextFunction } from 'express';
+import Logger from '../../utils/logger';
 
 /**
- * Global error handler middleware
+ * Global error handling middleware
  */
 export const errorHandler = (
   error: AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   let { statusCode = 500, message } = error;
 
-  // Don't expose internal errors in production
-  if (process.env.NODE_ENV === 'production' && !error.isOperational) {
-    message = 'Something went wrong';
+  // If status code is 500, change message to generic error for production users
+  if (
+    statusCode === 500 &&
+    process.env.NODE_ENV === 'production' &&
+    !error.isOperational
+  ) {
+    message = 'Something went wrong on the server';
   }
 
-  // Log error for debugging
-  console.error('Error:', {
+  // Log error using Logger
+  Logger.error('Error:', {
     message: error.message,
     stack: error.stack,
-    url: req.url,
+    path: req.path,
     method: req.method,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
   });
 
   res.status(statusCode).json({

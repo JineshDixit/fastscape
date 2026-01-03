@@ -21,16 +21,8 @@ class ChauffeurController extends BaseController {
    * Find available chauffeurs for a booking
    */
   getAvailableChauffeurs = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const {
-      startDatetime,
-      endDatetime,
-      vehicleType,
-      city,
-      minRating,
-      maxHourlyRate,
-      languages,
-      experienceLevel,
-    } = req.query;
+    const { startDatetime, endDatetime, vehicleType, city, minRating, maxHourlyRate, languages, experienceLevel } =
+      req.query;
 
     validateRequiredFields({ startDatetime, endDatetime }, ['startDatetime', 'endDatetime']);
 
@@ -205,7 +197,7 @@ class ChauffeurController extends BaseController {
     const { page, limit, offset } = parsePaginationParams(req.query);
 
     const { Chauffeur } = await import('../../models');
-    
+
     const whereConditions: any = {};
 
     if (status) {
@@ -222,7 +214,10 @@ class ChauffeurController extends BaseController {
 
     const { count, rows: chauffeurs } = await Chauffeur.findAndCountAll({
       where: whereConditions,
-      order: [['rating', 'DESC'], ['totalTrips', 'DESC']],
+      order: [
+        ['rating', 'DESC'],
+        ['totalTrips', 'DESC'],
+      ],
       limit,
       offset,
       attributes: [
@@ -247,17 +242,12 @@ class ChauffeurController extends BaseController {
       ],
     });
 
-    sendSuccessWithPagination(
-      res,
-      'Chauffeurs retrieved successfully',
-      chauffeurs,
-      {
-        total: count,
-        page,
-        limit,
-        totalPages: Math.ceil(count / limit)
-      }
-    );
+    sendSuccessWithPagination(res, 'Chauffeurs retrieved successfully', chauffeurs, {
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+    });
   });
 }
 
@@ -272,5 +262,5 @@ export const {
   createNewChauffeur,
   updateChauffeurProfile,
   getChauffeurPerformance,
-  getAllChauffeurs
+  getAllChauffeurs,
 } = chauffeurController;

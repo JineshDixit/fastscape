@@ -26,6 +26,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 ## ✨ Features
 
 ### 🔐 Authentication & Authorization
+
 - **JWT-based authentication** with dual token system (access + refresh tokens)
 - **Token rotation** for enhanced security
 - **Multi-device logout** capability
@@ -34,6 +35,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - **Rate limiting** to prevent brute force attacks
 
 ### 👤 User Management
+
 - User registration with comprehensive validation
 - Profile management (view, update, delete)
 - Email verification and sanitization
@@ -41,6 +43,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - Strong password policy enforcement
 
 ### 🚙 Vehicle Management
+
 - Browse available vehicles with advanced filtering
 - Search vehicles by make, model, type, etc.
 - Date-based availability checking
@@ -48,6 +51,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - Vehicle details with media gallery
 
 ### 📅 Booking System
+
 - Create bookings with conflict detection
 - Real-time availability checking
 - Booking management (view, update, cancel)
@@ -56,6 +60,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - Booking history tracking
 
 ### 🛡️ Security Features
+
 - **OWASP Top 10** compliance
 - **XSS protection** through input sanitization
 - **SQL injection prevention** via ORM
@@ -65,6 +70,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - **Comprehensive input validation**
 
 ### 🔧 Additional Features
+
 - Automatic token cleanup (background jobs)
 - Global error handling with production-safe messages
 - Comprehensive logging
@@ -75,6 +81,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 ## 🛠️ Tech Stack
 
 ### Core
+
 - **Runtime**: Node.js 14+
 - **Language**: TypeScript 5.9.3
 - **Framework**: Express 5.2.1
@@ -82,6 +89,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - **ORM**: Sequelize 6.37.7
 
 ### Security
+
 - **Authentication**: JWT (jsonwebtoken)
 - **Password Hashing**: bcrypt
 - **Validation**: express-validator
@@ -89,6 +97,7 @@ A secure, scalable, and production-ready RESTful API for a car rental platform b
 - **Security Headers**: Custom middleware
 
 ### Development
+
 - **Code Quality**: ESLint, Prettier
 - **Process Manager**: nodemon
 - **Environment**: dotenv
@@ -123,28 +132,32 @@ Response ← Error Handler ← HTTP ← Business ← ORM ← PostgreSQL
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd rental-car-backend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.development .env
    ```
-   
+
    Update the `.env` file with your configuration (see [Environment Variables](#-environment-variables))
 
 4. **Set up the database**
+
    ```bash
    # Create PostgreSQL database
    createdb rental-car-db
-   
+
    # Run migrations (if available)
    npm run migrate
    ```
@@ -173,6 +186,7 @@ curl http://localhost:3000/api/v1/health
 ## 📚 API Documentation
 
 ### Base URL
+
 ```
 http://localhost:3000/api/v1
 ```
@@ -180,6 +194,7 @@ http://localhost:3000/api/v1
 ### Authentication Endpoints
 
 #### Register User
+
 ```http
 POST /auth/register
 Content-Type: application/json
@@ -196,6 +211,7 @@ Content-Type: application/json
 ```
 
 #### Login
+
 ```http
 POST /auth/login
 Content-Type: application/json
@@ -207,6 +223,7 @@ Content-Type: application/json
 ```
 
 #### Refresh Token
+
 ```http
 POST /auth/refresh-token
 Content-Type: application/json
@@ -217,6 +234,7 @@ Content-Type: application/json
 ```
 
 #### Logout
+
 ```http
 POST /auth/logout
 Content-Type: application/json
@@ -227,6 +245,7 @@ Content-Type: application/json
 ```
 
 #### Logout All Devices
+
 ```http
 POST /auth/logout-all
 Authorization: Bearer <access-token>
@@ -235,12 +254,14 @@ Authorization: Bearer <access-token>
 ### User Endpoints
 
 #### Get Profile
+
 ```http
 GET /users/profile
 Authorization: Bearer <access-token>
 ```
 
 #### Update Profile
+
 ```http
 PUT /users/profile
 Authorization: Bearer <access-token>
@@ -253,6 +274,7 @@ Content-Type: application/json
 ```
 
 #### Delete Account
+
 ```http
 DELETE /users/profile
 Authorization: Bearer <access-token>
@@ -261,16 +283,19 @@ Authorization: Bearer <access-token>
 ### Vehicle Endpoints
 
 #### Get Available Vehicles
+
 ```http
 GET /vehicles?startDate=2025-01-01&endDate=2025-01-07&bodyType=SUV&minPrice=50&maxPrice=200
 ```
 
 #### Search Vehicles
+
 ```http
 GET /vehicles/search?query=BMW
 ```
 
 #### Get Vehicle Details
+
 ```http
 GET /vehicles/:vehicleId
 ```
@@ -278,6 +303,7 @@ GET /vehicles/:vehicleId
 ### Booking Endpoints
 
 #### Create Booking
+
 ```http
 POST /bookings
 Authorization: Bearer <access-token>
@@ -293,18 +319,21 @@ Content-Type: application/json
 ```
 
 #### Get User Bookings
+
 ```http
 GET /bookings
 Authorization: Bearer <access-token>
 ```
 
 #### Get Booking Details
+
 ```http
 GET /bookings/:bookingId
 Authorization: Bearer <access-token>
 ```
 
 #### Update Booking
+
 ```http
 PUT /bookings/:bookingId
 Authorization: Bearer <access-token>
@@ -316,6 +345,7 @@ Content-Type: application/json
 ```
 
 #### Cancel Booking
+
 ```http
 DELETE /bookings/:bookingId
 Authorization: Bearer <access-token>
@@ -328,12 +358,14 @@ For complete API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.m
 This project implements enterprise-grade security measures:
 
 ### Authentication Security
+
 - **JWT dual token system** (access: 15min, refresh: 7 days)
 - **Token rotation** on each refresh
 - **Token revocation** through database tracking
 - **bcrypt password hashing** (12 salt rounds)
 
 ### Input Security
+
 - **Express-validator** for all inputs
 - **XSS prevention** through HTML encoding
 - **SQL injection prevention** via Sequelize ORM
@@ -341,11 +373,13 @@ This project implements enterprise-grade security measures:
 - **Strong password policy** enforcement
 
 ### Rate Limiting
+
 - Authentication endpoints: **5 attempts per 15 minutes**
 - Token refresh: **10 attempts per 15 minutes**
 - General API: **100 requests per 15 minutes**
 
 ### Security Headers
+
 - Content Security Policy (CSP)
 - HTTP Strict Transport Security (HSTS)
 - X-Content-Type-Options
@@ -354,6 +388,7 @@ This project implements enterprise-grade security measures:
 - Referrer-Policy
 
 ### Additional Security
+
 - **Transaction support** for critical operations
 - **Row-level locking** for concurrent operations
 - **Global error handler** with production-safe messages
@@ -477,6 +512,7 @@ FRONTEND_URL=http://localhost:3000
 ```
 
 ### Security Notes
+
 - **Never commit** `.env` files to version control
 - Use **strong, unique secrets** for JWT tokens (minimum 32 characters)
 - Change default database credentials
@@ -552,11 +588,13 @@ npm run test:coverage
 ### Deployment Steps
 
 1. **Build the application**
+
    ```bash
    npm run build
    ```
 
 2. **Set environment variables**
+
    ```bash
    export NODE_ENV=production
    export PORT=3000

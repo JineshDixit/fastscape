@@ -2,19 +2,29 @@ import './config/env/envConfig';
 import express from 'express';
 import cors from 'cors';
 import passport from 'passport';
+import helmet from 'helmet';
+import compression from 'compression';
 import { initPostgres_DB, sequelize } from './models';
 import { configPassport } from './config/passport';
 import routes from './routes';
-import { securityHeaders, sanitizeInput, preventParameterPollution } from './services/middleware/security';
+import { sanitizeInput, preventParameterPollution } from './services/middleware/security';
 import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
+import Logger from './utils/logger';
+import httpLogger from './services/middleware/httpLogger';
 
 const server = express();
 const PORT = process.env.PORT;
 
+// HTTP Logging
+server.use(httpLogger);
+
 // Security middleware
-server.use(securityHeaders);
+server.use(helmet());
 server.use(preventParameterPollution);
+
+// Performance middleware
+server.use(compression());
 
 // Configure CORS
 server.use(
@@ -46,7 +56,7 @@ server.use(notFoundHandler);
 server.use(errorHandler);
 
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  Logger.info(`Server is running on port ${PORT}`);
 });
 
 (async () => {
@@ -55,9 +65,9 @@ server.listen(PORT, () => {
 
     startTokenCleanupJob();
 
-    console.log('Database initialized successfully');
+    Logger.info('Database initialized successfully');
   } catch (error) {
-    console.log('Failed to initialize database', error);
+    Logger.error('Failed to initialize database');
     process.exit(1);
   }
 })();

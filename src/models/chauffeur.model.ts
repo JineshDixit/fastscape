@@ -112,7 +112,7 @@ export const initChauffeurModel = (sequelize: Sequelize) => {
       hourlyRate: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        defaultValue: 25.00,
+        defaultValue: 25.0,
       },
       currency: {
         type: DataTypes.STRING(3),
@@ -127,7 +127,7 @@ export const initChauffeurModel = (sequelize: Sequelize) => {
       rating: {
         type: DataTypes.DECIMAL(3, 2),
         allowNull: false,
-        defaultValue: 5.00,
+        defaultValue: 5.0,
         validate: {
           min: 0,
           max: 5,

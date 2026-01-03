@@ -19,18 +19,13 @@ export interface ApiResponse<T = any> {
 /**
  * Send success response
  */
-export const sendSuccess = <T>(
-  res: Response,
-  message: string,
-  data?: T,
-  statusCode: number = 200
-): void => {
+export const sendSuccess = <T>(res: Response, message: string, data?: T, statusCode: number = 200): void => {
   const response: ApiResponse<T> = {
     success: true,
     message,
-    ...(data !== undefined && { data })
+    ...(data !== undefined && { data }),
   };
-  
+
   res.status(statusCode).json(response);
 };
 
@@ -47,26 +42,22 @@ export const sendSuccessWithPagination = <T>(
     limit: number;
     totalPages: number;
   },
-  statusCode: number = 200
+  statusCode: number = 200,
 ): void => {
   const response: ApiResponse<T> = {
     success: true,
     message,
     data,
-    pagination
+    pagination,
   };
-  
+
   res.status(statusCode).json(response);
 };
 
 /**
  * Send created response
  */
-export const sendCreated = <T>(
-  res: Response,
-  message: string,
-  data?: T
-): void => {
+export const sendCreated = <T>(res: Response, message: string, data?: T): void => {
   sendSuccess(res, message, data, 201);
 };
 
@@ -80,15 +71,11 @@ export const sendNoContent = (res: Response): void => {
 /**
  * Calculate pagination metadata
  */
-export const calculatePagination = (
-  total: number,
-  page: number,
-  limit: number
-) => ({
+export const calculatePagination = (total: number, page: number, limit: number) => ({
   total,
   page,
   limit,
-  totalPages: Math.ceil(total / limit)
+  totalPages: Math.ceil(total / limit),
 });
 
 /**
@@ -98,6 +85,6 @@ export const parsePaginationParams = (query: any) => {
   const page = Math.max(1, parseInt(query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
   const offset = (page - 1) * limit;
-  
+
   return { page, limit, offset };
 };

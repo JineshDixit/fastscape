@@ -2,6 +2,7 @@ import { DelayChargeCalculation, PaymentCalculation } from 'paymentTypes';
 import { Booking, BookingFinancial, Payment, Vehicle } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op } from 'sequelize';
+import Logger from '../../utils/logger';
 
 /**
  * Calculate payment breakdown for a booking
@@ -119,6 +120,10 @@ export const processDepositPayment = async (
       paymentStatus: 'PARTIALLY_PAID',
       paymentMethod,
     });
+    
+    Logger.info('Deposit processed successfully', { bookingId, amount: calculation.depositAmount });
+  } else {
+    Logger.info('Deposit payment initiated (manual)', { bookingId, method: paymentMethod });
   }
 
   return { payment, financial };
@@ -164,6 +169,9 @@ export const processBalancePayment = async (
     await booking!.update({
       paymentStatus: 'PAID',
     });
+    Logger.info('Balance payment processed successfully', { bookingId, amount: balanceAmount });
+  } else {
+    Logger.info('Balance payment initiated (manual)', { bookingId, method: paymentMethod });
   }
 
   return { payment, financial };
@@ -216,6 +224,8 @@ export const applyDelayCharges = async (
     const financial = await BookingFinancial.findOne({ where: { bookingId } });
     return { booking: booking!, financial: financial! };
   }
+  
+  Logger.warn('Applying delay charges', { bookingId, delayHours: delayCalculation.delayHours });
 
   // Update booking with delay information
   const booking = await Booking.findByPk(bookingId);
@@ -326,10 +336,7 @@ export const getPaymentSummary = async (bookingId: string) => {
 /**
  * Mark payment as completed (for pickup/dropoff payments)
  */
-export const markPaymentCompleted = async (
-  paymentId: string,
-  stripePaymentIntentId?: string,
-): Promise<Payment> => {
+export const markPaymentCompleted = async (paymentId: string, stripePaymentIntentId?: string): Promise<Payment> => {
   const payment = await Payment.findByPk(paymentId);
   if (!payment) {
     throw createError('Payment not found', 404);
@@ -352,6 +359,8 @@ export const markPaymentCompleted = async (
       remainingAmount: financial.totalAmount - (financial.paidAmount + payment.amount),
     });
   }
+  
+  Logger.info('Payment marked as completed', { paymentId, amount: payment.amount });
 
   return payment;
 };

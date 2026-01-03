@@ -1,27 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Security headers middleware
- */
-export const securityHeaders = (req: Request, res: Response, next: NextFunction): void => {
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:");
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.removeHeader('X-Powered-By');
-  
-  next();
-};
-
-/**
  * Sanitize request body to prevent XSS
  */
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction): void => {
   if (req.body) {
     // Recursively sanitize all string values in the request body
-    req.body = sanitizeObject(req.body);
+    // Limit recursion depth to 5 to prevent stack overflow
+    req.body = sanitizeObject(req.body, 0, 5);
   }
   next();
 };
@@ -29,38 +15,45 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction): 
 /**
  * Recursively sanitize an object
  */
-const sanitizeObject = (obj: any): any => {
+const sanitizeObject = (obj: any, depth: number, maxDepth: number): any => {
+  if (depth > maxDepth) {
+    return obj;
+  }
+
   if (typeof obj === 'string') {
     return sanitizeString(obj);
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
+    return obj.map((item) => sanitizeObject(item, depth + 1, maxDepth));
   }
-  
+
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        sanitized[key] = sanitizeObject(obj[key]);
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        sanitized[key] = sanitizeObject(obj[key], depth + 1, maxDepth);
       }
     }
     return sanitized;
   }
-  
+
   return obj;
 };
 
 /**
  * Sanitize a string to prevent XSS
+ * Uses a single replace with a map for better performance
  */
 const sanitizeString = (str: string): string => {
-  return str
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
+  const map: Record<string, string> = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;',
+  };
+  return str.replace(/[<>"'/]/g, (match) => map[match]);
 };
 
 /**

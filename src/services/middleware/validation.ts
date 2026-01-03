@@ -17,22 +17,18 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 
 // Registration validation rules
 export const validateRegistration = [
-  body('fullName')
-    .trim()
-    .isLength({ min: 2, max: 150 })
-    .withMessage('Full name must be between 2 and 150 characters'),
-  
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email address'),
-  
+  body('fullName').trim().isLength({ min: 2, max: 150 }).withMessage('Full name must be between 2 and 150 characters'),
+
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
+
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
-  
+    .withMessage(
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+    ),
+
   body('phone')
     .trim()
     .notEmpty()
@@ -41,12 +37,12 @@ export const validateRegistration = [
     .withMessage('Phone number must be between 10 and 20 characters')
     .matches(/^[+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/)
     .withMessage('Please provide a valid phone number'),
-  
+
   body('nationality')
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Nationality must be between 2 and 100 characters'),
-  
+
   body('dateOfBirth')
     .isISO8601()
     .withMessage('Please provide a valid date of birth')
@@ -89,30 +85,23 @@ export const validateRegistration = [
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Country must be between 2 and 100 characters'),
-  
+
   handleValidationErrors,
 ];
 
 // Login validation rules
 export const validateLogin = [
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email address'),
-  
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
-  
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
+
+  body('password').notEmpty().withMessage('Password is required'),
+
   handleValidationErrors,
 ];
 
 // Refresh token validation rules
 export const validateRefreshToken = [
-  body('refreshToken')
-    .notEmpty()
-    .withMessage('Refresh token is required'),
-  
+  body('refreshToken').notEmpty().withMessage('Refresh token is required'),
+
   handleValidationErrors,
 ];
 
@@ -187,26 +176,37 @@ export const validateUserUpdate = [
   handleValidationErrors,
 ];
 
-export const vehicleQueryValidation = [
-  query('page')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Page must be a positive integer'),
+export const validateForgotPassword = [
+  body('email').isEmail().withMessage('Valid email is required'),
+  handleValidationErrors,
+];
 
-  query('limit')
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
+export const validateVerifyOtp = [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  handleValidationErrors,
+];
+
+export const validateResetPassword = [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  body('newPassword')
+    .isLength({ min: 6 })
+    .withMessage('New Password must be at least 6 characters long'),
+  handleValidationErrors,
+];
+
+export const vehicleQueryValidation = [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
 
   query('sortBy')
     .optional()
     .isIn(['make', 'model', 'year', 'pricePerDay', 'createdAt', 'updatedAt'])
     .withMessage('sortBy must be one of: make, model, year, pricePerDay, createdAt, updatedAt'),
 
-  query('sortOrder')
-    .optional()
-    .isIn(['ASC', 'DESC'])
-    .withMessage('sortOrder must be ASC or DESC'),
+  query('sortOrder').optional().isIn(['ASC', 'DESC']).withMessage('sortOrder must be ASC or DESC'),
 
   query('bodyType')
     .optional()
@@ -223,20 +223,11 @@ export const vehicleQueryValidation = [
     .isIn(dbEnums.FUEL_TYPE)
     .withMessage(`Fuel type must be one of: ${dbEnums.FUEL_TYPE.join(', ')}`),
 
-  query('isAvailable')
-    .optional()
-    .isBoolean()
-    .withMessage('isAvailable must be a boolean'),
+  query('isAvailable').optional().isBoolean().withMessage('isAvailable must be a boolean'),
 
-  query('minPrice')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('minPrice must be a non-negative number'),
+  query('minPrice').optional().isFloat({ min: 0 }).withMessage('minPrice must be a non-negative number'),
 
-  query('maxPrice')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('maxPrice must be a non-negative number'),
+  query('maxPrice').optional().isFloat({ min: 0 }).withMessage('maxPrice must be a non-negative number'),
 
   query('year')
     .optional()
@@ -249,8 +240,4 @@ export const vehicleQueryValidation = [
     .withMessage('Search term must be between 1 and 100 characters'),
 ];
 
-export const vehicleIdValidation = [
-  param('id')
-    .isUUID()
-    .withMessage('Vehicle ID must be a valid UUID'),
-];
+export const vehicleIdValidation = [param('id').isUUID().withMessage('Vehicle ID must be a valid UUID')];

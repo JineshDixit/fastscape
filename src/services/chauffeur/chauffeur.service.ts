@@ -1,4 +1,8 @@
-import { ChauffeurAvailabilityQuery, CreateChauffeurData, UpdateChauffeurData } from '../../common/types/chauffeurTypes';
+import {
+  ChauffeurAvailabilityQuery,
+  CreateChauffeurData,
+  UpdateChauffeurData,
+} from '../../common/types/chauffeurTypes';
 import { Chauffeur, ChauffeurReview, Booking, Vehicle } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op } from 'sequelize';
@@ -6,9 +10,7 @@ import { Op } from 'sequelize';
 /**
  * Find available chauffeurs for a booking
  */
-export const findAvailableChauffeurs = async (
-  query: ChauffeurAvailabilityQuery,
-): Promise<Chauffeur[]> => {
+export const findAvailableChauffeurs = async (query: ChauffeurAvailabilityQuery): Promise<Chauffeur[]> => {
   const {
     startDatetime,
     endDatetime,
@@ -65,10 +67,7 @@ export const findAvailableChauffeurs = async (
           },
         },
         {
-          [Op.and]: [
-            { startDatetime: { [Op.lte]: startDatetime } },
-            { endDatetime: { [Op.gte]: endDatetime } },
-          ],
+          [Op.and]: [{ startDatetime: { [Op.lte]: startDatetime } }, { endDatetime: { [Op.gte]: endDatetime } }],
         },
       ],
     },
@@ -226,9 +225,7 @@ export const assignChauffeurToBooking = async (
 /**
  * Release chauffeur from booking
  */
-export const releaseChauffeurFromBooking = async (
-  bookingId: string,
-): Promise<void> => {
+export const releaseChauffeurFromBooking = async (bookingId: string): Promise<void> => {
   const booking = await Booking.findByPk(bookingId, {
     include: [{ model: Chauffeur }],
   });
@@ -293,16 +290,13 @@ export const getChauffeurDetails = async (chauffeurId: string) => {
   };
 
   if (totalReviews > 0) {
-    averageRatings.drivingSkill =
-      reviews.reduce((sum: number, r: any) => sum + r.drivingSkillRating, 0) / totalReviews;
-    averageRatings.punctuality =
-      reviews.reduce((sum: number, r: any) => sum + r.punctualityRating, 0) / totalReviews;
+    averageRatings.drivingSkill = reviews.reduce((sum: number, r: any) => sum + r.drivingSkillRating, 0) / totalReviews;
+    averageRatings.punctuality = reviews.reduce((sum: number, r: any) => sum + r.punctualityRating, 0) / totalReviews;
     averageRatings.professionalism =
       reviews.reduce((sum: number, r: any) => sum + r.professionalismRating, 0) / totalReviews;
     averageRatings.vehicleCondition =
       reviews.reduce((sum: number, r: any) => sum + r.vehicleConditionRating, 0) / totalReviews;
-    averageRatings.recommendationRate =
-      (reviews.filter((r: any) => r.wouldRecommend).length / totalReviews) * 100;
+    averageRatings.recommendationRate = (reviews.filter((r: any) => r.wouldRecommend).length / totalReviews) * 100;
   }
 
   return {
@@ -358,10 +352,7 @@ export const createChauffeur = async (data: CreateChauffeurData): Promise<Chauff
 /**
  * Update chauffeur
  */
-export const updateChauffeur = async (
-  chauffeurId: string,
-  data: UpdateChauffeurData,
-): Promise<Chauffeur> => {
+export const updateChauffeur = async (chauffeurId: string, data: UpdateChauffeurData): Promise<Chauffeur> => {
   const chauffeur = await Chauffeur.findByPk(chauffeurId);
 
   if (!chauffeur) {
@@ -434,13 +425,16 @@ export const getChauffeurMetrics = async (chauffeurId: string) => {
       totalReviews: reviews.length,
       averageRating: chauffeur.rating,
     },
-    detailedRatings: reviews.length > 0 ? {
-      drivingSkill: reviews.reduce((sum, r) => sum + r.drivingSkillRating, 0) / reviews.length,
-      punctuality: reviews.reduce((sum, r) => sum + r.punctualityRating, 0) / reviews.length,
-      professionalism: reviews.reduce((sum, r) => sum + r.professionalismRating, 0) / reviews.length,
-      vehicleCondition: reviews.reduce((sum, r) => sum + r.vehicleConditionRating, 0) / reviews.length,
-      recommendationRate: (reviews.filter(r => r.wouldRecommend).length / reviews.length) * 100,
-    } : null,
+    detailedRatings:
+      reviews.length > 0
+        ? {
+            drivingSkill: reviews.reduce((sum, r) => sum + r.drivingSkillRating, 0) / reviews.length,
+            punctuality: reviews.reduce((sum, r) => sum + r.punctualityRating, 0) / reviews.length,
+            professionalism: reviews.reduce((sum, r) => sum + r.professionalismRating, 0) / reviews.length,
+            vehicleCondition: reviews.reduce((sum, r) => sum + r.vehicleConditionRating, 0) / reviews.length,
+            recommendationRate: (reviews.filter((r) => r.wouldRecommend).length / reviews.length) * 100,
+          }
+        : null,
   };
 };
 
@@ -457,8 +451,5 @@ export const updateChauffeurRating = async (chauffeurId: string): Promise<void> 
 
   const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
 
-  await Chauffeur.update(
-    { rating: Math.round(averageRating * 100) / 100 },
-    { where: { id: chauffeurId } },
-  );
+  await Chauffeur.update({ rating: Math.round(averageRating * 100) / 100 }, { where: { id: chauffeurId } });
 };

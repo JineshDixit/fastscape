@@ -1,13 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../../common/types/expressTypes';
-import { 
-  LoginRequest, 
-  RegisterRequest, 
-  RefreshTokenRequest 
-} from '../../common/types/authTypes';
+import { LoginRequest, RegisterRequest, RefreshTokenRequest } from '../../common/types/authTypes';
 import * as authService from '../../services/auth/auth.service';
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess, sendCreated } from '../../utils/response.utils';
+import { createError } from '../../services/middleware/errorHandler';
 
 class AuthController extends BaseController {
   /**
@@ -54,6 +51,33 @@ class AuthController extends BaseController {
     await authService.logoutAllDevices(userId);
     sendSuccess(res, 'Logged out from all devices successfully');
   });
+
+  /**
+   * Initiate forgot password flow
+   */
+  forgotPassword = this.asyncHandler(async (req: Request, res: Response) => {
+    await authService.forgotPassword(req.body.email);
+    sendSuccess(res, 'If the email exists, an OTP has been sent to it.');
+  });
+
+  /**
+   * Verify OTP
+   */
+  verifyOtp = this.asyncHandler(async (req: Request, res: Response) => {
+    const isValid = await authService.verifyOtp(req.body.email, req.body.otp);
+    if (!isValid) {
+      throw createError('Invalid or expired OTP', 400);
+    }
+    sendSuccess(res, 'OTP verified successfully');
+  });
+
+  /**
+   * Reset password
+   */
+  resetPassword = this.asyncHandler(async (req: Request, res: Response) => {
+    await authService.resetPassword(req.body.email, req.body.otp, req.body.newPassword);
+    sendSuccess(res, 'Password has been reset successfully');
+  });
 }
 
 const authController = new AuthController();
@@ -63,5 +87,8 @@ export const {
   login,
   refreshToken,
   logout,
-  logoutAllDevices
+  logoutAllDevices,
+  forgotPassword,
+  verifyOtp,
+  resetPassword,
 } = authController;

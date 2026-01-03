@@ -10,16 +10,23 @@ const router = Router();
 router.use(authenticateUser);
 
 // Create booking
-router.post('/',
+router.post(
+  '/',
   [
     body('vehicleId').isUUID().withMessage('Valid vehicle ID is required'),
     body('startDatetime').isISO8601().withMessage('Valid start date is required'),
     body('endDatetime').isISO8601().withMessage('Valid end date is required'),
-    body('pickupLocation').trim().isLength({ min: 5, max: 200 }).withMessage('Pickup location must be between 5 and 200 characters'),
-    body('dropoffLocation').trim().isLength({ min: 5, max: 200 }).withMessage('Dropoff location must be between 5 and 200 characters'),
+    body('pickupLocation')
+      .trim()
+      .isLength({ min: 5, max: 200 })
+      .withMessage('Pickup location must be between 5 and 200 characters'),
+    body('dropoffLocation')
+      .trim()
+      .isLength({ min: 5, max: 200 })
+      .withMessage('Dropoff location must be between 5 and 200 characters'),
     handleValidationErrors,
   ],
-  bookingController.createBooking
+  bookingController.createBooking,
 );
 
 // Get user bookings
@@ -29,15 +36,24 @@ router.get('/', bookingController.getUserBookings);
 router.get('/:bookingId', bookingController.getBookingById);
 
 // Update booking
-router.put('/:bookingId',
+router.put(
+  '/:bookingId',
   [
     body('startDatetime').optional().isISO8601().withMessage('Valid start date is required'),
     body('endDatetime').optional().isISO8601().withMessage('Valid end date is required'),
-    body('pickupLocation').optional().trim().isLength({ min: 5, max: 200 }).withMessage('Pickup location must be between 5 and 200 characters'),
-    body('dropoffLocation').optional().trim().isLength({ min: 5, max: 200 }).withMessage('Dropoff location must be between 5 and 200 characters'),
+    body('pickupLocation')
+      .optional()
+      .trim()
+      .isLength({ min: 5, max: 200 })
+      .withMessage('Pickup location must be between 5 and 200 characters'),
+    body('dropoffLocation')
+      .optional()
+      .trim()
+      .isLength({ min: 5, max: 200 })
+      .withMessage('Dropoff location must be between 5 and 200 characters'),
     handleValidationErrors,
   ],
-  bookingController.updateBooking
+  bookingController.updateBooking,
 );
 
 // Cancel booking

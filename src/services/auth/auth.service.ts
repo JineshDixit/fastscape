@@ -1,15 +1,12 @@
 import { User, RefreshToken } from '../../models';
-import { 
-  LoginRequest, 
-  RegisterRequest, 
-  AuthResponse, 
-  RefreshTokenResponse 
-} from '../../common/types/authTypes';
+import { LoginRequest, RegisterRequest, AuthResponse, RefreshTokenResponse } from '../../common/types/authTypes';
 import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
+import Logger from '../../utils/logger';
+import { generateOtp } from '../../utils/otp.utils';
 
 /**
  * Create and store refresh token
@@ -27,10 +24,7 @@ const createRefreshToken = async (userId: string, token: string, expiresAt: Date
  * Revoke user's refresh tokens
  */
 const revokeUserTokens = async (userId: string): Promise<void> => {
-  await RefreshToken.update(
-    { isRevoked: true },
-    { where: { userId, isRevoked: false } }
-  );
+  await RefreshToken.update({ isRevoked: true }, { where: { userId, isRevoked: false } });
 };
 
 /**
@@ -59,6 +53,7 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
   // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser) {
+    Logger.warn('Registration attempt with existing email', { email });
     throw createError('User with this email already exists', 409);
   }
 
@@ -75,6 +70,8 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
     passwordHash,
     homeAddress,
     isBlocked: false,
+    resetPasswordOtp: null,
+    resetPasswordOtpExpires: null,
   });
 
   // Generate tokens
@@ -85,6 +82,8 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
 
   // Store refresh token
   await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
+
+  Logger.info('User registered successfully', { userId: user.id, email: user.email });
 
   return {
     user: formatUserResponse(user),
@@ -107,17 +106,20 @@ export const loginUser = async (loginData: LoginRequest): Promise<AuthResponse> 
   // Find user by email
   const user = await User.findOne({ where: { email } });
   if (!user) {
+    Logger.warn('Login failed: User not found', { email });
     throw createError('Invalid credentials', 401);
   }
 
   // Check if user is blocked
   if (user.isBlocked) {
+    Logger.warn('Login blocked: User account is blocked', { userId: user.id });
     throw createError('Account is blocked. Please contact support.', 403);
   }
 
   // Verify password
   const isPasswordValid = await comparePassword(password, user.passwordHash);
   if (!isPasswordValid) {
+    Logger.warn('Login failed: Invalid password', { userId: user.id });
     throw createError('Invalid credentials', 401);
   }
 
@@ -132,6 +134,8 @@ export const loginUser = async (loginData: LoginRequest): Promise<AuthResponse> 
 
   // Store new refresh token
   await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
+
+  Logger.info('User logged in successfully', { userId: user.id });
 
   return {
     user: formatUserResponse(user),
@@ -152,6 +156,7 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
   try {
     decoded = verifyRefreshToken(token);
   } catch (error) {
+    Logger.warn('Token refresh failed: Invalid token');
     throw createError('Invalid or expired refresh token', 401);
   }
 
@@ -165,18 +170,21 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
   });
 
   if (!storedToken) {
+    Logger.warn('Token refresh failed: Token not found or revoked', { userId: decoded.userId });
     throw createError('Refresh token not found or revoked', 401);
   }
 
   // Check if token is expired
   if (storedToken.expiresAt < new Date()) {
     await storedToken.update({ isRevoked: true });
+    Logger.warn('Token refresh failed: Token expired', { userId: decoded.userId });
     throw createError('Refresh token expired', 401);
   }
 
   // Get user details
   const user = await User.findByPk(decoded.userId);
   if (!user || user.isBlocked) {
+    Logger.warn('Token refresh failed: User blocked or not found', { userId: decoded.userId });
     throw createError('User not found or blocked', 401);
   }
 
@@ -192,6 +200,8 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
   // Store new refresh token
   await createRefreshToken(user.id, newTokenPair.refreshToken, newTokenPair.refreshTokenExpiresAt);
 
+  Logger.info('Token refreshed successfully', { userId: user.id });
+
   return newTokenPair;
 };
 
@@ -204,10 +214,9 @@ export const logoutUser = async (token: string): Promise<void> => {
   }
 
   // Revoke the refresh token
-  await RefreshToken.update(
-    { isRevoked: true },
-    { where: { token, isRevoked: false } }
-  );
+  await RefreshToken.update({ isRevoked: true }, { where: { token, isRevoked: false } });
+  
+  Logger.info('User logged out');
 };
 
 /**
@@ -219,4 +228,99 @@ export const logoutAllDevices = async (userId: string): Promise<void> => {
   }
 
   await revokeUserTokens(userId);
+  Logger.info('User logged out from all devices', { userId });
+};
+
+/**
+ * Initiate Forgot Password flow
+ */
+export const forgotPassword = async (email: string): Promise<void> => {
+  if (!email) {
+    throw createError('Email is required', 400);
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    Logger.info(`Forgot password requested for non-existent email: ${email}`);
+    return;
+  }
+
+  // Generate OTP
+  const otp = generateOtp();
+  
+  // Hash OTP for storage
+  const otpHash = await hashPassword(otp);
+
+  // Set expiry (10 minutes)
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  // Update user
+  await user.update({
+    resetPasswordOtp: otpHash,
+    resetPasswordOtpExpires: expiresAt,
+  });
+
+  // LOG OTP TO CONSOLE FOR MANUAL TESTING
+  Logger.info('================================================');
+  Logger.info(`OTP for ${email}: ${otp}`);
+  Logger.info('================================================');
+
+  Logger.info(`Forgot password OTP generated`, { userId: user.id });
+};
+
+/**
+ * Verify OTP
+ */
+export const verifyOtp = async (email: string, otp: string): Promise<boolean> => {
+  if (!email || !otp) {
+    throw createError('Email and OTP are required', 400);
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user || !user.resetPasswordOtp || !user.resetPasswordOtpExpires) {
+    return false;
+  }
+
+  // Check expiry
+  if (new Date() > user.resetPasswordOtpExpires) {
+    return false;
+  }
+
+  // Verify OTP hash
+  const isValid = await comparePassword(otp, user.resetPasswordOtp);
+  return isValid;
+};
+
+/**
+ * Reset Password
+ */
+export const resetPassword = async (email: string, otp: string, newPassword: string): Promise<void> => {
+  if (!email || !otp || !newPassword) {
+    throw createError('Email, OTP, and new password are required', 400);
+  }
+
+  const isValidOtp = await verifyOtp(email, otp);
+  if (!isValidOtp) {
+    throw createError('Invalid or expired OTP', 400);
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+     throw createError('User not found', 404);
+  }
+
+  // Hash new password
+  const passwordHash = await hashPassword(newPassword);
+
+  // Update password and clear OTP
+  await user.update({
+    passwordHash,
+    resetPasswordOtp: null,
+    resetPasswordOtpExpires: null,
+  });
+
+  // Revoke all sessions
+  await revokeUserTokens(user.id);
+
+  Logger.info(`Password reset successfully`, { userId: user.id });
 };

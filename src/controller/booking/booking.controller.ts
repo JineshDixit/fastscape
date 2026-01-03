@@ -58,10 +58,4 @@ class BookingController extends BaseController {
 
 const bookingController = new BookingController();
 
-export const {
-  createBooking,
-  getUserBookings,
-  getBookingById,
-  updateBooking,
-  cancelBooking
-} = bookingController;
+export const { createBooking, getUserBookings, getBookingById, updateBooking, cancelBooking } = bookingController;

@@ -1,3 +1,9 @@
+/*
+ * MANUAL MIGRATION QUERY:
+ * ALTER TABLE users ADD COLUMN reset_password_otp VARCHAR(255);
+ * ALTER TABLE users ADD COLUMN reset_password_otp_expires TIMESTAMP WITH TIME ZONE;
+ */
+
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class User extends Model {
@@ -14,6 +20,8 @@ export class User extends Model {
   public zipCode!: string;
   public country!: string;
   public isBlocked!: boolean;
+  public resetPasswordOtp!: string | null;
+  public resetPasswordOtpExpires!: Date | null;
 }
 
 export const initUserModel = (sequelize: Sequelize) => {
@@ -76,6 +84,14 @@ export const initUserModel = (sequelize: Sequelize) => {
       isBlocked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+      },
+      resetPasswordOtp: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      resetPasswordOtpExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {

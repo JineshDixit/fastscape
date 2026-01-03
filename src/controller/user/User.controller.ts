@@ -17,11 +17,7 @@ class UserController extends BaseController {
   /**
    * Get user by ID (admin only)
    */
-  getUserById = this.handleGetById(
-    userService.getUserById,
-    'User retrieved successfully',
-    false
-  );
+  getUserById = this.handleGetById(userService.getUserById, 'User retrieved successfully', false);
 
   /**
    * Update user profile
@@ -45,10 +41,4 @@ class UserController extends BaseController {
 
 const userController = new UserController();
 
-export const {
-  getCurrentUser,
-  getUserById,
-  updateUserProfile,
-  deleteUserAccount
-} = userController;
-
+export const { getCurrentUser, getUserById, updateUserProfile, deleteUserAccount } = userController;

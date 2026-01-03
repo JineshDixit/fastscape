@@ -25,7 +25,7 @@ export const configPassport = (): void => {
 
         // Find user by ID
         const user = await User.findByPk(jwtPayload.userId);
-        
+
         if (!user) {
           return done(null, false, { message: 'User not found' });
         }

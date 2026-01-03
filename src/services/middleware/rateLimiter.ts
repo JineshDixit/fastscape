@@ -1,37 +1,33 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { Options } from 'express-rate-limit';
+
+// Factory function to create rate limiters
+const createRateLimiter = (options: Partial<Options> & { messageStr: string }) => {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes default
+    standardHeaders: true,
+    legacyHeaders: false,
+    ...options,
+    message: {
+      success: false,
+      message: options.messageStr,
+    },
+  });
+};
 
 // Rate limiter for authentication endpoints
-export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many authentication attempts, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+export const authLimiter = createRateLimiter({
+  max: 5,
+  messageStr: 'Too many authentication attempts, please try again later.',
 });
 
 // Rate limiter for general API endpoints
-export const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+export const generalLimiter = createRateLimiter({
+  max: 100,
+  messageStr: 'Too many requests, please try again later.',
 });
 
 // Rate limiter for refresh token endpoint
-export const refreshTokenLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 refresh attempts per windowMs
-  message: {
-    success: false,
-    message: 'Too many token refresh attempts, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+export const refreshTokenLimiter = createRateLimiter({
+  max: 10,
+  messageStr: 'Too many token refresh attempts, please try again later.',
 });

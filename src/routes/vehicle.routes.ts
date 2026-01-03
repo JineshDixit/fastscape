@@ -4,14 +4,14 @@ import { handleValidationErrors, vehicleIdValidation, vehicleQueryValidation } f
 
 const router = Router();
 
-router.get('/', handleValidationErrors, vehicleQueryValidation, vehicleController.getVehiclesController);
+router.get('/', vehicleQueryValidation, handleValidationErrors, vehicleController.getVehicles);
 
-router.get('/stats', handleValidationErrors, vehicleController.getVehicleStatsController);
+router.get('/stats', vehicleController.getVehicleStats);
 
-router.get('/:id', handleValidationErrors, vehicleIdValidation, vehicleController.getVehicleByIdController);
+router.get('/body-types/summary', vehicleController.getVehicleBodyTypeSummary);
 
-router.get('/body-types/summary', handleValidationErrors, vehicleController.getVehicleBodyTypeSummaryController);
+router.get('/filters/metadata', vehicleController.getVehicleFilterMetadata);
 
-router.get('/filters/metadata', handleValidationErrors, vehicleController.getVehicleFilterMetadataController);
+router.get('/:id', vehicleIdValidation, handleValidationErrors, vehicleController.getVehicleById);
 
 export default router;
