@@ -17,11 +17,13 @@ server.use(securityHeaders);
 server.use(preventParameterPollution);
 
 // Configure CORS
-server.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-  optionsSuccessStatus: 200,
-}));
+server.use(
+  cors({
+    origin: process.env.FRONTEND_URL?.split(','),
+    credentials: true,
+    optionsSuccessStatus: 200,
+  }),
+);
 
 // Body parsing middleware
 server.use(express.json({ limit: '10mb' }));
@@ -50,9 +52,9 @@ server.listen(PORT, () => {
 (async () => {
   try {
     initPostgres_DB();
-    
+
     startTokenCleanupJob();
-    
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.log('Failed to initialize database', error);

@@ -1,26 +1,6 @@
 import { Op, WhereOptions, OrderItem } from 'sequelize';
 
 /**
- * Build where conditions for search queries
- */
-export const buildSearchConditions = (
-  searchTerm: string,
-  searchFields: string[]
-): WhereOptions => {
-  if (!searchTerm || searchTerm.trim().length < 2) {
-    return {};
-  }
-
-  const term = `%${searchTerm.trim()}%`;
-  
-  return {
-    [Op.or]: searchFields.map(field => ({
-      [field]: { [Op.iLike]: term }
-    }))
-  };
-};
-
-/**
  * Build date range conditions
  */
 export const buildDateRangeConditions = (
@@ -41,33 +21,6 @@ export const buildDateRangeConditions = (
     conditions[dateField] = {
       ...conditions[dateField],
       [Op.lte]: new Date(endDate)
-    };
-  }
-  
-  return conditions;
-};
-
-/**
- * Build numeric range conditions
- */
-export const buildNumericRangeConditions = (
-  field: string,
-  minValue?: number,
-  maxValue?: number
-): WhereOptions => {
-  const conditions: WhereOptions = {};
-  
-  if (minValue !== undefined) {
-    conditions[field] = {
-      ...conditions[field],
-      [Op.gte]: minValue
-    };
-  }
-  
-  if (maxValue !== undefined) {
-    conditions[field] = {
-      ...conditions[field],
-      [Op.lte]: maxValue
     };
   }
   
@@ -131,15 +84,6 @@ export const buildDateConflictConditions = (
       }
     ]
   };
-};
-
-/**
- * Merge where conditions
- */
-export const mergeWhereConditions = (...conditions: WhereOptions[]): WhereOptions => {
-  return conditions.reduce((merged, condition) => {
-    return { ...merged, ...condition };
-  }, {});
 };
 
 /**

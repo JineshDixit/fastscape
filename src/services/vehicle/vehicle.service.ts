@@ -1,104 +1,19 @@
-import { VehicleFilters } from '../../common/types/vehicalType';
+import { PaginationOptions, VehicleFilterOptions } from '../../common/types/vehicalType';
 import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { 
-  VehicleWithImages, 
-  VehicleImageUrls, 
-  VehicleImagesResponse 
-} from '../../common/types/vehicleMediaTypes';
-import { 
-  buildSearchConditions, 
-  buildDateConflictConditions, 
-  buildNumericRangeConditions,
-  mergeWhereConditions,
-  VEHICLE_LIST_ATTRIBUTES
-} from '../../utils/database.utils';
-import { validateDateRange } from '../../utils/validation.utils';
 import { Op } from 'sequelize';
 
 /**
- * Standard vehicle media include configuration
- */
-const VEHICLE_MEDIA_INCLUDE = {
-  model: VehicleMedia,
-  attributes: [
-    'id', 'vehicleId', 'frontImage', 'backImage', 'leftSideImage', 
-    'rightSideImage', 'frontLeftImage', 'frontRightImage', 
-    'interiorFrontImage', 'interiorBackImage', 'dashboardImage', 
-    'engineImage', 'isPrimary'
-  ]
-};
-
-/**
- * Build vehicle filter conditions
- */
-const buildVehicleFilters = (filters: VehicleFilters) => {
-  const conditions: any = {
-    isAvailable: true
-  };
-
-  if (filters.bodyType) {
-    conditions.bodyType = filters.bodyType;
-  }
-  
-  if (filters.fuelType) {
-    conditions.fuelType = filters.fuelType;
-  }
-  
-  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-    const priceConditions = buildNumericRangeConditions('pricePerDay', filters.minPrice, filters.maxPrice);
-    Object.assign(conditions, priceConditions);
-  }
-
-  return conditions;
-};
-
-/**
- * Get available vehicles with date availability check
- */
-export const getAvailableVehicles = async (filters: VehicleFilters): Promise<Vehicle[]> => {
-  let whereClause = buildVehicleFilters(filters);
-
-  // Check availability for specific dates
-  if (filters.startDate && filters.endDate) {
-    const { start, end } = validateDateRange(filters.startDate, filters.endDate);
-
-    // Find vehicles that are NOT booked during the requested period
-    const bookedVehicles = await Booking.findAll({
-      where: {
-        bookingStatus: ['PENDING', 'CONFIRMED'],
-        ...buildDateConflictConditions(start, end)
-      },
-      attributes: ['vehicleId']
-    });
-
-    const bookedVehicleIds = bookedVehicles.map(booking => booking.vehicleId);
-    
-    if (bookedVehicleIds.length > 0) {
-      whereClause = mergeWhereConditions(whereClause, {
-        id: { [Op.notIn]: bookedVehicleIds }
-      });
-    }
-  }
-
-  return Vehicle.findAll({
-    where: whereClause,
-    attributes: VEHICLE_LIST_ATTRIBUTES,
-    include: [VEHICLE_MEDIA_INCLUDE],
-    order: [['pricePerDay', 'ASC']]
-  });
-};
-
-/**
- * Retrieves a vehicle by ID
+ * Get vehicle by ID with media
  */
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
-  if (!vehicleId) {
-    throw createError('Vehicle ID is required', 400);
-  }
-
   const vehicle = await Vehicle.findByPk(vehicleId, {
-    include: [VEHICLE_MEDIA_INCLUDE]
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
   });
 
   if (!vehicle) {
@@ -109,159 +24,192 @@ export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
 };
 
 /**
- * Searches for vehicles based on the provided query and filters
+ * Get all vehicles with filtering and pagination
  */
-export const searchVehicles = async (query: string, filters: any): Promise<Vehicle[]> => {
-  if (!query || query.trim().length < 2) {
-    throw createError('Search query must be at least 2 characters long', 400);
+export const getVehicles = async (
+  filters: VehicleFilterOptions = {},
+  pagination: PaginationOptions = {},
+): Promise<{
+  vehicles: Vehicle[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> => {
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
+
+  const offset = (page - 1) * limit;
+
+  // Build where clause
+  const whereClause: any = {};
+
+  if (filters.make) {
+    whereClause.make = { [Op.iLike]: `%${filters.make}%` };
   }
 
-  const searchConditions = buildSearchConditions(query, [
-    'make', 'model', 'trim', 'bodyType', 'fuelType'
-  ]);
+  if (filters.model) {
+    whereClause.model = { [Op.iLike]: `%${filters.model}%` };
+  }
 
-  const filterConditions = buildVehicleFilters(filters);
-  const whereClause = mergeWhereConditions(searchConditions, filterConditions);
+  if (filters.bodyType) {
+    whereClause.bodyType = filters.bodyType;
+  }
 
-  return Vehicle.findAll({
+  if (filters.transmission) {
+    whereClause.transmission = filters.transmission;
+  }
+
+  if (filters.fuelType) {
+    whereClause.fuelType = filters.fuelType;
+  }
+
+  if (filters.isAvailable !== undefined) {
+    whereClause.isAvailable = filters.isAvailable;
+  }
+
+  if (filters.minPrice || filters.maxPrice) {
+    whereClause.pricePerDay = {};
+    if (filters.minPrice) {
+      whereClause.pricePerDay[Op.gte] = filters.minPrice;
+    }
+    if (filters.maxPrice) {
+      whereClause.pricePerDay[Op.lte] = filters.maxPrice;
+    }
+  }
+
+  if (filters.year) {
+    whereClause.year = filters.year;
+  }
+
+  if (filters.search) {
+    whereClause[Op.or] = [
+      { make: { [Op.iLike]: `%${filters.search}%` } },
+      { model: { [Op.iLike]: `%${filters.search}%` } },
+      { trim: { [Op.iLike]: `%${filters.search}%` } },
+      { exteriorColor: { [Op.iLike]: `%${filters.search}%` } },
+    ];
+  }
+
+  const { count, rows } = await Vehicle.findAndCountAll({
     where: whereClause,
-    attributes: VEHICLE_LIST_ATTRIBUTES,
-    include: [VEHICLE_MEDIA_INCLUDE],
-    order: [['pricePerDay', 'ASC']],
-    limit: 20
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]],
   });
-};
 
-/**
- * Transform vehicle media to structured image URLs
- */
-export const transformVehicleImages = (mediaRecords: VehicleMedia[]): VehicleImageUrls => {
-  const images: VehicleImageUrls = {};
-  
-  // Find primary media record first
-  const primaryMedia = mediaRecords.find(media => media.isPrimary);
-  const mediaToUse = primaryMedia || mediaRecords[0];
-  
-  if (mediaToUse) {
-    const imageFields = [
-      'frontImage', 'backImage', 'leftSideImage', 'rightSideImage',
-      'frontLeftImage', 'frontRightImage', 'interiorFrontImage', 
-      'interiorBackImage', 'dashboardImage', 'engineImage'
-    ] as const;
-
-    imageFields.forEach(field => {
-      if (mediaToUse[field]) {
-        images[field] = mediaToUse[field];
-      }
-    });
-  }
-  
-  return images;
-};
-
-/**
- * Get primary image URL for a vehicle
- */
-export const getPrimaryImageUrl = (mediaRecords: VehicleMedia[]): string | undefined => {
-  const primaryMedia = mediaRecords.find(media => media.isPrimary);
-  const mediaToUse = primaryMedia || mediaRecords[0];
-  
-  if (!mediaToUse) return undefined;
-  
-  // Priority order for primary image
-  const priorityOrder = [
-    'frontImage', 'frontLeftImage', 'frontRightImage', 
-    'leftSideImage', 'rightSideImage', 'backImage', 'interiorFrontImage'
-  ] as const;
-
-  for (const field of priorityOrder) {
-    if (mediaToUse[field]) {
-      return mediaToUse[field];
-    }
-  }
-
-  return undefined;
-};
-
-/**
- * Count total images for a vehicle
- */
-export const countVehicleImages = (mediaRecords: VehicleMedia[]): number => {
-  let count = 0;
-  
-  const imageFields = [
-    'frontImage', 'backImage', 'leftSideImage', 'rightSideImage',
-    'frontLeftImage', 'frontRightImage', 'interiorFrontImage', 
-    'interiorBackImage', 'dashboardImage', 'engineImage'
-  ] as const;
-
-  mediaRecords.forEach(media => {
-    imageFields.forEach(field => {
-      if (media[field]) count++;
-    });
-  });
-  
-  return count;
-};
-
-/**
- * Transform vehicle with media to VehicleWithImages format
- */
-export const transformVehicleWithImages = (vehicle: any): VehicleWithImages => {
-  const mediaRecords = vehicle.VehicleMedia || [];
-  const images = transformVehicleImages(mediaRecords);
-  const primaryImage = getPrimaryImageUrl(mediaRecords);
-  const imageCount = countVehicleImages(mediaRecords);
-  
   return {
-    id: vehicle.id,
-    make: vehicle.make,
-    model: vehicle.model,
-    year: vehicle.year,
-    bodyType: vehicle.bodyType,
-    pricePerDay: vehicle.pricePerDay,
-    currency: vehicle.currency,
-    isAvailable: vehicle.isAvailable,
-    images,
-    primaryImage,
-    imageCount,
-    hasImages: imageCount > 0
+    vehicles: rows,
+    total: count,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
   };
 };
 
 /**
- * Get vehicle images by vehicle ID
+ * Get vehicle statistics
  */
-export const getVehicleImages = async (vehicleId: string): Promise<VehicleImagesResponse> => {
-  if (!vehicleId) {
-    throw createError('Vehicle ID is required', 400);
-  }
+export const getVehicleStats = async (): Promise<{
+  total: number;
+  available: number;
+  unavailable: number;
+  byBodyType: Record<string, number>;
+  byFuelType: Record<string, number>;
+  averagePrice: number;
+}> => {
+  const total = await Vehicle.count();
+  const available = await Vehicle.count({ where: { isAvailable: true } });
+  const unavailable = total - available;
 
-  const mediaRecords = await VehicleMedia.findAll({
-    where: { vehicleId },
-    order: [['isPrimary', 'DESC'], ['createdAt', 'ASC']]
+  // Get stats by body type
+  const bodyTypeStats = await Vehicle.findAll({
+    attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    group: ['body_type'],
+    raw: true,
   });
 
-  const images = transformVehicleImages(mediaRecords);
-  const primaryImage = getPrimaryImageUrl(mediaRecords);
-  const imageCount = countVehicleImages(mediaRecords);
+  const byBodyType: Record<string, number> = {};
+  bodyTypeStats.forEach((stat: any) => {
+    byBodyType[stat.body_type] = parseInt(stat.count);
+  });
+
+  // Get stats by fuel type
+  const fuelTypeStats = await Vehicle.findAll({
+    attributes: ['fuel_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    group: ['fuel_type'],
+    raw: true,
+  });
+
+  const byFuelType: Record<string, number> = {};
+  fuelTypeStats.forEach((stat: any) => {
+    byFuelType[stat.fuel_type] = parseInt(stat.count);
+  });
+
+  // Get average price
+  const avgPriceResult = await Vehicle.findOne({
+    attributes: [[Vehicle.sequelize!.fn('AVG', Vehicle.sequelize!.col('price_per_day')), 'avgPrice']],
+    raw: true,
+  });
+
+  const averagePrice = parseFloat((avgPriceResult as any)?.avgPrice || '0');
 
   return {
-    success: true,
-    message: 'Vehicle images retrieved successfully',
-    data: {
-      vehicleId,
-      images,
-      primaryImage,
-      imageCount
-    }
+    total,
+    available,
+    unavailable,
+    byBodyType,
+    byFuelType,
+    averagePrice,
   };
 };
 
-/**
- * Get vehicles with structured images
- */
-export const getVehiclesWithImages = async (filters: VehicleFilters): Promise<VehicleWithImages[]> => {
-  const vehicles = await getAvailableVehicles(filters);
-  return vehicles.map(transformVehicleWithImages);
+export const getVehicleBodyTypeSummary = async (): Promise<{ bodyType: string; count: number }[]> => {
+  const results = await Vehicle.findAll({
+    attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: { isAvailable: true },
+    group: ['body_type'],
+    raw: true,
+  });
+
+  return results.map((r: any) => ({
+    bodyType: r.body_type,
+    count: Number(r.count),
+  }));
+};
+
+export const getBodyTypeFilterCounts = async () => {
+  const results = await Vehicle.findAll({
+    attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: { isAvailable: true },
+    group: ['body_type'],
+    raw: true,
+  });
+
+  return results;
+};
+
+export const getBrandFilterCounts = async () => {
+  const results = await Vehicle.findAll({
+    attributes: ['make', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: { isAvailable: true },
+    group: ['make'],
+    raw: true,
+  });
+
+  return results;
+};
+
+export const getVehicleFilterMetadata = async () => {
+  const [bodyTypes, brands] = await Promise.all([getBodyTypeFilterCounts(), getBrandFilterCounts()]);
+
+  return {
+    bodyTypes,
+    brands,
+  };
 };

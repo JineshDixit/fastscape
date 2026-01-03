@@ -1,8 +1,34 @@
-export interface VehicleFilters {
-  startDate?: string;
-  endDate?: string;
-  bodyType?: string;
-  fuelType?: string;
+import { dbEnums } from "../enum/dbEnums";
+
+export interface VehicleFilterOptions {
+  make?: string;
+  model?: string;
+  bodyType?: typeof dbEnums.VEHICLE_BODY_TYPE[number];
+  transmission?: typeof dbEnums.TRANSMISSION_TYPE[number];
+  fuelType?: typeof dbEnums.FUEL_TYPE[number];
+  isAvailable?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  year?: number;
+  search?: string;
+}
+
+export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface VehicleImageFiles {
+  frontImage?: Express.Multer.File[];
+  backImage?: Express.Multer.File[];
+  leftSideImage?: Express.Multer.File[];
+  rightSideImage?: Express.Multer.File[];
+  frontLeftImage?: Express.Multer.File[];
+  frontRightImage?: Express.Multer.File[];
+  interiorFrontImage?: Express.Multer.File[];
+  interiorBackImage?: Express.Multer.File[];
+  dashboardImage?: Express.Multer.File[];
+  engineImage?: Express.Multer.File[];
 }

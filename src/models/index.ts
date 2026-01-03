@@ -58,8 +58,12 @@ const initPostgres_DB = (): void => {
   User.hasMany(RefreshToken, { foreignKey: 'userId' });
   User.hasMany(ChauffeurReview, { foreignKey: 'userId' });
 
-  Vehicle.hasMany(VehicleMedia, { foreignKey: 'vehicleId' });
+  Vehicle.hasMany(VehicleMedia, { foreignKey: 'vehicleId', as: 'media' });
   Vehicle.hasMany(Booking, { foreignKey: 'vehicleId' });
+  VehicleMedia.belongsTo(Vehicle, {
+    foreignKey: 'vehicleId',
+    as: 'vehicle',
+  });
 
   Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId' });
   Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId' });
