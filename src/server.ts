@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3001;
 server.use(applySecurityMiddlewares);
 
 server.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [process.env.FRONTEND_URL, process.env.CLIENT_FRONTEND_URL],
   credentials: true,
   optionsSuccessStatus: 200,
 }));
