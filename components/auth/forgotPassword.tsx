@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ForgotPasswordPropType } from '@/common/propTypes';
 import { ForgotPasswordScreen } from '@/common/enums';
+import { useAuth } from '@/app/axios/hooks/useAuth';
 
 const emailSchema = z.object({
   email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email address'),
@@ -33,6 +34,7 @@ const resetSchema = z
   });
 
 const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
+  const { forgotPassword, verifyOtp, resetPassword, isLoading, error } = useAuth();
   const [screen, setScreen] = useState<ForgotPasswordScreen>(ForgotPasswordScreen.EMAIL);
   const [show, setShow] = useState({ password: false, confirm: false });
 
@@ -68,7 +70,10 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
         {screen === ForgotPasswordScreen.EMAIL && (
           <Form {...emailForm}>
-            <form onSubmit={emailForm.handleSubmit(() => setScreen(ForgotPasswordScreen.OTP))} className="space-y-6">
+            <form onSubmit={emailForm.handleSubmit(async (data) => {
+                await forgotPassword(data.email);
+                if (!error) setScreen(ForgotPasswordScreen.OTP);
+            })} className="space-y-6">
               <FormField
                 control={emailForm.control}
                 name="email"
@@ -93,7 +98,11 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
         {screen === ForgotPasswordScreen.OTP && (
           <Form {...otpForm}>
             <form
-              onSubmit={otpForm.handleSubmit(() => setScreen(ForgotPasswordScreen.RESET_PASSWORD))}
+              onSubmit={otpForm.handleSubmit(async (data) => {
+                  const email = emailForm.getValues().email;
+                  await verifyOtp(email, data.otp);
+                  if (!error) setScreen(ForgotPasswordScreen.RESET_PASSWORD);
+              })}
               className="space-y-6"
             >
               <FormField
@@ -125,7 +134,12 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
         {screen === ForgotPasswordScreen.RESET_PASSWORD && (
           <Form {...resetForm}>
-            <form onSubmit={resetForm.handleSubmit(closeDialog)} className="space-y-6">
+            <form onSubmit={resetForm.handleSubmit(async (data) => {
+                const email = emailForm.getValues().email;
+                const otp = otpForm.getValues().otp;
+                await resetPassword({ email, otp, newPassword: data.password });
+                if (!error) closeDialog();
+            })} className="space-y-6">
               {(['password', 'confirmPassword'] as const).map((key) => (
                 <FormField
                   key={key}

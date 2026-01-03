@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/app/axios/hooks/useAuth';
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,6 +23,8 @@ const loginSchema = z.object({
 const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClick, onForgotPasswordClick }) => {
   const [showPassword, setShowPassword] = useState(false);
 
+  const { login, isLoading, error } = useAuth();
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -36,9 +39,11 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
     setShowPassword(false);
   }
 
-  function onSubmit(values: z.infer<typeof loginSchema>) {
-    console.log(values);
-    closeDialog();
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
+    await login(values);
+    if (!error) {
+       closeDialog();
+    }
   }
 
   function handleRegister() {
