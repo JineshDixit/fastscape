@@ -14,7 +14,6 @@ export class User extends Model {
   public email!: string;
   public phone!: string;
   public passwordHash!: string;
-  public homeAddress!: string;
   public city!: string;
   public state!: string;
   public zipCode!: string;
@@ -59,11 +58,6 @@ export const initUserModel = (sequelize: Sequelize) => {
       passwordHash: {
         type: DataTypes.TEXT,
         allowNull: false,
-      },
-      homeAddress: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        comment: 'Detailed street address',
       },
       city: {
         type: DataTypes.STRING(100),

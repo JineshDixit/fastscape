@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as userController from '../controller/user/User.controller';
 import { authenticateUser } from '../services/middleware/authenticateUser';
 import { validateUserUpdate } from '../services/middleware/validation';
+import { userIdentityDocUpload } from '../config/multer/multerConfig';
 
 const router = Router();
 
@@ -9,12 +10,6 @@ const router = Router();
 router.get('/profile', authenticateUser, userController.getCurrentUser);
 
 // Update user profile
-router.put('/profile', authenticateUser, validateUserUpdate, userController.updateUserProfile);
-
-// Delete user account
-router.delete('/profile', authenticateUser, userController.deleteUserAccount);
-
-// Admin routes (for future use)
-router.get('/:userId', authenticateUser, userController.getUserById);
+router.put('/profile', authenticateUser, userIdentityDocUpload, validateUserUpdate, userController.updateUserProfile);
 
 export default router;

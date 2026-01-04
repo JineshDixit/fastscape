@@ -56,12 +56,6 @@ export const validateRegistration = [
       return true;
     }),
 
-  body('homeAddress')
-    .optional()
-    .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Home address must be between 10 and 500 characters'),
-
   body('city')
     .optional()
     .trim()
@@ -142,12 +136,6 @@ export const validateUserUpdate = [
       }
       return true;
     }),
-
-  body('homeAddress')
-    .optional()
-    .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Home address must be between 10 and 500 characters'),
 
   body('city')
     .optional()

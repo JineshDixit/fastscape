@@ -15,30 +15,18 @@ class UserController extends BaseController {
   });
 
   /**
-   * Get user by ID (admin only)
-   */
-  getUserById = this.handleGetById(userService.getUserById, 'User retrieved successfully', false);
-
-  /**
    * Update user profile
    */
   updateUserProfile = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
     const updateData = req.body;
-    const updatedUser = await userService.updateUser(userId, updateData);
+    const files = (req as any).files;
+    const updatedUser = await userService.updateUser(userId, updateData, files);
     sendSuccess(res, 'Profile updated successfully', updatedUser);
   });
 
-  /**
-   * Delete user account
-   */
-  deleteUserAccount = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const userId = this.ensureAuthenticated(req);
-    await userService.deleteUser(userId);
-    sendSuccess(res, 'Account deleted successfully');
-  });
 }
 
 const userController = new UserController();
 
-export const { getCurrentUser, getUserById, updateUserProfile, deleteUserAccount } = userController;
+export const { getCurrentUser, updateUserProfile } = userController;

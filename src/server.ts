@@ -4,7 +4,7 @@ import cors from 'cors';
 import passport from 'passport';
 import helmet from 'helmet';
 import compression from 'compression';
-import { initPostgres_DB, sequelize } from './models';
+import { initPostgres_DB } from './models';
 import { configPassport } from './config/passport';
 import routes from './routes';
 import { sanitizeInput, preventParameterPollution } from './services/middleware/security';

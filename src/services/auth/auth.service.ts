@@ -42,7 +42,7 @@ const formatUserResponse = (user: User) => ({
  * Registers a new user
  */
 export const registerUser = async (registerData: RegisterRequest): Promise<AuthResponse> => {
-  const { fullName, dateOfBirth, nationality, email: rawEmail, phone, password, homeAddress } = registerData;
+  const { fullName, dateOfBirth, nationality, email: rawEmail, phone, password } = registerData;
 
   // Validate required fields
   validateRequiredFields(registerData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'password']);
@@ -68,7 +68,6 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
     email,
     phone,
     passwordHash,
-    homeAddress,
     isBlocked: false,
     resetPasswordOtp: null,
     resetPasswordOtpExpires: null,
