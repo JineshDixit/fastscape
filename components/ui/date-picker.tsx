@@ -12,11 +12,11 @@ import { DatePickerPropType } from '@/common/propTypes';
 function formatDate(date?: Date) {
   if (!date) return '';
 
-  return date.toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
 function isValidDate(date?: Date) {
@@ -78,17 +78,13 @@ const DatePicker: FC<DatePickerPropType> = ({
               type="button"
               variant="ghost"
               disabled={disabled}
-              className="absolute right-2 top-1/2 size-6 -translate-y-1/2"
+              className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
             >
               <CalendarIcon className="size-4" />
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent
-            className="w-auto p-0"
-            align="end"
-            sideOffset={10}
-          >
+          <PopoverContent className="w-auto p-0" align="end" sideOffset={10}>
             <Calendar
               mode="single"
               selected={value}

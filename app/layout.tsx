@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Montserrat } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/app/context/AuthContext';
 import LayoutClient from '@/components/layout/layoutClient';
 
 const montserrat = Montserrat({
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning className={`${montserrat.variable} antialiased`}>
-        <LayoutClient>{children}</LayoutClient>
+        <AuthProvider>
+          <LayoutClient>{children}</LayoutClient>
+        </AuthProvider>
       </body>
     </html>
   );

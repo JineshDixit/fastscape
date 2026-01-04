@@ -4,7 +4,7 @@ import { Fragment, useState } from 'react';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import LoginModel from '@/components/auth/loginModel';
-import RegisterModel from '@/components/auth/regidterModel';
+import RegisterModel from '@/components/auth/registerModel';
 import ForgotPassword from '@/components/auth/forgotPassword';
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {

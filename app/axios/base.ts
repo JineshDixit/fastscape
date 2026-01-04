@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import apiClient from './client';
-import type { ApiResponse, PaginatedResponse, RequestConfig } from '../../common/interfaces';
+import type { ApiResponse, RequestConfig } from '../../common/interfaces';
 
 /**
  * Base API service class with common CRUD operations
@@ -45,18 +45,10 @@ export class BaseApiService {
   }
 
   /**
-   * DELETE request
+   * Delete request
    */
   async delete<T>(path: string = '', config?: RequestConfig): Promise<ApiResponse<T>> {
     const response: AxiosResponse<ApiResponse<T>> = await apiClient.delete(`${this.endpoint}${path}`, config);
-    return response.data;
-  }
-
-  /**
-   * Get all items with pagination
-   */
-  async getAll<T>(params?: Record<string, any>): Promise<PaginatedResponse<T>> {
-    const response: AxiosResponse<PaginatedResponse<T>> = await apiClient.get(this.endpoint, { params });
     return response.data;
   }
 

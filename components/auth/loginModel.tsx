@@ -40,9 +40,9 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
   }
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
-    await login(values);
-    if (!error) {
-       closeDialog();
+    const response = await login(values);
+    if (response.success) {
+      closeDialog();
     }
   }
 

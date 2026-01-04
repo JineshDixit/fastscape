@@ -5,22 +5,6 @@ export interface ApiResponse<T = any> {
   success: boolean;
 }
 
-export interface ApiError {
-  message: string;
-  code?: string;
-  details?: any;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
 // Common request types
 export interface PaginationParams {
   page?: number;

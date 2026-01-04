@@ -7,13 +7,14 @@ import Image from 'next/image';
 import { useVehicle } from './axios/hooks/useVehicle';
 import { useEffect, useMemo } from 'react';
 import VehicleCard from '@/components/car-components/vehicleCard';
+import { Separator } from '@/components/ui/separator';
 
 const Home = () => {
   const { bodyTypeSummary, fetchBodyTypeSummary, vehicles, fetchVehicles } = useVehicle();
 
   useEffect(() => {
     fetchBodyTypeSummary();
-    fetchVehicles({ bodyType: 'Supercar' });
+    fetchVehicles({ bodyType: 'Supercar', limit: 4 });
   }, []);
 
   const fleetCategoryData = useMemo(() => {
@@ -77,9 +78,9 @@ const Home = () => {
             </div>
             <div></div>
           </div>
-          <section className="mt-10">
+          <section className="mt-15">
             <h3 className="text-center text-lg font-semibold">Explore Fleet Categories</h3>
-            <div className="mt-20 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 {
                   label: 'Hatchback',
@@ -93,7 +94,7 @@ const Home = () => {
                 },
                 {
                   label: 'Super Car',
-                  img: '/images/home-supercar.png',
+                  img: '/images/home-super-car.png',
                   count: fleetCategoryData.supercar,
                 },
                 {
@@ -102,16 +103,18 @@ const Home = () => {
                   count: fleetCategoryData.suv,
                 },
               ].map((item) => (
-                <div key={item.label} className="relative flex flex-col items-center">
-                  <Image
-                    src={item.img}
-                    alt={item.label}
-                    width={240}
-                    height={240}
-                    className="absolute -top-17 left-1/2 z-10 -translate-x-1/2"
-                  />
+                <div key={item.label} className="relative flex w-full flex-col items-center">
+                  <div className="relative z-10 -mb-8">
+                    <Image
+                      src={item.img}
+                      alt={item.label}
+                      width={240}
+                      height={240}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
 
-                  <div className="bg-foreground/10 flex w-full max-w-[280px] flex-col items-center rounded-2xl pt-10 pb-5">
+                  <div className="bg-foreground/10 flex w-full flex-col gap-2 rounded-2xl px-6 pt-10 pb-5">
                     <span className="text-sm font-semibold">{item.label}</span>
                     <span className="text-muted-foreground text-sm">{item.count} Options</span>
                   </div>
@@ -119,12 +122,71 @@ const Home = () => {
               ))}
             </div>
           </section>
-          <section className="mt-10">
+          <section className="mt-15">
             <h3 className="text-center text-lg font-semibold">For the Luxury</h3>
             <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {vehicles.map((item) => (
                 <VehicleCard key={item.id} vehicle={item} />
               ))}
+            </div>
+          </section>
+          <section className="mt-15">
+            <h3 className="text-center text-lg font-semibold">Brands We Work with</h3>
+            <div className="mt-5 flex items-center justify-center gap-5 opacity-55 select-none">
+              {[
+                { label: 'BMW', img: '/brands/bmw-brand.png' },
+                { label: 'Jaguar', img: '/brands/jaguar-brand.png' },
+                { label: 'honda', img: '/brands/honda-brand.png' },
+                { label: 'Toyota', img: '/brands/toyota-brand.png' },
+                { label: 'Volkswagen', img: '/brands/volkswagen-brand.png' },
+                { label: 'Hyundai', img: '/brands/hyundai-brand.png' },
+              ].map((brand, index) => (
+                <Image
+                  key={`${brand.label}-${index}`}
+                  src={brand.img}
+                  alt={brand.label}
+                  width={90}
+                  height={90}
+                  className="aspect-7/4 object-contain bg-blend-color-burn"
+                />
+              ))}
+            </div>
+          </section>
+          <section className="mt-15 w-full rounded-3xl bg-gray-300 py-14">
+            <h3 className="mb-14 text-center text-lg font-semibold">Getting a ride is easy. Really easy.</h3>
+
+            <div className="relative mx-auto max-w-3xl px-12">
+              <Separator className="relative mx-auto max-w-2/3 -mb-6 bg-gray-500" />
+
+              <div className="relative z-10 flex justify-between">
+                {[
+                  {
+                    step: '01',
+                    title: 'Choose your ride',
+                    desc: 'Select a car that fits your trip and budget.',
+                  },
+                  {
+                    step: '02',
+                    title: 'Confirm instantly',
+                    desc: 'See final pricing upfront—no surprises.',
+                  },
+                  {
+                    step: '03',
+                    title: 'Sit back & relax',
+                    desc: 'Verified drivers get you there on time.',
+                  },
+                ].map((item) => (
+                  <div key={item.step} className="flex max-w-[200px] flex-col items-center text-center">
+                    <div className="relative mb-5 flex h-12 w-12 items-center justify-center">
+                      <div className="absolute h-12 w-12 rotate-45 rounded-lg bg-sky-500" />
+                      <span className="relative text-sm font-semibold text-white">{item.step}</span>
+                    </div>
+
+                    <h4 className="text-sm font-semibold">{item.title}</h4>
+                    <p className="mt-1 text-xs text-gray-600">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         </div>
