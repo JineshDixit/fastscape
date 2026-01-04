@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import VehicleDetails from '@/components/units/VehicleDetails';
+import debounce from 'lodash.debounce';
 
 const Units = () => {
   const [pageSize, setPageSize] = React.useState(10);
@@ -33,18 +34,34 @@ const Units = () => {
     fetchVehicleById,
   } = useVehicle();
 
-  useEffect(() => {
-    fetchVehicles({ page: currentPage, limit: pageSize });
-  }, [currentPage, pageSize]);
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        const trimmed = value.trim();
+
+        if (trimmed.length === 0) {
+          fetchVehicles({
+            page: 1,
+            limit: pageSize,
+          });
+          return;
+        }
+
+        if (trimmed.length < 2) return;
+
+        fetchVehicles({
+          search: trimmed,
+        });
+      }, 400),
+    [fetchVehicles],
+  );
 
   const handleAddVehicle = async (formData: FormData) => {
     try {
       if (selectedVehicle) {
-        // Edit mode
         await updateVehicle(selectedVehicle.id, formData);
         toast.success('Vehicle updated successfully!');
       } else {
-        // Create mode
         await createVehicle(formData);
         toast.success('Vehicle created successfully!');
       }
@@ -57,7 +74,6 @@ const Units = () => {
   const handleFormSuccess = () => {
     setShowAddForm(false);
     setSelectedVehicle(null);
-    // Refresh the list
     fetchVehicles({ page: currentPage, limit: pageSize });
   };
 
@@ -85,12 +101,25 @@ const Units = () => {
     try {
       await deleteVehicle(vehicleId);
       toast.success('Vehicle deleted successfully!');
-      // Refresh the list
       fetchVehicles({ page: currentPage, limit: pageSize });
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete vehicle');
     }
   };
+
+  const handleSearchVehicle = (value: string) => {
+    debouncedSearch(value);
+  };
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    fetchVehicles({ page: currentPage, limit: pageSize });
+  }, [currentPage, pageSize]);
 
   // Show form view
   if (showAddForm) {
@@ -123,7 +152,11 @@ const Units = () => {
         <div className="flex flex-1 flex-col items-center gap-4 sm:flex-row">
           <div className="relative w-full sm:max-w-md">
             <Search className="text-foreground/50 absolute top-1/2 left-4 size-[18px] -translate-y-1/2" />
-            <Input placeholder="Search client name, car, etc" className="placeholder:text-foreground/50 pl-11" />
+            <Input
+              placeholder="Search car name"
+              className="placeholder:text-foreground/50 pl-11"
+              onChange={(e) => handleSearchVehicle(e.target.value)}
+            />
           </div>
 
           <div className="flex w-full items-center gap-3 sm:w-auto">
