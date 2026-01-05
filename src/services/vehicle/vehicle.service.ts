@@ -36,6 +36,7 @@ export interface VehicleFilterOptions {
   maxPrice?: number;
   year?: number;
   search?: string;
+  city?: string;
 }
 
 export interface PaginationOptions {
@@ -270,6 +271,10 @@ export const getVehicles = async (
 
   if (filters.year) {
     whereClause.year = filters.year;
+  }
+
+  if (filters.city) {
+    whereClause.city = { [Op.iLike]: `%${filters.city}%` };
   }
 
   if (filters.search) {

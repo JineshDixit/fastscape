@@ -90,6 +90,11 @@ export const createVehicleValidation = [
     .optional()
     .isBoolean()
     .withMessage('isAvailable must be a boolean'),
+
+  body('city')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('City must be less than 100 characters'),
 ];
 
 export const updateVehicleValidation = [
@@ -186,6 +191,11 @@ export const updateVehicleValidation = [
     .optional()
     .isBoolean()
     .withMessage('isAvailable must be a boolean'),
+
+  body('city')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('City must be less than 100 characters'),
 ];
 
 export const vehicleIdValidation = [
@@ -268,4 +278,9 @@ export const vehicleQueryValidation = [
     .optional()
     .isLength({ min: 1, max: 100 })
     .withMessage('Search term must be between 1 and 100 characters'),
+
+  query('city')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('City must be less than 100 characters'),
 ];

@@ -24,6 +24,7 @@ export interface VehicleAttributes {
   isAvailable: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  city: string;
 }
 
 // Vehicle creation attributes (optional fields for creation)
@@ -49,7 +50,8 @@ export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes>
   public depositPercentage!: number;
   public currency!: string;
   public isAvailable!: boolean;
-  
+  public city!: string;
+
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -100,7 +102,12 @@ export const initVehicleModel = (sequelize: Sequelize) => {
       isAvailable: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
-      }
+      },
+      city: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        defaultValue: 'Dubai',
+      },
     },
     {
       sequelize,

@@ -44,6 +44,7 @@ export const createVehicleController = async (req: Request, res: Response, next:
       depositPercentage: req.body.depositPercentage ? parseFloat(req.body.depositPercentage) : undefined,
       currency: req.body.currency || 'USD',
       isAvailable: req.body.isAvailable !== undefined ? req.body.isAvailable === 'true' : true,
+      city: req.body.city,
     };
 
     // Handle image files
@@ -73,6 +74,7 @@ export const getVehiclesController = async (req: Request, res: Response, next: N
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
       search: req.query.search as string,
+      city: req.query.city as string,
     };
 
     const pagination = {
@@ -137,6 +139,7 @@ export const updateVehicleController = async (req: Request, res: Response, next:
     if (req.body.depositPercentage !== undefined) updateData.depositPercentage = parseFloat(req.body.depositPercentage);
     if (req.body.currency !== undefined) updateData.currency = req.body.currency;
     if (req.body.isAvailable !== undefined) updateData.isAvailable = req.body.isAvailable === 'true';
+    if (req.body.city !== undefined) updateData.city = req.body.city;
 
     // Handle image files
     const imageFiles = req.files as any;
