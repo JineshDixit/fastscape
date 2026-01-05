@@ -208,6 +208,49 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface VehicleSearchParams {
+  pickupLocation: string;
+  pickupDate: string; // ISO string format
+  dropoffDate: string; // ISO string format
+  bodyType?: BodyType;
+  transmission?: TransmissionType;
+  page?: number;
+  limit?: number;
+}
+
+// User Profile Types
+export interface UserProfile extends User {
+  city?: string;
+  state?: string;
+  country?: string;
+  licenseIssuingCountry?: string;
+  licenseExpiryDate?: string;
+  drivingExperienceYears?: number;
+  // Document URLs after upload
+  driverLicenseFront?: string;
+  driverLicenseBack?: string;
+  passportPhoto?: string;
+  internationalDrivingPermit?: string;
+  selfieWithLicense?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  licenseIssuingCountry?: string;
+  licenseExpiryDate?: string;
+  drivingExperienceYears?: number;
+  // Files for document upload
+  driverLicenseFront?: File;
+  driverLicenseBack?: File;
+  passportPhoto?: File;
+  internationalDrivingPermit?: File;
+  selfieWithLicense?: File;
+}
+
 export interface LogoutRequest {
   refreshToken: string;
 }

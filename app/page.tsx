@@ -15,7 +15,7 @@ const Home = () => {
   useEffect(() => {
     fetchBodyTypeSummary();
     fetchVehicles({ bodyType: 'Supercar', limit: 4 });
-  }, []);
+  }, [fetchBodyTypeSummary, fetchVehicles]);
 
   const fleetCategoryData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -70,7 +70,7 @@ const Home = () => {
             <div>
               <Image
                 src="/images/hero-chauffeurs.png"
-                alt="Hero Car Image"
+                alt="Professional Chauffeur Service"
                 width={500}
                 height={500}
                 className="object-cover"
@@ -124,7 +124,7 @@ const Home = () => {
           </section>
           <section className="mt-15">
             <h3 className="text-center text-lg font-semibold">For the Luxury</h3>
-            <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {vehicles.map((item) => (
                 <VehicleCard key={item.id} vehicle={item} />
               ))}
@@ -156,7 +156,7 @@ const Home = () => {
             <h3 className="mb-14 text-center text-lg font-semibold">Getting a ride is easy. Really easy.</h3>
 
             <div className="relative mx-auto max-w-3xl px-12">
-              <Separator className="relative mx-auto max-w-2/3 -mb-6 bg-gray-500" />
+              <Separator className="relative mx-auto -mb-6 max-w-2/3 bg-gray-500" />
 
               <div className="relative z-10 flex justify-between">
                 {[
@@ -186,6 +186,53 @@ const Home = () => {
                     <p className="mt-1 text-xs text-gray-600">{item.desc}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+          <section className="mt-15">
+            <h3 className="text-center text-lg font-semibold">Why Choose Us</h3>
+            <div className="mt-5 flex items-center justify-between gap-5">
+              {[
+                {
+                  title: 'Professional Driver Availability',
+                  desc: 'Need a driver? Our trained professionals ensure a safe, smooth, and stress-free travel experience.',
+                },
+                {
+                  title: 'Fast Delivery Service',
+                  desc: 'Get your rental car delivered to your location quickly and efficiently—no unnecessary waiting.',
+                },
+                {
+                  title: 'Reliable Support Team',
+                  desc: 'Our support specialists are available around the clock to assist you with bookings, issues, or special requests.',
+                },
+              ].map((items, index) => (
+                <div key={index} className="space-y-2">
+                  <h4 className="text-primary font-semibold">{items.title}</h4>
+                  <p className="text-foreground">{items.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section className="mt-17">
+            <div className="grid grid-cols-[auto_1fr] gap-20">
+              <Image src="/images/hero-driver.png" alt="hero-driver" width={350} height={350} />
+              <div className="my-auto space-y-3 text-start">
+                <h4 className="text-primary">Built on long-term partnerships</h4>
+                <h2 className="text-3xl font-bold">Driving success for leading companies worldwide</h2>
+                <p className="text-foreground">
+                  Fastscape has been the trusted mobility partner for organizations across the globe for over a decade,
+                  delivering reliable, scalable, and efficient transportation solutions.
+                </p>
+                <div className="flex items-center gap-8">
+                  <div>
+                    <h2 className="text-primary text-3xl font-bold">1500+</h2>
+                    <span>Vehicles</span>
+                  </div>
+                  <div>
+                    <h2 className="text-primary text-3xl font-bold">9+</h2>
+                    <span>States</span>
+                  </div>
+                </div>
               </div>
             </div>
           </section>

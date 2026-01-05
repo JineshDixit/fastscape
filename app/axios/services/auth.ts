@@ -1,5 +1,5 @@
 import { BaseApiService } from '../base';
-import { authCookies } from '@/utils/cookies';
+import { authCookies, TIME_CONSTANTS } from '@/utils/cookies';
 import type {
   ApiResponse,
   LoginRequest,
@@ -19,7 +19,7 @@ class AuthService extends BaseApiService {
   async register(data: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
     const response = await this.post<AuthResponse>('/register', data);
     if (response.success && response.data) {
-      this.handleAuthResponse(response.data);
+      this.handleTokenResponse(response.data);
     }
     return response;
   }
@@ -30,7 +30,7 @@ class AuthService extends BaseApiService {
   async login(data: LoginRequest): Promise<ApiResponse<AuthResponse>> {
     const response = await this.post<AuthResponse>('/login', data);
     if (response.success && response.data) {
-      this.handleAuthResponse(response.data);
+      this.handleTokenResponse(response.data);
     }
     return response;
   }
@@ -41,7 +41,7 @@ class AuthService extends BaseApiService {
   async refreshToken(refreshToken: string): Promise<ApiResponse<AuthResponse>> {
     const response = await this.post<AuthResponse>('/refresh-token', { refreshToken });
     if (response.success && response.data) {
-      this.handleAuthResponse(response.data);
+      this.handleTokenResponse(response.data);
     }
     return response;
   }
@@ -93,25 +93,22 @@ class AuthService extends BaseApiService {
   }
 
   /**
-   * Helper to handle successful auth response
+   * Helper to handle successful auth response with proper token expiration
+   * Only handles tokens, not user data (user data is fetched separately via API)
    */
-  private handleAuthResponse(data: AuthResponse) {
+  private handleTokenResponse(data: AuthResponse) {
     const { tokens } = data;
-    // Assuming tokens are valid for 7 days if not specified. 
-    // Ideally backend should return expiresAt or we decode JWT.
-    // For now, let's set a default expiration for cookies if not provided.
-    // In a real app, I'd decode the JWT to get 'exp'.
-    
-    // Using a default of 1 day for access, 7 days for refresh for this example 
-    // or relying on what the backend might return if we parse it.
-    // Since we don't have JWT decode handy, I'll set reasonable defaults.
-    
-    const oneDay = 24 * 60 * 60 * 1000;
-    const sevenDays = 7 * oneDay;
     const now = Date.now();
 
-    authCookies.setAccessToken(tokens.accessToken, new Date(now + oneDay).toISOString());
-    authCookies.setRefreshToken(tokens.refreshToken, new Date(now + sevenDays).toISOString());
+    // Set tokens with proper expiration times
+    authCookies.setAccessToken(
+      tokens.accessToken, 
+      new Date(now + TIME_CONSTANTS.ONE_DAY).toISOString()
+    );
+    authCookies.setRefreshToken(
+      tokens.refreshToken, 
+      new Date(now + TIME_CONSTANTS.SEVEN_DAYS).toISOString()
+    );
   }
 }
 

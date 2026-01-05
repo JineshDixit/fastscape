@@ -1,5 +1,13 @@
 import { BaseApiService } from '../base';
-import type { ApiResponse, Vehicle, VehicleStats, VehicleEnums, VehicleFilters, VehicleListResponse } from '../../../common/interfaces';
+import type { 
+  ApiResponse, 
+  Vehicle, 
+  VehicleStats, 
+  VehicleEnums, 
+  VehicleFilters, 
+  VehicleListResponse,
+  VehicleSearchParams 
+} from '../../../common/interfaces';
 
 export class VehicleService extends BaseApiService {
   constructor() {
@@ -11,6 +19,13 @@ export class VehicleService extends BaseApiService {
    */
   async getVehicles(params?: VehicleFilters): Promise<ApiResponse<VehicleListResponse>> {
     return this.get<VehicleListResponse>('', { params });
+  }
+
+  /**
+   * Search available vehicles with pickup/dropoff dates and location
+   */
+  async searchAvailableVehicles(params: VehicleSearchParams): Promise<ApiResponse<VehicleListResponse>> {
+    return this.get<VehicleListResponse>('/available', { params });
   }
 
   /**

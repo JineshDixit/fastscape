@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/app/axios/hooks/useAuth';
+import { useAuth } from '@/app/axios';
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -65,6 +65,7 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {error && <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>}
             <FormField
               control={form.control}
               name="email"
@@ -90,6 +91,7 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
                       <Input {...field} type={showPassword ? 'text' : 'password'} />
                       <button
                         type="button"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         onClick={() => setShowPassword((s) => !s)}
                         className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
                       >
@@ -107,7 +109,9 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
             </Button>
 
             <DialogFooter className="flex-col gap-2">
-              <Button type="submit">Login</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Logging in...' : 'Login'}
+              </Button>
 
               <Button
                 type="button"

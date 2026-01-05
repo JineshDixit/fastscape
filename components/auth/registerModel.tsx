@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import DatePicker from '@/components/ui/date-picker';
 
 import { RegisterModelPropType } from '@/common/propTypes';
-import { useAuth } from '@/app/axios/hooks/useAuth';
+import { useAuth } from '@/app/axios';
 
 const COUNTRY_CODES = [
   { code: '+1', country: 'US' },
@@ -27,6 +27,14 @@ const COUNTRY_CODES = [
   { code: '+86', country: 'CN' },
 ];
 
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character');
+
 export const registerSchema = z
   .object({
     fullName: z.string().trim().min(3, 'Full name must be at least 3 characters'),
@@ -35,7 +43,7 @@ export const registerSchema = z
     phone: z.string().min(7).max(15),
     dateOfBirth: z.date(),
     nationality: z.string().min(2, 'Nationality is required'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string().min(8, 'Password must be at least 8 characters'),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -56,7 +64,7 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
     confirmPassword: false,
   });
 
-  const { register: registerUser, isLoading } = useAuth();
+  const { register: registerUser, isLoading, error } = useAuth();
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -112,6 +120,7 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {error && <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>}
             <FormField
               control={form.control}
               name="fullName"

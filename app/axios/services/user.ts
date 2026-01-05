@@ -1,0 +1,57 @@
+import { BaseApiService } from '../base';
+import type { 
+  ApiResponse, 
+  UserProfile, 
+  UpdateProfileRequest 
+} from '../../../common/interfaces';
+
+export class UserService extends BaseApiService {
+  constructor() {
+    super('/users');
+  }
+
+  /**
+   * Get current user profile
+   */
+  async getProfile(): Promise<ApiResponse<UserProfile>> {
+    return this.get<UserProfile>('/profile');
+  }
+
+  /**
+   * Update user profile with form data (supports file uploads)
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>> {
+    const formData = new FormData();
+    
+    // Add text fields
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && !(value instanceof File)) {
+        formData.append(key, String(value));
+      }
+    });
+
+    // Add file fields
+    const fileFields = [
+      'driverLicenseFront',
+      'driverLicenseBack', 
+      'passportPhoto',
+      'internationalDrivingPermit',
+      'selfieWithLicense'
+    ] as const;
+
+    fileFields.forEach(field => {
+      const file = data[field];
+      if (file instanceof File) {
+        formData.append(field, file);
+      }
+    });
+
+    return this.put<UserProfile, FormData>('/profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  }
+}
+
+export const userService = new UserService();

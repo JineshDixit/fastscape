@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ForgotPasswordPropType } from '@/common/propTypes';
 import { ForgotPasswordScreen } from '@/common/enums';
-import { useAuth } from '@/app/axios/hooks/useAuth';
+import { useAuth } from '@/app/axios';
 
 const emailSchema = z.object({
   email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email address'),
@@ -23,9 +23,17 @@ const otpSchema = z.object({
   otp: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
 });
 
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character');
+
 const resetSchema = z
   .object({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: passwordSchema,
     confirmPassword: z.string().min(8, 'Password must be at least 8 characters'),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -59,6 +67,7 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
     emailForm.reset();
     otpForm.reset();
     resetForm.reset();
+    setShow({ password: false, confirm: false });
   }
 
   return (
@@ -70,10 +79,14 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
         {screen === ForgotPasswordScreen.EMAIL && (
           <Form {...emailForm}>
-            <form onSubmit={emailForm.handleSubmit(async (data) => {
+            <form
+              onSubmit={emailForm.handleSubmit(async (data) => {
                 await forgotPassword(data.email);
                 if (!error) setScreen(ForgotPasswordScreen.OTP);
-            })} className="space-y-6">
+              })}
+              className="space-y-6"
+            >
+              {error && <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>}
               <FormField
                 control={emailForm.control}
                 name="email"
@@ -89,7 +102,9 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
               />
 
               <DialogFooter>
-                <Button type="submit">Send OTP</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Sending...' : 'Send OTP'}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -99,9 +114,9 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
           <Form {...otpForm}>
             <form
               onSubmit={otpForm.handleSubmit(async (data) => {
-                  const email = emailForm.getValues().email;
-                  await verifyOtp(email, data.otp);
-                  if (!error) setScreen(ForgotPasswordScreen.RESET_PASSWORD);
+                const email = emailForm.getValues().email;
+                await verifyOtp(email, data.otp);
+                if (!error) setScreen(ForgotPasswordScreen.RESET_PASSWORD);
               })}
               className="space-y-6"
             >
@@ -126,7 +141,9 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
               />
 
               <DialogFooter>
-                <Button type="submit">Confirm OTP</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Verifying...' : 'Confirm OTP'}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -134,12 +151,15 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
         {screen === ForgotPasswordScreen.RESET_PASSWORD && (
           <Form {...resetForm}>
-            <form onSubmit={resetForm.handleSubmit(async (data) => {
+            <form
+              onSubmit={resetForm.handleSubmit(async (data) => {
                 const email = emailForm.getValues().email;
                 const otp = otpForm.getValues().otp;
                 await resetPassword({ email, otp, newPassword: data.password });
                 if (!error) closeDialog();
-            })} className="space-y-6">
+              })}
+              className="space-y-6"
+            >
               {(['password', 'confirmPassword'] as const).map((key) => (
                 <FormField
                   key={key}
@@ -156,6 +176,9 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
                           />
                           <button
                             type="button"
+                            aria-label={
+                              show[key === 'password' ? 'password' : 'confirm'] ? 'Hide password' : 'Show password'
+                            }
                             onClick={() =>
                               setShow((s) => ({
                                 ...s,
@@ -180,7 +203,9 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
               ))}
 
               <DialogFooter>
-                <Button type="submit">Reset Password</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Resetting...' : 'Reset Password'}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

@@ -9,16 +9,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import DatePicker from '@/components/ui/date-picker';
 import { ChipToggle } from '@/components/ui/chip-toggle';
 import z from 'zod';
-
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+import { useVehicle } from '@/app/axios';
+import { useRouter } from 'next/navigation';
 
 const carSearchSchema = z
   .object({
-    tripType: z.enum(['domestic', 'international']).default('domestic'),
+    tripType: z.enum(['domestic', 'international']),
     from: z.string().min(3, 'Pickup address must be at least 3 characters long'),
     to: z.string().min(3, 'Drop address must be at least 3 characters long'),
-    pickupDate: z.date().min(today, 'Pickup date must be today or later'),
+    pickupDate: z.date().refine(
+      (date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return date >= today;
+      },
+      { message: 'Pickup date must be today or later' },
+    ),
     dropDate: z.date(),
     needDriver: z.boolean().optional(),
   })
@@ -28,16 +34,28 @@ const carSearchSchema = z
   });
 
 export function CarSearchForm() {
-  const form = useForm({
+  const { searchAvailableVehicles } = useVehicle();
+  const router = useRouter();
+  const form = useForm<z.infer<typeof carSearchSchema>>({
     resolver: zodResolver(carSearchSchema),
     defaultValues: {
-      tripType: 'domestic',
+      tripType: 'domestic' as const,
+      from: '',
+      to: '',
+      pickupDate: undefined,
+      dropDate: undefined,
       needDriver: false,
     },
   });
 
   const onSubmit = (data: z.infer<typeof carSearchSchema>) => {
-    console.log(data);
+    searchAvailableVehicles({
+      pickupLocation: data.from,
+      dropoffDate: data.dropDate.toISOString(),
+      pickupDate: data.pickupDate.toISOString(),
+    });
+    router.push('/car-list');
+    form.reset();
   };
 
   return (

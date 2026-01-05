@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 import { HeaderPropType } from '@/common/propTypes';
-import { useAuth } from '@/app/axios/hooks/useAuth';
+import { useAuth } from '@/app/axios';
 
 const NAV_ITEMS = [
   {
@@ -37,7 +37,8 @@ const NAV_ITEMS = [
 ];
 
 const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const authData = useAuth();
+  const { isAuthenticated, user, logout } = authData;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

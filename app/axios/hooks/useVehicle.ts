@@ -5,6 +5,7 @@ import { vehicleService } from '../services/vehicle';
 import type {
   Vehicle,
   VehicleFilters,
+  VehicleSearchParams,
   VehicleStats,
   VehicleListResponse,
 } from '@/common/interfaces';
@@ -32,6 +33,7 @@ interface VehicleState {
 
 interface UseVehicleReturn extends VehicleState {
   fetchVehicles: (params?: VehicleFilters) => Promise<void>;
+  searchAvailableVehicles: (params: VehicleSearchParams) => Promise<void>;
   fetchVehicleById: (id: string) => Promise<void>;
   fetchStats: () => Promise<void>;
   fetchBodyTypeSummary: () => Promise<void>;
@@ -96,6 +98,38 @@ export const useVehicle = (): UseVehicleReturn => {
       }
     } catch (err: any) {
       handleError(err, 'Failed to fetch vehicles');
+    }
+  }, []);
+
+  /**
+   * Search available vehicles with pickup/dropoff dates and location
+   */
+  const searchAvailableVehicles = useCallback(async (params: VehicleSearchParams) => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
+    startLoading();
+
+    try {
+      const response = await vehicleService.searchAvailableVehicles(params);
+
+      if (response.success && response.data) {
+        setState(prev => ({
+          ...prev,
+          vehicles: response.data!.vehicles,
+          pagination: {
+            total: response.data!.total,
+            page: response.data!.page,
+            limit: response.data!.limit,
+            totalPages: response.data!.totalPages,
+          },
+          isLoading: false
+        }));
+      } else {
+        setState(prev => ({ ...prev, error: response.message || 'Failed to search vehicles', isLoading: false }));
+      }
+    } catch (err: any) {
+      handleError(err, 'Failed to search vehicles');
     }
   }, []);
 
@@ -178,6 +212,7 @@ export const useVehicle = (): UseVehicleReturn => {
   return {
     ...state,
     fetchVehicles,
+    searchAvailableVehicles,
     fetchVehicleById,
     fetchStats,
     fetchBodyTypeSummary,

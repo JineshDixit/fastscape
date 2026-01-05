@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import { AspectRatio } from '../ui/aspect-ratio';
 
 const VehicleCard: FC<VehicleCardPropType> = ({ vehicle }) => {
-  const fetchImage = (imagePath: string) => `http://localhost:3001/${imagePath.replace(/\\/g, '/')}`;
+  const fetchImage = (imagePath: string) => {
+    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
+    return `${baseUrl}/${imagePath.replace(/\\/g, '/')}`;
+  };
 
   const getDisplayImage = () => {
     const primaryMedia = vehicle.media?.find((m) => m.isPrimary);
@@ -14,7 +17,7 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle }) => {
   return (
     <div className="relative flex w-full flex-col items-center">
       <div className="relative z-10 -mb-8 w-[240px]">
-        <AspectRatio ratio={16 / 9} className='rounded-lg overflow-hidden'>
+        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg">
           <img src={getDisplayImage()} alt={vehicle.model} className="h-full w-full object-cover" />
         </AspectRatio>
       </div>

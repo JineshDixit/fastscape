@@ -113,6 +113,15 @@ export const clearAllCookies = (): void => {
   });
 };
 
+// Time constants for token expiration
+export const TIME_CONSTANTS = {
+  ONE_MINUTE: 60 * 1000,
+  ONE_HOUR: 60 * 60 * 1000,
+  ONE_DAY: 24 * 60 * 60 * 1000,
+  SEVEN_DAYS: 7 * 24 * 60 * 60 * 1000,
+  THIRTY_DAYS: 30 * 24 * 60 * 60 * 1000,
+} as const;
+
 // Specific cookie names for the application
 export const COOKIE_NAMES = {
   ACCESS_TOKEN: 'access_token',
@@ -129,14 +138,15 @@ export const authCookies = {
   // Set access token with expiration
   setAccessToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
+    const isProduction = process.env.NODE_ENV === 'production';
     setCookie(COOKIE_NAMES.ACCESS_TOKEN, token, {
       expires: expiresDate,
-      secure: true,
+      secure: isProduction,
       sameSite: 'strict',
     });
     setCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
-      secure: true,
+      secure: isProduction,
       sameSite: 'strict',
     });
   },
@@ -144,24 +154,26 @@ export const authCookies = {
   // Set refresh token with expiration
   setRefreshToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
+    const isProduction = process.env.NODE_ENV === 'production';
     setCookie(COOKIE_NAMES.REFRESH_TOKEN, token, {
       expires: expiresDate,
-      secure: true,
+      secure: isProduction,
       sameSite: 'strict',
     });
     setCookie(COOKIE_NAMES.REFRESH_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
-      secure: true,
+      secure: isProduction,
       sameSite: 'strict',
     });
   },
 
   // Set remember me
   setRememberMe: (remember: boolean) => {
+    const isProduction = process.env.NODE_ENV === 'production';
     if (remember) {
       setCookie(COOKIE_NAMES.REMEMBER_ME, 'true', {
         expires: 30, // 30 days
-        secure: true,
+        secure: isProduction,
         sameSite: 'strict',
       });
     } else {
@@ -183,17 +195,30 @@ export const authCookies = {
     });
   },
 
-  // Check if user is authenticated (simple check)
+  // Check if user is authenticated with proper token validation
   isAuthenticated: () => {
     const token = getCookie(COOKIE_NAMES.ACCESS_TOKEN);
     const expiresAt = getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT);
 
     if (!token || !expiresAt) return false;
 
-    // Simple expiry check
+    // Check if token is expired with 5-minute buffer
     const now = new Date().getTime();
     const expires = new Date(expiresAt).getTime();
+    const buffer = 5 * TIME_CONSTANTS.ONE_MINUTE;
 
-    return now < expires;
+    return now < expires - buffer;
+  },
+
+  // Check if token needs refresh (within 10 minutes of expiry)
+  needsRefresh: () => {
+    const expiresAt = getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT);
+    if (!expiresAt) return false;
+
+    const now = new Date().getTime();
+    const expires = new Date(expiresAt).getTime();
+    const refreshThreshold = 10 * TIME_CONSTANTS.ONE_MINUTE;
+
+    return now > expires - refreshThreshold;
   },
 };
