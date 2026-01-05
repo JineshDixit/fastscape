@@ -1,6 +1,7 @@
 /*
  * MANUAL MIGRATION QUERY:
  * ALTER TABLE vehicles ADD COLUMN passenger_capacity INTEGER DEFAULT 5;
+ * ALTER TABLE vehicles ADD COLUMN city VARCHAR(100) DEFAULT 'Dubai';
  */
 
 import { DataTypes, Model, Sequelize } from 'sequelize';
@@ -27,6 +28,7 @@ export class Vehicle extends Model {
   public currency!: string;
   public isAvailable!: boolean;
   public passengerCapacity!: number;
+  public city!: string;
 }
 
 export const initVehicleModel = (sequelize: Sequelize) => {
@@ -79,6 +81,11 @@ export const initVehicleModel = (sequelize: Sequelize) => {
         type: DataTypes.INTEGER,
         defaultValue: 5,
         allowNull: false,
+      },
+      city: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        defaultValue: 'Dubai',
       },
     },
     {

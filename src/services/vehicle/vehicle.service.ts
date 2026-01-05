@@ -1,4 +1,4 @@
-import { PaginationOptions, VehicleFilterOptions } from '../../common/types/vehicalType';
+import { PaginationOptions, VehicleFilterOptions, VehicleSearchQuery } from '../../common/types/vehicalType';
 import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op } from 'sequelize';
@@ -83,6 +83,102 @@ export const getVehicles = async (
     ];
   }
 
+  const { count, rows } = await Vehicle.findAndCountAll({
+    where: whereClause,
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]],
+  });
+
+  return {
+    vehicles: rows,
+    total: count,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
+  };
+};
+
+export const getAvailableVehicles = async (
+  searchQuery: VehicleSearchQuery,
+  pagination: PaginationOptions = {},
+): Promise<{
+  vehicles: Vehicle[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> => {
+  const { pickupLocation, pickupDate, dropoffDate, ...otherFilters } = searchQuery;
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
+  const offset = (page - 1) * limit;
+
+  const start = new Date(pickupDate);
+  const end = new Date(dropoffDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    throw createError('Invalid pickup or dropoff date', 400);
+  }
+
+  if (start >= end) {
+    throw createError('Pickup date must be before dropoff date', 400);
+  }
+
+  // 1. Find all vehicles that have conflicting bookings in the given range
+  const conflictingBookings = await Booking.findAll({
+    attributes: ['vehicleId'],
+    where: {
+      bookingStatus: {
+        [Op.notIn]: ['CANCELLED', 'COMPLETED'],
+      },
+      [Op.and]: [
+        { startDatetime: { [Op.lt]: end } },
+        { endDatetime: { [Op.gt]: start } },
+      ],
+    },
+    raw: true,
+  });
+
+  const unavailableVehicleIds = conflictingBookings.map((b) => b.vehicleId);
+
+  // 2. Build where clause for available vehicles
+  const whereClause: any = {
+    isAvailable: true,
+    id: { [Op.notIn]: unavailableVehicleIds },
+  };
+
+  if (pickupLocation) {
+    whereClause.city = { [Op.iLike]: `%${pickupLocation}%` };
+  }
+
+  // Apply additional filters
+  if (otherFilters.make) whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
+  if (otherFilters.model) whereClause.model = { [Op.iLike]: `%${otherFilters.model}%` };
+  if (otherFilters.bodyType) whereClause.bodyType = otherFilters.bodyType;
+  if (otherFilters.transmission) whereClause.transmission = otherFilters.transmission;
+  if (otherFilters.fuelType) whereClause.fuelType = otherFilters.fuelType;
+
+  if (otherFilters.minPrice || otherFilters.maxPrice) {
+    whereClause.pricePerDay = {};
+    if (otherFilters.minPrice) whereClause.pricePerDay[Op.gte] = otherFilters.minPrice;
+    if (otherFilters.maxPrice) whereClause.pricePerDay[Op.lte] = otherFilters.maxPrice;
+  }
+
+  if (otherFilters.search) {
+    whereClause[Op.or] = [
+      { make: { [Op.iLike]: `%${otherFilters.search}%` } },
+      { model: { [Op.iLike]: `%${otherFilters.search}%` } },
+      { trim: { [Op.iLike]: `%${otherFilters.search}%` } },
+    ];
+  }
+
+  // 3. Query vehicles
   const { count, rows } = await Vehicle.findAndCountAll({
     where: whereClause,
     include: [

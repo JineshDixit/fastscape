@@ -11,6 +11,13 @@ export interface VehicleFilterOptions {
   maxPrice?: number;
   year?: number;
   search?: string;
+  city?: string;
+}
+
+export interface VehicleSearchQuery extends VehicleFilterOptions {
+  pickupLocation: string;
+  pickupDate: string | Date;
+  dropoffDate: string | Date;
 }
 
 export interface PaginationOptions {

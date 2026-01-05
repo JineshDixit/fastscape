@@ -12,6 +12,8 @@ router.get('/body-types/summary', vehicleController.getVehicleBodyTypeSummary);
 
 router.get('/filters/metadata', vehicleController.getVehicleFilterMetadata);
 
+router.get('/available', vehicleController.getAvailableVehicles);
+
 router.get('/:id', vehicleIdValidation, handleValidationErrors, vehicleController.getVehicleById);
 
 export default router;

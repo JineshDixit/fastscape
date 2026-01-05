@@ -66,6 +66,35 @@ class VehicleController extends BaseController {
     const result = await vehicleService.getVehicleFilterMetadata();
     sendSuccess(res, 'Vehicle filter metadata retrieved successfully', result);
   });
+
+  /**
+   * Search for available vehicles based on date range and location
+   */
+  getAvailableVehicles = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const searchQuery = {
+      pickupLocation: req.query.pickupLocation as string,
+      pickupDate: req.query.pickupDate as string,
+      dropoffDate: req.query.dropoffDate as string,
+      make: req.query.make as string,
+      model: req.query.model as string,
+      bodyType: req.query.bodyType as (typeof dbEnums.VEHICLE_BODY_TYPE)[number],
+      transmission: req.query.transmission as (typeof dbEnums.TRANSMISSION_TYPE)[number],
+      fuelType: req.query.fuelType as (typeof dbEnums.FUEL_TYPE)[number],
+      minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
+      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
+      search: req.query.search as string,
+    };
+
+    const pagination = {
+      page: req.query.page ? parseInt(req.query.page as string) : 1,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 10,
+      sortBy: (req.query.sortBy as string) || 'createdAt',
+      sortOrder: (req.query.sortOrder as 'ASC' | 'DESC') || 'DESC',
+    };
+
+    const result = await vehicleService.getAvailableVehicles(searchQuery, pagination);
+    sendSuccess(res, 'Available vehicles retrieved successfully', result);
+  });
 }
 
 const vehicleController = new VehicleController();
@@ -76,4 +105,5 @@ export const {
   getVehicleStats,
   getVehicleBodyTypeSummary,
   getVehicleFilterMetadata,
+  getAvailableVehicles,
 } = vehicleController;
