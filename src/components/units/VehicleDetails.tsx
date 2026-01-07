@@ -1,25 +1,26 @@
-import { Fragment, useEffect, type FC } from 'react';
+import { Fragment, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { Card } from '@/components/ui/card';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel';
 import { AspectRatio } from '../ui/aspect-ratio';
+import { useVehicle } from '@/api/hooks/useVehicle';
 
-interface VehicleFormProps {
-  vehicle: Vehicle | null;
-  onCancel: () => void;
-  getVehicleDetails: (id: string) => Promise<void>;
-  isLoading?: boolean;
-}
-
-const VehicleDetails: FC<VehicleFormProps> = ({ vehicle, isLoading, onCancel, getVehicleDetails }) => {
+const VehicleDetails = () => {
+  const {vehicle, isLoading, fetchVehicleById} = useVehicle();
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {fetchVehicleById(id!)}, [fetchVehicleById]);
 
   const fetchImage = (imagePath: string) => {
     return `http://localhost:3001/${imagePath.replace(/\\/g, '/')}`;
   };
+
+  const onCancel = () => { 
+    navigate('/units')
+  }
 
   const getVehicleImages = (media: any) => {
     if (!media) return [];
@@ -37,11 +38,6 @@ const VehicleDetails: FC<VehicleFormProps> = ({ vehicle, isLoading, onCancel, ge
       media.engineImage,
     ].filter(Boolean);
   };
-
-  useEffect(() => {
-    if (!id) return;
-    getVehicleDetails(id);
-  }, [id, getVehicleDetails]);
 
   return (
     <Fragment>

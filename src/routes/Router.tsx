@@ -11,6 +11,8 @@ import Drivers from '@/pages/Drivers';
 import Financials from '@/pages/Financials';
 import NotFound from '@/pages/NotFound';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import UnitsLayout from '@/components/units/UnitsLayout';
+import VehicleDetails from '@/components/units/VehicleDetails';
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +20,7 @@ export const router = createBrowserRouter([
     element: <Navigate to="/dashboard" replace />,
   },
   {
-    path: '/login',
+    path: 'login',
     element: (
       <PublicRoute>
         <LoginPage />
@@ -43,11 +45,17 @@ export const router = createBrowserRouter([
       },
       {
         path: 'units',
-        element: <Units />,
-      },
-      {
-        path: 'units/:id',
-        element: <Units />,
+        element: <UnitsLayout />,
+        children: [
+          {
+            index: true,
+            element: <Units/>
+          },
+          {
+            path: ":id",
+            element: <VehicleDetails />
+          }
+        ]
       },
       {
         path: 'clients',

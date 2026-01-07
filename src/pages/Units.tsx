@@ -4,34 +4,33 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UnitCard from '@/components/units/UnitCard';
-import VehicleForm from '@/components/units/VehicleForm';
+import VehicleFormStepper from '@/components/units/VehicleFormStepper';
 import DataTablePagination from '@/components/shared/DataTablePagination';
 import { useVehicle } from '@/api/hooks/useVehicle';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import VehicleDetails from '@/components/units/VehicleDetails';
+// import VehicleDetails from '@/components/units/VehicleDetails';
 import debounce from 'lodash.debounce';
 
 const Units = () => {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [showVehicleDetails, setShowVehicleDetails] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   const navigate = useNavigate();
 
   const {
     vehicles,
-    vehicle,
+    // vehicle,
     isLoading,
     fetchVehicles,
     pagination,
     createVehicle,
     updateVehicle,
     deleteVehicle,
-    fetchVehicleById,
+    // fetchVehicleById,
   } = useVehicle();
 
   const debouncedSearch = useMemo(
@@ -89,12 +88,6 @@ const Units = () => {
 
   const handleVehicleDetails = (vehicleId: string) => {
     navigate(`/units/${vehicleId}`);
-    setShowVehicleDetails(true);
-  };
-
-  const handleVehicleDetailsClose = () => {
-    navigate(`/units`);
-    setShowVehicleDetails(false);
   };
 
   const handleDelete = async (vehicleId: string) => {
@@ -124,7 +117,7 @@ const Units = () => {
   // Show form view
   if (showAddForm) {
     return (
-      <VehicleForm
+      <VehicleFormStepper
         vehicle={selectedVehicle || undefined}
         onCancel={handleFormCancel}
         onSuccess={handleFormSuccess}
@@ -134,16 +127,16 @@ const Units = () => {
     );
   }
 
-  if (showVehicleDetails) {
-    return (
-      <VehicleDetails
-        vehicle={vehicle}
-        onCancel={handleVehicleDetailsClose}
-        isLoading={isLoading}
-        getVehicleDetails={fetchVehicleById}
-      />
-    );
-  }
+  // if (showVehicleDetails) {
+  //   return (
+  //     <VehicleDetails
+  //       vehicle={vehicle}
+  //       onCancel={handleVehicleDetailsClose}
+  //       isLoading={isLoading}
+  //       getVehicleDetails={fetchVehicleById}
+  //     />
+  //   );
+  // }
 
   // Show list view
   return (

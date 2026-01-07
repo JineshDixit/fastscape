@@ -6,7 +6,7 @@ import { Badge } from './badge';
 
 interface ImageUploadProps {
   id: string;
-  label: string;
+  label?: string;
   value?: File;
   existingImageUrl?: string; // URL of existing image (for edit mode)
   onChange: (file: File | undefined) => void;
@@ -82,20 +82,19 @@ const ImageUpload: FC<ImageUploadProps> = ({ id, label, existingImageUrl, onChan
 
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="text-sm font-medium">
+      {label && <label htmlFor={id} className="text-sm font-medium">
         {label}
-      </label>
+      </label>}
       <div
         onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-          'relative mt-2 cursor-pointer rounded-lg border-2 border-dashed transition-all',
+          'relative mt-2 cursor-pointer rounded-lg border-2 border-dashed transition-all aspect-2/1',
           'hover:border-primary/50 hover:bg-accent/50',
           isDragging && 'border-primary bg-accent',
-          disabled && 'cursor-not-allowed opacity-50',
-          preview ? 'aspect-video' : 'aspect-video',
+          disabled && 'cursor-not-allowed opacity-50', 
         )}
       >
         <input
