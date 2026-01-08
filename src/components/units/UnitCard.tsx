@@ -1,7 +1,7 @@
 import { useState, type FC } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GitFork, Fuel, Cog, Ellipsis } from 'lucide-react';
+import { Fuel, Cog, Ellipsis, Users } from 'lucide-react';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -100,9 +100,11 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
             </div>
             <div className="flex items-center justify-center gap-2">
               <div className="bg-muted/90 rounded-md p-1.5">
-                <GitFork className="text-foreground/80 size-4" />
+                <Users className="text-foreground/80 size-4" />
               </div>
-              <span className="text-foreground w-full truncate text-sm tracking-tight">{vehicle.drivetrain}</span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">
+                {vehicle.passengerCapacity || 5} People
+              </span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <div className="bg-muted/90 rounded-md p-1.5">

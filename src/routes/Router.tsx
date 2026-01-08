@@ -49,13 +49,13 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Units/>
+            element: <Units />,
           },
           {
-            path: ":id",
-            element: <VehicleDetails />
-          }
-        ]
+            path: ':id',
+            element: <VehicleDetails />,
+          },
+        ],
       },
       {
         path: 'clients',

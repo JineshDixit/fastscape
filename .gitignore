@@ -30,3 +30,4 @@ postman/
 *.njsproj
 *.sln
 *.sw?
+!src/postman/

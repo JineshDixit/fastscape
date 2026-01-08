@@ -82,19 +82,21 @@ const ImageUpload: FC<ImageUploadProps> = ({ id, label, existingImageUrl, onChan
 
   return (
     <div className="space-y-2">
-      {label && <label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </label>}
+      {label && (
+        <label htmlFor={id} className="text-sm font-medium">
+          {label}
+        </label>
+      )}
       <div
         onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         className={cn(
-          'relative mt-2 cursor-pointer rounded-lg border-2 border-dashed transition-all aspect-2/1',
+          'relative mt-2 aspect-2/1 cursor-pointer rounded-lg border-2 border-dashed transition-all',
           'hover:border-primary/50 hover:bg-accent/50',
           isDragging && 'border-primary bg-accent',
-          disabled && 'cursor-not-allowed opacity-50', 
+          disabled && 'cursor-not-allowed opacity-50',
         )}
       >
         <input

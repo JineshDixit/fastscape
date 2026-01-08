@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
 
 const UnitsLayout = () => {
-    return <Outlet />
+  return <Outlet />;
 };
 
 export default UnitsLayout;

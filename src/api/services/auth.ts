@@ -149,8 +149,10 @@ class AuthService extends BaseApiService {
   async getValidAccessToken(): Promise<string | null> {
     const currentToken = authCookies.getAccessToken();
 
-    if (!currentToken) return null;
-    if (!this.isTokenExpired()) return currentToken;
+    // If we have a valid non-expired access token, return it
+    if (currentToken && !this.isTokenExpired()) {
+      return currentToken;
+    }
 
     if (this.isRefreshTokenExpired()) {
       this.handleRefreshTokenExpiry();
@@ -309,7 +311,7 @@ class AuthService extends BaseApiService {
     this.stopAutoRefresh(); // Clear any existing interval
 
     this.autoRefreshInterval = setInterval(async () => {
-      if (authCookies.getAccessToken()) {
+      if (!this.isRefreshTokenExpired()) {
         await this.proactiveRefresh();
       } else {
         this.stopAutoRefresh();
@@ -416,10 +418,8 @@ class AuthService extends BaseApiService {
   }
 }
 
-// Create and export singleton instance
 export const authService = new AuthService();
 
-// Auto-start monitoring when module loads if user is authenticated
-if (typeof window !== 'undefined' && authCookies.getAccessToken()) {
+if (typeof window !== 'undefined' && (authCookies.getAccessToken() || authCookies.getRefreshToken())) {
   authService.startAutoRefresh();
 }

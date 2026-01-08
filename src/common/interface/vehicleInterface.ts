@@ -41,6 +41,8 @@ export interface Vehicle {
   delayChargePerHour?: string; // API returns string
   depositPercentage?: string; // API returns string
   currency?: string;
+  passengerCapacity?: number;
+  city?: string;
   isAvailable: boolean;
 
   media: VehicleMedia[];
@@ -88,6 +90,8 @@ export interface VehicleFilters {
   minPrice?: number;
   maxPrice?: number;
   year?: number;
+  passengerCapacity?: number;
+  city?: string;
 }
 
 export interface VehicleBulkUpdate {

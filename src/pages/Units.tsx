@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UnitCard from '@/components/units/UnitCard';
 import VehicleFormStepper from '@/components/units/VehicleFormStepper';
 import DataTablePagination from '@/components/shared/DataTablePagination';
@@ -10,28 +9,20 @@ import { useVehicle } from '@/api/hooks/useVehicle';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-// import VehicleDetails from '@/components/units/VehicleDetails';
 import debounce from 'lodash.debounce';
+import VehicleFilters from '@/components/units/VehicleFilters';
+import type { VehicleFilters as FilterInterface } from '@/common/interface/vehicleInterface';
 
 const Units = () => {
   const [pageSize, setPageSize] = React.useState(10);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [filters, setFilters] = useState<FilterInterface>({});
 
   const navigate = useNavigate();
 
-  const {
-    vehicles,
-    // vehicle,
-    isLoading,
-    fetchVehicles,
-    pagination,
-    createVehicle,
-    updateVehicle,
-    deleteVehicle,
-    // fetchVehicleById,
-  } = useVehicle();
+  const { vehicles, isLoading, fetchVehicles, pagination, createVehicle, updateVehicle, deleteVehicle } = useVehicle();
 
   const debouncedSearch = useMemo(
     () =>
@@ -42,6 +33,7 @@ const Units = () => {
           fetchVehicles({
             page: 1,
             limit: pageSize,
+            ...filters,
           });
           return;
         }
@@ -50,6 +42,7 @@ const Units = () => {
 
         fetchVehicles({
           search: trimmed,
+          ...filters,
         });
       }, 400),
     [fetchVehicles],
@@ -73,7 +66,7 @@ const Units = () => {
   const handleFormSuccess = () => {
     setShowAddForm(false);
     setSelectedVehicle(null);
-    fetchVehicles({ page: currentPage, limit: pageSize });
+    fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
   };
 
   const handleFormCancel = () => {
@@ -94,7 +87,7 @@ const Units = () => {
     try {
       await deleteVehicle(vehicleId);
       toast.success('Vehicle deleted successfully!');
-      fetchVehicles({ page: currentPage, limit: pageSize });
+      fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete vehicle');
     }
@@ -111,8 +104,21 @@ const Units = () => {
   }, [debouncedSearch]);
 
   useEffect(() => {
-    fetchVehicles({ page: currentPage, limit: pageSize });
-  }, [currentPage, pageSize]);
+    fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
+  }, [currentPage, pageSize, filters]);
+
+  const handleApplyFilters = (newFilters: FilterInterface) => {
+    setFilters(newFilters);
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+    fetchVehicles({ page: 1, limit: pageSize, ...newFilters });
+  };
+
+  const handleResetFilters = () => {
+    setFilters({});
+    setCurrentPage(1);
+    fetchVehicles({ page: 1, limit: pageSize });
+  };
 
   // Show form view
   if (showAddForm) {
@@ -127,97 +133,90 @@ const Units = () => {
     );
   }
 
-  // if (showVehicleDetails) {
-  //   return (
-  //     <VehicleDetails
-  //       vehicle={vehicle}
-  //       onCancel={handleVehicleDetailsClose}
-  //       isLoading={isLoading}
-  //       getVehicleDetails={fetchVehicleById}
-  //     />
-  //   );
-  // }
-
   // Show list view
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col items-stretch justify-between gap-6 xl:flex-row xl:items-center">
-        <div className="flex flex-1 flex-col items-center gap-4 sm:flex-row">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="text-foreground/50 absolute top-1/2 left-4 size-[18px] -translate-y-1/2" />
-            <Input
-              placeholder="Search car name"
-              className="placeholder:text-foreground/50 pl-11"
-              onChange={(e) => handleSearchVehicle(e.target.value)}
-            />
+    <div className="flex flex-col items-start gap-8 lg:flex-row">
+      <aside className="sticky top-4 hidden w-72 shrink-0 lg:block">
+        <div className="bg-card rounded-lg border p-6">
+          <div className="mb-6 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Filters</h3>
+          </div>
+          <VehicleFilters
+            currentFilters={filters}
+            onApplyFilters={handleApplyFilters}
+            onResetFilters={handleResetFilters}
+            mode="sidebar"
+          />
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="w-full flex-1 space-y-6">
+        <div className="flex flex-col items-stretch justify-between gap-6 xl:flex-row xl:items-center">
+          <div className="flex flex-1 items-center gap-4">
+            <div className="relative w-full max-w-md">
+              <Search className="text-foreground/50 absolute top-1/2 left-4 size-4 -translate-y-1/2" />
+              <Input
+                placeholder="Search car name..."
+                className="h-10 pl-10"
+                onChange={(e) => handleSearchVehicle(e.target.value)}
+              />
+            </div>
+
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden">
+              <VehicleFilters
+                currentFilters={filters}
+                onApplyFilters={handleApplyFilters}
+                onResetFilters={handleResetFilters}
+                mode="sheet"
+              />
+            </div>
           </div>
 
-          <div className="flex w-full items-center gap-3 sm:w-auto">
-            <Select defaultValue="all-types">
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <div className="flex items-center gap-2">
-                  <LayoutGrid className="text-foreground/50 size-4" />
-                  <SelectValue placeholder="Car Type" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-types">Car Type</SelectItem>
-                <SelectItem value="luxury">Luxury</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="suv">SUV</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select defaultValue="all-status">
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="text-foreground/50 size-4" />
-                  <SelectValue placeholder="Status" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-status">Status</SelectItem>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="unavailable">Unavailable</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Button onClick={() => setShowAddForm(true)} className="w-full xl:w-auto">
+            Add Unit
+          </Button>
         </div>
 
-        <Button onClick={() => setShowAddForm(true)}>Add Unit</Button>
-      </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3">
+          {isLoading && vehicles.length === 0 ? (
+            <div className="col-span-full flex justify-center py-20">
+              <div className="flex flex-col items-center gap-2">
+                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+                <p className="text-muted-foreground mt-2">Loading vehicles...</p>
+              </div>
+            </div>
+          ) : vehicles.length > 0 ? (
+            vehicles.map((vehicle) => (
+              <UnitCard
+                key={vehicle.id}
+                vehicle={vehicle}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onDetails={handleVehicleDetails}
+              />
+            ))
+          ) : (
+            <div className="bg-muted/20 col-span-full flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-20">
+              <p className="text-muted-foreground text-lg font-medium">No vehicles found</p>
+              <p className="text-muted-foreground mt-1 text-sm">Try adjusting your filters or search terms</p>
+              <Button variant="link" onClick={handleResetFilters} className="mt-2">
+                Clear all filters
+              </Button>
+            </div>
+          )}
+        </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {isLoading && vehicles.length === 0 ? (
-          <div className="col-span-full flex justify-center py-12">
-            <p className="text-muted-foreground">Loading vehicles...</p>
-          </div>
-        ) : vehicles.length > 0 ? (
-          vehicles.map((vehicle) => (
-            <UnitCard
-              key={vehicle.id}
-              vehicle={vehicle}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onDetails={handleVehicleDetails}
-            />
-          ))
-        ) : (
-          <div className="col-span-full flex justify-center py-12">
-            <p className="text-muted-foreground">No vehicles found.</p>
-          </div>
-        )}
+        <DataTablePagination
+          totalItems={pagination?.total || 0}
+          pageSize={pageSize}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[10, 20, 30, 40, 50]}
+        />
       </div>
-
-      <DataTablePagination
-        totalItems={pagination?.total || 0}
-        pageSize={pageSize}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
-        pageSizeOptions={[10, 20, 30, 40, 50]}
-      />
     </div>
   );
 };

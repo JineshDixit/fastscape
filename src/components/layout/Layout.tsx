@@ -34,9 +34,7 @@ const LayoutInner = () => {
         <Header title={currentTitle} />
 
         <main className="flex-1 overflow-y-auto p-6 transition-all duration-300 ease-in-out">
-          <div className="mx-auto max-w-7xl">
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </div>
     </div>
