@@ -10,12 +10,12 @@ export interface VehicleAttributes {
   year: number;
   exteriorColor: string;
   interiorColor: string;
-  bodyType: typeof dbEnums.VEHICLE_BODY_TYPE[number];
-  transmission: typeof dbEnums.TRANSMISSION_TYPE[number];
-  drivetrain: typeof dbEnums.DRIVETRAIN_TYPE[number];
+  bodyType: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  transmission: (typeof dbEnums.TRANSMISSION_TYPE)[number];
+  drivetrain: (typeof dbEnums.DRIVETRAIN_TYPE)[number];
   engine: string;
   horsepower: number;
-  fuelType: typeof dbEnums.FUEL_TYPE[number];
+  fuelType: (typeof dbEnums.FUEL_TYPE)[number];
   fuelConsumption: string;
   pricePerDay: number;
   delayChargePerHour: number;
@@ -24,11 +24,24 @@ export interface VehicleAttributes {
   isAvailable: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  passengerCapacity: number;
   city: string;
 }
 
 // Vehicle creation attributes (optional fields for creation)
-export interface VehicleCreationAttributes extends Optional<VehicleAttributes, 'id' | 'trim' | 'delayChargePerHour' | 'depositPercentage' | 'currency' | 'isAvailable' | 'createdAt' | 'updatedAt'> {}
+export interface VehicleCreationAttributes extends Optional<
+  VehicleAttributes,
+  | 'id'
+  | 'trim'
+  | 'delayChargePerHour'
+  | 'depositPercentage'
+  | 'currency'
+  | 'isAvailable'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'passengerCapacity'
+  | 'city'
+> {}
 
 export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes> implements VehicleAttributes {
   public id!: string;
@@ -38,18 +51,19 @@ export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes>
   public year!: number;
   public exteriorColor!: string;
   public interiorColor!: string;
-  public bodyType!: typeof dbEnums.VEHICLE_BODY_TYPE[number];
-  public transmission!: typeof dbEnums.TRANSMISSION_TYPE[number];
-  public drivetrain!: typeof dbEnums.DRIVETRAIN_TYPE[number];
+  public bodyType!: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  public transmission!: (typeof dbEnums.TRANSMISSION_TYPE)[number];
+  public drivetrain!: (typeof dbEnums.DRIVETRAIN_TYPE)[number];
   public engine!: string;
   public horsepower!: number;
-  public fuelType!: typeof dbEnums.FUEL_TYPE[number];
+  public fuelType!: (typeof dbEnums.FUEL_TYPE)[number];
   public fuelConsumption!: string;
   public pricePerDay!: number;
   public delayChargePerHour!: number;
   public depositPercentage!: number;
   public currency!: string;
   public isAvailable!: boolean;
+  public passengerCapacity!: number;
   public city!: string;
 
   // Timestamps
@@ -91,7 +105,7 @@ export const initVehicleModel = (sequelize: Sequelize) => {
       depositPercentage: {
         type: DataTypes.DECIMAL(5, 2),
         allowNull: false,
-        defaultValue: 20.00,
+        defaultValue: 20.0,
         comment: 'Default deposit percentage for this vehicle',
       },
       currency: {
@@ -102,6 +116,11 @@ export const initVehicleModel = (sequelize: Sequelize) => {
       isAvailable: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
+      },
+      passengerCapacity: {
+        type: DataTypes.INTEGER,
+        defaultValue: 5,
+        allowNull: false,
       },
       city: {
         type: DataTypes.STRING(100),

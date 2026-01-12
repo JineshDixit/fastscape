@@ -28,15 +28,16 @@ export interface VehicleImageFiles {
 export interface VehicleFilterOptions {
   make?: string;
   model?: string;
-  bodyType?: typeof dbEnums.VEHICLE_BODY_TYPE[number];
-  transmission?: typeof dbEnums.TRANSMISSION_TYPE[number];
-  fuelType?: typeof dbEnums.FUEL_TYPE[number];
+  bodyType?: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  transmission?: (typeof dbEnums.TRANSMISSION_TYPE)[number];
+  fuelType?: (typeof dbEnums.FUEL_TYPE)[number];
   isAvailable?: boolean;
   minPrice?: number;
   maxPrice?: number;
   year?: number;
   search?: string;
   city?: string;
+  passengerCapacity?: number;
 }
 
 export interface PaginationOptions {
@@ -70,10 +71,10 @@ const getFileExtension = (filename: string): string => {
 const handleVehicleImages = async (
   vehicleId: string,
   imageFiles: VehicleImageFiles,
-  transaction?: Transaction
+  transaction?: Transaction,
 ): Promise<void> => {
   const vehicleDir = path.join(uploadDir, vehicleId);
-  
+
   // Ensure vehicle directory exists
   if (!fs.existsSync(vehicleDir)) {
     fs.mkdirSync(vehicleDir, { recursive: true });
@@ -91,7 +92,7 @@ const handleVehicleImages = async (
         vehicleId,
         isPrimary: true,
       },
-      { transaction }
+      { transaction },
     );
   }
 
@@ -165,10 +166,10 @@ const deleteVehicleImages = async (vehicleId: string, transaction?: Transaction)
  */
 export const createVehicle = async (
   vehicleData: CreateVehicleRequest,
-  imageFiles?: VehicleImageFiles
+  imageFiles?: VehicleImageFiles,
 ): Promise<Vehicle> => {
   const transaction = await sequelize.transaction();
-  
+
   try {
     ensureUploadDirectoryExists();
 
@@ -215,7 +216,7 @@ export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
  */
 export const getVehicles = async (
   filters: VehicleFilterOptions = {},
-  pagination: PaginationOptions = {}
+  pagination: PaginationOptions = {},
 ): Promise<{
   vehicles: Vehicle[];
   total: number;
@@ -223,12 +224,7 @@ export const getVehicles = async (
   limit: number;
   totalPages: number;
 }> => {
-  const {
-    page = 1,
-    limit = 10,
-    sortBy = 'createdAt',
-    sortOrder = 'DESC',
-  } = pagination;
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
 
   const offset = (page - 1) * limit;
 
@@ -277,6 +273,10 @@ export const getVehicles = async (
     whereClause.city = { [Op.iLike]: `%${filters.city}%` };
   }
 
+  if (filters.passengerCapacity) {
+    whereClause.passengerCapacity = { [Op.gte]: filters.passengerCapacity };
+  }
+
   if (filters.search) {
     whereClause[Op.or] = [
       { make: { [Op.iLike]: `%${filters.search}%` } },
@@ -314,10 +314,10 @@ export const getVehicles = async (
 export const updateVehicle = async (
   vehicleId: string,
   updateData: UpdateVehicleRequest,
-  imageFiles?: VehicleImageFiles
+  imageFiles?: VehicleImageFiles,
 ): Promise<Vehicle> => {
   const transaction = await sequelize.transaction();
-  
+
   try {
     const vehicle = await Vehicle.findByPk(vehicleId);
     if (!vehicle) {
@@ -346,7 +346,7 @@ export const updateVehicle = async (
  */
 export const deleteVehicle = async (vehicleId: string): Promise<void> => {
   const transaction = await sequelize.transaction();
-  
+
   try {
     const vehicle = await Vehicle.findByPk(vehicleId);
     if (!vehicle) {
@@ -383,10 +383,7 @@ export const getVehicleStats = async (): Promise<{
 
   // Get stats by body type
   const bodyTypeStats = await Vehicle.findAll({
-    attributes: [
-      'bodyType',
-      [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count'],
-    ],
+    attributes: ['bodyType', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     group: ['bodyType'],
     raw: true,
   });
@@ -398,10 +395,7 @@ export const getVehicleStats = async (): Promise<{
 
   // Get stats by fuel type
   const fuelTypeStats = await Vehicle.findAll({
-    attributes: [
-      'fuelType',
-      [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count'],
-    ],
+    attributes: ['fuelType', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     group: ['fuelType'],
     raw: true,
   });
@@ -413,9 +407,7 @@ export const getVehicleStats = async (): Promise<{
 
   // Get average price
   const avgPriceResult = await Vehicle.findOne({
-    attributes: [
-      [Vehicle.sequelize!.fn('AVG', Vehicle.sequelize!.col('pricePerDay')), 'avgPrice'],
-    ],
+    attributes: [[Vehicle.sequelize!.fn('AVG', Vehicle.sequelize!.col('pricePerDay')), 'avgPrice']],
     raw: true,
   });
 
@@ -436,17 +428,14 @@ export const getVehicleStats = async (): Promise<{
  */
 export const toggleVehicleAvailability = async (vehicleId: string): Promise<Vehicle> => {
   const transaction = await sequelize.transaction();
-  
+
   try {
     const vehicle = await Vehicle.findByPk(vehicleId);
     if (!vehicle) {
       throw createError('Vehicle not found', 404);
     }
 
-    await vehicle.update(
-      { isAvailable: !vehicle.isAvailable },
-      { transaction }
-    );
+    await vehicle.update({ isAvailable: !vehicle.isAvailable }, { transaction });
 
     await transaction.commit();
 
@@ -460,12 +449,9 @@ export const toggleVehicleAvailability = async (vehicleId: string): Promise<Vehi
 /**
  * Bulk update vehicle availability
  */
-export const bulkUpdateVehicleAvailability = async (
-  vehicleIds: string[],
-  isAvailable: boolean
-): Promise<number> => {
+export const bulkUpdateVehicleAvailability = async (vehicleIds: string[], isAvailable: boolean): Promise<number> => {
   const transaction = await sequelize.transaction();
-  
+
   try {
     const [affectedCount] = await Vehicle.update(
       { isAvailable },
@@ -476,7 +462,7 @@ export const bulkUpdateVehicleAvailability = async (
           },
         },
         transaction,
-      }
+      },
     );
 
     await transaction.commit();
@@ -493,7 +479,7 @@ export const bulkUpdateVehicleAvailability = async (
  */
 export const getImageUrl = (imagePath: string): string => {
   if (!imagePath) return '';
-  
+
   // Return full URL for serving images
   const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
   return `${baseUrl}/${imagePath}`;
