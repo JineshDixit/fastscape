@@ -2,9 +2,7 @@ import './config/env/envConfig';
 import express from 'express';
 import cors from 'cors';
 import passport from 'passport';
-import {
-  applySecurityMiddlewares,
-} from './services/middleware/security';
+import { applySecurityMiddlewares } from './services/middleware/security';
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
 import { serveStaticFiles, handleImageNotFound } from './services/middleware/staticFiles';
 import { initPostgres_DB } from './models';
@@ -18,11 +16,14 @@ const PORT = process.env.PORT || 3001;
 // Security middleware
 server.use(applySecurityMiddlewares);
 
-server.use(cors({
-  origin: [process.env.FRONTEND_URL, process.env.CLIENT_FRONTEND_URL],
-  credentials: true,
-  optionsSuccessStatus: 200,
-}));
+server.use(
+  cors({
+    // origin: process.env.FRONTEND_URL,
+    origin: '*',
+    credentials: true,
+    optionsSuccessStatus: 200,
+  }),
+);
 
 // Body parsing middleware
 server.use(express.json({ limit: '10mb' }));
@@ -64,9 +65,9 @@ server.listen(PORT, () => {
 (async () => {
   try {
     initPostgres_DB();
-    
+
     startTokenCleanupJob();
-    
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.log('Failed to initialize database', error);

@@ -22,10 +22,10 @@ export interface VehicleAttributes {
   depositPercentage: number;
   currency: string;
   isAvailable: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
   passengerCapacity: number;
   city: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // Vehicle creation attributes (optional fields for creation)
@@ -37,10 +37,10 @@ export interface VehicleCreationAttributes extends Optional<
   | 'depositPercentage'
   | 'currency'
   | 'isAvailable'
-  | 'createdAt'
-  | 'updatedAt'
   | 'passengerCapacity'
   | 'city'
+  | 'createdAt'
+  | 'updatedAt'
 > {}
 
 export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes> implements VehicleAttributes {
@@ -119,13 +119,15 @@ export const initVehicleModel = (sequelize: Sequelize) => {
       },
       passengerCapacity: {
         type: DataTypes.INTEGER,
-        defaultValue: 5,
         allowNull: false,
+        defaultValue: 5,
+        comment: 'Number of passengers',
       },
       city: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
+        type: DataTypes.STRING,
+        allowNull: false,
         defaultValue: 'Dubai',
+        comment: 'City where the vehicle is located',
       },
     },
     {

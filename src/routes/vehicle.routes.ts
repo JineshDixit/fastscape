@@ -26,7 +26,6 @@ import {
 
 const router = Router();
 
-// Apply authentication and active user check to all routes
 router.use(authenticateUser);
 router.use(requireActiveUser);
 
