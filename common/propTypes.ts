@@ -41,6 +41,7 @@ export type ChipToggleProps<T extends string> = {
   value?: T;
   onChange?: (value: T) => void;
   disabled?: boolean;
+  className?: string;
 };
 
 export type VehicleCardPropType = {

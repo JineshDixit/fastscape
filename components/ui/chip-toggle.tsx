@@ -1,9 +1,9 @@
 import { ChipToggleProps } from '@/common/propTypes';
 import { cn } from '@/lib/utils';
 
-export function ChipToggle<T extends string>({ options, value, onChange, disabled }: ChipToggleProps<T>) {
+export function ChipToggle<T extends string>({ options, value, onChange, disabled, className }: ChipToggleProps<T>) {
   return (
-    <div className="bg-background inline-flex gap-2 rounded-full p-1">
+    <div className="bg-background inline-flex gap-2 rounded-full">
       {options.map((option) => {
         const isActive = option.value === value;
 
@@ -19,7 +19,7 @@ export function ChipToggle<T extends string>({ options, value, onChange, disable
               isActive
                 ? 'bg-primary text-primary-foreground'
                 : 'border-primary text-primary hover:bg-primary/10 border',
-              disabled && 'cursor-not-allowed opacity-50',
+              disabled && 'cursor-not-allowed opacity-50', className
             )}
           >
             {option.label}

@@ -9,12 +9,13 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import DatePicker from '@/components/ui/date-picker';
 
 import { RegisterModelPropType } from '@/common/propTypes';
 import { useAuth } from '@/app/axios';
+import { useTranslations } from 'next-intl';
 
 const COUNTRY_CODES = [
   { code: '+1', country: 'US' },
@@ -27,42 +28,42 @@ const COUNTRY_CODES = [
   { code: '+86', country: 'CN' },
 ];
 
-const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Must contain at least one number')
-  .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character');
-
-export const registerSchema = z
-  .object({
-    fullName: z.string().trim().min(3, 'Full name must be at least 3 characters'),
-    email: z.string().email('Please enter a valid email address'),
-    countryCode: z.string(),
-    phone: z.string().min(7).max(15),
-    dateOfBirth: z.date(),
-    nationality: z.string().min(2, 'Nationality is required'),
-    password: passwordSchema,
-    confirmPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'Passwords do not match',
-  });
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
-const PASSWORD_FIELDS = [
-  { name: 'password', label: 'Password' },
-  { name: 'confirmPassword', label: 'Confirm Password' },
-] as const;
+/* removed schema and constants outside */
 
 const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginClick }) => {
+  const t = useTranslations('auth');
+  const tVal = useTranslations('validation');
+
   const [show, setShow] = useState({
     password: false,
     confirmPassword: false,
   });
+
+  const registerSchema = z
+    .object({
+      fullName: z
+        .string()
+        .trim()
+        .min(3, tVal('minLength', { min: 3 })),
+      email: z.string().email(tVal('emailInvalid')),
+      countryCode: z.string(),
+      phone: z.string().min(7, tVal('phoneInvalid')).max(15, tVal('phoneInvalid')),
+      dateOfBirth: z.date({ message: tVal('required') }),
+      nationality: z.string().min(2, tVal('required')),
+      password: z.string().min(8, tVal('passwordMin')),
+      confirmPassword: z.string().min(8, tVal('passwordMin')),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      path: ['confirmPassword'],
+      message: tVal('passwordMismatch'),
+    });
+
+  type RegisterFormValues = z.infer<typeof registerSchema>;
+
+  const PASSWORD_FIELDS = [
+    { name: 'password', label: t('password') },
+    { name: 'confirmPassword', label: t('confirmPassword') },
+  ] as const;
 
   const { register: registerUser, isLoading, error } = useAuth();
 
@@ -115,7 +116,7 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center">Create Account</DialogTitle>
+          <DialogTitle className="text-center">{t('signUp')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -126,9 +127,8 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
               name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="John Doe" />
+                    <FloatingInput label={t('fullName')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,25 +140,23 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="john@example.com" />
+                    <FloatingInput label={t('email')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-[110px_1fr] gap-2">
+            <div className="grid grid-cols-[110px_1fr] items-end gap-2">
               <FormField
                 control={form.control}
                 name="countryCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Code</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-[48px]!" size="default">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -179,13 +177,12 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input
+                      <FloatingInput
+                        label={t('phone')}
                         {...field}
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        placeholder="1234567890"
                         onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ''))}
                       />
                     </FormControl>
@@ -201,9 +198,8 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
                     <FormControl>
-                      <DatePicker value={field.value} onChange={field.onChange} placeholder="1990-01-01" />
+                      <DatePicker value={field.value} onChange={field.onChange} placeholder={t('dateOfBirth')} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -215,9 +211,8 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
                 name="nationality"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nationality</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Indian" />
+                      <FloatingInput label={t('nationality')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -235,10 +230,9 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
                   name={name}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{label}</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input {...field} type={show[key] ? 'text' : 'password'} />
+                          <FloatingInput label={label} {...field} type={show[key] ? 'text' : 'password'} />
                           <button
                             type="button"
                             aria-label={`Toggle ${label}`}
@@ -258,11 +252,11 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
 
             <DialogFooter className="flex-col gap-2">
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Registering…' : 'Register'}
+                {isLoading ? t('loading') : t('register')}
               </Button>
 
               <Button type="button" variant="outline" onClick={handleLoginClick}>
-                Already have an account? Login
+                {t('alreadyHaveAccount')} {t('login')}
               </Button>
             </DialogFooter>
           </form>

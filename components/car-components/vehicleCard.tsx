@@ -1,9 +1,11 @@
 import { VehicleCardPropType } from '@/common/propTypes';
 import { FC } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { AspectRatio } from '../ui/aspect-ratio';
 
 const VehicleCard: FC<VehicleCardPropType> = ({ vehicle }) => {
+  const t = useTranslations('carList');
   const fetchImage = (imagePath: string) => {
     const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
     return `${baseUrl}/${imagePath.replace(/\\/g, '/')}`;
@@ -33,7 +35,7 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle }) => {
 
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">${vehicle.pricePerDay}</h3>
-          <Button className="h-6.5 rounded-full px-4 text-xs">View Details</Button>
+          <Button className="h-6.5 rounded-full px-4 text-xs">{t('viewDetails')}</Button>
         </div>
       </div>
     </div>

@@ -9,39 +9,38 @@ import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ForgotPasswordPropType } from '@/common/propTypes';
 import { ForgotPasswordScreen } from '@/common/enums';
 import { useAuth } from '@/app/axios';
 
-const emailSchema = z.object({
-  email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email address'),
-});
+import { useTranslations } from 'next-intl';
 
-const otpSchema = z.object({
-  otp: z.string().regex(/^\d{6}$/, 'OTP must be 6 digits'),
-});
-
-const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters')
-  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Must contain at least one number')
-  .regex(/[^A-Za-z0-9]/, 'Must contain at least one special character');
-
-const resetSchema = z
-  .object({
-    password: passwordSchema,
-    confirmPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'Passwords do not match',
-  });
+/* Remove external schemas */
 
 const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
+  const t = useTranslations('auth');
+  const tVal = useTranslations('validation');
+
+  const emailSchema = z.object({
+    email: z.string().trim().min(1, tVal('required')).email(tVal('emailInvalid')),
+  });
+
+  const otpSchema = z.object({
+    otp: z.string().regex(/^\d{6}$/, tVal('minLength', { min: 6 })),
+  });
+
+  const resetSchema = z
+    .object({
+      password: z.string().min(8, tVal('passwordMin')),
+      confirmPassword: z.string().min(8, tVal('passwordMin')),
+    })
+    .refine((d) => d.password === d.confirmPassword, {
+      path: ['confirmPassword'],
+      message: tVal('passwordMismatch'),
+    });
+
   const { forgotPassword, verifyOtp, resetPassword, isLoading, error } = useAuth();
   const [screen, setScreen] = useState<ForgotPasswordScreen>(ForgotPasswordScreen.EMAIL);
   const [show, setShow] = useState({ password: false, confirm: false });
@@ -74,7 +73,7 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
     <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center">Forgot Password</DialogTitle>
+          <DialogTitle className="text-center">{t('forgotPassword')}</DialogTitle>
         </DialogHeader>
 
         {screen === ForgotPasswordScreen.EMAIL && (
@@ -92,9 +91,8 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter your email" />
+                      <FloatingInput {...field} label={t('enterEmail')} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -103,7 +101,7 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
               <DialogFooter>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Sending...' : 'Send OTP'}
+                  {isLoading ? t('loading') : t('sendOTP')}
                 </Button>
               </DialogFooter>
             </form>
@@ -125,7 +123,7 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
                 name="otp"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email OTP</FormLabel>
+                    <FormLabel>{t('enterOTP')}</FormLabel>
                     <FormControl>
                       <InputOTP maxLength={6} pattern={REGEXP_ONLY_DIGITS} {...field}>
                         {[0, 1, 2, 3, 4, 5].map((key) => (
@@ -142,7 +140,7 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
               <DialogFooter>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Verifying...' : 'Confirm OTP'}
+                  {isLoading ? t('loading') : t('verifyOTP')}
                 </Button>
               </DialogFooter>
             </form>
@@ -167,12 +165,12 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
                   name={key}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{key === 'password' ? 'Password' : 'Confirm Password'}</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input
+                          <FloatingInput
                             {...field}
                             type={show[key === 'password' ? 'password' : 'confirm'] ? 'text' : 'password'}
+                            label={key === 'password' ? t('password') : t('confirmPassword')}
                           />
                           <button
                             type="button"
@@ -204,7 +202,7 @@ const ForgotPassword: FC<ForgotPasswordPropType> = ({ open, onOpenChange }) => {
 
               <DialogFooter>
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Resetting...' : 'Reset Password'}
+                  {isLoading ? t('loading') : t('resetPassword')}
                 </Button>
               </DialogFooter>
             </form>

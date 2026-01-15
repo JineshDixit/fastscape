@@ -1,15 +1,16 @@
 'use client';
 
 import { CarSearchForm } from '@/components/car-components/carSearchForm';
-import { AvatarImage } from '@/components/ui/avatar';
-import { Avatar } from '@radix-ui/react-avatar';
 import Image from 'next/image';
-import { useVehicle } from './axios/hooks/useVehicle';
+import { useVehicle } from '@/app/axios';
 import { useEffect, useMemo } from 'react';
 import VehicleCard from '@/components/car-components/vehicleCard';
 import { Separator } from '@/components/ui/separator';
+import { useTranslations } from 'next-intl';
 
 const Home = () => {
+  const t = useTranslations('home');
+  // const tCar = useTranslations('carSearch');
   const { bodyTypeSummary, fetchBodyTypeSummary, vehicles, fetchVehicles } = useVehicle();
 
   useEffect(() => {
@@ -34,38 +35,19 @@ const Home = () => {
 
   return (
     <main className="global-container mb-8">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[280px_1fr]">
-        <aside className="sticky top-20 hidden h-fit flex-col gap-4 pt-12 lg:flex">
-          <span className="text-md leading-6 font-bold">Want to Rent A Car Easily, Without Any Hassles?</span>
+      <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
+        <aside className="shadow-booking-engine sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+          <span className="text-lg leading-6 font-bold md:text-xl">{t('rentCar')}</span>
           <CarSearchForm />
         </aside>
         <div className="space-y-6">
-          <div className="bg-primary relative flex h-[calc(100vh-22.3rem)] w-full items-center justify-end-safe overflow-hidden rounded-xl">
-            <Image
-              src="/images/hero-car-clip.png"
-              alt="Hero Car Image"
-              width={850}
-              height={850}
-              className="object-cover"
-            />
-            <div className="text-background absolute top-15 left-12 max-w-[290px]">
-              <h1 className="text-3xl font-bold">Fast rides. Smooth journeys. Zero hassle.</h1>
-            </div>
-            <div className="text-background absolute bottom-15 left-12 flex items-center gap-2">
-              <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
-                <Avatar>
-                  <AvatarImage className="size-12" src="/images/first-avatar.png" alt="First Avatar" />
-                </Avatar>
-                <Avatar>
-                  <AvatarImage className="size-12" src="/images/second-avatar.png" alt="Second Avatar" />
-                </Avatar>
-                <Avatar>
-                  <AvatarImage className="size-12" src="/images/third-avatar.png" alt="Third Avatar" />
-                </Avatar>
-              </div>
-              <span className="font-semibold">Over 1000+ Vehicles</span>
-            </div>
-          </div>
+          <Image
+            src="/images/hero-car-clip-img.png"
+            alt="Hero Car Image"
+            width={850}
+            height={850}
+            className="w-full object-cover"
+          />
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <Image
@@ -79,7 +61,7 @@ const Home = () => {
             <div></div>
           </div>
           <section className="mt-15">
-            <h3 className="text-center text-lg font-semibold">Explore Fleet Categories</h3>
+            <h3 className="text-center text-lg font-semibold">{t('exploreFleet')}</h3>
             <div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 {
@@ -123,7 +105,7 @@ const Home = () => {
             </div>
           </section>
           <section className="mt-15">
-            <h3 className="text-center text-lg font-semibold">For the Luxury</h3>
+            <h3 className="text-center text-lg font-semibold">{t('luxury')}</h3>
             <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {vehicles.map((item) => (
                 <VehicleCard key={item.id} vehicle={item} />
@@ -131,7 +113,7 @@ const Home = () => {
             </div>
           </section>
           <section className="mt-15">
-            <h3 className="text-center text-lg font-semibold">Brands We Work with</h3>
+            <h3 className="text-center text-lg font-semibold">{t('brands')}</h3>
             <div className="mt-5 flex items-center justify-center gap-5 opacity-55 select-none">
               {[
                 { label: 'BMW', img: '/brands/bmw-brand.png' },
@@ -153,7 +135,7 @@ const Home = () => {
             </div>
           </section>
           <section className="mt-15 w-full rounded-3xl bg-gray-300 py-14">
-            <h3 className="mb-14 text-center text-lg font-semibold">Getting a ride is easy. Really easy.</h3>
+            <h3 className="mb-14 text-center text-lg font-semibold">{t('easyRide.title')}</h3>
 
             <div className="relative mx-auto max-w-3xl px-12">
               <Separator className="relative mx-auto -mb-6 max-w-2/3 bg-gray-500" />
@@ -162,18 +144,18 @@ const Home = () => {
                 {[
                   {
                     step: '01',
-                    title: 'Choose your ride',
-                    desc: 'Select a car that fits your trip and budget.',
+                    title: t('easyRide.step1'),
+                    desc: t('easyRide.step1Desc'),
                   },
                   {
                     step: '02',
-                    title: 'Confirm instantly',
-                    desc: 'See final pricing upfront—no surprises.',
+                    title: t('easyRide.step2'),
+                    desc: t('easyRide.step2Desc'),
                   },
                   {
                     step: '03',
-                    title: 'Sit back & relax',
-                    desc: 'Verified drivers get you there on time.',
+                    title: t('easyRide.step3'),
+                    desc: t('easyRide.step3Desc'),
                   },
                 ].map((item) => (
                   <div key={item.step} className="flex max-w-[200px] flex-col items-center text-center">
@@ -190,20 +172,20 @@ const Home = () => {
             </div>
           </section>
           <section className="mt-15">
-            <h3 className="text-center text-lg font-semibold">Why Choose Us</h3>
+            <h3 className="text-center text-lg font-semibold">{t('whyChoose.title')}</h3>
             <div className="mt-5 flex items-center justify-between gap-5">
               {[
                 {
-                  title: 'Professional Driver Availability',
-                  desc: 'Need a driver? Our trained professionals ensure a safe, smooth, and stress-free travel experience.',
+                  title: t('whyChoose.driverTitle'),
+                  desc: t('whyChoose.driverDesc'),
                 },
                 {
-                  title: 'Fast Delivery Service',
-                  desc: 'Get your rental car delivered to your location quickly and efficiently—no unnecessary waiting.',
+                  title: t('whyChoose.deliveryTitle'),
+                  desc: t('whyChoose.deliveryDesc'),
                 },
                 {
-                  title: 'Reliable Support Team',
-                  desc: 'Our support specialists are available around the clock to assist you with bookings, issues, or special requests.',
+                  title: t('whyChoose.supportTitle'),
+                  desc: t('whyChoose.supportDesc'),
                 },
               ].map((items, index) => (
                 <div key={index} className="space-y-2">
@@ -217,20 +199,17 @@ const Home = () => {
             <div className="grid grid-cols-[auto_1fr] gap-20">
               <Image src="/images/hero-driver.png" alt="hero-driver" width={350} height={350} />
               <div className="my-auto space-y-3 text-start">
-                <h4 className="text-primary">Built on long-term partnerships</h4>
-                <h2 className="text-3xl font-bold">Driving success for leading companies worldwide</h2>
-                <p className="text-foreground">
-                  Fastscape has been the trusted mobility partner for organizations across the globe for over a decade,
-                  delivering reliable, scalable, and efficient transportation solutions.
-                </p>
+                <h4 className="text-primary">{t('partnerships.subtitle')}</h4>
+                <h2 className="text-3xl font-bold">{t('partnerships.title')}</h2>
+                <p className="text-foreground">{t('partnerships.desc')}</p>
                 <div className="flex items-center gap-8">
                   <div>
                     <h2 className="text-primary text-3xl font-bold">1500+</h2>
-                    <span>Vehicles</span>
+                    <span>{t('partnerships.statsVehicles')}</span>
                   </div>
                   <div>
                     <h2 className="text-primary text-3xl font-bold">9+</h2>
-                    <span>States</span>
+                    <span>{t('partnerships.statsStates')}</span>
                   </div>
                 </div>
               </div>

@@ -9,19 +9,24 @@ import { useAuth } from '@/app/axios';
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { FloatingInput } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 import { LoginModelPropType } from '@/common/propTypes';
 
-const loginSchema = z.object({
-  email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email address'),
+import { useTranslations } from 'next-intl';
 
-  password: z.string().min(1, 'Password is required').min(8, 'Password must be at least 8 characters long'),
-});
+/* Delete schema definition outside component */
 
 const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClick, onForgotPasswordClick }) => {
+  const t = useTranslations('auth');
+  const tVal = useTranslations('validation');
   const [showPassword, setShowPassword] = useState(false);
+
+  const loginSchema = z.object({
+    email: z.string().trim().min(1, tVal('required')).email(tVal('emailInvalid')),
+    password: z.string().min(1, tVal('required')).min(8, tVal('passwordMin')),
+  });
 
   const { login, isLoading, error } = useAuth();
 
@@ -60,7 +65,7 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
     <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-center">User Log In</DialogTitle>
+          <DialogTitle className="text-center">{t('login')}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -71,9 +76,8 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <FloatingInput label={t('email')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -85,10 +89,9 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Input {...field} type={showPassword ? 'text' : 'password'} />
+                      <FloatingInput label={t('password')} {...field} type={showPassword ? 'text' : 'password'} />
                       <button
                         type="button"
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -105,12 +108,12 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
             />
 
             <Button type="button" variant="link" className="justify-start p-0" onClick={handleForgotPassword}>
-              Forgot password?
+              {t('forgotPassword')}
             </Button>
 
             <DialogFooter className="flex-col gap-2">
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? t('loading') : t('login')}
               </Button>
 
               <Button
@@ -119,7 +122,7 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
                 className="hover:text-foreground hover:bg-transparent"
                 onClick={handleRegister}
               >
-                New User? Sign Up
+                {t('dontHaveAccount')} {t('signUp')}
               </Button>
             </DialogFooter>
           </form>

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+/* @plugin 'tailwindcss-rtl'; */
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
@@ -41,6 +42,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --shadow-navbar: 0px 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-booking-engine: 4px 0px 16px rgba(0, 0, 0, 0.12);
 
   --font-montserrat: var(--font-montserrat);
 }
@@ -90,6 +93,9 @@
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #06b0fc;
 
+  --shadow-navbar: var(--shadow-navbar);
+  --shadow-booking-engine: var(--shadow-booking-engine);
+
   --font-montserrat: var(--font-montserrat);
 }
 
@@ -135,6 +141,9 @@
   --sidebar-accent-foreground: #1b1c1e;
   --sidebar-border: #3a3b3d;
   --sidebar-ring: #06b0fc;
+
+  --shadow-navbar: var(--shadow-navbar);
+  --shadow-booking-engine: var(--shadow-booking-engine);
 
   --font-montserrat: var(--font-montserrat);
 }
