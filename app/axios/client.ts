@@ -44,12 +44,13 @@ apiClient.interceptors.response.use(
             refreshToken,
           });
 
-          if (response.data?.success && response.data?.data?.tokens) {
-            const { accessToken, refreshToken: newRefreshToken } = response.data.data.tokens;
+          if (response.data?.success && response.data?.data) {
+            const tokenData = response.data.data;
+            const { accessToken, refreshToken: newRefreshToken } = tokenData;
             const now = Date.now();
 
-            // Update cookies with new tokens
-            authCookies.setAccessToken(accessToken, new Date(now + TIME_CONSTANTS.ONE_DAY).toISOString());
+            // Update cookies with correct expiration times (15 minutes for access, 7 days for refresh)
+            authCookies.setAccessToken(accessToken, new Date(now + 15 * TIME_CONSTANTS.ONE_MINUTE).toISOString());
             authCookies.setRefreshToken(newRefreshToken, new Date(now + TIME_CONSTANTS.SEVEN_DAYS).toISOString());
 
             // Retry original request with new token

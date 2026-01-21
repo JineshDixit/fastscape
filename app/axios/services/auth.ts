@@ -39,9 +39,16 @@ class AuthService extends BaseApiService {
    * Refresh Token
    */
   async refreshToken(refreshToken: string): Promise<ApiResponse<AuthResponse>> {
-    const response = await this.post<AuthResponse>('/refresh-token', { refreshToken });
+    const response = await this.post<any>('/refresh-token', { refreshToken });
     if (response.success && response.data) {
-      this.handleTokenResponse(response.data);
+      // The refresh endpoint returns just token data, not full AuthResponse
+      // So we need to structure it properly for handleTokenResponse
+      const authResponse: AuthResponse = {
+        user: null as any, // User data is fetched separately
+        tokens: response.data
+      };
+      this.handleTokenResponse(authResponse);
+      return { ...response, data: authResponse };
     }
     return response;
   }
@@ -100,10 +107,10 @@ class AuthService extends BaseApiService {
     const { tokens } = data;
     const now = Date.now();
 
-    // Set tokens with proper expiration times
+    // Set tokens with correct expiration times (15 minutes for access, 7 days for refresh)
     authCookies.setAccessToken(
       tokens.accessToken, 
-      new Date(now + TIME_CONSTANTS.ONE_DAY).toISOString()
+      new Date(now + 15 * TIME_CONSTANTS.ONE_MINUTE).toISOString()
     );
     authCookies.setRefreshToken(
       tokens.refreshToken, 

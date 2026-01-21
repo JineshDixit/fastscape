@@ -20,13 +20,17 @@
     "tripType": "Domestic"
   },
   "carFilter": {
-    "exploreFleet": "Explore the Fleet By Categories",
     "byBodyTypes": "By Body Types",
     "byBrands": "By Brands",
     "loading": "Loading filters...",
     "error": "Error loading filters",
     "retry": "Retry",
-    "noData": "No filter data available"
+    "noData": "No filter data available",
+    "options": "Options",
+    "sedan": "Sedan",
+    "hatchback": "Hatchback",
+    "supercar": "Supercar",
+    "suv": "SUV"
   },
   "auth": {
     "email": "Email",
@@ -116,7 +120,49 @@
   },
   "carList": {
     "title": "Explore the Fleet By Categories",
-    "explore": "Explore",
+    "exploreCars": "Explore Cars",
     "viewDetails": "View Details"
+  },
+  "vehicleDetails": {
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "totalDays": "Total Days",
+    "totalPrice": "Total Price",
+    "priceDisclaimer": "* Final price excluding taxes and optional chauffeur charges.",
+    "checking": "Checking...",
+    "notAvailable": "Not Available",
+    "makePayment": "Make Payment",
+    "vehicleNotFound": "Vehicle Not Found",
+    "notFoundDescription": "The vehicle you're looking for doesn't exist or has been removed.",
+    "day": "Day",
+    "days": "Days",
+    "deposit": "Deposit",
+    "checkAvailability": "Check Availability",
+    "availableFor": "Available For",
+    "selfDrive": "Self Drive",
+    "chauffeur": "Chauffeur",
+    "specifications": "Specifications",
+    "specs": {
+      "passenger": "Passenger",
+      "transmission": "Transmission",
+      "engine": "Engine",
+      "drivetrain": "Drivetrain",
+      "fuelType": "Fuel Type",
+      "horsepower": "Horsepower",
+      "fuelConsumption": "Fuel Consumption"
+    },
+    "enums": {
+      "automatic": "Automatic",
+      "manual": "Manual",
+      "petrol": "Petrol",
+      "diesel": "Diesel",
+      "hybrid": "Hybrid",
+      "electric": "Electric",
+      "fwd": "FWD",
+      "rwd": "RWD",
+      "awd": "AWD",
+      "4x4": "4x4"
+    },
+    "noImage": "No Image Available"
   }
 }

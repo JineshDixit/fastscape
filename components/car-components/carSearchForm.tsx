@@ -13,12 +13,12 @@ import DatePicker from '@/components/ui/date-picker';
 import { ChipToggle } from '@/components/ui/chip-toggle';
 import z from 'zod';
 import { useVehicle } from '@/app/axios';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/localization/navigation';
 
 export function CarSearchForm() {
   const t = useTranslations('carSearch');
   const tVal = useTranslations('validation');
-  const { searchAvailableVehicles } = useVehicle();
+  const { searchAvailableVehicles, setBookingData } = useVehicle();
   const router = useRouter();
 
   const carSearchSchema = z
@@ -67,12 +67,20 @@ export function CarSearchForm() {
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const onSubmit = (data: any) => {
-    searchAvailableVehicles({
+    const bookingData = {
       pickupLocation: data.from,
-      dropoffDate: data.dropDate.toISOString(),
       pickupDate: data.pickupDate.toISOString(),
+      dropoffDate: data.dropDate.toISOString(),
+      bookingType: (data.needDriver ? 'SELF_DRIVE' : 'CHAUFFEUR') as 'SELF_DRIVE' | 'CHAUFFEUR',
+    };
+
+    setBookingData(bookingData);
+    searchAvailableVehicles({
+      pickupLocation: bookingData.pickupLocation,
+      pickupDate: bookingData.pickupDate,
+      dropoffDate: bookingData.dropoffDate,
     });
-    router.push('/car-list');
+    router.push('/vehicles');
     form.reset();
   };
 

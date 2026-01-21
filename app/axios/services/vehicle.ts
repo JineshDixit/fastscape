@@ -1,12 +1,12 @@
 import { BaseApiService } from '../base';
-import type { 
-  ApiResponse, 
-  Vehicle, 
-  VehicleStats, 
-  VehicleEnums, 
-  VehicleFilters, 
+import type {
+  ApiResponse,
+  Vehicle,
+  VehicleStats,
+  VehicleEnums,
+  VehicleFilters,
   VehicleListResponse,
-  VehicleSearchParams 
+  VehicleSearchParams,
 } from '../../../common/interfaces';
 
 export class VehicleService extends BaseApiService {
@@ -54,14 +54,26 @@ export class VehicleService extends BaseApiService {
    */
   async getFilterMetadata(): Promise<
     ApiResponse<{
-      bodyTypes: { bodyType: string; count: number }[];
-      brands: { make: string; count: number }[];
+      bodyTypes: { bodyType: string; count: number; models: string[] }[];
+      brands: { make: string; count: number; models: string[] }[];
     }>
   > {
     return this.get<{
-      bodyTypes: { bodyType: string; count: number }[];
-      brands: { make: string; count: number }[];
+      bodyTypes: { bodyType: string; count: number; models: string[] }[];
+      brands: { make: string; count: number; models: string[] }[];
     }>('/filters/metadata');
+  }
+  /**
+   * Check if a specific vehicle is available for a date range
+   */
+  async checkAvailability(
+    vehicleId: string,
+    pickupDate: string,
+    dropoffDate: string,
+  ): Promise<ApiResponse<{ isAvailable: boolean }>> {
+    return this.get<{ isAvailable: boolean }>(`/${vehicleId}/availability`, {
+      params: { pickupDate, dropoffDate },
+    });
   }
 }
 

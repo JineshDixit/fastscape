@@ -2,7 +2,7 @@
 
 import { FC, useEffect, useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/localization/navigation';
 import { UserRound } from 'lucide-react';
 
 import { HeaderPropType } from '@/common/propTypes';
@@ -74,7 +74,7 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
                       onClick={logout}
                       className="text-foreground p-0 text-start hover:no-underline"
                     >
-                      My Account
+                      {t('myAccount')}
                     </Button>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -84,7 +84,7 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
                       onClick={logout}
                       className="text-foreground p-0 text-start hover:no-underline"
                     >
-                      Logout
+                      {t('logout')}
                     </Button>
                   </DropdownMenuLabel>
                 </DropdownMenuContent>

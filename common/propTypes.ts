@@ -46,4 +46,5 @@ export type ChipToggleProps<T extends string> = {
 
 export type VehicleCardPropType = {
   vehicle: Vehicle;
+  onClick?: () => void;
 };

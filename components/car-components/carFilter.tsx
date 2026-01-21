@@ -1,14 +1,153 @@
 import { useVehicle } from '@/app/axios';
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { Minus, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { BodyType } from '@/common/interfaces';
 
 const CarFilter = () => {
   const t = useTranslations('carFilter');
-  const { filterMetadata, fetchFilterMetadata, isLoading, error, clearError } = useVehicle();
+  const { filterMetadata, fetchFilterMetadata, fetchVehicles, filters, isLoading, error, clearError } = useVehicle();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     fetchFilterMetadata();
   }, [fetchFilterMetadata]);
+
+  useEffect(() => {
+    if (filterMetadata && !isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [filterMetadata, isInitialized]);
+
+  const selectedMakes = useMemo(() => {
+    if (!filters.make) return [];
+    return Array.isArray(filters.make) ? filters.make : [filters.make];
+  }, [filters.make]);
+
+  const selectedBodyTypes = useMemo(() => {
+    if (!filters.bodyType) return [];
+    return Array.isArray(filters.bodyType) ? filters.bodyType : [filters.bodyType];
+  }, [filters.bodyType]);
+
+  const selectedModelsArr = useMemo(() => {
+    if (!filters.model) return [];
+    return Array.isArray(filters.model) ? filters.model : [filters.model];
+  }, [filters.model]);
+
+  const selectedModelsMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    if (!filterMetadata) return map;
+
+    filterMetadata.brands.forEach((brand) => {
+      map[brand.make] = brand.models.filter((m) => selectedModelsArr.includes(m));
+    });
+
+    filterMetadata.bodyTypes.forEach((bt) => {
+      map[bt.bodyType] = bt.models.filter((m) => selectedModelsArr.includes(m));
+    });
+
+    return map;
+  }, [filterMetadata, selectedModelsArr]);
+
+  const handleModelToggle = (model: string) => {
+    const currentModels = [...selectedModelsArr];
+    const currentMakes = [...selectedMakes];
+    const currentBodyTypes = [...selectedBodyTypes];
+
+    const isSelected = currentModels.includes(model);
+    const nextModels = isSelected ? currentModels.filter((m) => m !== model) : [...currentModels, model];
+
+    const brand = filterMetadata?.brands.find((b) => b.models.includes(model));
+    const bodyType = filterMetadata?.bodyTypes.find((bt) => bt.models.includes(model));
+
+    let nextMakes = [...currentMakes];
+    let nextBodyTypes = [...currentBodyTypes];
+
+    if (brand) {
+      const brandModels = brand.models;
+      const anyModelSelectedForBrand = nextModels.some((m) => brandModels.includes(m));
+      if (anyModelSelectedForBrand && !nextMakes.includes(brand.make)) {
+        nextMakes.push(brand.make);
+      } else if (!anyModelSelectedForBrand && nextMakes.includes(brand.make)) {
+        nextMakes = nextMakes.filter((m) => m !== brand.make);
+      }
+    }
+
+    if (bodyType) {
+      const btModels = bodyType.models;
+      const anyModelSelectedForBT = nextModels.some((m) => btModels.includes(m));
+      if (anyModelSelectedForBT && !nextBodyTypes.includes(bodyType.bodyType as any)) {
+        nextBodyTypes.push(bodyType.bodyType as any);
+      } else if (!anyModelSelectedForBT && nextBodyTypes.includes(bodyType.bodyType as any)) {
+        nextBodyTypes = nextBodyTypes.filter((bt) => bt !== (bodyType.bodyType as any));
+      }
+    }
+
+    fetchVehicles({
+      make: nextMakes,
+      bodyType: nextBodyTypes as BodyType[],
+      model: nextModels,
+      page: 1,
+    });
+  };
+
+  const renderFilterSection = (title: string, items: { label: string; count: number; models: string[] }[]) => {
+    return (
+      <div className="mb-8">
+        <h4 className="text-md mb-4 font-bold text-gray-900">{title}</h4>
+        <Accordion type="multiple" className="w-full space-y-3">
+          {items.map((item) => {
+            const models = item.models || [];
+            const activeModelsForCategory = selectedModelsMap[item.label] || [];
+
+            return (
+              <AccordionItem key={item.label} value={item.label} className="border-none">
+                <AccordionTrigger className="cursor-pointer p-0 hover:no-underline [&[data-state=open]_.minus]:scale-100 [&[data-state=open]_.plus]:scale-0">
+                  <div className="group flex w-full items-center justify-between">
+                    <div className="flex flex-1 items-center gap-3">
+                      <div className="bg-primary relative flex h-5 w-5 cursor-pointer items-center justify-center rounded-[4px] text-white">
+                        <Plus className="plus absolute h-3.5 w-3.5 transition-transform duration-200" />
+                        <Minus className="minus absolute h-3.5 w-3.5 scale-0 transition-transform duration-200" />
+                      </div>
+
+                      <span className="text-sm text-gray-800 select-none">{item.label}</span>
+                    </div>
+
+                    <span className="text-sm text-gray-800">[{item.count}]</span>
+                  </div>
+                </AccordionTrigger>
+
+                {models.length > 0 && (
+                  <AccordionContent>
+                    <div className="flex flex-col gap-3 pt-3 pl-8">
+                      {models.map((model) => (
+                        <div key={model} className="flex items-center gap-3">
+                          <Checkbox
+                            id={`${item.label}-${model}`}
+                            checked={activeModelsForCategory.includes(model)}
+                            onCheckedChange={() => handleModelToggle(model)}
+                            className="data-[state=checked]:border-primary data-[state=checked]:bg-primary h-4 w-4 rounded border-gray-300"
+                          />
+                          <label
+                            htmlFor={`${item.label}-${model}`}
+                            className="cursor-pointer text-sm text-gray-700 select-none"
+                          >
+                            {model}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                )}
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
+    );
+  };
 
   useEffect(() => {
     if (error) {
@@ -17,7 +156,7 @@ const CarFilter = () => {
     }
   }, [error, clearError]);
 
-  if (isLoading) {
+  if (isLoading && !isInitialized) {
     return (
       <div className="p-3 md:p-4">
         <div className="animate-pulse">
@@ -53,41 +192,20 @@ const CarFilter = () => {
   }
 
   return (
-    <div className="">
-      {/* Body Types Filter */}
-      {filterMetadata.bodyTypes && filterMetadata.bodyTypes.length > 0 && (
-        <div className="mb-4 md:mb-6">
-          <h4 className="mb-2 text-sm font-medium md:text-base">{t('byBodyTypes')}</h4>
-          <div className="space-y-1.5 md:space-y-2">
-            {filterMetadata.bodyTypes.map((bodyType) => (
-              <div key={bodyType.bodyType} className="flex items-center justify-between">
-                <label className="flex items-center text-xs sm:text-sm">
-                  <input type="checkbox" className="mr-2" />
-                  {bodyType.bodyType}
-                </label>
-                <span className="text-xs text-gray-500 sm:text-sm">[{bodyType.count}]</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+    <div className="w-full bg-white">
+      {filterMetadata.bodyTypes &&
+        filterMetadata.bodyTypes.length > 0 &&
+        renderFilterSection(
+          t('byBodyTypes'),
+          filterMetadata.bodyTypes.map((b) => ({ label: b.bodyType, count: b.count, models: b.models })),
+        )}
 
-      {filterMetadata.brands && filterMetadata.brands.length > 0 && (
-        <div className="mb-4 md:mb-6">
-          <h4 className="mb-2 text-sm font-medium md:text-base">{t('byBrands')}</h4>
-          <div className="space-y-1.5 md:space-y-2">
-            {filterMetadata.brands.map((brand) => (
-              <div key={brand.make} className="flex items-center justify-between">
-                <label className="flex items-center text-xs sm:text-sm">
-                  <input type="checkbox" className="mr-2" />
-                  {brand.make}
-                </label>
-                <span className="text-xs text-gray-500 sm:text-sm">[{brand.count}]</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {filterMetadata.brands &&
+        filterMetadata.brands.length > 0 &&
+        renderFilterSection(
+          t('byBrands'),
+          filterMetadata.brands.map((b) => ({ label: b.make, count: b.count, models: b.models })),
+        )}
     </div>
   );
 };

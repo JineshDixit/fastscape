@@ -56,7 +56,7 @@ function FloatingInput({ className, type = 'text', label, id, ...props }: Floati
           'peer-focus:-top-0.5 peer-focus:left-2.5',
           'peer-focus:translate-y-0 peer-focus:scale-75',
           'peer-focus:text-primary',
-          'peer-not-placeholder-shown:-top-2 peer-not-placeholder-shown:left-2.5',
+          'peer-not-placeholder-shown:-top-0.5 peer-not-placeholder-shown:left-2.5',
           'peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:scale-75',
           'peer-disabled:opacity-50',
           'peer-aria-invalid:text-destructive',

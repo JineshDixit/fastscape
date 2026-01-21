@@ -1,155 +1,142 @@
-'use client';
-
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { vehicleService } from '../services/vehicle';
-import type {
-  Vehicle,
-  VehicleFilters,
-  VehicleSearchParams,
-  VehicleStats,
-  VehicleListResponse,
-} from '@/common/interfaces';
+import { useVehicleContext, VehicleState } from '@/app/context/VehicleContext';
+import type { VehicleFilters, VehicleSearchParams } from '@/common/interfaces';
 
-interface BodyTypeSummary {
-  bodyType: string;
-  count: number;
-}
+export const useVehicle = () => {
+  const { setState, abortControllerRef, ...state } = useVehicleContext();
 
-interface FilterMetadata {
-  bodyTypes: BodyTypeSummary[];
-  brands: { make: string; count: number }[];
-}
+  const filtersRef = useRef(state.filters);
 
-interface VehicleState {
-  vehicles: Vehicle[];
-  vehicle: Vehicle | null;
-  stats: VehicleStats | null;
-  bodyTypeSummary: BodyTypeSummary[];
-  filterMetadata: FilterMetadata | null;
-  pagination: Omit<VehicleListResponse, 'vehicles'> | null;
-  isLoading: boolean;
-  error: string | null;
-}
+  // Sync ref with state
+  useEffect(() => {
+    filtersRef.current = state.filters;
+  }, [state.filters]);
 
-interface UseVehicleReturn extends VehicleState {
-  fetchVehicles: (params?: VehicleFilters) => Promise<void>;
-  searchAvailableVehicles: (params: VehicleSearchParams) => Promise<void>;
-  fetchVehicleById: (id: string) => Promise<void>;
-  fetchStats: () => Promise<void>;
-  fetchBodyTypeSummary: () => Promise<void>;
-  fetchFilterMetadata: () => Promise<void>;
-  clearError: () => void;
-  resetVehicle: () => void;
-}
+  const clearError = useCallback(() => setState((prev) => ({ ...prev, error: null })), [setState]);
+  const resetVehicle = useCallback(() => setState((prev) => ({ ...prev, vehicle: null })), [setState]);
 
-export const useVehicle = (): UseVehicleReturn => {
-  const [state, setState] = useState<VehicleState>({
-    vehicles: [],
-    vehicle: null,
-    stats: null,
-    bodyTypeSummary: [],
-    filterMetadata: null,
-    pagination: null,
-    isLoading: false,
-    error: null,
-  });
+  const startLoading = useCallback(() => setState((prev) => ({ ...prev, isLoading: true, error: null })), [setState]);
+  const stopLoading = useCallback(() => setState((prev) => ({ ...prev, isLoading: false })), [setState]);
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const clearError = useCallback(() => setState(prev => ({ ...prev, error: null })), []);
-  const resetVehicle = useCallback(() => setState(prev => ({ ...prev, vehicle: null })), []);
-
-  const startLoading = () => setState(prev => ({ ...prev, isLoading: true, error: null }));
-  const stopLoading = () => setState(prev => ({ ...prev, isLoading: false }));
-  const handleError = (error: any, fallbackMessage: string) => {
-    if (error?.name !== 'AbortError') {
-      setState(prev => ({ ...prev, error: error?.message || fallbackMessage, isLoading: false }));
-    } else {
-      stopLoading();
-    }
-  };
+  const handleError = useCallback(
+    (error: any, fallbackMessage: string) => {
+      if (error?.name !== 'AbortError') {
+        setState((prev) => ({ ...prev, error: error?.message || fallbackMessage, isLoading: false }));
+      } else {
+        stopLoading();
+      }
+    },
+    [setState, stopLoading],
+  );
 
   /**
    * Fetch vehicle list (with filters & pagination)
    */
-  const fetchVehicles = useCallback(async (params?: VehicleFilters) => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
+  const fetchVehicles = useCallback(
+    async (newParams?: Partial<VehicleFilters>) => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
 
-    startLoading();
+      startLoading();
 
-    try {
-      const response = await vehicleService.getVehicles(params);
+      try {
+        // Merge new params with existing filters from REF to avoid stable closure/identity issues
+        const mergedFilters = {
+          ...filtersRef.current,
+          ...newParams,
+        };
 
-      if (response.success && response.data) {
-        setState(prev => ({
-          ...prev,
-          vehicles: response.data!.vehicles,
-          pagination: {
-            total: response.data!.total,
-            page: response.data!.page,
-            limit: response.data!.limit,
-            totalPages: response.data!.totalPages,
-          },
-          isLoading: false
-        }));
-      } else {
-        setState(prev => ({ ...prev, error: response.message || 'Failed to fetch vehicles', isLoading: false }));
+        const response = await vehicleService.getVehicles(mergedFilters);
+
+        if (response.success && response.data) {
+          setState((prev) => ({
+            ...prev,
+            vehicles: response.data!.vehicles,
+            pagination: {
+              total: response.data!.total,
+              page: response.data!.page,
+              limit: response.data!.limit,
+              totalPages: response.data!.totalPages,
+            },
+            filters: mergedFilters, // Persist the filters used
+            isLoading: false,
+          }));
+        } else {
+          setState((prev) => ({ ...prev, error: response.message || 'Failed to fetch vehicles', isLoading: false }));
+        }
+      } catch (err: any) {
+        handleError(err, 'Failed to fetch vehicles');
       }
-    } catch (err: any) {
-      handleError(err, 'Failed to fetch vehicles');
-    }
-  }, []);
+    },
+    [abortControllerRef, startLoading, setState, handleError], // state.filters removed to break identity loop
+  );
+
+  const setFilters = useCallback(
+    (newFilters: Partial<VehicleFilters>) => {
+      setState((prev) => ({
+        ...prev,
+        filters: { ...prev.filters, ...newFilters },
+      }));
+    },
+    [setState],
+  );
 
   /**
    * Search available vehicles with pickup/dropoff dates and location
    */
-  const searchAvailableVehicles = useCallback(async (params: VehicleSearchParams) => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
+  const searchAvailableVehicles = useCallback(
+    async (params: VehicleSearchParams) => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
 
-    startLoading();
+      startLoading();
 
-    try {
-      const response = await vehicleService.searchAvailableVehicles(params);
+      try {
+        const response = await vehicleService.searchAvailableVehicles(params);
 
-      if (response.success && response.data) {
-        setState(prev => ({
-          ...prev,
-          vehicles: response.data!.vehicles,
-          pagination: {
-            total: response.data!.total,
-            page: response.data!.page,
-            limit: response.data!.limit,
-            totalPages: response.data!.totalPages,
-          },
-          isLoading: false
-        }));
-      } else {
-        setState(prev => ({ ...prev, error: response.message || 'Failed to search vehicles', isLoading: false }));
+        if (response.success && response.data) {
+          setState((prev) => ({
+            ...prev,
+            vehicles: response.data!.vehicles,
+            pagination: {
+              total: response.data!.total,
+              page: response.data!.page,
+              limit: response.data!.limit,
+              totalPages: response.data!.totalPages,
+            },
+            isLoading: false,
+          }));
+        } else {
+          setState((prev) => ({ ...prev, error: response.message || 'Failed to search vehicles', isLoading: false }));
+        }
+      } catch (err: any) {
+        handleError(err, 'Failed to search vehicles');
       }
-    } catch (err: any) {
-      handleError(err, 'Failed to search vehicles');
-    }
-  }, []);
+    },
+    [abortControllerRef, startLoading, setState, handleError],
+  );
 
   /**
    * Fetch vehicle by ID
    */
-  const fetchVehicleById = useCallback(async (id: string) => {
-    startLoading();
+  const fetchVehicleById = useCallback(
+    async (id: string) => {
+      startLoading();
 
-    try {
-      const response = await vehicleService.getVehicleById(id);
-      if (response.success && response.data) {
-        setState(prev => ({ ...prev, vehicle: response.data!, isLoading: false }));
-      } else {
-        setState(prev => ({ ...prev, error: response.message || 'Vehicle not found', isLoading: false }));
+      try {
+        const response = await vehicleService.getVehicleById(id);
+        if (response.success && response.data) {
+          setState((prev) => ({ ...prev, vehicle: response.data!, isLoading: false }));
+        } else {
+          setState((prev) => ({ ...prev, error: response.message || 'Vehicle not found', isLoading: false }));
+        }
+      } catch (err: any) {
+        handleError(err, 'Failed to fetch vehicle');
       }
-    } catch (err: any) {
-      handleError(err, 'Failed to fetch vehicle');
-    }
-  }, []);
+    },
+    [startLoading, setState, handleError],
+  );
 
   /**
    * Fetch vehicle stats
@@ -159,14 +146,14 @@ export const useVehicle = (): UseVehicleReturn => {
     try {
       const response = await vehicleService.getStats();
       if (response.success && response.data) {
-        setState(prev => ({ ...prev, stats: response.data!, isLoading: false }));
+        setState((prev) => ({ ...prev, stats: response.data!, isLoading: false }));
       } else {
-        setState(prev => ({ ...prev, error: response.message || 'Failed to fetch stats', isLoading: false }));
+        setState((prev) => ({ ...prev, error: response.message || 'Failed to fetch stats', isLoading: false }));
       }
     } catch (err: any) {
       handleError(err, 'Failed to fetch stats');
     }
-  }, []);
+  }, [startLoading, setState, handleError]);
 
   /**
    * Fetch body-type summary
@@ -176,14 +163,14 @@ export const useVehicle = (): UseVehicleReturn => {
     try {
       const response = await vehicleService.getBodyTypeSummary();
       if (response.success && response.data) {
-        setState(prev => ({ ...prev, bodyTypeSummary: response.data!, isLoading: false }));
+        setState((prev) => ({ ...prev, bodyTypeSummary: response.data!, isLoading: false }));
       } else {
-        setState(prev => ({ ...prev, error: response.message || 'Failed to fetch body types', isLoading: false }));
+        setState((prev) => ({ ...prev, error: response.message || 'Failed to fetch body types', isLoading: false }));
       }
     } catch (err: any) {
       handleError(err, 'Failed to fetch body types');
     }
-  }, []);
+  }, [startLoading, setState, handleError]);
 
   /**
    * Fetch filter metadata (sidebar filters)
@@ -193,21 +180,35 @@ export const useVehicle = (): UseVehicleReturn => {
     try {
       const response = await vehicleService.getFilterMetadata();
       if (response.success && response.data) {
-        setState(prev => ({ ...prev, filterMetadata: response.data!, isLoading: false }));
+        setState((prev) => ({ ...prev, filterMetadata: response.data!, isLoading: false }));
       } else {
-        setState(prev => ({ ...prev, error: response.message || 'Failed to fetch filters', isLoading: false }));
+        setState((prev) => ({ ...prev, error: response.message || 'Failed to fetch filters', isLoading: false }));
       }
     } catch (err: any) {
       handleError(err, 'Failed to fetch filters');
     }
-  }, []);
+  }, [startLoading, setState, handleError]);
 
   /**
    * Cleanup on unmount
    */
   useEffect(() => {
-    return () => abortControllerRef.current?.abort();
-  }, []);
+    const currentAbortController = abortControllerRef.current;
+    return () => currentAbortController?.abort();
+  }, [abortControllerRef]);
+
+  /**
+   * Update booking data (dates, location, type)
+   */
+  const setBookingData = useCallback(
+    (data: Partial<VehicleState['bookingData']>) => {
+      setState((prev) => ({
+        ...prev,
+        bookingData: { ...prev.bookingData, ...data },
+      }));
+    },
+    [setState],
+  );
 
   return {
     ...state,
@@ -219,5 +220,7 @@ export const useVehicle = (): UseVehicleReturn => {
     fetchFilterMetadata,
     clearError,
     resetVehicle,
+    setBookingData,
+    setFilters,
   };
 };

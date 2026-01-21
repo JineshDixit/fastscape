@@ -58,47 +58,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       console.log('Fetching current user from API');
       const response = await userService.getProfile();
-      
+
       if (response.success && response.data) {
         console.log('User fetched successfully:', response.data);
         setUser(response.data);
         setIsAuthenticated(true);
       } else {
         console.log('Failed to fetch user:', response.message);
-        clearAuthState();
+        // Don't clear auth state immediately, might be a temporary API issue
+        console.log('API error, but keeping current auth state');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user:', error);
-      clearAuthState();
+      // Only clear auth state if it's a 401 (unauthorized) error
+      if (error?.response?.status === 401) {
+        console.log('401 error, clearing auth state');
+        clearAuthState();
+      } else {
+        console.log('Non-401 error, keeping current auth state');
+      }
     }
   }, [clearAuthState]);
-
-  // Check authentication status and fetch user if authenticated
-  const checkAuth = useCallback(async () => {
-    try {
-      const hasValidToken = authCookies.isAuthenticated();
-      console.log('Token validation result:', hasValidToken);
-
-      if (hasValidToken) {
-        // Token exists and is valid, fetch user data
-        await fetchCurrentUser();
-        
-        // Check if token needs refresh
-        if (authCookies.needsRefresh()) {
-          console.log('Token needs refresh, refreshing...');
-          await refreshAuth();
-        }
-      } else {
-        console.log('No valid token found');
-        clearAuthState();
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      clearAuthState();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchCurrentUser, clearAuthState]);
 
   // Refresh authentication token
   const refreshAuth = useCallback(async () => {
@@ -107,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (refreshToken) {
         console.log('Refreshing token...');
         const response = await authService.refreshToken(refreshToken);
-        
+
         if (response.success) {
           console.log('Token refreshed successfully');
           // After successful token refresh, fetch updated user data
@@ -122,76 +102,126 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [fetchCurrentUser, clearAuthState]);
 
+  // Check authentication status and fetch user if authenticated
+  const checkAuth = useCallback(async () => {
+    try {
+      const hasValidToken = authCookies.isAuthenticated();
+      console.log('Token validation result:', hasValidToken);
+
+      if (hasValidToken) {
+        // Token exists and is valid, fetch user data
+        await fetchCurrentUser();
+
+        // Check if token needs refresh
+        if (authCookies.needsRefresh()) {
+          console.log('Token needs refresh, refreshing...');
+          await refreshAuth();
+        }
+      } else {
+        // Check if we have a refresh token to try refreshing
+        const refreshToken = authCookies.getRefreshToken();
+        if (refreshToken) {
+          console.log('Access token expired but refresh token exists, attempting refresh...');
+          try {
+            await refreshAuth();
+          } catch (error) {
+            console.error('Failed to refresh token during auth check:', error);
+            clearAuthState();
+          }
+        } else {
+          console.log('No valid token found');
+          clearAuthState();
+        }
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      // Don't clear auth state immediately on fetch errors, token might still be valid
+      console.log('Auth check failed, but keeping current state');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchCurrentUser, clearAuthState, refreshAuth]);
+
   // Initialize auth check
   useEffect(() => {
     checkAuth();
-    
-    // Set up periodic auth check every 5 minutes
+
+    // Set up periodic auth check every 10 minutes (increased from 5 minutes)
     const interval = setInterval(() => {
       if (authCookies.isAuthenticated()) {
-        checkAuth();
+        // Only check if token needs refresh, don't fetch user data unnecessarily
+        if (authCookies.needsRefresh()) {
+          console.log('Periodic check: Token needs refresh');
+          refreshAuth();
+        }
       }
-    }, 5 * TIME_CONSTANTS.ONE_MINUTE);
-    
+    }, 10 * TIME_CONSTANTS.ONE_MINUTE);
+
     return () => clearInterval(interval);
-  }, [checkAuth]);
+  }, [checkAuth, refreshAuth]);
 
-  const login = useCallback(async (data: LoginRequest) => {
-    console.log('Login attempt started');
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.login(data);
-      console.log('Login response:', response);
-      
-      if (response.success && response.data) {
-        console.log('Login successful, fetching user data');
-        // After successful login, fetch user data from API
-        await fetchCurrentUser();
-      } else {
-        console.log('Login failed:', response.message);
-        setError(response.message || 'Login failed');
-      }
-      return response;
-    } catch (err: any) {
-      console.error('Login error:', err);
-      return handleAuthError(err, 'Login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchCurrentUser, handleAuthError]);
+  const login = useCallback(
+    async (data: LoginRequest) => {
+      console.log('Login attempt started');
+      setIsLoading(true);
+      setError(null);
 
-  const register = useCallback(async (data: RegisterRequest) => {
-    console.log('Registration attempt started');
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.register(data);
-      console.log('Registration response:', response);
-      
-      if (response.success && response.data) {
-        console.log('Registration successful, fetching user data');
-        // After successful registration, fetch user data from API
-        await fetchCurrentUser();
-      } else {
-        console.log('Registration failed:', response.message);
-        setError(response.message || 'Registration failed');
+      try {
+        const response = await authService.login(data);
+        console.log('Login response:', response);
+
+        if (response.success && response.data) {
+          console.log('Login successful, fetching user data');
+          // After successful login, fetch user data from API
+          await fetchCurrentUser();
+        } else {
+          console.log('Login failed:', response.message);
+          setError(response.message || 'Login failed');
+        }
+        return response;
+      } catch (err: any) {
+        console.error('Login error:', err);
+        return handleAuthError(err, 'Login failed');
+      } finally {
+        setIsLoading(false);
       }
-      return response;
-    } catch (err: any) {
-      console.error('Registration error:', err);
-      return handleAuthError(err, 'Registration failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchCurrentUser, handleAuthError]);
+    },
+    [fetchCurrentUser, handleAuthError],
+  );
+
+  const register = useCallback(
+    async (data: RegisterRequest) => {
+      console.log('Registration attempt started');
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await authService.register(data);
+        console.log('Registration response:', response);
+
+        if (response.success && response.data) {
+          console.log('Registration successful, fetching user data');
+          // After successful registration, fetch user data from API
+          await fetchCurrentUser();
+        } else {
+          console.log('Registration failed:', response.message);
+          setError(response.message || 'Registration failed');
+        }
+        return response;
+      } catch (err: any) {
+        console.error('Registration error:', err);
+        return handleAuthError(err, 'Registration failed');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchCurrentUser, handleAuthError],
+  );
 
   const logout = useCallback(async () => {
     console.log('Logout initiated');
     setIsLoading(true);
-    
+
     try {
       await authService.logout();
       console.log('Logout API call successful');
@@ -206,56 +236,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [router, clearAuthState]);
 
-  const forgotPassword = useCallback(async (email: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.forgotPassword(email);
-      if (!response.success) {
-        setError(response.message || 'Failed to send reset email');
-      }
-      return response;
-    } catch (err: any) {
-      return handleAuthError(err, 'Failed to send reset email');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [handleAuthError]);
+  const forgotPassword = useCallback(
+    async (email: string) => {
+      setIsLoading(true);
+      setError(null);
 
-  const resetPassword = useCallback(async (data: ResetPasswordRequest) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.resetPassword(data);
-      if (!response.success) {
-        setError(response.message || 'Failed to reset password');
+      try {
+        const response = await authService.forgotPassword(email);
+        if (!response.success) {
+          setError(response.message || 'Failed to send reset email');
+        }
+        return response;
+      } catch (err: any) {
+        return handleAuthError(err, 'Failed to send reset email');
+      } finally {
+        setIsLoading(false);
       }
-      return response;
-    } catch (err: any) {
-      return handleAuthError(err, 'Failed to reset password');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [handleAuthError]);
+    },
+    [handleAuthError],
+  );
 
-  const verifyOtp = useCallback(async (email: string, otp: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await authService.verifyOtp(email, otp);
-      if (!response.success) {
-        setError(response.message || 'Invalid OTP');
+  const resetPassword = useCallback(
+    async (data: ResetPasswordRequest) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await authService.resetPassword(data);
+        if (!response.success) {
+          setError(response.message || 'Failed to reset password');
+        }
+        return response;
+      } catch (err: any) {
+        return handleAuthError(err, 'Failed to reset password');
+      } finally {
+        setIsLoading(false);
       }
-      return response;
-    } catch (err: any) {
-      return handleAuthError(err, 'Invalid OTP');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [handleAuthError]);
+    },
+    [handleAuthError],
+  );
+
+  const verifyOtp = useCallback(
+    async (email: string, otp: string) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await authService.verifyOtp(email, otp);
+        if (!response.success) {
+          setError(response.message || 'Invalid OTP');
+        }
+        return response;
+      } catch (err: any) {
+        return handleAuthError(err, 'Invalid OTP');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [handleAuthError],
+  );
 
   return (
     <AuthContext.Provider

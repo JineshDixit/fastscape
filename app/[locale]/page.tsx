@@ -7,11 +7,13 @@ import { useEffect, useMemo } from 'react';
 import VehicleCard from '@/components/car-components/vehicleCard';
 import { Separator } from '@/components/ui/separator';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/localization/navigation';
 
 const Home = () => {
   const t = useTranslations('home');
-  // const tCar = useTranslations('carSearch');
+  const tFilter = useTranslations('carFilter');
   const { bodyTypeSummary, fetchBodyTypeSummary, vehicles, fetchVehicles } = useVehicle();
+  const router = useRouter();
 
   useEffect(() => {
     fetchBodyTypeSummary();
@@ -36,7 +38,7 @@ const Home = () => {
   return (
     <main className="global-container mb-8">
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-        <aside className="shadow-booking-engine sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+        <aside className="border-2 border-gray-100 sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
           <span className="text-lg leading-6 font-bold md:text-xl">{t('rentCar')}</span>
           <CarSearchForm />
         </aside>
@@ -96,9 +98,13 @@ const Home = () => {
                     />
                   </div>
 
-                  <div className="bg-foreground/10 flex w-full flex-col gap-2 rounded-2xl px-6 pt-10 pb-5">
-                    <span className="text-sm font-semibold">{item.label}</span>
-                    <span className="text-muted-foreground text-sm">{item.count} Options</span>
+                  <div className="border-gray-100 bg-gray-50 flex w-full items-center flex-col gap-2 rounded-2xl px-6 pt-10 pb-5">
+                    <span className="text-sm font-semibold">
+                      {tFilter(item.label.toLowerCase().replace(' ', '') as any)}
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {item.count} {tFilter('options')}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -108,7 +114,7 @@ const Home = () => {
             <h3 className="text-center text-lg font-semibold">{t('luxury')}</h3>
             <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {vehicles.map((item) => (
-                <VehicleCard key={item.id} vehicle={item} />
+                <VehicleCard key={item.id} vehicle={item} onClick={() => router.push(`/vehicles/${item.id}`)} />
               ))}
             </div>
           </section>
@@ -134,7 +140,7 @@ const Home = () => {
               ))}
             </div>
           </section>
-          <section className="mt-15 w-full rounded-3xl bg-gray-300 py-14">
+          <section className="mt-15 w-full rounded-3xl border-gray-100 bg-gray-100 py-14">
             <h3 className="mb-14 text-center text-lg font-semibold">{t('easyRide.title')}</h3>
 
             <div className="relative mx-auto max-w-3xl px-12">

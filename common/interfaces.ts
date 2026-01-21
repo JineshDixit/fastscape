@@ -78,11 +78,13 @@ export interface Vehicle {
   horsepower: number;
   fuelType: FuelType;
   fuelConsumption: string;
-  pricePerDay: string; 
+  pricePerDay: string;
   delayChargePerHour?: string;
   depositPercentage?: string;
   currency?: string;
   isAvailable: boolean;
+  passengerCapacity: number;
+  city: string;
 
   media: VehicleMedia[];
 
@@ -120,12 +122,12 @@ export interface VehicleFilters {
   sortBy?: keyof Vehicle | 'createdAt' | 'updatedAt';
   sortOrder?: 'ASC' | 'DESC';
   search?: string;
-  make?: string;
-  model?: string;
-  bodyType?: BodyType;
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: BodyType | BodyType[];
   transmission?: TransmissionType;
   fuelType?: FuelType;
-  isAvailable?: boolean | string; 
+  isAvailable?: boolean | string;
   minPrice?: number;
   maxPrice?: number;
   year?: number;
@@ -161,6 +163,7 @@ export interface User {
   fullName: string;
   phone: string;
   role: 'USER' | 'ADMIN';
+  avatar?: string;
   dateOfBirth?: string;
   nationality?: string;
 }
@@ -223,6 +226,8 @@ export interface UserProfile extends User {
   city?: string;
   state?: string;
   country?: string;
+  zipCode?: string;
+  address?: string;
   licenseIssuingCountry?: string;
   licenseExpiryDate?: string;
   drivingExperienceYears?: number;
@@ -253,4 +258,207 @@ export interface UpdateProfileRequest {
 
 export interface LogoutRequest {
   refreshToken: string;
+}
+
+// Booking Types (matching backend exactly)
+export type BookingType = 'SELF_DRIVE' | 'CHAUFFEUR';
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'PICKED_UP' | 'DROPPED_OFF' | 'CANCELLED' | 'COMPLETED';
+export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'REFUNDED' | 'OVERDUE';
+export type PaymentMethod = 'PICKUP' | 'DROPOFF' | 'ONLINE';
+
+export interface Booking {
+  id: string;
+  userId: string;
+  vehicleId: string;
+  chauffeurId?: string;
+  startDatetime: string;
+  endDatetime: string;
+  actualPickupDatetime?: string;
+  actualDropoffDatetime?: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  bookingType: BookingType;
+  bookingStatus: BookingStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  delayChargeApplied: boolean;
+  delayHours: number;
+  chauffeurInstructions?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // Relations (only what client needs to see)
+  vehicle?: Vehicle;
+  chauffeur?: {
+    id: string;
+    fullName: string;
+    phone: string;
+    rating: number;
+    totalTrips?: number;
+    experienceLevel?: string;
+    languages?: string[];
+  };
+  BookingFinancial?: BookingFinancial; // Backend uses this exact name
+}
+
+export interface BookingFinancial {
+  id: string;
+  bookingId: string;
+  baseAmount: string;
+  depositAmount: string;
+  balanceAmount: string;
+  taxAmount: string;
+  totalAmount: string;
+  currency: string;
+  depositPercentage: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Payment {
+  id: string;
+  bookingId: string;
+  userId: string;
+  amount: string;
+  currency: string;
+  paymentType: 'DEPOSIT' | 'BALANCE' | 'DELAY_CHARGE' | 'REFUND';
+  paymentMethod: PaymentMethod;
+  paymentStatus: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  stripePaymentIntentId?: string;
+  transactionId?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Client-focused Booking Request Types
+export interface CreateBookingRequest {
+  vehicleId: string;
+  startDatetime: string;
+  endDatetime: string;
+  pickupLocation: string;
+  dropoffLocation: string;
+  bookingType: BookingType;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+  chauffeurInstructions?: string; // Only used if bookingType is CHAUFFEUR
+}
+
+export interface UpdateBookingRequest {
+  startDatetime?: string;
+  endDatetime?: string;
+  pickupLocation?: string;
+  dropoffLocation?: string;
+  notes?: string;
+  chauffeurInstructions?: string;
+  actualPickupDatetime?: string;
+  actualDropoffDatetime?: string;
+}
+
+export interface CheckAvailabilityRequest {
+  vehicleId: string;
+  startDatetime: string;
+  endDatetime: string;
+}
+
+export interface ExtendBookingRequest {
+  newEndDatetime: string;
+}
+
+export interface CancelBookingRequest {
+  cancellationReason?: string;
+}
+
+// Backend availability response structure
+export interface AvailabilityResponse {
+  isAvailable: boolean;
+  vehicle: {
+    id: string;
+    make: string;
+    model: string;
+    isAvailable: boolean;
+  };
+  conflictingBookings: Array<{
+    id: string;
+    startDatetime: string;
+    endDatetime: string;
+    status: string;
+  }>;
+  requestedPeriod: {
+    start: string;
+    end: string;
+    durationHours: number;
+    durationDays: number;
+  };
+}
+
+// Client-focused Filter Types
+export interface BookingFilters extends PaginationParams {
+  status?: BookingStatus;
+  vehicleType?: BodyType;
+  startDate?: string;
+  endDate?: string;
+  bookingType?: BookingType;
+  paymentStatus?: PaymentStatus;
+}
+
+export interface BookingListResponse {
+  bookings: Booking[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface BookingStats {
+  total: number;
+  pending: number;
+  confirmed: number;
+  active: number;
+  completed: number;
+  cancelled: number;
+  totalSpent: number;
+  averageRating: number;
+}
+
+// Payment Types (Client-focused)
+export interface PaymentBreakdown {
+  baseAmount: string;
+  depositAmount: string;
+  balanceAmount: string;
+  taxAmount: string;
+  delayCharges?: string;
+  totalAmount: string;
+  currency: string;
+  daysCount: number;
+  delayHours?: number;
+  depositPercentage: number;
+}
+
+export interface ProcessPaymentRequest {
+  paymentMethod: PaymentMethod;
+  stripePaymentIntentId?: string;
+}
+
+export interface PaymentSummary {
+  booking: Booking;
+  financial: BookingFinancial;
+  payments: Payment[];
+  totalPaid: string;
+  remainingBalance: string;
+  nextPaymentDue?: string;
+}
+
+// Extend booking response
+export interface ExtendBookingResponse {
+  booking: Booking;
+  additionalCost: number;
+}
+
+// Cancel booking response
+export interface CancelBookingResponse {
+  booking: Booking;
+  refundAmount: number;
+  refundPolicy: string;
 }

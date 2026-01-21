@@ -20,13 +20,17 @@
     "tripType": "محلي"
   },
   "carFilter": {
-    "exploreFleet": "استكشف الأسطول حسب الفئات",
     "byBodyTypes": "حسب نوع الهيكل",
     "byBrands": "حسب العلامة التجارية",
     "loading": "جاري التحميل...",
     "error": "خطأ في تحميل الفلاتر",
     "retry": "أعد المحاولة",
-    "noData": "لا توجد بيانات متاحة"
+    "noData": "لا توجد بيانات متاحة",
+    "options": "خيارات",
+    "sedan": "سيدان",
+    "hatchback": "هاتشباك",
+    "supercar": "سيارة خارقة",
+    "suv": "سيارة دفع رباعي"
   },
   "auth": {
     "email": "البريد الإلكتروني",
@@ -116,7 +120,49 @@
   },
   "carList": {
     "title": "استكشف الأسطول حسب الفئات",
-    "explore": "استكشف",
+    "exploreCars": "استكشف السيارات",
     "viewDetails": "عرض التفاصيل"
+  },
+  "vehicleDetails": {
+    "available": "متاح",
+    "unavailable": "غير متاح",
+    "totalDays": "إجمالي الأيام",
+    "totalPrice": "السعر الإجمالي",
+    "priceDisclaimer": "* السعر النهائي لا يشمل الضرائب ورسوم السائق الاختيارية.",
+    "checking": "جاري التحقق...",
+    "notAvailable": "غير متاح",
+    "makePayment": "إتمام الدفع",
+    "vehicleNotFound": "المركبة غير موجودة",
+    "notFoundDescription": "المركبة التي تبحث عنها غير موجودة أو تم حذفها.",
+    "day": "يوم",
+    "days": "أيام",
+    "deposit": "تأمين",
+    "checkAvailability": "التحقق من التوفر",
+    "availableFor": "متاح لـ",
+    "selfDrive": "قيادة ذاتية",
+    "chauffeur": "سائق",
+    "specifications": "المواصفات",
+    "specs": {
+      "passenger": "ركاب",
+      "transmission": "ناقل الحركة",
+      "engine": "المحرك",
+      "drivetrain": "نظام الدفع",
+      "fuelType": "نوع الوقود",
+      "horsepower": "القوة الحصانية",
+      "fuelConsumption": "استهلاك الوقود"
+    },
+    "enums": {
+      "automatic": "أوتوماتيك",
+      "manual": "يدوي",
+      "petrol": "بنزين",
+      "diesel": "ديزل",
+      "hybrid": "هجين",
+      "electric": "كهربائية",
+      "fwd": "دفع أمامي",
+      "rwd": "دفع خلفي",
+      "awd": "دفع رباعي مستمر",
+      "4x4": "دفع رباعي"
+    },
+    "noImage": "لا توجد صورة متاحة"
   }
 }
