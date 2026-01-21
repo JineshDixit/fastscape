@@ -36,16 +36,28 @@ export const getVehicles = async (
 
   const whereClause: any = {};
 
-  if (filters.make) {
-    whereClause.make = { [Op.iLike]: `%${filters.make}%` };
+  if (filters.make !== undefined && filters.make !== null) {
+    if (Array.isArray(filters.make)) {
+      whereClause.make = filters.make.length > 0 ? { [Op.in]: filters.make } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.make = { [Op.iLike]: `%${filters.make}%` };
+    }
   }
 
-  if (filters.model) {
-    whereClause.model = { [Op.iLike]: `%${filters.model}%` };
+  if (filters.model !== undefined && filters.model !== null) {
+    if (Array.isArray(filters.model)) {
+      whereClause.model = filters.model.length > 0 ? { [Op.in]: filters.model } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.model = { [Op.iLike]: `%${filters.model}%` };
+    }
   }
 
-  if (filters.bodyType) {
-    whereClause.bodyType = filters.bodyType;
+  if (filters.bodyType !== undefined && filters.bodyType !== null) {
+    if (Array.isArray(filters.bodyType)) {
+      whereClause.bodyType = filters.bodyType.length > 0 ? { [Op.in]: filters.bodyType } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.bodyType = filters.bodyType;
+    }
   }
 
   if (filters.transmission) {
@@ -137,10 +149,7 @@ export const getAvailableVehicles = async (
       bookingStatus: {
         [Op.notIn]: ['CANCELLED', 'COMPLETED'],
       },
-      [Op.and]: [
-        { startDatetime: { [Op.lt]: end } },
-        { endDatetime: { [Op.gt]: start } },
-      ],
+      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
     },
     raw: true,
   });
@@ -158,9 +167,28 @@ export const getAvailableVehicles = async (
   }
 
   // Apply additional filters
-  if (otherFilters.make) whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
-  if (otherFilters.model) whereClause.model = { [Op.iLike]: `%${otherFilters.model}%` };
-  if (otherFilters.bodyType) whereClause.bodyType = otherFilters.bodyType;
+  if (otherFilters.make !== undefined && otherFilters.make !== null) {
+    if (Array.isArray(otherFilters.make)) {
+      whereClause.make = otherFilters.make.length > 0 ? { [Op.in]: otherFilters.make } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
+    }
+  }
+  if (otherFilters.model !== undefined && otherFilters.model !== null) {
+    if (Array.isArray(otherFilters.model)) {
+      whereClause.model = otherFilters.model.length > 0 ? { [Op.in]: otherFilters.model } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.model = { [Op.iLike]: `%${otherFilters.model}%` };
+    }
+  }
+  if (otherFilters.bodyType !== undefined && otherFilters.bodyType !== null) {
+    if (Array.isArray(otherFilters.bodyType)) {
+      whereClause.bodyType =
+        otherFilters.bodyType.length > 0 ? { [Op.in]: otherFilters.bodyType } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.bodyType = otherFilters.bodyType;
+    }
+  }
   if (otherFilters.transmission) whereClause.transmission = otherFilters.transmission;
   if (otherFilters.fuelType) whereClause.fuelType = otherFilters.fuelType;
 
@@ -198,6 +226,30 @@ export const getAvailableVehicles = async (
     page,
     limit,
     totalPages: Math.ceil(count / limit),
+  };
+};
+
+/**
+ * Check if a specific vehicle is available for a date range
+ */
+export const checkAvailability = async (vehicleId: string, startDate: string, endDate: string) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const conflictingBookings = await Booking.count({
+    where: {
+      vehicleId,
+      bookingStatus: {
+        [Op.notIn]: ['CANCELLED', 'COMPLETED'],
+      },
+      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
+    },
+  });
+
+  return {
+    isAvailable: conflictingBookings === 0,
+    vehicleId,
+    requestedPeriod: { start, end },
   };
 };
 
@@ -268,51 +320,64 @@ export const getVehicleBodyTypeSummary = async (): Promise<{ bodyType: string; c
 
 export const getVehicleFilterMetadata = async () => {
   const bodyTypeRaw = await Vehicle.findAll({
-    attributes: [
-      'bodyType',
-      'make',
-      'model',
-      [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count'],
-    ],
+    attributes: ['bodyType', 'make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     where: { isAvailable: true },
     group: ['bodyType', 'make', 'model'],
     raw: true,
   });
 
   const brandRaw = await Vehicle.findAll({
-    attributes: ['make', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    attributes: ['make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     where: { isAvailable: true },
-    group: ['make'],
+    group: ['make', 'model'],
     raw: true,
   });
 
-  const bodyTypeMap = new Map<string, { count: number; vehicles: Set<string> }>();
+  // Process Body Types
+  const bodyTypeMap = new Map<string, { count: number; models: Set<string> }>();
 
   (bodyTypeRaw as any[]).forEach((item) => {
-    const { bodyType, make, model, count } = item;
-    const vehicleName = `${make} ${model}`;
+    const { bodyType, model, count } = item;
     const numCount = Number(count);
 
     if (!bodyTypeMap.has(bodyType)) {
-      bodyTypeMap.set(bodyType, { count: 0, vehicles: new Set() });
+      bodyTypeMap.set(bodyType, { count: 0, models: new Set() });
     }
 
     const entry = bodyTypeMap.get(bodyType)!;
     entry.count += numCount;
-    entry.vehicles.add(vehicleName);
+    entry.models.add(model);
+  });
+
+  // Process Brands
+  const brandMap = new Map<string, { count: number; models: Set<string> }>();
+
+  (brandRaw as any[]).forEach((item) => {
+    const { make, model, count } = item;
+    const numCount = Number(count);
+
+    if (!brandMap.has(make)) {
+      brandMap.set(make, { count: 0, models: new Set() });
+    }
+
+    const entry = brandMap.get(make)!;
+    entry.count += numCount;
+    // For brands, we just list the model names, not Make + Model
+    entry.models.add(model);
   });
 
   // Format Body Type Output
   const bodyTypes = Array.from(bodyTypeMap.entries()).map(([type, data]) => ({
     bodyType: type,
     count: data.count,
-    vehicles: Array.from(data.vehicles).sort(),
+    models: Array.from(data.models).sort(),
   }));
 
   // Format Brand Output
-  const brands = (brandRaw as any[]).map((item) => ({
-    make: item.make,
-    count: Number(item.count),
+  const brands = Array.from(brandMap.entries()).map(([make, data]) => ({
+    make: make,
+    count: data.count,
+    models: Array.from(data.models).sort(),
   }));
 
   return {

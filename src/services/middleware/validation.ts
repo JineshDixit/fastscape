@@ -229,3 +229,73 @@ export const vehicleQueryValidation = [
 ];
 
 export const vehicleIdValidation = [param('id').isUUID().withMessage('Vehicle ID must be a valid UUID')];
+
+export const availableVehiclesValidation = [
+  query('pickupLocation')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Pickup location must be between 2 and 100 characters'),
+
+  query('pickupDate')
+    .notEmpty()
+    .withMessage('Pickup date is required')
+    .isISO8601()
+    .withMessage('Pickup date must be a valid ISO 8601 date'),
+
+  query('dropoffDate')
+    .notEmpty()
+    .withMessage('Dropoff date is required')
+    .isISO8601()
+    .withMessage('Dropoff date must be a valid ISO 8601 date')
+    .custom((value, { req }) => {
+      const pickupDate = new Date(req.query?.pickupDate as string);
+      const dropoffDate = new Date(value);
+      
+      if (dropoffDate <= pickupDate) {
+        throw new Error('Dropoff date must be after pickup date');
+      }
+      
+      const now = new Date();
+      if (pickupDate < now) {
+        throw new Error('Pickup date cannot be in the past');
+      }
+      
+      return true;
+    }),
+
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+
+  query('sortBy')
+    .optional()
+    .isIn(['make', 'model', 'year', 'pricePerDay', 'createdAt', 'updatedAt'])
+    .withMessage('sortBy must be one of: make, model, year, pricePerDay, createdAt, updatedAt'),
+
+  query('sortOrder').optional().isIn(['ASC', 'DESC']).withMessage('sortOrder must be ASC or DESC'),
+
+  query('bodyType')
+    .optional()
+    .isIn(dbEnums.VEHICLE_BODY_TYPE)
+    .withMessage(`Body type must be one of: ${dbEnums.VEHICLE_BODY_TYPE.join(', ')}`),
+
+  query('transmission')
+    .optional()
+    .isIn(dbEnums.TRANSMISSION_TYPE)
+    .withMessage(`Transmission must be one of: ${dbEnums.TRANSMISSION_TYPE.join(', ')}`),
+
+  query('fuelType')
+    .optional()
+    .isIn(dbEnums.FUEL_TYPE)
+    .withMessage(`Fuel type must be one of: ${dbEnums.FUEL_TYPE.join(', ')}`),
+
+  query('minPrice').optional().isFloat({ min: 0 }).withMessage('minPrice must be a non-negative number'),
+
+  query('maxPrice').optional().isFloat({ min: 0 }).withMessage('maxPrice must be a non-negative number'),
+
+  query('search')
+    .optional()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Search term must be between 1 and 100 characters'),
+];

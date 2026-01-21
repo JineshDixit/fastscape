@@ -6,10 +6,19 @@ import { userIdentityDocUpload } from '../config/multer/multerConfig';
 
 const router = Router();
 
+// All user routes require authentication
+router.use(authenticateUser);
+
 // Get current user profile
-router.get('/profile', authenticateUser, userController.getCurrentUser);
+router.get('/profile', userController.getCurrentUser);
 
 // Update user profile
-router.put('/profile', authenticateUser, userIdentityDocUpload, validateUserUpdate, userController.updateUserProfile);
+router.put('/profile', userIdentityDocUpload, validateUserUpdate, userController.updateUserProfile);
+
+// Delete user account
+router.delete('/profile', userController.deleteUserAccount);
+
+// Get user statistics
+router.get('/stats', userController.getUserStats);
 
 export default router;

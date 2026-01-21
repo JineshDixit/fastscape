@@ -1,9 +1,9 @@
 import { dbEnums } from '../enum/dbEnums';
 
 export interface VehicleFilterOptions {
-  make?: string;
-  model?: string;
-  bodyType?: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: (typeof dbEnums.VEHICLE_BODY_TYPE)[number] | (typeof dbEnums.VEHICLE_BODY_TYPE)[number][];
   transmission?: (typeof dbEnums.TRANSMISSION_TYPE)[number];
   fuelType?: (typeof dbEnums.FUEL_TYPE)[number];
   isAvailable?: boolean;

@@ -69,6 +69,7 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
       delayChargeRate: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        defaultValue: 0,
         comment: 'Charge per hour for delay',
       },
       taxAmount: {
@@ -86,6 +87,7 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
       remainingAmount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+        defaultValue: 0,
       },
       currency: {
         type: DataTypes.STRING(3),
@@ -112,7 +114,7 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
       freezeTableName: true,
       timestamps: true,
       createdAt: true,
-      updatedAt: true,
+      updatedAt: false,
       underscored: true,
       tableName: 'booking_financials',
       modelName: 'BookingFinancial',

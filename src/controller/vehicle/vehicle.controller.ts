@@ -2,20 +2,29 @@ import { Response } from 'express';
 import * as vehicleService from '../../services/vehicle/vehicle.service';
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
+import { createError } from '../../services/middleware/errorHandler';
 import { AuthenticatedRequest } from 'expressTypes';
 import { dbEnums } from '../../common/enum/dbEnums';
 
 class VehicleController extends BaseController {
   /**
+   * Helper to normalize query params that might have [] suffix
+   */
+  private parseFilterParam(req: AuthenticatedRequest, key: string): any {
+    const value = req.query[key] || req.query[`${key}[]`];
+    return value;
+  }
+
+  /**
    * Get all vehicles with filtering and pagination
    */
   getVehicles = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const filters = {
-      make: req.query.make as string,
-      model: req.query.model as string,
-      bodyType: req.query.bodyType as (typeof dbEnums.VEHICLE_BODY_TYPE)[number],
-      transmission: req.query.transmission as (typeof dbEnums.TRANSMISSION_TYPE)[number],
-      fuelType: req.query.fuelType as (typeof dbEnums.FUEL_TYPE)[number],
+      make: this.parseFilterParam(req, 'make'),
+      model: this.parseFilterParam(req, 'model'),
+      bodyType: this.parseFilterParam(req, 'bodyType'),
+      transmission: this.parseFilterParam(req, 'transmission') as (typeof dbEnums.TRANSMISSION_TYPE)[number],
+      fuelType: this.parseFilterParam(req, 'fuelType') as (typeof dbEnums.FUEL_TYPE)[number],
       isAvailable: req.query.isAvailable ? req.query.isAvailable === 'true' : undefined,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
@@ -75,9 +84,9 @@ class VehicleController extends BaseController {
       pickupLocation: req.query.pickupLocation as string,
       pickupDate: req.query.pickupDate as string,
       dropoffDate: req.query.dropoffDate as string,
-      make: req.query.make as string,
-      model: req.query.model as string,
-      bodyType: req.query.bodyType as (typeof dbEnums.VEHICLE_BODY_TYPE)[number],
+      make: this.parseFilterParam(req, 'make'),
+      model: this.parseFilterParam(req, 'model'),
+      bodyType: this.parseFilterParam(req, 'bodyType'),
       transmission: req.query.transmission as (typeof dbEnums.TRANSMISSION_TYPE)[number],
       fuelType: req.query.fuelType as (typeof dbEnums.FUEL_TYPE)[number],
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
@@ -95,6 +104,21 @@ class VehicleController extends BaseController {
     const result = await vehicleService.getAvailableVehicles(searchQuery, pagination);
     sendSuccess(res, 'Available vehicles retrieved successfully', result);
   });
+
+  /**
+   * Check vehicle availability for specific dates
+   */
+  checkAvailability = this.asyncHandler(async (req: AuthenticatedRequest | any, res: Response) => {
+    const { id } = req.params;
+    const { pickupDate, dropoffDate } = req.query;
+
+    if (!pickupDate || !dropoffDate) {
+      throw createError('pickupDate and dropoffDate are required', 400);
+    }
+
+    const result = await vehicleService.checkAvailability(id, pickupDate as string, dropoffDate as string);
+    sendSuccess(res, 'Vehicle availability checked successfully', result);
+  });
 }
 
 const vehicleController = new VehicleController();
@@ -106,4 +130,5 @@ export const {
   getVehicleBodyTypeSummary,
   getVehicleFilterMetadata,
   getAvailableVehicles,
+  checkAvailability,
 } = vehicleController;

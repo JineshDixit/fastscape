@@ -21,6 +21,10 @@ export class User extends Model {
   public isBlocked!: boolean;
   public resetPasswordOtp!: string | null;
   public resetPasswordOtpExpires!: Date | null;
+
+  // Timestamps
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 }
 
 export const initUserModel = (sequelize: Sequelize) => {

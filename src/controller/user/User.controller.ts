@@ -25,8 +25,25 @@ class UserController extends BaseController {
     sendSuccess(res, 'Profile updated successfully', updatedUser);
   });
 
+  /**
+   * Delete user account
+   */
+  deleteUserAccount = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    await userService.deleteUser(userId);
+    sendSuccess(res, 'Account deleted successfully');
+  });
+
+  /**
+   * Get user statistics
+   */
+  getUserStats = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const stats = await userService.getUserStatistics(userId);
+    sendSuccess(res, 'User statistics retrieved successfully', stats);
+  });
 }
 
 const userController = new UserController();
 
-export const { getCurrentUser, updateUserProfile } = userController;
+export const { getCurrentUser, updateUserProfile, deleteUserAccount, getUserStats } = userController;

@@ -5,8 +5,10 @@ export interface PaymentCalculation {
   depositAmount: number;
   balanceAmount: number;
   delayChargeAmount: number;
+  delayChargeRate: number;
   taxAmount: number;
   totalAmount: number;
+  remainingAmount: number;
   currency: string;
 }
 
@@ -164,40 +166,4 @@ export interface EnhancedBookingFinancialData {
   refundPolicy?: string;
   refundableUntil?: Date;
   depositPercentage: number;
-}
-
-export interface EnhancedPaymentData {
-  id: string;
-  bookingId: string;
-  userId: string;
-  amount: number;
-  currency: string;
-  stripePaymentIntentId?: string;
-  stripeChargeId?: string;
-  stripeRefundId?: string;
-  paymentType: (typeof dbEnums.PAYMENT_TYPE)[number];
-  paymentStatus: (typeof dbEnums.PAYMENT_STATUS)[number];
-  paymentMethod: (typeof dbEnums.PAYMENT_METHOD)[number];
-  metadata?: Record<string, any>;
-  paidAt?: Date;
-  failureReason?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface PaymentCalculation {
-  baseAmount: number;
-  depositAmount: number;
-  balanceAmount: number;
-  delayChargeAmount: number;
-  taxAmount: number;
-  totalAmount: number;
-  currency: string;
-}
-
-export interface DelayChargeCalculation {
-  delayHours: number;
-  delayChargeRate: number;
-  delayChargeAmount: number;
-  totalDelayCharge: number;
 }

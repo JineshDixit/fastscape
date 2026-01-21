@@ -1,6 +1,6 @@
 import { User, RefreshToken, UserDrivingInfo, UserIdentityDocument } from '../../models';
 import { saveFile } from '../../utils/file.utils';
-import { userModelType, LocationSearchQuery, UserLocationData, UserWithLocation } from '../../common/types/userTypes';
+import { userModelType, LocationSearchQuery, UserWithLocation } from '../../common/types/userTypes';
 import { createError } from '../middleware/errorHandler';
 import { hashPassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
@@ -347,5 +347,177 @@ export const getLocationStatistics = async () => {
     totalUsers,
     locationBreakdown: stats,
     addressCompleteness,
+  };
+};
+/**
+ * Get user statistics
+ */
+export const getUserStatistics = async (userId: string): Promise<{
+  profile: {
+    completeness: 'COMPLETE' | 'PARTIAL' | 'MISSING';
+    addressCompleteness: 'COMPLETE' | 'PARTIAL' | 'MISSING';
+    documentsUploaded: number;
+    totalDocuments: number;
+    verificationStatus: 'VERIFIED' | 'PENDING' | 'NOT_STARTED';
+  };
+  activity: {
+    accountAge: number; // days
+    lastLogin: Date | null;
+    totalBookings: number;
+    completedBookings: number;
+    cancelledBookings: number;
+  };
+  preferences: {
+    preferredVehicleTypes: string[];
+    averageBookingDuration: number; // days
+    totalSpent: number;
+  };
+}> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const user = await User.findByPk(userId, {
+    include: [
+      {
+        model: UserDrivingInfo,
+        required: false,
+      },
+      {
+        model: UserIdentityDocument,
+        required: false,
+      },
+    ],
+  });
+
+  if (!user) {
+    throw createError('User not found', 404);
+  }
+
+  // Import Booking model dynamically to avoid circular dependency
+  const { Booking, BookingFinancial, Vehicle } = require('../../models');
+
+  // Get user bookings
+  const bookings = await Booking.findAll({
+    where: { userId },
+    include: [
+      {
+        model: BookingFinancial,
+        attributes: ['totalAmount'],
+        required: false,
+      },
+      {
+        model: Vehicle,
+        attributes: ['bodyType'],
+        required: false,
+      },
+    ],
+  });
+
+  // Calculate profile completeness
+  const addressCompleteness = getAddressCompleteness(user);
+  const drivingInfo = (user as any).UserDrivingInfo;
+  const identityDocs = (user as any).UserIdentityDocument;
+
+  // Count uploaded documents
+  let documentsUploaded = 0;
+  const totalDocuments = 5; // driverLicenseFront, driverLicenseBack, passportPhoto, internationalDrivingPermit, selfieWithLicense
+
+  if (identityDocs) {
+    if (identityDocs.driverLicenseFront) documentsUploaded++;
+    if (identityDocs.driverLicenseBack) documentsUploaded++;
+    if (identityDocs.passportPhoto) documentsUploaded++;
+    if (identityDocs.internationalDrivingPermit) documentsUploaded++;
+    if (identityDocs.selfieWithLicense) documentsUploaded++;
+  }
+
+  // Determine overall completeness
+  const hasBasicInfo = !!(user.fullName && user.email && user.phone && user.nationality);
+  const hasDrivingInfo = !!(drivingInfo?.licenseIssuingCountry && drivingInfo?.licenseExpiryDate);
+  const hasDocuments = documentsUploaded > 0;
+
+  let completeness: 'COMPLETE' | 'PARTIAL' | 'MISSING';
+  if (hasBasicInfo && hasDrivingInfo && hasDocuments && addressCompleteness === 'COMPLETE') {
+    completeness = 'COMPLETE';
+  } else if (hasBasicInfo || hasDrivingInfo || hasDocuments) {
+    completeness = 'PARTIAL';
+  } else {
+    completeness = 'MISSING';
+  }
+
+  // Determine verification status
+  let verificationStatus: 'VERIFIED' | 'PENDING' | 'NOT_STARTED';
+  if (documentsUploaded >= 3 && hasDrivingInfo) {
+    verificationStatus = 'VERIFIED'; // In real app, this would be based on admin verification
+  } else if (documentsUploaded > 0 || hasDrivingInfo) {
+    verificationStatus = 'PENDING';
+  } else {
+    verificationStatus = 'NOT_STARTED';
+  }
+
+  // Calculate activity stats
+  const now = new Date();
+  const accountAge = Math.floor((now.getTime() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const totalBookings = bookings.length;
+  const completedBookings = bookings.filter((b: any) => b.bookingStatus === 'COMPLETED').length;
+  const cancelledBookings = bookings.filter((b: any) => b.bookingStatus === 'CANCELLED').length;
+
+  // Calculate preferences
+  const vehicleTypes = bookings
+    .map((b: any) => b.Vehicle?.bodyType)
+    .filter(Boolean);
+  
+  const vehicleTypeCounts = vehicleTypes.reduce((acc: Record<string, number>, type: string) => {
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+
+  const preferredVehicleTypes = Object.entries(vehicleTypeCounts)
+    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .slice(0, 3)
+    .map(([type]) => type);
+
+  // Calculate average booking duration
+  const completedBookingsWithDuration = bookings
+    .filter((b: any) => b.bookingStatus === 'COMPLETED')
+    .map((b: any) => {
+      const start = new Date(b.startDatetime);
+      const end = new Date(b.endDatetime);
+      return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    });
+
+  const averageBookingDuration = completedBookingsWithDuration.length > 0
+    ? completedBookingsWithDuration.reduce((sum: number, duration: number) => sum + duration, 0) / completedBookingsWithDuration.length
+    : 0;
+
+  // Calculate total spent
+  const totalSpent = bookings
+    .filter((b: any) => b.bookingStatus === 'COMPLETED')
+    .reduce((sum: number, b: any) => {
+      const financial = b.BookingFinancial;
+      return sum + (financial ? parseFloat(financial.totalAmount) : 0);
+    }, 0);
+
+  return {
+    profile: {
+      completeness,
+      addressCompleteness,
+      documentsUploaded,
+      totalDocuments,
+      verificationStatus,
+    },
+    activity: {
+      accountAge,
+      lastLogin: null, // Would need to track this separately
+      totalBookings,
+      completedBookings,
+      cancelledBookings,
+    },
+    preferences: {
+      preferredVehicleTypes,
+      averageBookingDuration: Math.round(averageBookingDuration * 100) / 100,
+      totalSpent: Math.round(totalSpent * 100) / 100,
+    },
   };
 };

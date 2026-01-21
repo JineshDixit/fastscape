@@ -1,7 +1,7 @@
 import { DelayChargeCalculation, PaymentCalculation } from 'paymentTypes';
 import { Booking, BookingFinancial, Payment, Vehicle } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import Logger from '../../utils/logger';
 
 /**
@@ -10,8 +10,10 @@ import Logger from '../../utils/logger';
 export const calculatePaymentBreakdown = async (
   bookingId: string,
   delayHours: number = 0,
+  transaction?: Transaction,
 ): Promise<PaymentCalculation> => {
   const booking = await Booking.findByPk(bookingId, {
+    transaction,
     include: [
       {
         model: Vehicle,
@@ -37,19 +39,19 @@ export const calculatePaymentBreakdown = async (
   const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   // Base calculations
-  const baseAmount = existingFinancial?.baseAmount || vehicle.pricePerDay * rentalDays;
-  const depositPercentage = existingFinancial?.depositPercentage || vehicle.depositPercentage;
+  const baseAmount = Number(existingFinancial?.baseAmount || vehicle.pricePerDay * rentalDays);
+  const depositPercentage = Number(existingFinancial?.depositPercentage || vehicle.depositPercentage);
   const depositAmount = (baseAmount * depositPercentage) / 100;
   const balanceAmount = baseAmount - depositAmount;
 
   // Delay charge calculation
-  const delayChargeRate = vehicle.delayChargePerHour;
+  const delayChargeRate = Number(vehicle.delayChargePerHour);
   const delayChargeAmount = delayHours > 0 ? delayHours * delayChargeRate : 0;
 
   // Tax calculation (example: 10% tax)
   const taxRate = 0.1;
   const subtotal = baseAmount + delayChargeAmount;
-  const taxAmount = existingFinancial?.taxAmount || subtotal * taxRate;
+  const taxAmount = Number(existingFinancial?.taxAmount || subtotal * taxRate);
 
   const totalAmount = subtotal + taxAmount;
 
@@ -58,8 +60,10 @@ export const calculatePaymentBreakdown = async (
     depositAmount,
     balanceAmount,
     delayChargeAmount,
+    delayChargeRate,
     taxAmount,
     totalAmount,
+    remainingAmount: totalAmount,
     currency: vehicle.currency,
   };
 };
@@ -83,8 +87,8 @@ export const processDepositPayment = async (
       baseAmount: calculation.baseAmount,
       depositAmount: calculation.depositAmount,
       balanceAmount: calculation.balanceAmount,
-      delayChargeAmount: 0,
-      delayChargeRate: 0,
+      delayChargeAmount: calculation.delayChargeAmount,
+      delayChargeRate: calculation.delayChargeRate,
       taxAmount: calculation.taxAmount,
       totalAmount: calculation.totalAmount,
       paidAmount: 0,
@@ -120,7 +124,7 @@ export const processDepositPayment = async (
       paymentStatus: 'PARTIALLY_PAID',
       paymentMethod,
     });
-    
+
     Logger.info('Deposit processed successfully', { bookingId, amount: calculation.depositAmount });
   } else {
     Logger.info('Deposit payment initiated (manual)', { bookingId, method: paymentMethod });
@@ -224,7 +228,7 @@ export const applyDelayCharges = async (
     const financial = await BookingFinancial.findOne({ where: { bookingId } });
     return { booking: booking!, financial: financial! };
   }
-  
+
   Logger.warn('Applying delay charges', { bookingId, delayHours: delayCalculation.delayHours });
 
   // Update booking with delay information
@@ -359,7 +363,7 @@ export const markPaymentCompleted = async (paymentId: string, stripePaymentInten
       remainingAmount: financial.totalAmount - (financial.paidAmount + payment.amount),
     });
   }
-  
+
   Logger.info('Payment marked as completed', { paymentId, amount: payment.amount });
 
   return payment;
