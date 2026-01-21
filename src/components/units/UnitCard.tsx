@@ -60,10 +60,10 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
     <Card className="min-w-0 overflow-hidden py-4">
       <CardHeader className="flex items-start justify-between space-y-0 px-5">
         <div className="space-y-1">
-          <h3 className="text-foreground text-xl leading-tight font-semibold tracking-normal">
-            {vehicle.make} {vehicle.model}
+          <h3 className="flex flex-col text-foreground text-xl leading-tight font-semibold tracking-normal">
+            <span>{vehicle.model}</span>
+            <span className="text-sm">{vehicle.make}{vehicle.trim ? ` (${vehicle.trim})` : ''}</span>
           </h3>
-          <p className="text-foreground/50 text-xs font-semibold tracking-wider">{vehicle.bodyType}</p>
         </div>
         <div className="space-y-1">
           <h3 className="text-foreground text-xl leading-tight font-semibold tracking-normal">

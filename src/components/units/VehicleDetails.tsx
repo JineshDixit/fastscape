@@ -1,6 +1,20 @@
 import { Fragment, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Car, CreditCard, Fuel, Gauge, Settings, Users, Activity, MapPin } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  Car,
+  CreditCard,
+  Fuel,
+  Gauge,
+  Settings,
+  Users,
+  Activity,
+  MapPin,
+  Palette,
+  Zap,
+  Route,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../ui/carousel';
@@ -121,15 +135,45 @@ const VehicleDetails = () => {
               </div>
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Palette className="size-4" /> Exterior Color
+                </span>
+                <p className="font-medium">{vehicle?.exteriorColor || 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Palette className="size-4" /> Interior Color
+                </span>
+                <p className="font-medium">{vehicle?.interiorColor || 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Settings className="size-4" /> Transmission
                 </span>
                 <p className="font-medium">{vehicle?.transmission}</p>
               </div>
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Route className="size-4" /> Drivetrain
+                </span>
+                <p className="font-medium">{vehicle?.drivetrain || 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Fuel className="size-4" /> Fuel Type
                 </span>
                 <p className="font-medium">{vehicle?.fuelType}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Gauge className="size-4" /> Engine
+                </span>
+                <p className="font-medium">{vehicle?.engine || 'N/A'}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Zap className="size-4" /> Horsepower
+                </span>
+                <p className="font-medium">{vehicle?.horsepower || 'N/A'} HP</p>
               </div>
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center gap-2 text-sm">
@@ -145,7 +189,7 @@ const VehicleDetails = () => {
               </div>
               <div className="space-y-1">
                 <span className="text-muted-foreground flex items-center gap-2 text-sm">
-                  <Gauge className="size-4" /> Mileage
+                  <Gauge className="size-4" /> Mileage/Consumption
                 </span>
                 <p className="font-medium">{vehicle?.fuelConsumption}</p>
               </div>

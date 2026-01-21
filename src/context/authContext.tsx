@@ -49,8 +49,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 
   const refreshProfile = useCallback(async () => {
-    const token = authCookies.getAccessToken();
-    if (!token) {
+    // First check if we have any form of authentication (access or refresh token)
+    if (!authCookies.isAuthenticated()) {
       setIsAuthenticated(false);
       setUser(null);
       setIsLoading(false);
@@ -58,6 +58,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
+      // Try to get a valid access token (this will handle refresh automatically)
+      const validToken = await authService.getValidAccessToken();
+      
+      if (!validToken) {
+        // No valid token could be obtained (refresh token expired)
+        setIsAuthenticated(false);
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // Now fetch the profile with the valid token
       const response = await authService.getProfile();
       if (response.success && response.data) {
         setUser(response.data);

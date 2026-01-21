@@ -129,40 +129,46 @@ export const authCookies = {
   // Set access token with expiration
   setAccessToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
+    const isDevelopment = window.location.protocol === 'http:';
+    
     setCookie(COOKIE_NAMES.ACCESS_TOKEN, token, {
       expires: expiresDate,
-      secure: true,
-      sameSite: 'strict',
+      secure: !isDevelopment, // Only secure in production (HTTPS)
+      sameSite: isDevelopment ? 'lax' : 'strict', // More permissive in development
     });
     setCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
-      secure: true,
-      sameSite: 'strict',
+      secure: !isDevelopment,
+      sameSite: isDevelopment ? 'lax' : 'strict',
     });
   },
 
   // Set refresh token with expiration
   setRefreshToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
+    const isDevelopment = window.location.protocol === 'http:';
+    
     setCookie(COOKIE_NAMES.REFRESH_TOKEN, token, {
       expires: expiresDate,
-      secure: true,
-      sameSite: 'strict',
+      secure: !isDevelopment, // Only secure in production (HTTPS)
+      sameSite: isDevelopment ? 'lax' : 'strict', // More permissive in development
     });
     setCookie(COOKIE_NAMES.REFRESH_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
-      secure: true,
-      sameSite: 'strict',
+      secure: !isDevelopment,
+      sameSite: isDevelopment ? 'lax' : 'strict',
     });
   },
 
   // Set remember me
   setRememberMe: (remember: boolean) => {
+    const isDevelopment = window.location.protocol === 'http:';
+    
     if (remember) {
       setCookie(COOKIE_NAMES.REMEMBER_ME, 'true', {
         expires: 30, // 30 days
-        secure: true,
-        sameSite: 'strict',
+        secure: !isDevelopment,
+        sameSite: isDevelopment ? 'lax' : 'strict',
       });
     } else {
       deleteCookie(COOKIE_NAMES.REMEMBER_ME);
@@ -185,15 +191,26 @@ export const authCookies = {
 
   // Check if user is authenticated (simple check)
   isAuthenticated: () => {
-    const token = getCookie(COOKIE_NAMES.ACCESS_TOKEN);
-    const expiresAt = getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT);
+    const accessToken = getCookie(COOKIE_NAMES.ACCESS_TOKEN);
+    const refreshToken = getCookie(COOKIE_NAMES.REFRESH_TOKEN);
+    const accessExpiresAt = getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT);
+    const refreshExpiresAt = getCookie(COOKIE_NAMES.REFRESH_EXPIRES_AT);
 
-    if (!token || !expiresAt) return false;
+    // If we have a valid access token, we are definitely authenticated
+    if (accessToken && accessExpiresAt) {
+      const now = Date.now();
+      const expires = new Date(accessExpiresAt).getTime();
+      if (now < expires) return true;
+    }
 
-    // Simple expiry check
-    const now = new Date().getTime();
-    const expires = new Date(expiresAt).getTime();
+    // If access token is missing/expired, but we have a valid refresh token,
+    // we are still "authenticated" in the sense that we can recover the session.
+    if (refreshToken && refreshExpiresAt) {
+      const now = Date.now();
+      const expires = new Date(refreshExpiresAt).getTime();
+      return now < expires;
+    }
 
-    return now < expires;
+    return false;
   },
 };

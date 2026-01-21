@@ -154,16 +154,25 @@ class AuthService extends BaseApiService {
       return currentToken;
     }
 
-    if (this.isRefreshTokenExpired()) {
+    // Checking if we CAN refresh
+    const hasRefreshToken = !!authCookies.getRefreshToken();
+    if (!hasRefreshToken || this.isRefreshTokenExpired()) {
+      if (import.meta.env.DEV) {
+        console.warn('Cannot refresh: No refresh token or it is expired');
+      }
       this.handleRefreshTokenExpiry();
       return null;
     }
 
     try {
+      if (import.meta.env.DEV) {
+        console.log('Access token expired, attempting refresh...');
+      }
       return await this.refreshAccessToken();
     } catch (error) {
-      console.error('Failed to refresh token:', error);
-      this.handleRefreshTokenExpiry();
+      console.error('Failed to get valid access token:', error);
+      // We don't always want to logout here if it was a network error during refreshAccessToken
+      // but usually refreshAccessToken handles its own 401/403 logouts.
       return null;
     }
   }
@@ -242,9 +251,11 @@ class AuthService extends BaseApiService {
   }
 
   /**
-   * Check if error indicates refresh token expiry
+   * Check if error indicates refresh token expiry (not network errors)
    */
   private isRefreshTokenError(error: any): boolean {
+    // Only treat as auth error if we get a proper HTTP response with 401/403
+    // Network errors (no response) should not trigger logout
     return error.response?.status === 401 || error.response?.status === 403;
   }
 
@@ -286,13 +297,22 @@ class AuthService extends BaseApiService {
       try {
         await this.refreshAccessToken();
         if (import.meta.env.DEV) {
-          console.log('Proactive token refresh completed');
+          console.log('✅ Proactive token refresh completed');
         }
-      } catch (error) {
-        console.error('Proactive token refresh failed:', error);
-        this.handleRefreshTokenExpiry();
+      } catch (error: any) {
+        // Only trigger logout if it's an auth error (401/403), not a transient network error
+        if (this.isRefreshTokenError(error)) {
+          console.error('❌ Proactive refresh failed with auth error - logging out');
+          this.handleRefreshTokenExpiry();
+        } else {
+          console.warn('⚠️ Proactive refresh failed with transient error - will retry later', error.message);
+          // Don't logout on network errors - let the next interval retry
+        }
       }
     } else if (this.isRefreshTokenExpired()) {
+      if (import.meta.env.DEV) {
+        console.log('❌ Refresh token expired - stopping auto refresh');
+      }
       this.handleRefreshTokenExpiry();
     }
   }
@@ -311,7 +331,7 @@ class AuthService extends BaseApiService {
     this.stopAutoRefresh(); // Clear any existing interval
 
     this.autoRefreshInterval = setInterval(async () => {
-      if (!this.isRefreshTokenExpired()) {
+      if (authCookies.getAccessToken() || authCookies.getRefreshToken()) {
         await this.proactiveRefresh();
       } else {
         this.stopAutoRefresh();
