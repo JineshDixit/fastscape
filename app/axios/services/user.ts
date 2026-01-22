@@ -25,8 +25,16 @@ export class UserService extends BaseApiService {
     
     // Add text fields
     Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && !(value instanceof File)) {
-        formData.append(key, String(value));
+      if (value !== undefined) {
+        if (value instanceof File) {
+          // Skip files, handled below
+          return;
+        }
+        if (typeof value === 'object' && value !== null) {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, String(value));
+        }
       }
     });
 

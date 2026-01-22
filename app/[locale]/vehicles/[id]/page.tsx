@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useRouter } from '@/localization/navigation';
+import dynamic from 'next/dynamic';
 
 const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
@@ -20,6 +21,12 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
   const tCommon = useTranslations('common');
   const [isChecking, setIsChecking] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure client-side hydration
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const checkVehicleAvailability = useCallback(
     async (start: string, end: string) => {
@@ -91,6 +98,11 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
 
   const totalPrice = days * parseFloat(vehicle.pricePerDay);
 
+  // Format price consistently for SSR/CSR
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US').format(price);
+  };
+
   const isFormValid = !!(bookingData.pickupDate && bookingData.dropoffDate && availabilityStatus === true);
 
   return (
@@ -113,27 +125,35 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
               </h1>
               <Badge
                 variant={
-                  isChecking
-                    ? 'secondary'
-                    : availabilityStatus === true
+                  !isClient
+                    ? vehicle.isAvailable
                       ? 'success'
-                      : availabilityStatus === false
-                        ? 'destructive'
-                        : vehicle.isAvailable
-                          ? 'success'
-                          : 'destructive'
+                      : 'destructive'
+                    : isChecking
+                      ? 'secondary'
+                      : availabilityStatus === true
+                        ? 'success'
+                        : availabilityStatus === false
+                          ? 'destructive'
+                          : vehicle.isAvailable
+                            ? 'success'
+                            : 'destructive'
                 }
                 className="px-4 py-1.5 text-sm font-semibold capitalize"
               >
-                {isChecking
-                  ? t('checking')
-                  : availabilityStatus === true
+                {!isClient
+                  ? vehicle.isAvailable
                     ? t('available')
-                    : availabilityStatus === false
-                      ? t('unavailable')
-                      : vehicle.isAvailable
-                        ? t('available')
-                        : t('unavailable')}
+                    : t('unavailable')
+                  : isChecking
+                    ? t('checking')
+                    : availabilityStatus === true
+                      ? t('available')
+                      : availabilityStatus === false
+                        ? t('unavailable')
+                        : vehicle.isAvailable
+                          ? t('available')
+                          : t('unavailable')}
               </Badge>
             </div>
             <p className="text-lg font-medium text-gray-500">
@@ -167,7 +187,7 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
               <div className="flex flex-col items-end">
                 <span>
                   {vehicle.currency || '$'}
-                  {totalPrice.toLocaleString()}
+                  {isClient ? formatPrice(totalPrice) : totalPrice.toString()}
                 </span>
                 <span className="text-[10px] font-normal text-gray-400">
                   {t('deposit')}: {vehicle.depositPercentage || '0'}%
@@ -180,10 +200,10 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-end">
             <Button
               className="text-md w-full rounded-md py-5 transition-all md:w-40"
-              disabled={!isFormValid || isChecking}
+              disabled={!isClient ? false : (!isFormValid || isChecking)}
               onClick={() => router.push(`/checkout/${vehicle.id}`)}
             >
-              {isChecking ? t('checking') : t('makePayment')}
+              {!isClient ? t('makePayment') : (isChecking ? t('checking') : t('makePayment'))}
             </Button>
           </div>
         </div>

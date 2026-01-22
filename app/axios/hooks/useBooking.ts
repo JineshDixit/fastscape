@@ -11,6 +11,9 @@ import type {
   CheckAvailabilityRequest,
   ExtendBookingRequest,
   CancelBookingRequest,
+  AvailabilityResponse,
+  ExtendBookingResponse,
+  CancelBookingResponse,
   PaymentBreakdown,
   ProcessPaymentRequest,
   PaymentSummary,
@@ -71,6 +74,21 @@ export const useBooking = () => {
   const checkAvailability = useCallback(
     async (data: CheckAvailabilityRequest) => {
       return handleApiCall(() => bookingService.checkAvailability(data));
+    },
+    [handleApiCall],
+  );
+
+  const getBookingQuote = useCallback(
+    async (data: CreateBookingRequest) => {
+      return handleApiCall(
+        () => bookingService.getBookingQuote(data),
+        (response) => {
+          if (response.calculation) {
+            setPaymentBreakdown(response.calculation);
+          }
+        },
+        setIsLoading,
+      );
     },
     [handleApiCall],
   );
@@ -254,6 +272,7 @@ export const useBooking = () => {
     extendBooking,
     updateBooking,
     cancelBooking,
+    getBookingQuote,
 
     // Payment Operations
     calculatePaymentBreakdown,

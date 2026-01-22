@@ -11,6 +11,7 @@ import type {
   ExtendBookingRequest,
   CancelBookingRequest,
   AvailabilityResponse,
+  PaymentBreakdown,
   ExtendBookingResponse,
   CancelBookingResponse
 } from '../../../common/interfaces';
@@ -25,6 +26,13 @@ export class BookingService extends BaseApiService {
    */
   async checkAvailability(data: CheckAvailabilityRequest): Promise<ApiResponse<AvailabilityResponse>> {
     return this.post<AvailabilityResponse>('/check-availability', data);
+  }
+
+  /**
+   * Get booking quote (availability + price)
+   */
+  async getBookingQuote(data: CreateBookingRequest): Promise<ApiResponse<{ availability: AvailabilityResponse, calculation: PaymentBreakdown }>> {
+    return this.post<{ availability: AvailabilityResponse, calculation: PaymentBreakdown }>('/quote', data);
   }
 
   /**

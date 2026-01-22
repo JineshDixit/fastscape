@@ -5,8 +5,7 @@ import { useRouter } from '@/localization/navigation';
 import { useVehicle, useUser, useBooking } from '@/app/axios/hooks';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
 import JourneySummary from '@/components/checkout/JourneySummary';
-import PersonDetailsForm from '@/components/checkout/PersonDetailsForm';
-import DocumentUploadForm from '@/components/checkout/DocumentUploadForm';
+import IdentityStep from '@/components/checkout/IdentityStep';
 import PaymentMethodForm from '@/components/checkout/PaymentMethodForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,11 +24,11 @@ import {
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { differenceInDays, parseISO } from 'date-fns';
+import { useAuth } from '@/app/axios';
 
 const STEPS: { id: CheckoutStep; label: string }[] = [
   { id: 'JOURNEY', label: 'Journey' },
-  { id: 'PERSON', label: 'Person' },
-  { id: 'DOCUMENT', label: 'Document' },
+  { id: 'IDENTITY', label: 'Identity' },
   { id: 'PAYMENT', label: 'Payment' },
   { id: 'SUMMARY', label: 'Summary' },
 ];
@@ -39,12 +38,20 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const router = useRouter();
   const t = useTranslations('vehicleDetails');
 
+  const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
   const { profile, fetchProfile, updateProfile, isLoading: profileLoading } = useUser();
-  const { createBooking, calculatePaymentBreakdown, paymentBreakdown, isLoading: bookingLoading } = useBooking();
+  const {
+    createBooking,
+    getBookingQuote,
+    calculatePaymentBreakdown,
+    paymentBreakdown,
+    isLoading: bookingLoading,
+  } = useBooking();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('JOURNEY');
   const [error, setError] = useState<string | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<{ method: string; payFull: boolean } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -53,23 +60,16 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     }
   }, [id, fetchVehicleById, fetchProfile]);
 
-  const handlePersonNext = async (data: any) => {
+  const handleIdentityNext = async (profileData?: any, files?: Record<string, File>) => {
     try {
-      await updateProfile(data);
-      setCurrentStep('DOCUMENT');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      setError('Failed to update profile details');
-    }
-  };
-
-  const handleDocumentNext = async (files: Record<string, File>) => {
-    try {
-      if (Object.keys(files).length > 0) {
+      if (profileData) {
+        await updateProfile(profileData);
+      }
+      if (files && Object.keys(files).length > 0) {
         await updateProfile(files as any);
       }
 
-      const tempBooking = {
+      const quoteData = {
         vehicleId: id,
         startDatetime: bookingData.pickupDate!,
         endDatetime: bookingData.dropoffDate!,
@@ -78,22 +78,43 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         bookingType: bookingData.bookingType,
       };
 
-      const response = await createBooking(tempBooking as any);
+      const response = await getBookingQuote(quoteData as any);
       if (response && response.success && response.data) {
-        await calculatePaymentBreakdown(response.data.id);
+        // paymentBreakdown is already set by the hook's internal logic
         setCurrentStep('PAYMENT');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        setError('Failed to create booking. Please check your dates.');
+        setError(response?.message || 'Failed to generate quote. Please check your dates.');
       }
     } catch (err) {
-      setError('Failed to upload documents');
+      setError('Failed to process identity or documents');
     }
   };
 
-  const handlePaymentNext = async () => {
-    setCurrentStep('SUMMARY');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handlePaymentNext = async (method: string, payFull: boolean) => {
+    try {
+      const finalBookingData = {
+        vehicleId: id,
+        startDatetime: bookingData.pickupDate!,
+        endDatetime: bookingData.dropoffDate!,
+        pickupLocation: bookingData.pickupLocation || 'Dubai',
+        dropoffLocation: bookingData.pickupLocation || 'Dubai',
+        bookingType: bookingData.bookingType,
+        paymentMethod: method as any,
+        paymentIntentId: method === 'ONLINE' ? 'pi_mock_123456' : undefined, // In reality, this comes from Stripe
+        notes: `Payment for ${payFull ? 'Full Amount' : 'Deposit'}`,
+      };
+
+      const response = await createBooking(finalBookingData as any);
+      if (response && response.success) {
+        setCurrentStep('SUMMARY');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setError(response?.message || 'Final booking creation failed.');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred during final synchronization.');
+    }
   };
 
   if (vehicleLoading || profileLoading) {
@@ -205,8 +226,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     </CardTitle>
                     <CardDescription className="text-sm font-medium text-gray-400 italic">
                       {currentStep === 'JOURNEY' && 'Audit your temporal and spatial migration details.'}
-                      {currentStep === 'PERSON' && 'Authenticate your identity for our digital records.'}
-                      {currentStep === 'DOCUMENT' && 'Authorize your operational permissions.'}
+                      {currentStep === 'IDENTITY' && 'Verify your identity and provide operational permissions.'}
                       {currentStep === 'PAYMENT' && 'Finalize the financial synchronization.'}
                       {currentStep === 'SUMMARY' && 'Your propulsion unit is synchronized and ready.'}
                     </CardDescription>
@@ -219,22 +239,17 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     vehicle={vehicle}
                     bookingData={bookingData}
                     onNext={() => {
-                      const isPersonComplete = profile?.fullName && profile?.phone && profile?.city;
-                      setCurrentStep(isPersonComplete ? 'DOCUMENT' : 'PERSON');
+                      setCurrentStep('IDENTITY');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                   />
                 )}
 
-                {currentStep === 'PERSON' && (
-                  <PersonDetailsForm initialData={profile} onNext={handlePersonNext} isLoading={profileLoading} />
-                )}
-
-                {currentStep === 'DOCUMENT' && (
-                  <DocumentUploadForm
-                    initialData={profile}
-                    onNext={handleDocumentNext}
-                    onBack={() => setCurrentStep('PERSON')}
+                {currentStep === 'IDENTITY' && (
+                  <IdentityStep
+                    profile={profile}
+                    onNext={handleIdentityNext}
+                    onBack={() => setCurrentStep('JOURNEY')}
                     isLoading={profileLoading || bookingLoading}
                   />
                 )}
@@ -243,7 +258,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <PaymentMethodForm
                     breakdown={paymentBreakdown}
                     onNext={handlePaymentNext}
-                    onBack={() => setCurrentStep('DOCUMENT')}
+                    onBack={() => setCurrentStep('IDENTITY')}
                     isLoading={bookingLoading}
                   />
                 )}
@@ -288,95 +303,91 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           {/* {showSummarySidebar && ( */}
-            <div className="hidden lg:block">
-              <div className="animate-in slide-in-from-right-10 sticky top-28 space-y-6 duration-700">
-                <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
-                  <div className="group relative h-56 w-full overflow-hidden">
-                    <img
-                      src={getFullUrl(vehicle.media?.[0]?.frontImage || '/placeholder-car.png')}
-                      className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-transparent to-transparent" />
-                    <div className="absolute right-8 bottom-6 left-8">
-                      <div className="mb-1 flex items-center gap-2">
-                        <span className="bg-primary h-1 w-6 rounded-full" />
-                        <span className="text-[9px] font-black tracking-[0.3em] text-white/70 uppercase">
-                          Selected Asset
-                        </span>
+          <div className="hidden lg:block">
+            <div className="animate-in slide-in-from-right-10 sticky top-28 space-y-6 duration-700">
+              <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
+                <div className="group relative h-56 w-full overflow-hidden">
+                  <img
+                    src={getFullUrl(vehicle.media?.[0]?.frontImage || '/placeholder-car.png')}
+                    className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-transparent to-transparent" />
+                  <div className="absolute right-8 bottom-6 left-8">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="bg-primary h-1 w-6 rounded-full" />
+                      <span className="text-[9px] font-black tracking-[0.3em] text-white/70 uppercase">
+                        Selected Asset
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-black tracking-tight text-white">
+                      {vehicle.make} <span className="text-primary italic">{vehicle.model}</span>
+                    </h3>
+                    <div className="mt-2 flex gap-4">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-tighter text-white/60 uppercase">
+                        <Car className="h-3 w-3" /> {vehicle.bodyType}
                       </div>
-                      <h3 className="text-2xl font-black tracking-tight text-white">
-                        {vehicle.make} <span className="text-primary italic">{vehicle.model}</span>
-                      </h3>
-                      <div className="mt-2 flex gap-4">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-tighter text-white/60 uppercase">
-                          <Car className="h-3 w-3" /> {vehicle.bodyType}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-tighter text-white/60 uppercase">
-                          <span className="h-1 w-1 rounded-full bg-white/20" /> {vehicle.year}
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-tighter text-white/60 uppercase">
+                        <span className="h-1 w-1 rounded-full bg-white/20" /> {vehicle.year}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <CardContent className="space-y-6 p-8">
+                  <div className="flex items-center gap-4 rounded-2xl bg-gray-50/50 p-4 dark:bg-gray-800/50">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-gray-900">
+                      <User className="h-8 w-8 rounded-lg" />
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="truncate text-sm font-black tracking-tighter text-gray-950 uppercase dark:text-white">
+                        {profile?.fullName || 'Guest Pilot'}
+                      </p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <Mail className="text-primary h-3 w-3 opacity-50" />
+                        <p className="truncate text-[10px] font-bold tracking-tight text-gray-400">{profile?.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between rounded-2xl bg-gray-50/50 px-6 py-4 dark:bg-gray-800/50">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="text-primary h-4 w-4" />
+                        <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Duration</span>
+                      </div>
+                      <span className="text-xs font-black text-gray-950 dark:text-white">
+                        {days} {days === 1 ? 'Cycle' : 'Cycles'}
+                      </span>
+                    </div>
+
+                    <div className="group flex cursor-help items-center justify-between px-2">
+                      <div className="space-y-1">
+                        <span className="group-hover:text-primary text-[10px] font-black tracking-[0.2em] text-gray-300 uppercase transition-colors">
+                          Projected Total
+                        </span>
+                        <div className="mt-1 flex items-baseline gap-1.5">
+                          <span className="text-primary text-3xl font-black">{vehicle.currency || '$'}</span>
+                          <span className="text-5xl font-black tracking-tighter text-gray-950 dark:text-white">
+                            {(days * parseFloat(vehicle.pricePerDay)).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <CardContent className="space-y-6 p-8">
-                    <div className="flex items-center gap-4 rounded-2xl bg-gray-50/50 p-4 dark:bg-gray-800/50">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-gray-900">
-                        <User className="h-8 w-8 rounded-lg" />
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="truncate text-sm font-black tracking-tighter text-gray-950 uppercase dark:text-white">
-                          {profile?.fullName || 'Guest Pilot'}
-                        </p>
-                        <div className="mt-0.5 flex items-center gap-2">
-                          <Mail className="text-primary h-3 w-3 opacity-50" />
-                          <p className="truncate text-[10px] font-bold tracking-tight text-gray-400">
-                            {profile?.email}
-                          </p>
-                        </div>
-                      </div>
+                  <div className="bg-primary/5 border-primary/10 group relative flex gap-4 overflow-hidden rounded-3xl border p-6">
+                    <div className="absolute top-0 right-0 scale-150 rotate-12 p-2 opacity-5 transition-transform group-hover:rotate-45">
+                      <Info className="text-primary h-10 w-10" />
                     </div>
-
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between rounded-2xl bg-gray-50/50 px-6 py-4 dark:bg-gray-800/50">
-                        <div className="flex items-center gap-3">
-                          <Calendar className="text-primary h-4 w-4" />
-                          <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                            Duration
-                          </span>
-                        </div>
-                        <span className="text-xs font-black text-gray-950 dark:text-white">
-                          {days} {days === 1 ? 'Cycle' : 'Cycles'}
-                        </span>
-                      </div>
-
-                      <div className="group flex cursor-help items-center justify-between px-2">
-                        <div className="space-y-1">
-                          <span className="group-hover:text-primary text-[10px] font-black tracking-[0.2em] text-gray-300 uppercase transition-colors">
-                            Projected Total
-                          </span>
-                          <div className="mt-1 flex items-baseline gap-1.5">
-                            <span className="text-primary text-3xl font-black">{vehicle.currency || '$'}</span>
-                            <span className="text-5xl font-black tracking-tighter text-gray-950 dark:text-white">
-                              {(days * parseFloat(vehicle.pricePerDay)).toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-primary/5 border-primary/10 group relative flex gap-4 overflow-hidden rounded-3xl border p-6">
-                      <div className="absolute top-0 right-0 scale-150 rotate-12 p-2 opacity-5 transition-transform group-hover:rotate-45">
-                        <Info className="text-primary h-10 w-10" />
-                      </div>
-                      <Info className="text-primary z-10 h-5 w-5 shrink-0" />
-                      <p className="z-10 text-[10px] leading-relaxed font-bold tracking-tight text-gray-500 uppercase">
-                        Pricing includes full comprehensive insurance and maintenance coverage for the entire cycle.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Info className="text-primary z-10 h-5 w-5 shrink-0" />
+                    <p className="z-10 text-[10px] leading-relaxed font-bold tracking-tight text-gray-500 uppercase">
+                      Pricing includes full comprehensive insurance and maintenance coverage for the entire cycle.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
           {/* )} */}
         </div>
       </div>

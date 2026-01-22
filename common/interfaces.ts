@@ -156,6 +156,19 @@ export interface Unit {
   fuelType: FuelType;
 }
 
+// Address Type
+export interface Address {
+  id?: string;
+  type: string; // 'Home' | 'Work' | 'Other'
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault?: boolean;
+}
+
 // Auth Types
 export interface User {
   id: string;
@@ -166,6 +179,7 @@ export interface User {
   avatar?: string;
   dateOfBirth?: string;
   nationality?: string;
+  addresses?: Address[];
 }
 
 export interface AuthTokens {
