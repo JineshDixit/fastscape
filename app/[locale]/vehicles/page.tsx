@@ -19,14 +19,27 @@ import {
 
 const VehiclePage = () => {
   const t = useTranslations('carList');
-  const { vehicles, fetchVehicles, isLoading, pagination } = useVehicle();
+  const { vehicles, fetchVehicles, searchAvailableVehicles, isLoading, pagination, bookingData } = useVehicle();
   const router = useRouter();
+
+  // Check if we have search criteria (dates and location)
+  const hasSearchCriteria = !!(bookingData.pickupDate && bookingData.dropoffDate && bookingData.pickupLocation);
 
   useEffect(() => {
     if (!pagination && vehicles.length === 0 && !isLoading) {
-      fetchVehicles();
+      if (hasSearchCriteria) {
+        // Use search for available vehicles if we have search criteria
+        searchAvailableVehicles({
+          pickupLocation: bookingData.pickupLocation!,
+          pickupDate: bookingData.pickupDate!,
+          dropoffDate: bookingData.dropoffDate!,
+        });
+      } else {
+        // Use regular fetch for all available vehicles (filter out unavailable ones)
+        fetchVehicles({ isAvailable: true });
+      }
     }
-  }, [fetchVehicles, vehicles.length, isLoading, pagination]);
+  }, [fetchVehicles, searchAvailableVehicles, vehicles.length, isLoading, pagination, hasSearchCriteria, bookingData]);
 
   const handleVehicleClick = (vehicleId: string) => {
     router.push(`/vehicles/${vehicleId}`);
@@ -34,7 +47,20 @@ const VehiclePage = () => {
 
   const handlePageChange = (page: number) => {
     if (page < 1 || (pagination && page > pagination.totalPages)) return;
-    fetchVehicles({ page });
+
+    if (hasSearchCriteria) {
+      // Use search pagination
+      searchAvailableVehicles({
+        pickupLocation: bookingData.pickupLocation!,
+        pickupDate: bookingData.pickupDate!,
+        dropoffDate: bookingData.dropoffDate!,
+        page,
+      });
+    } else {
+      // Use regular pagination for available vehicles
+      fetchVehicles({ page, isAvailable: true });
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -99,11 +125,61 @@ const VehiclePage = () => {
         </aside>
         <div className="flex flex-col gap-10">
           <section>
-            <h3 className="text-center text-lg font-semibold">{t('exploreCars')}</h3>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold">{t('exploreCars')}</h3>
+              {hasSearchCriteria && (
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600">
+                  <span>Showing available vehicles for:</span>
+                  <span className="font-medium">{bookingData.pickupLocation}</span>
+                  <span>•</span>
+                  <span className="font-medium">
+                    {new Date(bookingData.pickupDate!).toLocaleDateString()} - {new Date(bookingData.dropoffDate!).toLocaleDateString()}
+                  </span>
+                  <button
+                    onClick={() => {
+                      // Clear search criteria and show all vehicles
+                      window.location.href = '/vehicles';
+                    }}
+                    className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {vehicles.map((item) => (
-                <VehicleCard key={item.id} vehicle={item} onClick={() => handleVehicleClick(item.id)} />
-              ))}
+              {vehicles.length > 0 ? (
+                vehicles.map((item) => (
+                  <VehicleCard key={item.id} vehicle={item} onClick={() => handleVehicleClick(item.id)} />
+                ))
+              ) : !isLoading ? (
+                <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-gray-400 mb-4">
+                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {hasSearchCriteria ? 'No vehicles available' : 'No vehicles found'}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {hasSearchCriteria
+                      ? 'No vehicles are available for your selected dates and location. Try different dates or location.'
+                      : 'No vehicles are currently available. Please check back later.'
+                    }
+                  </p>
+                  {hasSearchCriteria && (
+                    <button
+                      onClick={() => {
+                        window.location.href = '/vehicles';
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      View All Vehicles
+                    </button>
+                  )}
+                </div>
+              ) : null}
             </div>
           </section>
 

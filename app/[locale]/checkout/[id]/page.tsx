@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from '@/localization/navigation';
 import { useVehicle, useUser, useBooking } from '@/app/axios/hooks';
+import { vehicleService } from '@/app/axios/services/vehicle';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
 import JourneySummary from '@/components/checkout/JourneySummary';
 import IdentityStep from '@/components/checkout/IdentityStep';
@@ -21,7 +22,6 @@ import {
   BadgeCheck,
   User,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useAuth } from '@/app/axios';
@@ -36,7 +36,6 @@ const STEPS: { id: CheckoutStep; label: string }[] = [
 const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
   const router = useRouter();
-  const t = useTranslations('vehicleDetails');
 
   const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
@@ -44,14 +43,15 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const {
     createBooking,
     getBookingQuote,
-    calculatePaymentBreakdown,
     paymentBreakdown,
     isLoading: bookingLoading,
   } = useBooking();
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('JOURNEY');
   const [error, setError] = useState<string | null>(null);
-  const [paymentDetails, setPaymentDetails] = useState<{ method: string; payFull: boolean } | null>(null);
+  const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [enableSmartFlow, setEnableSmartFlow] = useState(false); // Disable enhanced booking flow
 
   useEffect(() => {
     if (id) {
@@ -59,6 +59,36 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
       fetchProfile();
     }
   }, [id, fetchVehicleById, fetchProfile]);
+
+  // Check vehicle availability when checkout page loads
+  useEffect(() => {
+    const checkInitialAvailability = async () => {
+      if (id && bookingData.pickupDate && bookingData.dropoffDate) {
+        setIsCheckingAvailability(true);
+        try {
+          const response = await vehicleService.checkAvailability(
+            id,
+            bookingData.pickupDate,
+            bookingData.dropoffDate
+          );
+
+          if (response.success) {
+            setAvailabilityStatus(response.data?.isAvailable ?? false);
+            if (!response.data?.isAvailable) {
+              setError('This vehicle is no longer available for the selected dates. Please choose different dates or another vehicle.');
+            }
+          }
+        } catch (err) {
+          console.error('Availability check failed:', err);
+          setError('Unable to verify vehicle availability. Please try again.');
+        } finally {
+          setIsCheckingAvailability(false);
+        }
+      }
+    };
+
+    checkInitialAvailability();
+  }, [id, bookingData.pickupDate, bookingData.dropoffDate]);
 
   const handleIdentityNext = async (profileData?: any, files?: Record<string, File>) => {
     try {
@@ -69,6 +99,25 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         await updateProfile(files as any);
       }
 
+      // First, check vehicle availability before proceeding
+      if (bookingData.pickupDate && bookingData.dropoffDate) {
+        console.log('Checking vehicle availability before proceeding to payment...');
+
+        const availabilityResponse = await vehicleService.checkAvailability(
+          id,
+          bookingData.pickupDate,
+          bookingData.dropoffDate
+        );
+
+        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
+          setError('Sorry, this vehicle is no longer available for the selected dates. Please choose different dates or another vehicle.');
+          return;
+        }
+
+        console.log('Vehicle is available, proceeding with quote...');
+      }
+
+      // Generate quote data
       const quoteData = {
         vehicleId: id,
         startDatetime: bookingData.pickupDate!,
@@ -78,21 +127,39 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         bookingType: bookingData.bookingType,
       };
 
+      console.log('Quote data:', quoteData); // Debug log
+
       const response = await getBookingQuote(quoteData as any);
       if (response && response.success && response.data) {
-        // paymentBreakdown is already set by the hook's internal logic
         setCurrentStep('PAYMENT');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        setError(response?.message || 'Failed to generate quote. Please check your dates.');
+        setError(response?.message || 'Failed to generate quote. Please check your dates and try again.');
       }
     } catch (err) {
+      console.error('Identity next error:', err);
       setError('Failed to process identity or documents');
     }
   };
 
   const handlePaymentNext = async (method: string, payFull: boolean) => {
     try {
+      // Final availability check before creating booking
+      if (bookingData.pickupDate && bookingData.dropoffDate) {
+        console.log('Final availability check before booking creation...');
+
+        const availabilityResponse = await vehicleService.checkAvailability(
+          id,
+          bookingData.pickupDate,
+          bookingData.dropoffDate
+        );
+
+        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
+          setError('Sorry, this vehicle was just booked by another user. Please choose different dates or another vehicle.');
+          return;
+        }
+      }
+
       const finalBookingData = {
         vehicleId: id,
         startDatetime: bookingData.pickupDate!,
@@ -202,11 +269,31 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
             <CheckoutSteppers currentStep={currentStep} steps={STEPS} />
 
+
+
             {error && (
               <Alert variant="destructive" className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
                 <AlertCircle className="h-5 w-5" />
                 <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
                   {error}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isCheckingAvailability && (
+              <Alert className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
+                  Verifying vehicle availability...
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {availabilityStatus === false && !error && (
+              <Alert variant="destructive" className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
+                <AlertCircle className="h-5 w-5" />
+                <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
+                  Vehicle not available for selected dates
                 </AlertDescription>
               </Alert>
             )}
@@ -238,9 +325,18 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <JourneySummary
                     vehicle={vehicle}
                     bookingData={bookingData}
+                    availabilityStatus={availabilityStatus}
+                    isCheckingAvailability={isCheckingAvailability}
                     onNext={() => {
+                      if (availabilityStatus === false) {
+                        setError('Cannot proceed - vehicle is not available for selected dates');
+                        return;
+                      }
                       setCurrentStep('IDENTITY');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    onBackToVehicles={() => {
+                      router.push('/vehicles');
                     }}
                   />
                 )}
@@ -251,6 +347,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     onNext={handleIdentityNext}
                     onBack={() => setCurrentStep('JOURNEY')}
                     isLoading={profileLoading || bookingLoading}
+                    bookingType={bookingData.bookingType as 'SELF_DRIVE' | 'CHAUFFEUR'}
+                    enableSmartDocumentHandling={false}
+                    showProgressIndicators={false}
                   />
                 )}
 
@@ -260,6 +359,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     onNext={handlePaymentNext}
                     onBack={() => setCurrentStep('IDENTITY')}
                     isLoading={bookingLoading}
+                    vehicle={vehicle}
+                    bookingData={bookingData}
                   />
                 )}
 
@@ -388,7 +489,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
               </Card>
             </div>
           </div>
-          {/* )} */}
         </div>
       </div>
     </main>

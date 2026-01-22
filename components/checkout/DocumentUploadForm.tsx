@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, FileText, Camera, ShieldCheck, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDocument } from '@/app/axios/hooks';
 import type { UserProfile } from '@/common/interfaces';
 
 interface DocumentUploadFormProps {
@@ -47,6 +48,7 @@ const getImageUrl = (path: string) => {
 
 const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, onChange, onBack, isLoading }) => {
   const tCommon = useTranslations('common');
+  const { uploadDocuments, isLoading: documentLoading } = useDocument();
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
   const [previews, setPreviews] = useState<Record<string, string>>({});
 
@@ -96,7 +98,7 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
             <div key={field.id} className="group relative flex flex-col gap-2">
               <div
                 className={cn(
-                  'relative flex aspect-[4/3] flex-col items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300',
+                  'relative flex aspect-4/3 flex-col items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300',
                   hasFile
                     ? 'border-primary/20 bg-primary/5'
                     : 'hover:border-primary/30 border-gray-100 bg-gray-50/30 hover:bg-white',

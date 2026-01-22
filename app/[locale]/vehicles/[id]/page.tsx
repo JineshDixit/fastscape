@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useRouter } from '@/localization/navigation';
-import dynamic from 'next/dynamic';
 
 const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
@@ -64,8 +63,17 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
 
   const handleDateChange = async (start: Date, end: Date | null) => {
     setAvailabilityStatus(null);
-    const pickupDate = start.toISOString();
-    const dropoffDate = end ? end.toISOString() : null;
+
+    // Use local date format to avoid timezone issues
+    const formatDateForAPI = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const pickupDate = formatDateForAPI(start);
+    const dropoffDate = end ? formatDateForAPI(end) : null;
 
     setBookingData({ pickupDate, dropoffDate });
     if (pickupDate && dropoffDate) {
@@ -104,6 +112,7 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
   };
 
   const isFormValid = !!(bookingData.pickupDate && bookingData.dropoffDate && availabilityStatus === true);
+  const canProceedToCheckout = isFormValid && !isChecking;
 
   return (
     <main className="global-container py-8 md:py-16">
@@ -200,10 +209,25 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-end">
             <Button
               className="text-md w-full rounded-md py-5 transition-all md:w-40"
-              disabled={!isClient ? false : (!isFormValid || isChecking)}
-              onClick={() => router.push(`/checkout/${vehicle.id}`)}
+              disabled={!canProceedToCheckout}
+              onClick={() => {
+                if (canProceedToCheckout) {
+                  router.push(`/checkout/${vehicle.id}`);
+                } else if (availabilityStatus === false) {
+                  alert('This vehicle is not available for the selected dates. Please choose different dates.');
+                } else if (!bookingData.pickupDate || !bookingData.dropoffDate) {
+                  alert('Please select pickup and dropoff dates.');
+                }
+              }}
             >
-              {!isClient ? t('makePayment') : (isChecking ? t('checking') : t('makePayment'))}
+              {isChecking
+                ? t('checking')
+                : availabilityStatus === false
+                  ? 'Not Available'
+                  : !bookingData.pickupDate || !bookingData.dropoffDate
+                    ? 'Select Dates'
+                    : t('makePayment')
+              }
             </Button>
           </div>
         </div>

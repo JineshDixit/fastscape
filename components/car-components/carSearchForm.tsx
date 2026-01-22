@@ -67,10 +67,18 @@ export function CarSearchForm() {
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const onSubmit = (data: any) => {
+    // Use local date format to avoid timezone issues
+    const formatDateForAPI = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
     const bookingData = {
       pickupLocation: data.from,
-      pickupDate: data.pickupDate.toISOString(),
-      dropoffDate: data.dropDate.toISOString(),
+      pickupDate: formatDateForAPI(data.pickupDate),
+      dropoffDate: formatDateForAPI(data.dropDate),
       bookingType: (data.needDriver ? 'SELF_DRIVE' : 'CHAUFFEUR') as 'SELF_DRIVE' | 'CHAUFFEUR',
     };
 

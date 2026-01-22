@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Car, Compass, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Car, Compass, ShieldCheck, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
 import type { Vehicle } from '@/common/interfaces';
 
 interface JourneySummaryProps {
@@ -16,9 +17,19 @@ interface JourneySummaryProps {
     bookingType: 'SELF_DRIVE' | 'CHAUFFEUR';
   };
   onNext: () => void;
+  onBackToVehicles?: () => void;
+  availabilityStatus?: boolean | null;
+  isCheckingAvailability?: boolean;
 }
 
-const JourneySummary: React.FC<JourneySummaryProps> = ({ vehicle, bookingData, onNext }) => {
+const JourneySummary: React.FC<JourneySummaryProps> = ({
+  vehicle,
+  bookingData,
+  onNext,
+  onBackToVehicles,
+  availabilityStatus,
+  isCheckingAvailability
+}) => {
   const t = useTranslations('vehicleDetails');
   const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
 
@@ -123,16 +134,50 @@ const JourneySummary: React.FC<JourneySummaryProps> = ({ vehicle, bookingData, o
           </div>
         </div>
 
-        <Button
-          onClick={onNext}
-          className="group bg-primary hover:shadow-primary/30 animate-in fade-in slide-in-from-right-10 relative px-5 py-5 overflow-hidden rounded-md text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto"
-        >
-          <span className="relative z-10 flex items-center gap-3">
-            Configure Profile
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </span>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/5" />
-        </Button>
+        <div className="flex gap-3">
+          {availabilityStatus === false && onBackToVehicles && (
+            <Button
+              onClick={onBackToVehicles}
+              variant="outline"
+              className="h-12 rounded-xl border-2 px-6 text-xs font-black tracking-widest uppercase"
+            >
+              Choose Another Vehicle
+            </Button>
+          )}
+
+          <Button
+            onClick={onNext}
+            disabled={availabilityStatus === false || isCheckingAvailability}
+            className={cn(
+              "group relative px-5 py-5 overflow-hidden rounded-md text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto animate-in fade-in slide-in-from-right-10",
+              availabilityStatus === false
+                ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
+                : isCheckingAvailability
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-primary hover:shadow-primary/30"
+            )}
+          >
+            <span className="relative z-10 flex items-center gap-3">
+              {isCheckingAvailability ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Checking Availability
+                </>
+              ) : availabilityStatus === false ? (
+                <>
+                  <AlertCircle className="h-4 w-4" />
+                  Not Available
+                </>
+              ) : (
+                <>
+                  Configure Profile
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
+            </span>
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/5" />
+          </Button>
+        </div>
       </div>
     </div>
   );

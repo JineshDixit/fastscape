@@ -13,19 +13,62 @@ interface PaymentMethodFormProps {
   onNext: (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => void;
   onBack: () => void;
   isLoading?: boolean;
+  vehicle?: any; // Add vehicle prop for fallback calculation
+  bookingData?: any; // Add booking data for fallback calculation
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext, onBack, isLoading }) => {
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
+  breakdown,
+  onNext,
+  onBack,
+  isLoading,
+  vehicle,
+  bookingData
+}) => {
   const [method, setMethod] = useState<'ONLINE' | 'CARD' | 'CASH'>('ONLINE');
   const [payFull, setPayFull] = useState(false);
 
-  if (!breakdown)
+  // Create fallback breakdown if none provided
+  const getBreakdown = (): PaymentBreakdown => {
+    if (breakdown) return breakdown;
+
+    // Calculate fallback breakdown from vehicle and booking data
+    const days = bookingData?.pickupDate && bookingData?.dropoffDate
+      ? Math.ceil((new Date(bookingData.dropoffDate).getTime() - new Date(bookingData.pickupDate).getTime()) / (1000 * 60 * 60 * 24))
+      : 1;
+
+    const dailyRate = vehicle ? parseFloat(vehicle.pricePerDay) : 1200;
+    const baseAmount = dailyRate * days;
+    const taxAmount = Math.round(baseAmount * 0.05); // 5% tax
+    const totalAmount = baseAmount + taxAmount;
+    const depositAmount = Math.round(totalAmount * 0.3); // 30% deposit
+
+    return {
+      baseAmount,
+      taxAmount,
+      totalAmount,
+      depositAmount,
+      currency: vehicle?.currency || 'AED',
+      breakdown: {
+        dailyRate,
+        days,
+        subtotal: baseAmount,
+        tax: taxAmount,
+        total: totalAmount
+      }
+    };
+  };
+
+  const currentBreakdown = getBreakdown();
+
+  if (!currentBreakdown && !vehicle) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
         <div className="border-primary h-10 w-10 animate-spin rounded-full border-4 border-t-transparent" />
         <p className="text-xs font-black tracking-widest text-gray-400 uppercase">Loading Financial Data</p>
       </div>
     );
+  }
 
   return (
     <div className="animate-in fade-in space-y-6 duration-500">
@@ -124,9 +167,9 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                 Investment Summary
               </h3>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-primary text-base font-black">{breakdown.currency}</span>
+                <span className="text-primary text-base font-black">{currentBreakdown.currency}</span>
                 <span className="text-4xl font-black tracking-tighter text-gray-950 dark:text-white">
-                  {breakdown.totalAmount.toLocaleString()}
+                  {currentBreakdown.totalAmount.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -139,13 +182,13 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                     <Info className="h-3.5 w-3.5 cursor-help opacity-40" />
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {breakdown.currency} {breakdown.baseAmount.toLocaleString()}
+                    {currentBreakdown.currency} {currentBreakdown.baseAmount.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-bold tracking-tight text-gray-500 uppercase">
                   <span>Fees & Regulations</span>
                   <span className="text-gray-900 dark:text-white">
-                    {breakdown.currency} {breakdown.taxAmount.toLocaleString()}
+                    {currentBreakdown.currency} {currentBreakdown.taxAmount.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -167,7 +210,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                     Secure Deposit Only
                   </span>
                   <span className="mt-1 text-xl font-black text-gray-950 dark:text-white">
-                    {breakdown.currency} {breakdown.depositAmount.toLocaleString()}
+                    {currentBreakdown.currency} {currentBreakdown.depositAmount.toLocaleString()}
                   </span>
                 </button>
 
@@ -185,7 +228,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                     Full Journey Access
                   </span>
                   <span className="mt-1 text-xl font-black text-gray-950 dark:text-white">
-                    {breakdown.currency} {breakdown.totalAmount.toLocaleString()}
+                    {currentBreakdown.currency} {currentBreakdown.totalAmount.toLocaleString()}
                   </span>
                 </button>
               </div>

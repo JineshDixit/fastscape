@@ -6,7 +6,6 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { format, addDays, isWithinInterval, parseISO, startOfDay } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { DateRange } from 'react-day-picker';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 
@@ -32,20 +31,9 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
   const lastInitialDate = initialDates[initialDates.length - 1];
 
   const handleDateSelect = (date: Date) => {
-    if (start && end && start.getTime() === end.getTime() && date > start) {
-      onDateChange(start, date);
-    } else {
-      onDateChange(date, date);
-    }
-  };
-
-  const handleRangeSelect = (range: DateRange | undefined) => {
-    if (range?.from) {
-      onDateChange(range.from, range.to || null);
-      if (range.to) {
-        setCalendarOpen(false);
-      }
-    }
+    // For single-day rental, both pickup and dropoff are the same date
+    // The backend should handle this as start of day to end of day
+    onDateChange(date, date);
   };
 
   const isExtendedRange = end && end > lastInitialDate;
@@ -59,9 +47,8 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
         <div className="flex flex-wrap items-center gap-2">
           {visibleDates.map((date, idx) => {
             const d = startOfDay(date);
-            const isRangeStart = start && d.getTime() === start.getTime();
-            const isRangeEnd = end && d.getTime() === end.getTime();
-            const isInRange = start && end && isWithinInterval(d, { start, end });
+            const isSelected = start && d.getTime() === start.getTime();
+            const isInRange = start && end && start.getTime() !== end.getTime() && isWithinInterval(d, { start, end });
 
             const showEllipsisBefore = isExtendedRange && idx === 3;
 
@@ -74,7 +61,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
                   onClick={() => handleDateSelect(date)}
                   className={cn(
                     'flex h-12 w-12 flex-col gap-0.5 items-center justify-center rounded-xl border text-center transition-all duration-200',
-                    isRangeStart || isRangeEnd
+                    isSelected
                       ? 'border-primary bg-primary hover:bg-primary hover:border-primary text-white hover:text-white'
                       : isInRange
                         ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary hover:border-primary/30'
@@ -99,10 +86,15 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
             <PopoverContent className="w-auto border-none p-0 shadow-xl" align="start">
               <Calendar
                 initialFocus
-                mode="range"
+                mode="single"
                 defaultMonth={start || now}
-                selected={{ from: start || undefined, to: end || undefined }}
-                onSelect={handleRangeSelect}
+                selected={start || undefined}
+                onSelect={(date) => {
+                  if (date) {
+                    handleDateSelect(date);
+                    setCalendarOpen(false);
+                  }
+                }}
                 numberOfMonths={1}
                 disabled={{ before: now }}
                 classNames={{
