@@ -4,14 +4,67 @@ import {
   BookingConfirmationData,
   BookingAvailabilityCheck,
 } from '../../common/types/bookingTypes';
-import { Booking, Vehicle, User, Chauffeur, BookingFinancial, sequelize } from '../../models';
+import { Booking, Vehicle, User, Chauffeur, BookingFinancial, Address, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateDateRange } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
 import { calculatePaymentBreakdown, calculatePaymentBreakdownInternal } from '../payment/enhancedPayment.service';
 import { autoAssignChauffeur } from '../chauffeur/chauffeur.service';
+import {
+  checkDocumentCompleteness,
+  validateDocumentForBooking,
+  shouldSkipDocumentStep,
+  checkBookingEligibility
+} from '../user/user.service';
 import Logger from '../../utils/logger';
 import { Op } from 'sequelize';
+
+// Enhanced booking interfaces for address integration
+export interface EnhancedBookingData extends CreateBookingData {
+  pickupAddressId?: string;
+  dropoffAddressId?: string;
+  useNewPickupAddress?: boolean;
+  useNewDropoffAddress?: boolean;
+  newPickupAddress?: CreateAddressData;
+  newDropoffAddress?: CreateAddressData;
+  saveNewAddresses?: boolean;
+}
+
+export interface CreateAddressData {
+  type: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault?: boolean;
+}
+
+export interface BookingFlowStep {
+  step: number;
+  name: string;
+  title: string;
+  description: string;
+  required: boolean;
+  completed: boolean;
+  skippable: boolean;
+  estimatedTime: number; // minutes
+}
+
+export interface EligibilityResult {
+  eligible: boolean;
+  reason?: string;
+  missingRequirements: string[];
+}
+
+export interface BookingAddressOption {
+  id: string;
+  type: string;
+  displayName: string;
+  fullAddress: string;
+  isDefault: boolean;
+}
 
 /**
  * Check vehicle availability for specific date range
@@ -85,7 +138,7 @@ export const getBookingQuote = async (bookingData: CreateBookingData) => {
 
   // Check vehicle availability
   const availability = await checkVehicleAvailability(vehicleId, start, end);
-  
+
   if (!availability.isAvailable) {
     return { availability, calculation: null };
   }
@@ -1025,4 +1078,495 @@ export const getBookingHistory = async (
     ],
     order: [['startDatetime', 'DESC']],
   });
+};
+
+/**
+ * Enhanced Booking Service Methods for Address Integration
+ * Requirements: 2.1, 2.2, 2.4, 6.1, 6.2, 6.3
+ */
+
+/**
+ * Create booking with address integration support
+ * Supports both saved addresses and new address creation
+ * Requirements: 2.1, 2.2, 2.4
+ */
+export const createBookingWithAddresses = async (bookingData: EnhancedBookingData): Promise<Booking> => {
+  const {
+    userId,
+    vehicleId,
+    startDatetime,
+    endDatetime,
+    pickupAddressId,
+    dropoffAddressId,
+    useNewPickupAddress,
+    useNewDropoffAddress,
+    newPickupAddress,
+    newDropoffAddress,
+    saveNewAddresses,
+    bookingType = 'SELF_DRIVE',
+    paymentMethod = 'ONLINE',
+    paymentIntentId,
+    chauffeurInstructions,
+    notes,
+  } = bookingData;
+
+  Logger.info('Creating booking with address integration', {
+    userId,
+    vehicleId,
+    pickupAddressId,
+    dropoffAddressId,
+    useNewPickupAddress,
+    useNewDropoffAddress,
+  });
+
+  // Validate required fields
+  validateRequiredFields(bookingData, [
+    'userId',
+    'vehicleId',
+    'startDatetime',
+    'endDatetime',
+  ]);
+
+  // Validate dates
+  const { start, end } = validateDateRange(startDatetime, endDatetime);
+
+  // Check if user exists and is not blocked
+  const user = await User.findByPk(userId);
+  if (!user) {
+    throw createError('User not found', 404);
+  }
+
+  if (user.isBlocked) {
+    Logger.warn('Booking attempted by blocked user', { userId });
+    throw createError('Account is blocked. Please contact support.', 403);
+  }
+
+  // Validate addresses and get location strings
+  const { pickupLocation, dropoffLocation } = await validateBookingAddresses(
+    pickupAddressId,
+    dropoffAddressId,
+    userId,
+    useNewPickupAddress ? newPickupAddress : undefined,
+    useNewDropoffAddress ? newDropoffAddress : undefined
+  );
+
+  // Check vehicle availability
+  const availabilityCheck = await checkVehicleAvailability(vehicleId, start, end);
+
+  if (!availabilityCheck.isAvailable) {
+    Logger.warn('Booking attempted on unavailable vehicle', {
+      vehicleId,
+      userId,
+      conflicts: availabilityCheck.conflictingBookings.length,
+    });
+
+    if (availabilityCheck.conflictingBookings.length > 0) {
+      throw createError('Vehicle is already booked for the selected dates', 409);
+    } else {
+      throw createError('Vehicle is not available', 400);
+    }
+  }
+
+  // Use transaction for atomic operations
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Double-check availability within transaction with row locking
+    const finalAvailabilityCheck = await Booking.findOne({
+      where: {
+        vehicleId,
+        bookingStatus: ['PENDING', 'CONFIRMED', 'PICKED_UP'],
+        ...buildDateConflictConditions(start, end),
+      },
+      transaction,
+      lock: true,
+    });
+
+    if (finalAvailabilityCheck) {
+      await transaction.rollback();
+      Logger.warn('Race condition detected during booking creation', { vehicleId, userId });
+      throw createError('Vehicle was just booked by another user. Please try again.', 409);
+    }
+
+    // Save new addresses if requested
+    if (saveNewAddresses) {
+      if (useNewPickupAddress && newPickupAddress && !pickupAddressId) {
+        const savedPickupAddress = await Address.create(
+          { ...newPickupAddress, userId },
+          { transaction }
+        );
+        Logger.info('New pickup address saved', { userId, addressId: savedPickupAddress.id });
+      }
+
+      if (useNewDropoffAddress && newDropoffAddress && !dropoffAddressId) {
+        const savedDropoffAddress = await Address.create(
+          { ...newDropoffAddress, userId },
+          { transaction }
+        );
+        Logger.info('New dropoff address saved', { userId, addressId: savedDropoffAddress.id });
+      }
+    }
+
+    // Create booking within transaction
+    const booking = await Booking.create(
+      {
+        userId,
+        vehicleId,
+        startDatetime: start,
+        endDatetime: end,
+        pickupLocation,
+        dropoffLocation,
+        bookingType,
+        paymentMethod,
+        bookingStatus: paymentMethod === 'ONLINE' && paymentIntentId ? 'CONFIRMED' : 'PENDING',
+        paymentStatus: paymentMethod === 'ONLINE' && paymentIntentId ? 'PARTIALLY_PAID' : 'UNPAID',
+        chauffeurInstructions: chauffeurInstructions || null,
+        notes: notes || null,
+        delayChargeApplied: false,
+        delayHours: 0,
+      },
+      { transaction },
+    );
+
+    // Calculate payment breakdown and create financial record
+    const paymentCalculation = await calculatePaymentBreakdown(booking.id, 0, transaction);
+
+    await BookingFinancial.create(
+      {
+        bookingId: booking.id,
+        baseAmount: paymentCalculation.baseAmount,
+        depositAmount: paymentCalculation.depositAmount,
+        balanceAmount: paymentCalculation.balanceAmount,
+        delayChargeAmount: paymentCalculation.delayChargeAmount,
+        delayChargeRate: paymentCalculation.delayChargeRate,
+        taxAmount: paymentCalculation.taxAmount,
+        totalAmount: paymentCalculation.totalAmount,
+        paidAmount: paymentIntentId ? paymentCalculation.depositAmount : 0,
+        remainingAmount: paymentIntentId ? paymentCalculation.totalAmount - paymentCalculation.depositAmount : paymentCalculation.totalAmount,
+        currency: paymentCalculation.currency,
+        depositPercentage: (paymentCalculation.depositAmount / paymentCalculation.baseAmount) * 100,
+      },
+      { transaction },
+    );
+
+    // If payment was made, create a Payment record
+    if (paymentIntentId) {
+      const { Payment } = require('../../models');
+      await Payment.create({
+        bookingId: booking.id,
+        userId,
+        amount: paymentCalculation.depositAmount,
+        currency: paymentCalculation.currency,
+        paymentType: 'DEPOSIT',
+        paymentStatus: 'PAID',
+        paymentMethod,
+        stripePaymentIntentId: paymentIntentId,
+        paidAt: new Date(),
+      }, { transaction });
+    }
+
+    // Auto-assign chauffeur if booking type is CHAUFFEUR
+    if (bookingType === 'CHAUFFEUR') {
+      try {
+        const chauffeurAssignment = await autoAssignChauffeur(booking.id);
+        if (chauffeurAssignment) {
+          await booking.update({ chauffeurId: chauffeurAssignment.chauffeur.id }, { transaction });
+          Logger.info('Chauffeur auto-assigned to booking', {
+            bookingId: booking.id,
+            chauffeurId: chauffeurAssignment.chauffeur.id,
+          });
+        } else {
+          Logger.warn('No chauffeur available for auto-assignment', {
+            bookingId: booking.id,
+          });
+        }
+      } catch (chauffeurError) {
+        Logger.error('Error during chauffeur auto-assignment', {
+          bookingId: booking.id,
+          error: chauffeurError,
+        });
+        // Don't fail the booking if chauffeur assignment fails
+      }
+    }
+
+    await transaction.commit();
+
+    Logger.info('Enhanced booking created successfully', {
+      bookingId: booking.id,
+      userId,
+      vehicleId,
+      bookingType,
+      hasAddressIntegration: !!(pickupAddressId || dropoffAddressId),
+      totalAmount: paymentCalculation.totalAmount,
+    });
+
+    return booking;
+  } catch (error) {
+    await transaction.rollback();
+    Logger.error('Enhanced booking transaction failed', { error, userId, vehicleId });
+    throw error;
+  }
+};
+
+/**
+ * Validate booking addresses and return location strings
+ * Requirements: 2.2, 2.4
+ */
+export const validateBookingAddresses = async (
+  pickupAddressId?: string,
+  dropoffAddressId?: string,
+  userId?: string,
+  newPickupAddress?: CreateAddressData,
+  newDropoffAddress?: CreateAddressData
+): Promise<{ pickupLocation: string; dropoffLocation: string }> => {
+  Logger.info('Validating booking addresses', {
+    pickupAddressId,
+    dropoffAddressId,
+    userId,
+    hasNewPickupAddress: !!newPickupAddress,
+    hasNewDropoffAddress: !!newDropoffAddress,
+  });
+
+  let pickupLocation = '';
+  let dropoffLocation = '';
+
+  // Validate pickup address
+  if (pickupAddressId && userId) {
+    const pickupAddress = await Address.findOne({
+      where: { id: pickupAddressId, userId }
+    });
+
+    if (!pickupAddress) {
+      throw createError('Pickup address not found or does not belong to user', 404);
+    }
+
+    pickupLocation = formatAddressString(pickupAddress);
+  } else if (newPickupAddress) {
+    // Validate new pickup address format
+    validateRequiredFields(newPickupAddress, ['addressLine1', 'city', 'state', 'country']);
+    pickupLocation = formatAddressString(newPickupAddress);
+  } else {
+    throw createError('Either pickup address ID or new pickup address must be provided', 400);
+  }
+
+  // Validate dropoff address
+  if (dropoffAddressId && userId) {
+    const dropoffAddress = await Address.findOne({
+      where: { id: dropoffAddressId, userId }
+    });
+
+    if (!dropoffAddress) {
+      throw createError('Dropoff address not found or does not belong to user', 404);
+    }
+
+    dropoffLocation = formatAddressString(dropoffAddress);
+  } else if (newDropoffAddress) {
+    // Validate new dropoff address format
+    validateRequiredFields(newDropoffAddress, ['addressLine1', 'city', 'state', 'country']);
+    dropoffLocation = formatAddressString(newDropoffAddress);
+  } else {
+    throw createError('Either dropoff address ID or new dropoff address must be provided', 400);
+  }
+
+  Logger.info('Address validation completed successfully', {
+    pickupLocation: pickupLocation.substring(0, 50) + '...',
+    dropoffLocation: dropoffLocation.substring(0, 50) + '...',
+  });
+
+  return { pickupLocation, dropoffLocation };
+};
+
+/**
+ * Get customized booking flow steps based on user profile completeness
+ * Requirements: 6.1, 6.2, 6.3
+ */
+export const getBookingFlowSteps = async (
+  userId: string,
+  bookingType: string = 'SELF_DRIVE'
+): Promise<BookingFlowStep[]> => {
+  Logger.info('Getting booking flow steps', { userId, bookingType });
+
+  try {
+    // Check user's profile completeness
+    const user = await User.findByPk(userId, {
+      include: [
+        {
+          model: Address,
+          as: 'addresses',
+          required: false,
+        }
+      ],
+    });
+
+    if (!user) {
+      throw createError('User not found', 404);
+    }
+
+    // Check document completeness
+    const documentStatus = await checkDocumentCompleteness(userId);
+    const shouldSkipDocuments = await shouldSkipDocumentStep(userId, bookingType as any);
+
+    // Check address completeness
+    const addresses = (user as any).addresses || [];
+    const hasAddresses = addresses.length > 0;
+
+    // Base flow steps
+    const baseSteps: BookingFlowStep[] = [
+      {
+        step: 1,
+        name: 'vehicle_selection',
+        title: 'Select Vehicle',
+        description: 'Choose your preferred vehicle from available options',
+        required: true,
+        completed: false,
+        skippable: false,
+        estimatedTime: 5,
+      },
+      {
+        step: 2,
+        name: 'address_selection',
+        title: 'Pickup & Dropoff',
+        description: hasAddresses
+          ? 'Select pickup and dropoff locations from your saved addresses'
+          : 'Enter pickup and dropoff locations',
+        required: true,
+        completed: false,
+        skippable: false,
+        estimatedTime: hasAddresses ? 2 : 5,
+      },
+      {
+        step: 3,
+        name: 'document_verification',
+        title: 'Document Verification',
+        description: shouldSkipDocuments
+          ? 'Documents verified - this step will be skipped'
+          : 'Upload and verify required documents',
+        required: !shouldSkipDocuments,
+        completed: shouldSkipDocuments,
+        skippable: shouldSkipDocuments,
+        estimatedTime: shouldSkipDocuments ? 0 : 10,
+      },
+      {
+        step: 4,
+        name: 'payment',
+        title: 'Payment',
+        description: 'Choose payment option and complete booking',
+        required: true,
+        completed: false,
+        skippable: false,
+        estimatedTime: 3,
+      },
+      {
+        step: 5,
+        name: 'confirmation',
+        title: 'Confirmation',
+        description: 'Review booking details and receive confirmation',
+        required: true,
+        completed: false,
+        skippable: false,
+        estimatedTime: 1,
+      },
+    ];
+
+    // Filter out skippable steps for simplified flow
+    const activeSteps = baseSteps.filter(step => !step.skippable);
+
+    // Renumber steps after filtering
+    activeSteps.forEach((step, index) => {
+      step.step = index + 1;
+    });
+
+    Logger.info('Booking flow steps generated', {
+      userId,
+      totalSteps: activeSteps.length,
+      skippedSteps: baseSteps.length - activeSteps.length,
+      hasAddresses,
+      documentsComplete: shouldSkipDocuments,
+    });
+
+    return activeSteps;
+
+  } catch (error) {
+    Logger.error('Error generating booking flow steps', { userId, bookingType, error });
+    throw createError('Failed to generate booking flow steps', 500);
+  }
+};
+
+/**
+ * Check booking eligibility based on document status and profile completeness
+ * Requirements: 6.1, 6.2
+ */
+export const checkBookingEligibilityEnhanced = async (
+  userId: string,
+  bookingType: string = 'SELF_DRIVE'
+): Promise<EligibilityResult> => {
+  Logger.info('Checking enhanced booking eligibility', { userId, bookingType });
+
+  try {
+    // Use the existing document validation from user service
+    const eligibilityResult = await checkBookingEligibility(userId, bookingType as any);
+
+    Logger.info('Enhanced booking eligibility check completed', {
+      userId,
+      eligible: eligibilityResult.eligible,
+      missingRequirements: eligibilityResult.missingRequirements.length,
+    });
+
+    return eligibilityResult;
+
+  } catch (error) {
+    Logger.error('Error checking enhanced booking eligibility', { userId, bookingType, error });
+    throw createError('Failed to check booking eligibility', 500);
+  }
+};
+
+/**
+ * Get user addresses formatted for booking selection
+ * Requirements: 2.1
+ */
+export const getAddressesForBooking = async (userId: string): Promise<BookingAddressOption[]> => {
+  Logger.info('Getting addresses for booking selection', { userId });
+
+  try {
+    const addresses = await Address.findAll({
+      where: { userId },
+      order: [['isDefault', 'DESC'], ['type', 'ASC'], ['createdAt', 'ASC']],
+    });
+
+    const addressOptions: BookingAddressOption[] = addresses.map(address => ({
+      id: address.id,
+      type: address.type,
+      displayName: `${address.type}${address.isDefault ? ' (Default)' : ''}`,
+      fullAddress: formatAddressString(address),
+      isDefault: address.isDefault,
+    }));
+
+    Logger.info('Address options retrieved for booking', {
+      userId,
+      addressCount: addressOptions.length,
+      hasDefault: addressOptions.some(addr => addr.isDefault),
+    });
+
+    return addressOptions;
+
+  } catch (error) {
+    Logger.error('Error getting addresses for booking', { userId, error });
+    throw createError('Failed to get addresses for booking', 500);
+  }
+};
+
+/**
+ * Helper function to format address as a string
+ */
+const formatAddressString = (address: Address | CreateAddressData): string => {
+  const parts = [
+    address.addressLine1,
+    address.addressLine2,
+    address.city,
+    address.state,
+    address.zipCode,
+    address.country,
+  ].filter(Boolean);
+
+  return parts.join(', ');
 };

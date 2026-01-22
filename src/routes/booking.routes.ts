@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as bookingController from '../controller/booking/booking.controller';
 import { authenticateUser } from '../services/middleware/authenticateUser';
-import { body, query } from 'express-validator';
+import { body, query, param } from 'express-validator';
 import { handleValidationErrors } from '../services/middleware/validation';
 import { dbEnums } from '../common/enum/dbEnums';
 
@@ -9,6 +9,170 @@ const router = Router();
 
 // All booking routes require authentication
 router.use(authenticateUser);
+
+// Enhanced Booking Flow Routes (Requirements: 6.1, 6.2, 6.3, 6.4)
+
+// Get booking flow steps based on user profile completeness
+router.get(
+  '/flow/steps',
+  [
+    query('bookingType')
+      .optional()
+      .isIn(dbEnums.BOOKING_TYPE)
+      .withMessage(`Booking type must be one of: ${dbEnums.BOOKING_TYPE.join(', ')}`),
+    handleValidationErrors,
+  ],
+  bookingController.getBookingFlowSteps,
+);
+
+// Check booking eligibility based on profile completeness
+router.get(
+  '/flow/eligibility',
+  [
+    query('bookingType')
+      .optional()
+      .isIn(dbEnums.BOOKING_TYPE)
+      .withMessage(`Booking type must be one of: ${dbEnums.BOOKING_TYPE.join(', ')}`),
+    handleValidationErrors,
+  ],
+  bookingController.checkBookingEligibility,
+);
+
+// Get user addresses for booking selection
+router.get('/addresses', bookingController.getAddressesForBooking);
+
+// Save booking progress
+router.post(
+  '/progress',
+  [
+    body('step').isInt({ min: 1, max: 10 }).withMessage('Step must be a number between 1 and 10'),
+    body('data').isObject().withMessage('Data must be an object'),
+    body('bookingType')
+      .optional()
+      .isIn(dbEnums.BOOKING_TYPE)
+      .withMessage(`Booking type must be one of: ${dbEnums.BOOKING_TYPE.join(', ')}`),
+    handleValidationErrors,
+  ],
+  bookingController.saveBookingProgress,
+);
+
+// Resume booking progress
+router.get(
+  '/progress',
+  [
+    query('bookingType')
+      .optional()
+      .isIn(dbEnums.BOOKING_TYPE)
+      .withMessage(`Booking type must be one of: ${dbEnums.BOOKING_TYPE.join(', ')}`),
+    handleValidationErrors,
+  ],
+  bookingController.resumeBookingProgress,
+);
+
+// Clear booking progress
+router.delete(
+  '/progress',
+  [
+    query('bookingType')
+      .optional()
+      .isIn(dbEnums.BOOKING_TYPE)
+      .withMessage(`Booking type must be one of: ${dbEnums.BOOKING_TYPE.join(', ')}`),
+    handleValidationErrors,
+  ],
+  bookingController.clearBookingProgress,
+);
+
+// Create enhanced booking with address integration
+router.post(
+  '/enhanced',
+  [
+    body('vehicleId').isUUID().withMessage('Valid vehicle ID is required'),
+    body('startDatetime').isISO8601().withMessage('Valid start date is required'),
+    body('endDatetime').isISO8601().withMessage('Valid end date is required'),
+
+    // Address selection validation
+    body('pickupAddressId')
+      .optional()
+      .isUUID()
+      .withMessage('Pickup address ID must be a valid UUID'),
+    body('dropoffAddressId')
+      .optional()
+      .isUUID()
+      .withMessage('Dropoff address ID must be a valid UUID'),
+
+    // New address validation
+    body('useNewPickupAddress')
+      .optional()
+      .isBoolean()
+      .withMessage('Use new pickup address must be a boolean'),
+    body('useNewDropoffAddress')
+      .optional()
+      .isBoolean()
+      .withMessage('Use new dropoff address must be a boolean'),
+
+    // New pickup address fields (conditional validation)
+    body('newPickupAddress.addressLine1')
+      .if(body('useNewPickupAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Pickup address line 1 is required when using new pickup address'),
+    body('newPickupAddress.city')
+      .if(body('useNewPickupAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Pickup city is required when using new pickup address'),
+    body('newPickupAddress.state')
+      .if(body('useNewPickupAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Pickup state is required when using new pickup address'),
+    body('newPickupAddress.country')
+      .if(body('useNewPickupAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Pickup country is required when using new pickup address'),
+
+    // New dropoff address fields (conditional validation)
+    body('newDropoffAddress.addressLine1')
+      .if(body('useNewDropoffAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Dropoff address line 1 is required when using new dropoff address'),
+    body('newDropoffAddress.city')
+      .if(body('useNewDropoffAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Dropoff city is required when using new dropoff address'),
+    body('newDropoffAddress.state')
+      .if(body('useNewDropoffAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Dropoff state is required when using new dropoff address'),
+    body('newDropoffAddress.country')
+      .if(body('useNewDropoffAddress').equals('true'))
+      .notEmpty()
+      .withMessage('Dropoff country is required when using new dropoff address'),
+
+    body('saveNewAddresses')
+      .optional()
+      .isBoolean()
+      .withMessage('Save new addresses must be a boolean'),
+
+    body('bookingType')
+      .optional()
+      .isIn(dbEnums.BOOKING_TYPE)
+      .withMessage(`Booking type must be one of: ${dbEnums.BOOKING_TYPE.join(', ')}`),
+    body('paymentMethod')
+      .optional()
+      .isIn(dbEnums.PAYMENT_METHOD)
+      .withMessage(`Payment method must be one of: ${dbEnums.PAYMENT_METHOD.join(', ')}`),
+    body('chauffeurInstructions')
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage('Chauffeur instructions must not exceed 500 characters'),
+    body('notes')
+      .optional()
+      .trim()
+      .isLength({ max: 1000 })
+      .withMessage('Notes must not exceed 1000 characters'),
+    handleValidationErrors,
+  ],
+  bookingController.createEnhancedBooking,
+);
 
 // Check vehicle availability
 router.post(

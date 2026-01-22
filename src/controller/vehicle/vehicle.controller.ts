@@ -5,6 +5,8 @@ import { sendSuccess } from '../../utils/response.utils';
 import { createError } from '../../services/middleware/errorHandler';
 import { AuthenticatedRequest } from 'expressTypes';
 import { dbEnums } from '../../common/enum/dbEnums';
+import Logger from '../../utils/logger';
+import { Op } from 'sequelize';
 
 class VehicleController extends BaseController {
   /**
@@ -116,8 +118,53 @@ class VehicleController extends BaseController {
       throw createError('pickupDate and dropoffDate are required', 400);
     }
 
+    Logger.info('Vehicle availability check request', {
+      vehicleId: id,
+      pickupDate,
+      dropoffDate,
+      queryParams: req.query
+    });
+
     const result = await vehicleService.checkAvailability(id, pickupDate as string, dropoffDate as string);
+
+    Logger.info('Vehicle availability check result', {
+      vehicleId: id,
+      result
+    });
+
     sendSuccess(res, 'Vehicle availability checked successfully', result);
+  });
+
+  // Debug endpoint to check bookings for a specific vehicle
+  debugVehicleBookings = this.asyncHandler(async (req: AuthenticatedRequest | any, res: Response) => {
+    const { id } = req.params;
+
+    const { Booking } = require('../../models');
+
+    const allBookings = await Booking.findAll({
+      where: { vehicleId: id },
+      attributes: ['id', 'vehicleId', 'startDatetime', 'endDatetime', 'bookingStatus'],
+      order: [['startDatetime', 'ASC']]
+    });
+
+    const activeBookings = await Booking.findAll({
+      where: {
+        vehicleId: id,
+        bookingStatus: {
+          [Op.notIn]: ['CANCELLED', 'COMPLETED'],
+        }
+      },
+      attributes: ['id', 'vehicleId', 'startDatetime', 'endDatetime', 'bookingStatus'],
+      order: [['startDatetime', 'ASC']]
+    });
+
+    sendSuccess(res, 'Vehicle bookings debug info', {
+      vehicleId: id,
+      allBookings,
+      activeBookings,
+      totalBookings: allBookings.length,
+      activeBookingsCount: activeBookings.length
+    });
   });
 }
 
@@ -131,4 +178,5 @@ export const {
   getVehicleFilterMetadata,
   getAvailableVehicles,
   checkAvailability,
+  debugVehicleBookings,
 } = vehicleController;

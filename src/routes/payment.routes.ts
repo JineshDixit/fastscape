@@ -10,6 +10,15 @@ import {
   getOverduePaymentsList,
   markVehiclePickedUp,
   markVehicleDroppedOff,
+  // Gateway-related endpoints
+  createPaymentIntent,
+  processOnlineDeposit,
+  processOnlineBalance,
+  processOnlineFullPayment,
+  processRefund,
+  getEnhancedPaymentSummary,
+  handleWebhook,
+  getGatewayInfo,
 } from '../controller/payment/payment.controller';
 import { authenticateUser } from '../services/middleware/authenticateUser';
 import { handleValidationErrors } from '../services/middleware/validation';
@@ -147,5 +156,115 @@ router.put(
  * @access Private (Admin)
  */
 router.get('/overdue', getOverduePaymentsList);
+
+// ===== PAYMENT GATEWAY ROUTES =====
+
+/**
+ * @route POST /api/payments/intent/:bookingId
+ * @desc Create payment intent for online payment
+ * @access Private
+ */
+router.post(
+  '/intent/:bookingId',
+  [
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('paymentType')
+      .isIn(['DEPOSIT', 'BALANCE', 'FULL'])
+      .withMessage('Payment type must be DEPOSIT, BALANCE, or FULL'),
+    body('currency').optional().isString().withMessage('Currency must be a string'),
+  ],
+  handleValidationErrors,
+  createPaymentIntent,
+);
+
+/**
+ * @route POST /api/payments/online/deposit/:bookingId
+ * @desc Process online deposit payment
+ * @access Private
+ */
+router.post(
+  '/online/deposit/:bookingId',
+  [
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('paymentIntentId').isString().withMessage('Payment intent ID is required'),
+    body('paymentMethodId').optional().isString().withMessage('Payment method ID must be a string'),
+  ],
+  handleValidationErrors,
+  processOnlineDeposit,
+);
+
+/**
+ * @route POST /api/payments/online/balance/:bookingId
+ * @desc Process online balance payment
+ * @access Private
+ */
+router.post(
+  '/online/balance/:bookingId',
+  [
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('paymentIntentId').isString().withMessage('Payment intent ID is required'),
+    body('paymentMethodId').optional().isString().withMessage('Payment method ID must be a string'),
+  ],
+  handleValidationErrors,
+  processOnlineBalance,
+);
+
+/**
+ * @route POST /api/payments/online/full/:bookingId
+ * @desc Process online full payment
+ * @access Private
+ */
+router.post(
+  '/online/full/:bookingId',
+  [
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('paymentIntentId').isString().withMessage('Payment intent ID is required'),
+    body('paymentMethodId').optional().isString().withMessage('Payment method ID must be a string'),
+  ],
+  handleValidationErrors,
+  processOnlineFullPayment,
+);
+
+/**
+ * @route POST /api/payments/refund/:paymentId
+ * @desc Process payment refund
+ * @access Private
+ */
+router.post(
+  '/refund/:paymentId',
+  [
+    param('paymentId').isUUID().withMessage('Valid payment ID is required'),
+    body('amount').optional().isNumeric().withMessage('Amount must be a number'),
+    body('reason').optional().isString().withMessage('Reason must be a string'),
+  ],
+  handleValidationErrors,
+  processRefund,
+);
+
+/**
+ * @route GET /api/payments/enhanced-summary/:bookingId
+ * @desc Get enhanced payment summary with gateway information
+ * @access Private
+ */
+router.get(
+  '/enhanced-summary/:bookingId',
+  [param('bookingId').isUUID().withMessage('Valid booking ID is required')],
+  handleValidationErrors,
+  getEnhancedPaymentSummary,
+);
+
+/**
+ * @route GET /api/payments/gateway/info
+ * @desc Get payment gateway information
+ * @access Private
+ */
+router.get('/gateway/info', getGatewayInfo);
+
+/**
+ * @route POST /api/payments/webhook
+ * @desc Handle payment gateway webhook
+ * @access Public (webhook endpoint)
+ */
+router.post('/webhook', handleWebhook);
 
 export default router;

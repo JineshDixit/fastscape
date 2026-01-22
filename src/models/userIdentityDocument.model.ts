@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
+import { dbEnums } from '../common/enum/dbEnums';
 
 export class UserIdentityDocument extends Model {
   public id!: string;
@@ -9,6 +10,10 @@ export class UserIdentityDocument extends Model {
   public internationalDrivingPermit!: string;
   public selfieWithLicense!: string;
   public verified!: boolean;
+  public verificationStatus!: string;
+  public verificationDate!: Date | null;
+  public verificationNotes!: string | null;
+  public documentExpiryDate!: Date | null;
 }
 
 export const initUserIdentityDocumentModel = (sequelize: Sequelize) => {
@@ -35,6 +40,23 @@ export const initUserIdentityDocumentModel = (sequelize: Sequelize) => {
       verified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+      },
+      verificationStatus: {
+        type: DataTypes.ENUM(...dbEnums.DOCUMENT_VERIFICATION_STATUS),
+        defaultValue: 'PENDING',
+        allowNull: false,
+      },
+      verificationDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      verificationNotes: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      documentExpiryDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
       },
     },
     {

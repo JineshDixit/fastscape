@@ -2,6 +2,7 @@ import { PaginationOptions, VehicleFilterOptions, VehicleSearchQuery } from '../
 import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op } from 'sequelize';
+import Logger from '../../utils/logger';
 
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
@@ -236,7 +237,15 @@ export const checkAvailability = async (vehicleId: string, startDate: string, en
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  const conflictingBookings = await Booking.count({
+  Logger.info('Checking vehicle availability', {
+    vehicleId,
+    startDate,
+    endDate,
+    parsedStart: start,
+    parsedEnd: end
+  });
+
+  const conflictingBookings = await Booking.findAll({
     where: {
       vehicleId,
       bookingStatus: {
@@ -244,12 +253,30 @@ export const checkAvailability = async (vehicleId: string, startDate: string, en
       },
       [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
     },
+    attributes: ['id', 'startDatetime', 'endDatetime', 'bookingStatus'],
+  });
+
+  Logger.info('Found conflicting bookings', {
+    vehicleId,
+    conflictingBookingsCount: conflictingBookings.length,
+    conflictingBookings: conflictingBookings.map(b => ({
+      id: b.id,
+      startDatetime: b.startDatetime,
+      endDatetime: b.endDatetime,
+      bookingStatus: b.bookingStatus
+    }))
   });
 
   return {
-    isAvailable: conflictingBookings === 0,
+    isAvailable: conflictingBookings.length === 0,
     vehicleId,
     requestedPeriod: { start, end },
+    conflictingBookings: conflictingBookings.map(b => ({
+      id: b.id,
+      startDatetime: b.startDatetime,
+      endDatetime: b.endDatetime,
+      bookingStatus: b.bookingStatus
+    }))
   };
 };
 

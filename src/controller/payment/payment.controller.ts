@@ -9,6 +9,16 @@ import {
   markPaymentCompleted,
   getOverduePayments,
 } from '../../services/payment/enhancedPayment.service';
+import {
+  createPaymentIntentForBooking,
+  processOnlineDepositPayment,
+  processOnlineBalancePayment,
+  processOnlineFullPayment as processFullPaymentOnline,
+  processPaymentRefund,
+  getEnhancedPaymentSummary as getPaymentSummaryEnhanced,
+  handlePaymentWebhook,
+} from '../../services/payment/gatewayIntegratedPayment.service';
+import { paymentGatewayService } from '../../services/payment/paymentGatewayService';
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
 import { validateRequiredFields } from '../../utils/validation.utils';
@@ -133,7 +143,7 @@ class PaymentController extends BaseController {
   });
 
   /**
-   * Update booking status to dropped off
+   * Mark booking status to dropped off
    */
   markVehicleDroppedOff = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const bookingId = this.getValidatedId(req, 'bookingId');
@@ -154,6 +164,144 @@ class PaymentController extends BaseController {
       hasDelayCharges: !!result.delayCharge,
     });
   });
+
+  // ===== PAYMENT GATEWAY ENDPOINTS =====
+
+  /**
+   * Create payment intent for online payment
+   */
+  createPaymentIntent = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const { paymentType = 'DEPOSIT', currency = 'USD' } = req.body;
+
+    validateRequiredFields({ paymentType }, ['paymentType']);
+
+    if (!['DEPOSIT', 'BALANCE', 'FULL'].includes(paymentType)) {
+      return sendSuccess(res, 'Invalid payment type. Must be DEPOSIT, BALANCE, or FULL', null, 400);
+    }
+
+    const paymentIntent = await createPaymentIntentForBooking(bookingId, paymentType, currency);
+
+    if (paymentIntent.success) {
+      sendSuccess(res, 'Payment intent created successfully', {
+        paymentIntentId: paymentIntent.paymentIntentId,
+        clientSecret: paymentIntent.clientSecret,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status,
+      });
+    } else {
+      sendSuccess(res, 'Failed to create payment intent', {
+        error: paymentIntent.error,
+      }, 400);
+    }
+  });
+
+  /**
+   * Process online deposit payment
+   */
+  processOnlineDeposit = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const { paymentIntentId, paymentMethodId } = req.body;
+
+    validateRequiredFields({ paymentIntentId }, ['paymentIntentId']);
+
+    const result = await processOnlineDepositPayment(bookingId, paymentIntentId, paymentMethodId);
+
+    sendSuccess(res, 'Online deposit payment processed successfully', {
+      payment: result.payment,
+      financial: result.financial,
+      confirmation: result.confirmation,
+    });
+  });
+
+  /**
+   * Process online balance payment
+   */
+  processOnlineBalance = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const { paymentIntentId, paymentMethodId } = req.body;
+
+    validateRequiredFields({ paymentIntentId }, ['paymentIntentId']);
+
+    const result = await processOnlineBalancePayment(bookingId, paymentIntentId, paymentMethodId);
+
+    sendSuccess(res, 'Online balance payment processed successfully', {
+      payment: result.payment,
+      financial: result.financial,
+      confirmation: result.confirmation,
+    });
+  });
+
+  /**
+   * Process online full payment
+   */
+  processOnlineFullPayment = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const { paymentIntentId, paymentMethodId } = req.body;
+
+    validateRequiredFields({ paymentIntentId }, ['paymentIntentId']);
+
+    const result = await processFullPaymentOnline(bookingId, paymentIntentId, paymentMethodId);
+
+    sendSuccess(res, 'Online full payment processed successfully', {
+      payments: result.payments,
+      financial: result.financial,
+      confirmation: result.confirmation,
+    });
+  });
+
+  /**
+   * Process payment refund
+   */
+  processRefund = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const paymentId = this.getValidatedId(req, 'paymentId');
+    const { amount, reason } = req.body;
+
+    const result = await processPaymentRefund(paymentId, amount, reason);
+
+    if (result.success) {
+      sendSuccess(res, 'Payment refund processed successfully', {
+        refundId: result.refundId,
+      });
+    } else {
+      sendSuccess(res, 'Payment refund failed', {
+        error: result.error,
+      }, 400);
+    }
+  });
+
+  /**
+   * Get enhanced payment summary with gateway information
+   */
+  getEnhancedPaymentSummary = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const summary = await getPaymentSummaryEnhanced(bookingId);
+    sendSuccess(res, 'Enhanced payment summary retrieved successfully', summary);
+  });
+
+  /**
+   * Handle payment gateway webhook
+   */
+  handleWebhook = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const signature = (req.headers['stripe-signature'] || req.headers['x-webhook-signature']) as string;
+    const payload = req.body;
+
+    if (!signature) {
+      return sendSuccess(res, 'Missing webhook signature', null, 400);
+    }
+
+    await handlePaymentWebhook(payload, signature);
+    sendSuccess(res, 'Webhook processed successfully', { received: true });
+  });
+
+  /**
+   * Get payment gateway information
+   */
+  getGatewayInfo = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const gatewayInfo = paymentGatewayService.getGatewayInfo();
+    sendSuccess(res, 'Payment gateway information retrieved', gatewayInfo);
+  });
 }
 
 const paymentController = new PaymentController();
@@ -168,4 +316,13 @@ export const {
   getOverduePaymentsList,
   markVehiclePickedUp,
   markVehicleDroppedOff,
+  // Gateway-related endpoints
+  createPaymentIntent,
+  processOnlineDeposit,
+  processOnlineBalance,
+  processOnlineFullPayment,
+  processRefund,
+  getEnhancedPaymentSummary,
+  handleWebhook,
+  getGatewayInfo,
 } = paymentController;

@@ -334,16 +334,16 @@ export const getPaymentSummary = async (bookingId: string) => {
     },
     financial: financial
       ? {
-          baseAmount: financial.baseAmount,
-          depositAmount: financial.depositAmount,
-          balanceAmount: financial.balanceAmount,
-          delayChargeAmount: financial.delayChargeAmount,
-          taxAmount: financial.taxAmount,
-          totalAmount: financial.totalAmount,
-          paidAmount: financial.paidAmount,
-          remainingAmount: financial.remainingAmount,
-          currency: financial.currency,
-        }
+        baseAmount: financial.baseAmount,
+        depositAmount: financial.depositAmount,
+        balanceAmount: financial.balanceAmount,
+        delayChargeAmount: financial.delayChargeAmount,
+        taxAmount: financial.taxAmount,
+        totalAmount: financial.totalAmount,
+        paidAmount: financial.paidAmount,
+        remainingAmount: financial.remainingAmount,
+        currency: financial.currency,
+      }
       : null,
     payments: payments.map((payment: any) => ({
       id: payment.id,

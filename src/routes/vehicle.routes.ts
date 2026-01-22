@@ -27,6 +27,9 @@ router.get('/available', availableVehiclesValidation, handleValidationErrors, ve
 // Get vehicle availability for specific dates
 router.get('/:id/availability', vehicleIdValidation, handleValidationErrors, vehicleController.checkAvailability);
 
+// Debug endpoint to check vehicle bookings
+router.get('/:id/debug-bookings', vehicleIdValidation, handleValidationErrors, vehicleController.debugVehicleBookings);
+
 // Get vehicle by ID
 router.get('/:id', vehicleIdValidation, handleValidationErrors, vehicleController.getVehicleById);
 
