@@ -161,6 +161,22 @@ export const validateUserUpdate = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Country must be between 2 and 100 characters'),
 
+  body('addresses')
+    .optional()
+    .custom((value) => {
+      // Allow array or string (which will be parsed in controller)
+      if (Array.isArray(value)) return true;
+      if (typeof value === 'string') {
+        try {
+          JSON.parse(value);
+          return true;
+        } catch {
+          throw new Error('Invalid address format');
+        }
+      }
+      return true;
+    }),
+
   handleValidationErrors,
 ];
 

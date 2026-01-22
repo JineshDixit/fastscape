@@ -35,3 +35,21 @@ export const saveFile = async (file: Express.Multer.File, subDir: string = 'docu
   // Converting backslashes to forward slashes for consistency
   return path.join('uploads', subDir, fileName).replace(/\\/g, '/');
 };
+
+/**
+ * Delete a file from disk
+ * @param relativePath The relative path of the file to delete (e.g., 'uploads/documents/...')
+ */
+export const deleteFile = async (relativePath: string): Promise<void> => {
+  if (!relativePath) return;
+
+  const absolutePath = path.join(process.cwd(), relativePath);
+
+  try {
+    await fs.access(absolutePath);
+    await fs.unlink(absolutePath);
+  } catch (err) {
+    // If file doesn't exist or can't be deleted, just log and continue
+    // (We don't want to break the whole process if a file is already missing)
+  }
+};

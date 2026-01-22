@@ -1,6 +1,7 @@
 import { Sequelize } from 'sequelize';
 import dbConfig from '../config/database/dbConfig';
 import { initUserModel, User } from './user.model';
+import { initAddressModel, Address } from './address.model';
 import { initUserIdentityDocumentModel, UserIdentityDocument } from './userIdentityDocument.model';
 import { initUserDrivingInfoModel, UserDrivingInfo } from './userDrivingInfo.model';
 import { initVehicleModel, Vehicle } from './vehicle.model';
@@ -19,9 +20,9 @@ let sequelize: Sequelize;
  * instance with the database configuration and defining the models
  * for the database tables.
  *
- * @returns {void} - nothing
+ * @returns {Promise<void>} - nothing
  */
-const initPostgres_DB = (): void => {
+const initPostgres_DB = async (): Promise<void> => {
   const config = dbConfig;
 
   sequelize = new Sequelize(config.POSTGRES_DB.database, config.POSTGRES_DB.userName, config.POSTGRES_DB.password, {
@@ -39,6 +40,7 @@ const initPostgres_DB = (): void => {
     ssl: true,
   });
   initUserModel(sequelize);
+  initAddressModel(sequelize);
   initUserIdentityDocumentModel(sequelize);
   initUserDrivingInfoModel(sequelize);
   initVehicleModel(sequelize);
@@ -51,6 +53,7 @@ const initPostgres_DB = (): void => {
   initChauffeurReviewModel(sequelize);
 
   //Associations
+  User.hasMany(Address, { foreignKey: 'userId', as: 'addresses' });
   User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
   User.hasOne(UserDrivingInfo, { foreignKey: 'userId' });
   User.hasMany(Booking, { foreignKey: 'userId' });
@@ -85,12 +88,14 @@ const initPostgres_DB = (): void => {
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
 
   RefreshToken.belongsTo(User, { foreignKey: 'userId' });
+  Address.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 };
 
 export {
   initPostgres_DB,
   sequelize,
   User,
+  Address,
   UserIdentityDocument,
   UserDrivingInfo,
   Vehicle,

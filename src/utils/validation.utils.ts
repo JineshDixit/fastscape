@@ -40,7 +40,7 @@ export const validateDateRange = (
     throw createError('Invalid date format', 400);
   }
 
-  if (start >= end) {
+  if (start > end) {
     throw createError('End date must be after start date', 400);
   }
 

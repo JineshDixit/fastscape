@@ -1,3 +1,16 @@
+// Basic Address Interface (matching backend model)
+export interface AddressType {
+  id?: string;
+  type: string;
+  addressLine1: string;
+  addressLine2?: string | null;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault?: boolean;
+}
+
 export type userModelType = {
   id?: string;
   fullName?: string;
@@ -6,11 +19,8 @@ export type userModelType = {
   email?: string;
   phone?: string;
   passwordHash?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
   isBlocked?: boolean;
+  addresses?: AddressType[];
 };
 
 export interface CreateUserData {
@@ -20,6 +30,9 @@ export interface CreateUserData {
   email: string;
   phone?: string;
   passwordHash: string;
+  // Initial address
+  addressLine1?: string;
+  addressLine2?: string;
   city?: string;
   state?: string;
   zipCode?: string;
@@ -31,10 +44,7 @@ export interface UpdateUserData {
   dateOfBirth?: Date;
   nationality?: string;
   phone?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
+  addresses?: AddressType[];
   // Driving Info
   licenseIssuingCountry?: string;
   licenseExpiryDate?: Date;

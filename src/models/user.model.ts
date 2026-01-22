@@ -2,6 +2,11 @@
  * MANUAL MIGRATION QUERY:
  * ALTER TABLE users ADD COLUMN reset_password_otp VARCHAR(255);
  * ALTER TABLE users ADD COLUMN reset_password_otp_expires TIMESTAMP WITH TIME ZONE;
+ * -- MANUAL MIGRATION FOR ADDRESS REFACTOR:
+ * -- ALTER TABLE users DROP COLUMN city;
+ * -- ALTER TABLE users DROP COLUMN state;
+ * -- ALTER TABLE users DROP COLUMN zip_code;
+ * -- ALTER TABLE users DROP COLUMN country;
  */
 
 import { DataTypes, Model, Sequelize } from 'sequelize';
@@ -14,10 +19,6 @@ export class User extends Model {
   public email!: string;
   public phone!: string;
   public passwordHash!: string;
-  public city!: string;
-  public state!: string;
-  public zipCode!: string;
-  public country!: string;
   public isBlocked!: boolean;
   public resetPasswordOtp!: string | null;
   public resetPasswordOtpExpires!: Date | null;
@@ -63,22 +64,6 @@ export const initUserModel = (sequelize: Sequelize) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      city: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-      },
-      state: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-      },
-      zipCode: {
-        type: DataTypes.STRING(20),
-        allowNull: true,
-      },
-      country: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
-      },
       isBlocked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
@@ -108,12 +93,6 @@ export const initUserModel = (sequelize: Sequelize) => {
         },
         {
           fields: ['phone'],
-        },
-        {
-          fields: ['city', 'state'],
-        },
-        {
-          fields: ['country'],
         },
         {
           fields: ['is_blocked'],

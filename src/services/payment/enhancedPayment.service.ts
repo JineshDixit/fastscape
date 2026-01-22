@@ -5,6 +5,46 @@ import { Op, Transaction } from 'sequelize';
 import Logger from '../../utils/logger';
 
 /**
+ * Internal logic for payment breakdown calculation
+ */
+export const calculatePaymentBreakdownInternal = (
+  rentalDays: number,
+  pricePerDay: number,
+  depositPercentage: number,
+  delayChargePerHour: number,
+  delayHours: number = 0,
+  currency: string = '$',
+  existingTaxAmount?: number,
+): PaymentCalculation => {
+  // Base calculations
+  const baseAmount = pricePerDay * rentalDays;
+  const depositAmount = (baseAmount * depositPercentage) / 100;
+  const balanceAmount = baseAmount - depositAmount;
+
+  // Delay charge calculation
+  const delayChargeAmount = delayHours > 0 ? delayHours * delayChargePerHour : 0;
+
+  // Tax calculation (example: 10% tax)
+  const taxRate = 0.1;
+  const subtotal = baseAmount + delayChargeAmount;
+  const taxAmount = Number(existingTaxAmount !== undefined ? existingTaxAmount : subtotal * taxRate);
+
+  const totalAmount = subtotal + taxAmount;
+
+  return {
+    baseAmount,
+    depositAmount,
+    balanceAmount,
+    delayChargeAmount,
+    delayChargeRate: delayChargePerHour,
+    taxAmount,
+    totalAmount,
+    remainingAmount: totalAmount,
+    currency,
+  };
+};
+
+/**
  * Calculate payment breakdown for a booking
  */
 export const calculatePaymentBreakdown = async (
@@ -36,36 +76,17 @@ export const calculatePaymentBreakdown = async (
   // Calculate rental duration in days
   const startDate = new Date(booking.startDatetime);
   const endDate = new Date(booking.endDatetime);
-  const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1; // Default to 1 for same-day
 
-  // Base calculations
-  const baseAmount = Number(existingFinancial?.baseAmount || vehicle.pricePerDay * rentalDays);
-  const depositPercentage = Number(existingFinancial?.depositPercentage || vehicle.depositPercentage);
-  const depositAmount = (baseAmount * depositPercentage) / 100;
-  const balanceAmount = baseAmount - depositAmount;
-
-  // Delay charge calculation
-  const delayChargeRate = Number(vehicle.delayChargePerHour);
-  const delayChargeAmount = delayHours > 0 ? delayHours * delayChargeRate : 0;
-
-  // Tax calculation (example: 10% tax)
-  const taxRate = 0.1;
-  const subtotal = baseAmount + delayChargeAmount;
-  const taxAmount = Number(existingFinancial?.taxAmount || subtotal * taxRate);
-
-  const totalAmount = subtotal + taxAmount;
-
-  return {
-    baseAmount,
-    depositAmount,
-    balanceAmount,
-    delayChargeAmount,
-    delayChargeRate,
-    taxAmount,
-    totalAmount,
-    remainingAmount: totalAmount,
-    currency: vehicle.currency,
-  };
+  return calculatePaymentBreakdownInternal(
+    rentalDays,
+    Number(vehicle.pricePerDay),
+    Number(existingFinancial?.depositPercentage || vehicle.depositPercentage),
+    Number(vehicle.delayChargePerHour),
+    delayHours,
+    vehicle.currency,
+    existingFinancial?.taxAmount ? Number(existingFinancial.taxAmount) : undefined
+  );
 };
 
 /**

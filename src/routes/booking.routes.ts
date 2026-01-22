@@ -22,6 +22,18 @@ router.post(
   bookingController.checkAvailability,
 );
 
+// Get booking quote (availability + price)
+router.post(
+  '/quote',
+  [
+    body('vehicleId').isUUID().withMessage('Valid vehicle ID is required'),
+    body('startDatetime').isISO8601().withMessage('Valid start date is required'),
+    body('endDatetime').isISO8601().withMessage('Valid end date is required'),
+    handleValidationErrors,
+  ],
+  bookingController.getBookingQuote,
+);
+
 // Create booking
 router.post(
   '/',

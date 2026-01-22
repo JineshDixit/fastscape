@@ -8,7 +8,7 @@ import { Booking, Vehicle, User, Chauffeur, BookingFinancial, sequelize } from '
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateDateRange } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
-import { calculatePaymentBreakdown } from '../payment/enhancedPayment.service';
+import { calculatePaymentBreakdown, calculatePaymentBreakdownInternal } from '../payment/enhancedPayment.service';
 import { autoAssignChauffeur } from '../chauffeur/chauffeur.service';
 import Logger from '../../utils/logger';
 import { Op } from 'sequelize';
@@ -69,8 +69,48 @@ export const checkVehicleAvailability = async (
       start,
       end,
       durationHours: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60)),
-      durationDays: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)),
+      durationDays: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1,
     },
+  };
+};
+
+/**
+ * Get a temporal and financial quote for a potential booking
+ */
+export const getBookingQuote = async (bookingData: CreateBookingData) => {
+  const { vehicleId, startDatetime, endDatetime } = bookingData;
+
+  // Validate dates
+  const { start, end } = validateDateRange(startDatetime, endDatetime);
+
+  // Check vehicle availability
+  const availability = await checkVehicleAvailability(vehicleId, start, end);
+  
+  if (!availability.isAvailable) {
+    return { availability, calculation: null };
+  }
+
+  // Get vehicle details for calculation
+  const vehicle = await Vehicle.findByPk(vehicleId);
+  if (!vehicle) {
+    throw createError('Vehicle not found', 404);
+  }
+
+  const rentalDays = availability.requestedPeriod.durationDays;
+
+  // Calculate breakdown without persistence
+  const calculation = calculatePaymentBreakdownInternal(
+    rentalDays,
+    Number(vehicle.pricePerDay),
+    Number(vehicle.depositPercentage),
+    Number(vehicle.delayChargePerHour),
+    0, // No delay for initial quote
+    vehicle.currency
+  );
+
+  return {
+    availability,
+    calculation
   };
 };
 /**
@@ -86,6 +126,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     dropoffLocation,
     bookingType = 'SELF_DRIVE',
     paymentMethod = 'ONLINE',
+    paymentIntentId,
     chauffeurInstructions,
     notes,
   } = bookingData;
@@ -167,8 +208,8 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
         dropoffLocation,
         bookingType,
         paymentMethod,
-        bookingStatus: 'PENDING',
-        paymentStatus: 'UNPAID',
+        bookingStatus: paymentMethod === 'ONLINE' && paymentIntentId ? 'CONFIRMED' : 'PENDING',
+        paymentStatus: paymentMethod === 'ONLINE' && paymentIntentId ? 'PARTIALLY_PAID' : 'UNPAID',
         chauffeurInstructions: chauffeurInstructions || null,
         notes: notes || null,
         delayChargeApplied: false,
@@ -190,12 +231,29 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
         delayChargeRate: paymentCalculation.delayChargeRate,
         taxAmount: paymentCalculation.taxAmount,
         totalAmount: paymentCalculation.totalAmount,
-        remainingAmount: paymentCalculation.totalAmount,
+        paidAmount: paymentIntentId ? paymentCalculation.depositAmount : 0,
+        remainingAmount: paymentIntentId ? paymentCalculation.totalAmount - paymentCalculation.depositAmount : paymentCalculation.totalAmount,
         currency: paymentCalculation.currency,
         depositPercentage: (paymentCalculation.depositAmount / paymentCalculation.baseAmount) * 100,
       },
       { transaction },
     );
+
+    // If payment was made, create a Payment record
+    if (paymentIntentId) {
+      const { Payment } = require('../../models');
+      await Payment.create({
+        bookingId: booking.id,
+        userId,
+        amount: paymentCalculation.depositAmount,
+        currency: paymentCalculation.currency,
+        paymentType: 'DEPOSIT',
+        paymentStatus: 'PAID',
+        paymentMethod,
+        stripePaymentIntentId: paymentIntentId,
+        paidAt: new Date(),
+      }, { transaction });
+    }
 
     // Auto-assign chauffeur if booking type is CHAUFFEUR
     if (bookingType === 'CHAUFFEUR') {

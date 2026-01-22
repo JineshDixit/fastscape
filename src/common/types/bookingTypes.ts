@@ -9,6 +9,7 @@ export interface CreateBookingData {
   dropoffLocation: string;
   bookingType?: (typeof dbEnums.BOOKING_TYPE)[number];
   paymentMethod?: (typeof dbEnums.PAYMENT_METHOD)[number];
+  paymentIntentId?: string;
   chauffeurInstructions?: string;
   notes?: string;
 }

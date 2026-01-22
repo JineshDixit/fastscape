@@ -1,4 +1,4 @@
-import { User, RefreshToken } from '../../models';
+import { User, RefreshToken, Address } from '../../models';
 import { LoginRequest, RegisterRequest, AuthResponse, RefreshTokenResponse } from '../../common/types/authTypes';
 import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';

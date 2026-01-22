@@ -16,6 +16,14 @@ class BookingController extends BaseController {
   });
 
   /**
+   * Get booking quote without persistence
+   */
+  getBookingQuote = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const quote = await bookingService.getBookingQuote(req.body);
+    sendSuccess(res, 'Booking quote generated', quote);
+  });
+
+  /**
    * Check vehicle availability for specific dates
    */
   checkAvailability = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -171,6 +179,7 @@ const bookingController = new BookingController();
 
 export const { 
   createBooking, 
+  getBookingQuote,
   checkAvailability,
   confirmBooking,
   startBooking,

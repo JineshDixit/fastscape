@@ -35,8 +35,11 @@ export const generateRefreshToken = (payload: Omit<JwtPayload, 'type'>): string 
  * Generate both access and refresh tokens
  */
 export const generateTokenPair = (payload: Omit<JwtPayload, 'type'>): TokenPair => {
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
+  const jti = generateSecureToken();
+  const tokenPayload = { ...payload, jti };
+  
+  const accessToken = generateAccessToken(tokenPayload);
+  const refreshToken = generateRefreshToken(tokenPayload);
 
   // Calculate expiration dates
   const accessTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes

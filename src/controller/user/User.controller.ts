@@ -20,6 +20,17 @@ class UserController extends BaseController {
   updateUserProfile = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
     const updateData = req.body;
+    
+    // Parse addresses if sent as JSON string (from FormData)
+    if (typeof updateData.addresses === 'string') {
+      try {
+        updateData.addresses = JSON.parse(updateData.addresses);
+      } catch (e) {
+        // invalid json, ignore or let validation handle it
+        updateData.addresses = [];
+      }
+    }
+
     const files = (req as any).files;
     const updatedUser = await userService.updateUser(userId, updateData, files);
     sendSuccess(res, 'Profile updated successfully', updatedUser);
@@ -46,4 +57,9 @@ class UserController extends BaseController {
 
 const userController = new UserController();
 
-export const { getCurrentUser, updateUserProfile, deleteUserAccount, getUserStats } = userController;
+export const { 
+  getCurrentUser, 
+  updateUserProfile, 
+  deleteUserAccount, 
+  getUserStats
+} = userController;

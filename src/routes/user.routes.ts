@@ -21,4 +21,7 @@ router.delete('/profile', userController.deleteUserAccount);
 // Get user statistics
 router.get('/stats', userController.getUserStats);
 
+// Address Management Routes (Moved to Aggregate)
+// router.post('/address', userController.addAddress);
+
 export default router;

@@ -55,19 +55,19 @@ server.use(notFoundHandler);
 // Global error handler
 server.use(errorHandler);
 
-server.listen(PORT, () => {
-  Logger.info(`Server is running on port ${PORT}`);
-});
+// server.listen moved to initialization block below
 
 (async () => {
   try {
-    initPostgres_DB();
-
+    await initPostgres_DB();
     startTokenCleanupJob();
+    Logger.info('Database initialized and synchronized');
 
-    Logger.info('Database initialized successfully');
-  } catch (error) {
-    Logger.error('Failed to initialize database');
+    server.listen(PORT, () => {
+      Logger.info(`Server is running on port ${PORT}`);
+    });
+  } catch (error: any) {
+    Logger.error('Failed to initialize database', { error: error.message });
     process.exit(1);
   }
 })();
