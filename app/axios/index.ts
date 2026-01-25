@@ -3,6 +3,7 @@ export { authService } from './services/auth';
 export { userService } from './services/user';
 export { bookingService } from './services/booking';
 export { paymentService } from './services/payment';
+export { locationService } from './services/location';
 
 // Export hooks
 export { useVehicle, useUser, useBooking } from './hooks';

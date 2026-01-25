@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 
 type FloatingInputProps = React.ComponentProps<'input'> & {
   label: string;
+  endContent?: React.ReactNode;
 };
 
-function FloatingInput({ className, type = 'text', label, id, ...props }: FloatingInputProps) {
+function FloatingInput({ className, type = 'text', label, id, endContent, ...props }: FloatingInputProps) {
   const inputId = id ?? React.useId();
 
   return (
@@ -20,6 +21,7 @@ function FloatingInput({ className, type = 'text', label, id, ...props }: Floati
           'peer bg-background h-14 w-full rounded-md px-3.5 pt-4 pb-1.5 text-sm outline-none',
           'transition-colors duration-200',
           'disabled:cursor-not-allowed disabled:opacity-50',
+          endContent ? 'pr-10' : '',
           className,
         )}
         {...props}
@@ -64,6 +66,12 @@ function FloatingInput({ className, type = 'text', label, id, ...props }: Floati
       >
         {label}
       </label>
+
+      {endContent && (
+        <div className="text-muted-foreground absolute top-1/2 right-3 flex -translate-y-1/2 items-center justify-center">
+          {endContent}
+        </div>
+      )}
     </div>
   );
 }

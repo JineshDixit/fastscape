@@ -7,13 +7,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { FloatingInput } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useEffect } from 'react';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import DatePicker from '@/components/ui/date-picker';
 import { ChipToggle } from '@/components/ui/chip-toggle';
 import z from 'zod';
 import { useVehicle } from '@/app/axios';
 import { useRouter } from '@/localization/navigation';
+import { useEffect, useState } from 'react';
+import { useLocation } from '@/app/axios/hooks/useLocation';
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from '@/components/ui/combobox';
 
 export function CarSearchForm() {
   const t = useTranslations('carSearch');
@@ -56,8 +65,10 @@ export function CarSearchForm() {
     },
   });
 
+  const { locations } = useLocation();
   const sameAddress = form.watch('sameAddress');
   const fromAddress = form.watch('from');
+  const needDriver = form.watch('needDriver');
 
   useEffect(() => {
     if (sameAddress) {
@@ -91,6 +102,21 @@ export function CarSearchForm() {
     router.push('/vehicles');
     form.reset();
   };
+
+  const [fromQuery, setFromQuery] = useState('');
+  const [toQuery, setToQuery] = useState('');
+
+  // Sync query with form value (initial load or external change)
+  useEffect(() => {
+    if (form.getValues('from')) setFromQuery(form.getValues('from'));
+    if (form.getValues('to')) setToQuery(form.getValues('to'));
+  }, [form.getValues('from'), form.getValues('to')]);
+
+  const filteredFromLocations =
+    fromQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(fromQuery.toLowerCase()));
+
+  const filteredToLocations =
+    toQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(toQuery.toLowerCase()));
 
   return (
     <Form {...form}>
@@ -131,7 +157,56 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <FloatingInput label={t('from')} {...field} />
+                {needDriver ? (
+                  <Combobox
+                    value={
+                      locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
+                    }
+                    onValueChange={(val) => {
+                      if (val) {
+                        field.onChange(val.label);
+                        setFromQuery(''); // Reset query on selection or set to label? usually reset or set to label.
+                        // Actually, if we want the input to show the selected value, we rely on the Combobox rendering the value.
+                        if (form.getValues('sameAddress')) {
+                          form.setValue('to', val.label);
+                        }
+                      } else {
+                        field.onChange('');
+                      }
+                    }}
+                  >
+                    <ComboboxInput
+                      placeholder={t('from')}
+                      className="bg-background h-14 w-full"
+                      value={fromQuery}
+                      onChange={(e) => {
+                        setFromQuery(e.target.value);
+                        // Optional: Clear selection if user types something new?
+                        // field.onChange(''); // Uncomment if strict selection is required immediately
+                      }}
+                      onBlur={() => {
+                        // Restore value if nothing selected? Or keep query?
+                        // If field.value exists, maybe reset query to it?
+                        if (field.value) setFromQuery(field.value);
+                      }}
+                    />
+                    <ComboboxContent>
+                      <ComboboxList>
+                        {filteredFromLocations.length > 0 ? (
+                          filteredFromLocations.map((location) => (
+                            <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
+                              {location.name}
+                            </ComboboxItem>
+                          ))
+                        ) : (
+                          <ComboboxEmpty>No locations found</ComboboxEmpty>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
+                ) : (
+                  <FloatingInput label={t('from')} {...field} />
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -157,12 +232,53 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <FloatingInput
-                  label={t('to')}
-                  {...field}
-                  disabled={sameAddress}
-                  className={sameAddress ? 'cursor-not-allowed opacity-50' : ''}
-                />
+                {needDriver ? (
+                  <Combobox
+                    value={
+                      locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
+                    }
+                    onValueChange={(val) => {
+                      if (val) {
+                        field.onChange(val.label);
+                        setToQuery('');
+                      } else {
+                        field.onChange('');
+                      }
+                    }}
+                    disabled={sameAddress}
+                  >
+                    <ComboboxInput
+                      placeholder={t('to')}
+                      className={`bg-background h-14 w-full ${sameAddress ? 'cursor-not-allowed opacity-50' : ''}`}
+                      disabled={sameAddress}
+                      value={toQuery}
+                      onChange={(e) => setToQuery(e.target.value)}
+                      onBlur={() => {
+                        if (field.value) setToQuery(field.value);
+                      }}
+                    />
+                    <ComboboxContent>
+                      <ComboboxList>
+                        {filteredToLocations.length > 0 ? (
+                          filteredToLocations.map((location) => (
+                            <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
+                              {location.name}
+                            </ComboboxItem>
+                          ))
+                        ) : (
+                          <ComboboxEmpty>No locations found</ComboboxEmpty>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
+                ) : (
+                  <FloatingInput
+                    label={t('to')}
+                    {...field}
+                    disabled={sameAddress}
+                    className={sameAddress ? 'cursor-not-allowed opacity-50' : ''}
+                  />
+                )}
               </FormControl>
               <FormMessage />
             </FormItem>

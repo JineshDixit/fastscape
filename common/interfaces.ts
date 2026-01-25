@@ -169,6 +169,16 @@ export interface Address {
   isDefault?: boolean;
 }
 
+export interface Location {
+  id: string;
+  name: string;
+  type: 'AIRPORT' | 'CITY' | 'HOTEL' | 'BRANCH' | 'OTHER';
+  address: string;
+  city: string;
+  code: string;
+  isActive: boolean;
+}
+
 // Auth Types
 export interface User {
   id: string;
