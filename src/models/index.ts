@@ -11,6 +11,7 @@ import { initPaymentModel, Payment } from './payment.model';
 import { initRefreshTokenModel, RefreshToken } from './refreshToken.model';
 import { initChauffeurModel, Chauffeur } from './chauffeur.model';
 import { initChauffeurReviewModel, ChauffeurReview } from './chauffeurReview.model';
+import { initLocationModel, Location } from './location.model';
 
 let sequelize: Sequelize;
 
@@ -21,7 +22,7 @@ let sequelize: Sequelize;
  *
  * @returns {void} - nothing
  */
-const initPostgres_DB = (): void => {
+const initPostgres_DB = async(): Promise<void> => {
   const config = dbConfig;
 
   sequelize = new Sequelize(config.POSTGRES_DB.database, config.POSTGRES_DB.userName, config.POSTGRES_DB.password, {
@@ -53,6 +54,7 @@ const initPostgres_DB = (): void => {
   initRefreshTokenModel(sequelize);
   initChauffeurModel(sequelize);
   initChauffeurReviewModel(sequelize);
+  initLocationModel(sequelize);
 
   //Associations
   User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
@@ -105,4 +107,5 @@ export {
   RefreshToken,
   Chauffeur,
   ChauffeurReview,
+  Location,
 };

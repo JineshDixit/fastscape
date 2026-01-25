@@ -162,9 +162,9 @@ export const getAvailableVehicles = async (
     id: { [Op.notIn]: unavailableVehicleIds },
   };
 
-  if (pickupLocation) {
-    whereClause.city = { [Op.iLike]: `%${pickupLocation}%` };
-  }
+  // if (pickupLocation) {
+  //   whereClause.city = { [Op.iLike]: `%${pickupLocation}%` };
+  // }
 
   // Apply additional filters
   if (otherFilters.make) whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
