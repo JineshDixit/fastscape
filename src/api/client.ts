@@ -70,7 +70,9 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // Handle 401 errors by clearing tokens and redirecting
+    const originalRequest = error.config;
+
+    // Handle 401 errors by attempting to refresh token
     const publicEndpoints = [
       '/auth/login',
       '/auth/register',
@@ -78,19 +80,40 @@ apiClient.interceptors.response.use(
       '/auth/forgot-password',
       '/auth/reset-password',
     ];
-    const isPublicEndpoint = publicEndpoints.some((endpoint) => error.config?.url?.includes(endpoint));
+    const isPublicEndpoint = publicEndpoints.some((endpoint) => originalRequest?.url?.includes(endpoint));
 
-    if (error.response?.status === 401 && !isPublicEndpoint) {
-      console.error('401 Unauthorized - Clearing tokens');
+    // If 401 and not already retried and not a public endpoint
+    if (error.response?.status === 401 && !originalRequest._retry && !isPublicEndpoint) {
+      originalRequest._retry = true;
 
-      // Import authService here to avoid circular dependency
-      const { authService } = await import('./services/auth');
-      authService.clearTokens();
+      try {
+        if (import.meta.env.DEV) {
+          console.warn('401 detected, attempting token refresh and retry...');
+        }
 
-      // Only redirect if not already on login page
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        // Import authService here to avoid circular dependency
+        const { authService } = await import('./services/auth');
+
+        // This will attempt to refresh the token
+        const validToken = await authService.getValidAccessToken();
+
+        if (validToken) {
+          // Update the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${validToken}`;
+          // Retry the request
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed during 401 retry:', refreshError);
       }
+
+      // If refresh failed or was not possible, force logout
+      if (import.meta.env.DEV) {
+        console.error('Unauthorized and refresh failed - Force logout');
+      }
+
+      const { authService } = await import('./services/auth');
+      authService.forceLogout();
     }
 
     // Log other errors
