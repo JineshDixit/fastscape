@@ -31,9 +31,25 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
   const lastInitialDate = initialDates[initialDates.length - 1];
 
   const handleDateSelect = (date: Date) => {
-    // For single-day rental, both pickup and dropoff are the same date
-    // The backend should handle this as start of day to end of day
-    onDateChange(date, date);
+    const dateTime = startOfDay(date).getTime();
+
+    // If no dates selected, or if we already have a range selected, start fresh
+    if (!start || (start && end && start.getTime() !== end.getTime())) {
+      // First click: set as single-day rental
+      onDateChange(date, date);
+    } else if (start && end && start.getTime() === end.getTime()) {
+      // We have a single day selected, now selecting second date for range
+      if (dateTime === start.getTime()) {
+        // Clicked same date again - keep as single day
+        return;
+      } else if (dateTime > start.getTime()) {
+        // Selected date after start - create range
+        onDateChange(start, date);
+      } else {
+        // Selected date before start - reset with new start date
+        onDateChange(date, date);
+      }
+    }
   };
 
   const isExtendedRange = end && end > lastInitialDate;
@@ -47,7 +63,9 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
         <div className="flex flex-wrap items-center gap-2">
           {visibleDates.map((date, idx) => {
             const d = startOfDay(date);
-            const isSelected = start && d.getTime() === start.getTime();
+            const isPickup = start && d.getTime() === start.getTime();
+            const isDropoff = end && d.getTime() === end.getTime();
+            const isSelected = isPickup || isDropoff;
             const isInRange = start && end && start.getTime() !== end.getTime() && isWithinInterval(d, { start, end });
 
             const showEllipsisBefore = isExtendedRange && idx === 3;
@@ -60,7 +78,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
                 <Button
                   onClick={() => handleDateSelect(date)}
                   className={cn(
-                    'flex h-12 w-12 flex-col gap-0.5 items-center justify-center rounded-xl border text-center transition-all duration-200',
+                    'flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-xl border text-center transition-all duration-200',
                     isSelected
                       ? 'border-primary bg-primary hover:bg-primary hover:border-primary text-white hover:text-white'
                       : isInRange
@@ -86,13 +104,18 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({ bookingData, onSe
             <PopoverContent className="w-auto border-none p-0 shadow-xl" align="start">
               <Calendar
                 initialFocus
-                mode="single"
+                mode="range"
                 defaultMonth={start || now}
-                selected={start || undefined}
-                onSelect={(date) => {
-                  if (date) {
-                    handleDateSelect(date);
-                    setCalendarOpen(false);
+                selected={start && end ? { from: start, to: end } : undefined}
+                onSelect={(range) => {
+                  if (range?.from) {
+                    if (range.to) {
+                      onDateChange(range.from, range.to);
+                      setCalendarOpen(false);
+                    } else {
+                      // Only 'from' is selected, set as same-day rental
+                      onDateChange(range.from, range.from);
+                    }
                   }
                 }}
                 numberOfMonths={1}
