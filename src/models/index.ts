@@ -28,6 +28,10 @@ const initPostgres_DB = (): void => {
     host: config.POSTGRES_DB.host,
     port: +config.POSTGRES_DB.port,
     dialect: 'postgres',
+    timezone: '+00:00', // Force UTC timezone for all operations
+    dialectOptions: {
+      timezone: 'UTC', // PostgreSQL session timezone
+    },
     logging: false,
     pool: {
       max: 5,

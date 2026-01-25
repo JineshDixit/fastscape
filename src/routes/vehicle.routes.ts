@@ -14,6 +14,13 @@ router.get('/filters/metadata', vehicleController.getVehicleFilterMetadata);
 
 router.get('/available', vehicleController.getAvailableVehicles);
 
+router.get(
+  '/:id/availability',
+  vehicleIdValidation,
+  handleValidationErrors,
+  vehicleController.checkVehicleAvailability,
+);
+
 router.get('/:id', vehicleIdValidation, handleValidationErrors, vehicleController.getVehicleById);
 
 export default router;

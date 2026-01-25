@@ -1,3 +1,7 @@
+// Set timezone to UTC before any other code runs
+// This ensures consistent behavior across US and Dubai deployments
+process.env.TZ = 'UTC';
+
 import './config/env/envConfig';
 import express from 'express';
 import cors from 'cors';

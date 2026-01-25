@@ -4,6 +4,7 @@ import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
 import { AuthenticatedRequest } from 'expressTypes';
 import { dbEnums } from '../../common/enum/dbEnums';
+import { createError } from '../../services/middleware/errorHandler';
 
 class VehicleController extends BaseController {
   /**
@@ -95,6 +96,22 @@ class VehicleController extends BaseController {
     const result = await vehicleService.getAvailableVehicles(searchQuery, pagination);
     sendSuccess(res, 'Available vehicles retrieved successfully', result);
   });
+
+  /**
+   * Check if a specific vehicle is available for a date range
+   */
+  checkVehicleAvailability = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const id = this.getValidatedId(req, 'id');
+    const pickupDate = req.query.pickupDate as string;
+    const dropoffDate = req.query.dropoffDate as string;
+
+    if (!pickupDate || !dropoffDate) {
+      throw createError('pickupDate and dropoffDate are required', 400);
+    }
+
+    const result = await vehicleService.checkVehicleAvailability(id, pickupDate, dropoffDate);
+    sendSuccess(res, 'Vehicle availability checked successfully', result);
+  });
 }
 
 const vehicleController = new VehicleController();
@@ -106,4 +123,5 @@ export const {
   getVehicleBodyTypeSummary,
   getVehicleFilterMetadata,
   getAvailableVehicles,
+  checkVehicleAvailability,
 } = vehicleController;

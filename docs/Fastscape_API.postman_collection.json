@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "fastscape-api-collection",
-		"name": "Fastscape API",
-		"description": "API collection for Fastscape Backend - Auth and Vehicle modules",
+		"name": "Fastscape API - Complete",
+		"description": "Complete API collection for Fastscape Backend - Auth, Vehicles, Bookings, Payments, Chauffeurs, and Users",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -13,10 +13,15 @@
 					"name": "Register",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"fullName\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"Password@123\",\n    \"phone\": \"+1234567890\",\n    \"dateOfBirth\": \"1990-01-01\",\n    \"nationality\": \"American\"\n}",
+							"raw": "{\n    \"fullName\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"Password@123\",\n    \"phone\": \"+1234567890\",\n    \"dateOfBirth\": \"1990-01-01\",\n    \"nationality\": \"American\",\n    \"city\": \"Dubai\",\n    \"state\": \"Dubai\",\n    \"country\": \"UAE\",\n    \"zipCode\": \"12345\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -47,6 +52,7 @@
 									"if (jsonData.success) {",
 									"    pm.environment.set(\"accessToken\", jsonData.data.tokens.accessToken);",
 									"    pm.environment.set(\"refreshToken\", jsonData.data.tokens.refreshToken);",
+									"    pm.environment.set(\"userId\", jsonData.data.user.id);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -55,7 +61,12 @@
 					],
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"Password@123\"\n}",
@@ -80,9 +91,29 @@
 				},
 				{
 					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success) {",
+									"    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
@@ -109,7 +140,12 @@
 					"name": "Forgot Password",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"john@example.com\"\n}",
@@ -136,7 +172,12 @@
 					"name": "Verify OTP",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"john@example.com\",\n    \"otp\": \"123456\"\n}",
@@ -163,7 +204,12 @@
 					"name": "Reset Password",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"email\": \"john@example.com\",\n    \"otp\": \"123456\",\n    \"newPassword\": \"NewPassword@123\"\n}",
@@ -190,7 +236,12 @@
 					"name": "Logout",
 					"request": {
 						"method": "POST",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
@@ -252,7 +303,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/vehicles?page=1&limit=10&isAvailable=true",
+							"raw": "{{baseUrl}}/vehicles?page=1&limit=10&isAvailable=true&bodyType=SUV&transmission=Automatic&fuelType=Petrol&minPrice=50&maxPrice=500&search=BMW",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -271,6 +322,46 @@
 								{
 									"key": "isAvailable",
 									"value": "true"
+								},
+								{
+									"key": "bodyType",
+									"value": "SUV",
+									"disabled": true
+								},
+								{
+									"key": "transmission",
+									"value": "Automatic",
+									"disabled": true
+								},
+								{
+									"key": "fuelType",
+									"value": "Petrol",
+									"disabled": true
+								},
+								{
+									"key": "minPrice",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "maxPrice",
+									"value": "500",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "BMW",
+									"disabled": true
+								},
+								{
+									"key": "sortBy",
+									"value": "pricePerDay",
+									"disabled": true
+								},
+								{
+									"key": "sortOrder",
+									"value": "ASC",
+									"disabled": true
 								}
 							]
 						}
@@ -283,7 +374,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/vehicles/available?pickupLocation=Dubai&pickupDate=2026-01-10T10:00:00Z&dropoffDate=2026-01-15T10:00:00Z",
+							"raw": "{{baseUrl}}/vehicles/available?pickupLocation=Dubai&pickupDate=2026-02-10T10:00:00Z&dropoffDate=2026-02-15T10:00:00Z&bodyType=SUV&transmission=Automatic&page=1&limit=10",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -294,26 +385,95 @@
 							"query": [
 								{
 									"key": "pickupLocation",
-									"value": "Dubai"
+									"value": "Dubai",
+									"description": "Optional - Filter by pickup location"
 								},
 								{
 									"key": "pickupDate",
-									"value": "2026-01-10T10:00:00Z"
+									"value": "2026-02-10T10:00:00Z",
+									"description": "Required - Pickup date in ISO format"
 								},
 								{
 									"key": "dropoffDate",
-									"value": "2026-01-15T10:00:00Z"
+									"value": "2026-02-15T10:00:00Z",
+									"description": "Required - Dropoff date in ISO format"
 								},
 								{
 									"key": "bodyType",
 									"value": "SUV",
-									"disabled": true
+									"disabled": true,
+									"description": "Optional - Filter by vehicle body type"
 								},
 								{
 									"key": "transmission",
 									"value": "Automatic",
-									"disabled": true
+									"disabled": true,
+									"description": "Optional - Filter by transmission type"
+								},
+								{
+									"key": "fuelType",
+									"value": "Petrol",
+									"disabled": true,
+									"description": "Optional - Filter by fuel type"
+								},
+								{
+									"key": "minPrice",
+									"value": "100",
+									"disabled": true,
+									"description": "Optional - Minimum price per day"
+								},
+								{
+									"key": "maxPrice",
+									"value": "1000",
+									"disabled": true,
+									"description": "Optional - Maximum price per day"
+								},
+								{
+									"key": "search",
+									"value": "luxury",
+									"disabled": true,
+									"description": "Optional - Search term"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Optional - Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Optional - Items per page (default: 10, max: 100)"
+								},
+								{
+									"key": "sortBy",
+									"value": "pricePerDay",
+									"disabled": true,
+									"description": "Optional - Sort field"
+								},
+								{
+									"key": "sortOrder",
+									"value": "ASC",
+									"disabled": true,
+									"description": "Optional - Sort order (ASC/DESC)"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vehicle by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/vehicles/{{vehicleId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"vehicles",
+								"{{vehicleId}}"
 							]
 						}
 					},
@@ -332,25 +492,6 @@
 							"path": [
 								"vehicles",
 								"stats"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Filter Metadata",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/vehicles/filters/metadata",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"vehicles",
-								"filters",
-								"metadata"
 							]
 						}
 					},
@@ -376,23 +517,1248 @@
 					"response": []
 				},
 				{
-					"name": "Get Vehicle by ID",
+					"name": "Get Filter Metadata",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/vehicles/:id",
+							"raw": "{{baseUrl}}/vehicles/filters/metadata",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"vehicles",
-								":id"
-							],
-							"variable": [
+								"filters",
+								"metadata"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bookings",
+			"item": [
+				{
+					"name": "Check Vehicle Availability",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
 								{
-									"key": "id",
-									"value": "REPLACE_WITH_UUID"
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicleId\": \"{{vehicleId}}\",\n    \"startDatetime\": \"2026-02-10T10:00:00Z\",\n    \"endDatetime\": \"2026-02-15T10:00:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/check-availability",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"check-availability"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.environment.set(\"bookingId\", jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicleId\": \"{{vehicleId}}\",\n    \"startDatetime\": \"2026-02-10T10:00:00Z\",\n    \"endDatetime\": \"2026-02-15T10:00:00Z\",\n    \"pickupLocation\": \"Dubai International Airport, Terminal 3, Dubai, UAE\",\n    \"dropoffLocation\": \"Dubai Mall, Downtown Dubai, Dubai, UAE\",\n    \"bookingType\": \"SELF_DRIVE\",\n    \"paymentMethod\": \"ONLINE\",\n    \"notes\": \"Please ensure the vehicle is clean and fueled\",\n    \"chauffeurInstructions\": \"Pick up from Terminal 3 arrivals hall\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Chauffeur Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vehicleId\": \"{{vehicleId}}\",\n    \"startDatetime\": \"2026-02-20T09:00:00Z\",\n    \"endDatetime\": \"2026-02-22T18:00:00Z\",\n    \"pickupLocation\": \"Burj Al Arab Hotel, Dubai, UAE\",\n    \"dropoffLocation\": \"Dubai International Airport, Terminal 1, Dubai, UAE\",\n    \"bookingType\": \"CHAUFFEUR\",\n    \"paymentMethod\": \"ONLINE\",\n    \"chauffeurInstructions\": \"Professional attire required. Client prefers English-speaking chauffeur. Airport pickup from Terminal 1.\",\n    \"notes\": \"VIP client - ensure premium service\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Bookings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings?page=1&limit=10&status=PENDING&vehicleType=SUV&startDate=2026-01-01&endDate=2026-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "PENDING",
+									"disabled": true
+								},
+								{
+									"key": "vehicleType",
+									"value": "SUV",
+									"disabled": true
+								},
+								{
+									"key": "startDate",
+									"value": "2026-01-01",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "2026-12-31",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Upcoming Bookings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/upcoming",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"upcoming"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Bookings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/active",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"active"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Booking Statistics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"stats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Booking History",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/history?year=2026&month=2&status=COMPLETED&vehicleType=SUV",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"history"
+							],
+							"query": [
+								{
+									"key": "year",
+									"value": "2026",
+									"disabled": true
+								},
+								{
+									"key": "month",
+									"value": "2",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "COMPLETED",
+									"disabled": true
+								},
+								{
+									"key": "vehicleType",
+									"value": "SUV",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Booking by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paymentIntentId\": \"pi_1234567890\",\n    \"actualPickupDatetime\": \"2026-02-10T10:30:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}/confirm",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}",
+								"confirm"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start Booking (Vehicle Pickup)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}/start",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}",
+								"start"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Booking (Vehicle Dropoff)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"actualDropoffDatetime\": \"2026-02-15T11:00:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}",
+								"complete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Extend Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"newEndDatetime\": \"2026-02-17T10:00:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}/extend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}",
+								"extend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"pickupLocation\": \"Updated pickup location\",\n    \"dropoffLocation\": \"Updated dropoff location\",\n    \"notes\": \"Updated booking notes\",\n    \"chauffeurInstructions\": \"Updated chauffeur instructions\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cancellationReason\": \"Change of travel plans\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bookings/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"bookings",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Calculate Payment Breakdown",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/calculate/{{bookingId}}?delayHours=2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"calculate",
+								"{{bookingId}}"
+							],
+							"query": [
+								{
+									"key": "delayHours",
+									"value": "2",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Process Deposit Payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paymentMethod\": \"ONLINE\",\n    \"stripePaymentIntentId\": \"pi_1234567890\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/deposit/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"deposit",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Process Balance Payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paymentMethod\": \"ONLINE\",\n    \"stripePaymentIntentId\": \"pi_0987654321\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/balance/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"balance",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply Delay Charges",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"delayHours\": 3,\n    \"paymentMethod\": \"ONLINE\",\n    \"stripePaymentIntentId\": \"pi_delay_123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/delay-charge/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"delay-charge",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment Summary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/summary/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"summary",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Payment Complete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"stripePaymentIntentId\": \"pi_completed_123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/complete/{{paymentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"complete",
+								"{{paymentId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Vehicle Picked Up",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/pickup/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"pickup",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Vehicle Dropped Off",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"actualDropoffDatetime\": \"2026-02-15T11:30:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/dropoff/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"dropoff",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Overdue Payments",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/payments/overdue",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"overdue"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chauffeurs",
+			"item": [
+				{
+					"name": "Get Available Chauffeurs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs/available?startDatetime=2026-02-10T10:00:00Z&endDatetime=2026-02-15T10:00:00Z&vehicleType=SUV&city=Dubai&minRating=4.0&maxHourlyRate=100&languages=English,Arabic&experienceLevel=EXPERIENCED",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs",
+								"available"
+							],
+							"query": [
+								{
+									"key": "startDatetime",
+									"value": "2026-02-10T10:00:00Z"
+								},
+								{
+									"key": "endDatetime",
+									"value": "2026-02-15T10:00:00Z"
+								},
+								{
+									"key": "vehicleType",
+									"value": "SUV",
+									"disabled": true
+								},
+								{
+									"key": "city",
+									"value": "Dubai",
+									"disabled": true
+								},
+								{
+									"key": "minRating",
+									"value": "4.0",
+									"disabled": true
+								},
+								{
+									"key": "maxHourlyRate",
+									"value": "100",
+									"disabled": true
+								},
+								{
+									"key": "languages",
+									"value": "English,Arabic",
+									"disabled": true
+								},
+								{
+									"key": "experienceLevel",
+									"value": "EXPERIENCED",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auto-Assign Chauffeur",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"preferences\": {\n        \"minRating\": 4.5,\n        \"maxHourlyRate\": 80,\n        \"languages\": [\"English\", \"Arabic\"]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs/auto-assign/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs",
+								"auto-assign",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Specific Chauffeur",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs/assign/{{bookingId}}/{{chauffeurId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs",
+								"assign",
+								"{{bookingId}}",
+								"{{chauffeurId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Chauffeur from Booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs/remove/{{bookingId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs",
+								"remove",
+								"{{bookingId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chauffeur Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs/{{chauffeurId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs",
+								"{{chauffeurId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chauffeur Metrics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs/{{chauffeurId}}/metrics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs",
+								"{{chauffeurId}}",
+								"metrics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Chauffeurs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/chauffeurs?page=1&limit=10&status=AVAILABLE&city=Dubai&minRating=4.0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"chauffeurs"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "AVAILABLE",
+									"disabled": true
+								},
+								{
+									"key": "city",
+									"value": "Dubai",
+									"disabled": true
+								},
+								{
+									"key": "minRating",
+									"value": "4.0",
+									"disabled": true
 								}
 							]
 						}
@@ -407,6 +1773,16 @@
 				{
 					"name": "Get Profile",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -425,6 +1801,16 @@
 				{
 					"name": "Update Profile",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
 						"header": [],
 						"body": {
@@ -442,22 +1828,27 @@
 								},
 								{
 									"key": "city",
-									"value": "New York",
+									"value": "Dubai",
 									"type": "text"
 								},
 								{
 									"key": "state",
-									"value": "NY",
+									"value": "Dubai",
 									"type": "text"
 								},
 								{
 									"key": "country",
-									"value": "USA",
+									"value": "UAE",
+									"type": "text"
+								},
+								{
+									"key": "zipCode",
+									"value": "12345",
 									"type": "text"
 								},
 								{
 									"key": "licenseIssuingCountry",
-									"value": "USA",
+									"value": "UAE",
 									"type": "text"
 								},
 								{
@@ -467,33 +1858,43 @@
 								},
 								{
 									"key": "drivingExperienceYears",
-									"value": "5",
+									"value": "8",
+									"type": "text"
+								},
+								{
+									"key": "visaStatus",
+									"value": "Resident",
 									"type": "text"
 								},
 								{
 									"key": "driverLicenseFront",
 									"type": "file",
-									"src": []
+									"src": [],
+									"disabled": true
 								},
 								{
 									"key": "driverLicenseBack",
 									"type": "file",
-									"src": []
+									"src": [],
+									"disabled": true
 								},
 								{
 									"key": "passportPhoto",
 									"type": "file",
-									"src": []
+									"src": [],
+									"disabled": true
 								},
 								{
 									"key": "internationalDrivingPermit",
 									"type": "file",
-									"src": []
+									"src": [],
+									"disabled": true
 								},
 								{
 									"key": "selfieWithLicense",
 									"type": "file",
-									"src": []
+									"src": [],
+									"disabled": true
 								}
 							]
 						},
@@ -509,6 +1910,84 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get User Statistics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"stats"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Account",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "API Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
@@ -517,6 +1996,41 @@
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:3000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "vehicleId",
+			"value": "REPLACE_WITH_ACTUAL_VEHICLE_UUID",
+			"type": "string"
+		},
+		{
+			"key": "bookingId",
+			"value": "REPLACE_WITH_ACTUAL_BOOKING_UUID",
+			"type": "string"
+		},
+		{
+			"key": "chauffeurId",
+			"value": "REPLACE_WITH_ACTUAL_CHAUFFEUR_UUID",
+			"type": "string"
+		},
+		{
+			"key": "paymentId",
+			"value": "REPLACE_WITH_ACTUAL_PAYMENT_UUID",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
 			"type": "string"
 		}
 	]
