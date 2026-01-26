@@ -25,6 +25,7 @@ export interface VehicleState {
     pickupDate: string | null;
     dropoffDate: string | null;
     pickupLocation: string | null;
+    dropoffLocation: string | null;
     bookingType: 'SELF_DRIVE' | 'CHAUFFEUR';
   };
   isLoading: boolean;
@@ -48,6 +49,7 @@ const initialState: VehicleState = {
     pickupDate: null,
     dropoffDate: null,
     pickupLocation: null,
+    dropoffLocation: null,
     bookingType: 'SELF_DRIVE',
   },
   isLoading: false,

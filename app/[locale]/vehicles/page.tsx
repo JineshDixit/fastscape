@@ -119,7 +119,7 @@ const VehiclePage = () => {
   return (
     <main className="global-container mb-8">
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-        <aside className="shadow-booking-engine sticky top-24 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+        <aside className="border-2 border-gray-100  sticky top-24 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
           <span className="text-base leading-6 font-bold md:text-lg">{t('title')}</span>
           <CarFilter />
         </aside>
@@ -127,25 +127,6 @@ const VehiclePage = () => {
           <section>
             <div className="text-center">
               <h3 className="text-lg font-semibold">{t('exploreCars')}</h3>
-              {hasSearchCriteria && (
-                <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600">
-                  <span>Showing available vehicles for:</span>
-                  <span className="font-medium">{bookingData.pickupLocation}</span>
-                  <span>•</span>
-                  <span className="font-medium">
-                    {new Date(bookingData.pickupDate!).toLocaleDateString()} - {new Date(bookingData.dropoffDate!).toLocaleDateString()}
-                  </span>
-                  <button
-                    onClick={() => {
-                      // Clear search criteria and show all vehicles
-                      window.location.href = '/vehicles';
-                    }}
-                    className="ml-2 text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Clear search
-                  </button>
-                </div>
-              )}
             </div>
             <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3">
               {vehicles.length > 0 ? (

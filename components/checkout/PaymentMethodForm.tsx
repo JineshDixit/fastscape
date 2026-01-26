@@ -23,7 +23,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
   onBack,
   isLoading,
   vehicle,
-  bookingData
+  bookingData,
 }) => {
   const [method, setMethod] = useState<'ONLINE' | 'CARD' | 'CASH'>('ONLINE');
   const [payFull, setPayFull] = useState(false);
@@ -33,9 +33,13 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
     if (breakdown) return breakdown;
 
     // Calculate fallback breakdown from vehicle and booking data
-    const days = bookingData?.pickupDate && bookingData?.dropoffDate
-      ? Math.ceil((new Date(bookingData.dropoffDate).getTime() - new Date(bookingData.pickupDate).getTime()) / (1000 * 60 * 60 * 24))
-      : 1;
+    const days =
+      bookingData?.pickupDate && bookingData?.dropoffDate
+        ? Math.ceil(
+            (new Date(bookingData.dropoffDate).getTime() - new Date(bookingData.pickupDate).getTime()) /
+              (1000 * 60 * 60 * 24),
+          )
+        : 1;
 
     const dailyRate = vehicle ? parseFloat(vehicle.pricePerDay) : 1200;
     const baseAmount = dailyRate * days;
@@ -43,19 +47,18 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
     const totalAmount = baseAmount + taxAmount;
     const depositAmount = Math.round(totalAmount * 0.3); // 30% deposit
 
+    const balanceAmount = totalAmount - depositAmount;
+    const depositPercentage = vehicle?.depositPercentage ? parseFloat(vehicle.depositPercentage) : 30;
+
     return {
-      baseAmount,
-      taxAmount,
-      totalAmount,
-      depositAmount,
+      baseAmount: baseAmount.toString(),
+      taxAmount: taxAmount.toString(),
+      totalAmount: totalAmount.toString(),
+      depositAmount: depositAmount.toString(),
+      balanceAmount: balanceAmount.toString(),
       currency: vehicle?.currency || 'AED',
-      breakdown: {
-        dailyRate,
-        days,
-        subtotal: baseAmount,
-        tax: taxAmount,
-        total: totalAmount
-      }
+      daysCount: days,
+      depositPercentage: depositPercentage,
     };
   };
 
@@ -169,7 +172,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-primary text-base font-black">{currentBreakdown.currency}</span>
                 <span className="text-4xl font-black tracking-tighter text-gray-950 dark:text-white">
-                  {currentBreakdown.totalAmount.toLocaleString()}
+                  {Number(currentBreakdown.totalAmount).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -182,13 +185,13 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                     <Info className="h-3.5 w-3.5 cursor-help opacity-40" />
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.baseAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.baseAmount).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-bold tracking-tight text-gray-500 uppercase">
                   <span>Fees & Regulations</span>
                   <span className="text-gray-900 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.taxAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.taxAmount).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -210,7 +213,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                     Secure Deposit Only
                   </span>
                   <span className="mt-1 text-xl font-black text-gray-950 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.depositAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.depositAmount).toLocaleString()}
                   </span>
                 </button>
 
@@ -228,7 +231,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                     Full Journey Access
                   </span>
                   <span className="mt-1 text-xl font-black text-gray-950 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.totalAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.totalAmount).toLocaleString()}
                   </span>
                 </button>
               </div>
@@ -255,7 +258,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         <Button
           onClick={() => onNext(method, payFull)}
           disabled={isLoading}
-          className="group bg-primary hover:shadow-primary/30 animate-in fade-in slide-in-from-right-10 relative px-5 py-5 overflow-hidden rounded-md text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto"
+          className="group bg-primary hover:shadow-primary/30 animate-in fade-in slide-in-from-right-10 relative overflow-hidden rounded-md px-5 py-5 text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto"
         >
           <span className="relative z-10 flex items-center gap-3">
             {isLoading ? 'Synchronizing...' : 'Complete Booking'}

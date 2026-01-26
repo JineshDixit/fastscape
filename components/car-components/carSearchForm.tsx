@@ -88,6 +88,7 @@ export function CarSearchForm() {
 
     const bookingData = {
       pickupLocation: data.from,
+      dropoffLocation: data.to,
       pickupDate: formatDateForAPI(data.pickupDate),
       dropoffDate: formatDateForAPI(data.dropDate),
       bookingType: (data.needDriver ? 'SELF_DRIVE' : 'CHAUFFEUR') as 'SELF_DRIVE' | 'CHAUFFEUR',
@@ -110,7 +111,27 @@ export function CarSearchForm() {
   useEffect(() => {
     if (form.getValues('from')) setFromQuery(form.getValues('from'));
     if (form.getValues('to')) setToQuery(form.getValues('to'));
-  }, [form.getValues('from'), form.getValues('to')]);
+  }, [form.getValues('from'), form.getValues('to'), form]);
+
+  // Robust Fix for persistent scroll-lock bugs
+  useEffect(() => {
+    const fixScroll = () => {
+      if (typeof document !== 'undefined' && document.body) {
+        if (document.body.style.overflow === 'hidden' || document.body.dataset.scrollLocked) {
+          document.body.style.overflow = '';
+          document.body.style.pointerEvents = '';
+          delete document.body.dataset.scrollLocked;
+        }
+      }
+    };
+
+    fixScroll();
+    const timer = setTimeout(fixScroll, 100);
+    return () => {
+      clearTimeout(timer);
+      fixScroll();
+    };
+  }, [needDriver, sameAddress]);
 
   const filteredFromLocations =
     fromQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(fromQuery.toLowerCase()));
@@ -159,6 +180,7 @@ export function CarSearchForm() {
               <FormControl>
                 {needDriver ? (
                   <Combobox
+                    modal={false}
                     value={
                       locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
                     }
@@ -232,8 +254,14 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                {needDriver ? (
+                {/* 
+                   Fix: When sameAddress is true, we render a simple FloatingInput instead of the Combobox.
+                   This avoids potential scroll-lock bugs in the UI library when a component is portaled and then disabled.
+                   It also ensures the 'To' field correctly displays the synced value.
+                */}
+                {needDriver && !sameAddress ? (
                   <Combobox
+                    modal={false}
                     value={
                       locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
                     }
@@ -245,12 +273,10 @@ export function CarSearchForm() {
                         field.onChange('');
                       }
                     }}
-                    disabled={sameAddress}
                   >
                     <ComboboxInput
                       placeholder={t('to')}
-                      className={`bg-background h-14 w-full ${sameAddress ? 'cursor-not-allowed opacity-50' : ''}`}
-                      disabled={sameAddress}
+                      className="bg-background h-14 w-full"
                       value={toQuery}
                       onChange={(e) => setToQuery(e.target.value)}
                       onBlur={() => {
