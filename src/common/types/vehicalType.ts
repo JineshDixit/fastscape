@@ -1,9 +1,9 @@
 import { dbEnums } from '../enum/dbEnums';
 
 export interface VehicleFilterOptions {
-  make?: string;
-  model?: string;
-  bodyType?: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: BodyType | BodyType[];
   transmission?: (typeof dbEnums.TRANSMISSION_TYPE)[number];
   fuelType?: (typeof dbEnums.FUEL_TYPE)[number];
   isAvailable?: boolean;
@@ -13,6 +13,8 @@ export interface VehicleFilterOptions {
   search?: string;
   city?: string;
 }
+
+type BodyType = (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
 
 export interface VehicleSearchQuery extends VehicleFilterOptions {
   pickupLocation: string;

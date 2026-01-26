@@ -1,7 +1,7 @@
 import { PaginationOptions, VehicleFilterOptions, VehicleSearchQuery } from '../../common/types/vehicalType';
 import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
@@ -37,15 +37,24 @@ export const getVehicles = async (
   const whereClause: any = {};
 
   if (filters.make) {
-    whereClause.make = { [Op.iLike]: `%${filters.make}%` };
+    whereClause.make = Array.isArray(filters.make) ? { [Op.in]: filters.make } : { [Op.iLike]: `%${filters.make}%` };
   }
 
   if (filters.model) {
-    whereClause.model = { [Op.iLike]: `%${filters.model}%` };
+    const models = Array.isArray(filters.model) ? filters.model : [filters.model];
+    // Allow matching either the specific model OR the full 'Make Model' display name
+    whereClause[Op.or] = models.map((m) => ({
+      [Op.or]: [
+        { model: { [Op.iLike]: m } },
+        Sequelize.where(Sequelize.fn('CONCAT', Sequelize.col('make'), ' ', Sequelize.col('model')), {
+          [Op.iLike]: m,
+        }),
+      ],
+    }));
   }
 
   if (filters.bodyType) {
-    whereClause.bodyType = filters.bodyType;
+    whereClause.bodyType = Array.isArray(filters.bodyType) ? { [Op.in]: filters.bodyType } : filters.bodyType;
   }
 
   if (filters.transmission) {
@@ -167,9 +176,30 @@ export const getAvailableVehicles = async (
   // }
 
   // Apply additional filters
-  if (otherFilters.make) whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
-  if (otherFilters.model) whereClause.model = { [Op.iLike]: `%${otherFilters.model}%` };
-  if (otherFilters.bodyType) whereClause.bodyType = otherFilters.bodyType;
+  if (otherFilters.make) {
+    whereClause.make = Array.isArray(otherFilters.make)
+      ? { [Op.in]: otherFilters.make }
+      : { [Op.iLike]: `%${otherFilters.make}%` };
+  }
+
+  if (otherFilters.model) {
+    const models = Array.isArray(otherFilters.model) ? otherFilters.model : [otherFilters.model];
+    // Allow matching either the specific model OR the full 'Make Model' display name
+    whereClause[Op.or] = models.map((m) => ({
+      [Op.or]: [
+        { model: { [Op.iLike]: m } },
+        Sequelize.where(Sequelize.fn('CONCAT', Sequelize.col('make'), ' ', Sequelize.col('model')), {
+          [Op.iLike]: m,
+        }),
+      ],
+    }));
+  }
+
+  if (otherFilters.bodyType) {
+    whereClause.bodyType = Array.isArray(otherFilters.bodyType)
+      ? { [Op.in]: otherFilters.bodyType }
+      : otherFilters.bodyType;
+  }
   if (otherFilters.transmission) whereClause.transmission = otherFilters.transmission;
   if (otherFilters.fuelType) whereClause.fuelType = otherFilters.fuelType;
 
@@ -276,47 +306,58 @@ export const getVehicleBodyTypeSummary = async (): Promise<{ bodyType: string; c
 };
 
 export const getVehicleFilterMetadata = async () => {
+  // Use explicit aliases to ensure raw results match expected keys exactly
   const bodyTypeRaw = await Vehicle.findAll({
-    attributes: ['bodyType', 'make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    attributes: [
+      ['body_type', 'bodyType'],
+      'make',
+      'model',
+      [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count'],
+    ],
     where: { isAvailable: true },
-    group: ['bodyType', 'make', 'model'],
+    group: ['body_type', 'make', 'model'],
     raw: true,
   });
 
   const brandRaw = await Vehicle.findAll({
-    attributes: ['make', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    attributes: ['make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
     where: { isAvailable: true },
-    group: ['make'],
+    group: ['make', 'model'],
     raw: true,
   });
 
-  const bodyTypeMap = new Map<string, { count: number; vehicles: Set<string> }>();
-
+  const bodyTypeMap = new Map<string, { count: number; models: Set<string> }>();
   (bodyTypeRaw as any[]).forEach((item) => {
     const { bodyType, make, model, count } = item;
-    const vehicleName = `${make} ${model}`;
-    const numCount = Number(count);
-
     if (!bodyTypeMap.has(bodyType)) {
-      bodyTypeMap.set(bodyType, { count: 0, vehicles: new Set() });
+      bodyTypeMap.set(bodyType, { count: 0, models: new Set() });
     }
-
     const entry = bodyTypeMap.get(bodyType)!;
-    entry.count += numCount;
-    entry.vehicles.add(vehicleName);
+    entry.count += Number(count);
+    if (make && model) entry.models.add(`${make} ${model}`);
   });
 
-  // Format Body Type Output
+  const brandMap = new Map<string, { count: number; models: Set<string> }>();
+  (brandRaw as any[]).forEach((item) => {
+    const { make, model, count } = item;
+    if (!brandMap.has(make)) {
+      brandMap.set(make, { count: 0, models: new Set() });
+    }
+    const entry = brandMap.get(make)!;
+    entry.count += Number(count);
+    if (make && model) entry.models.add(`${make} ${model}`);
+  });
+
   const bodyTypes = Array.from(bodyTypeMap.entries()).map(([type, data]) => ({
     bodyType: type,
     count: data.count,
-    vehicles: Array.from(data.vehicles).sort(),
+    models: Array.from(data.models).sort(),
   }));
 
-  // Format Brand Output
-  const brands = (brandRaw as any[]).map((item) => ({
-    make: item.make,
-    count: Number(item.count),
+  const brands = Array.from(brandMap.entries()).map(([make, data]) => ({
+    make: make,
+    count: data.count,
+    models: Array.from(data.models).sort(),
   }));
 
   return {
