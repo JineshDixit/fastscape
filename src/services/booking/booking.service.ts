@@ -1,7 +1,7 @@
 import { CreateBookingData, UpdateBookingData } from '../../common/types/bookingTypes';
 import { Booking, Vehicle, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { validateRequiredFields, validateDateRange } from '../../utils/validation.utils';
+import { validateRequiredFields, validateDateRange, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
 import Logger from '../../utils/logger';
 
@@ -21,24 +21,28 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     'dropoffLocation',
   ]);
 
-  // Validate dates
-  const { start, end } = validateDateRange(startDatetime, endDatetime);
-
-  // Check if vehicle exists and is available
-  const vehicle = await Vehicle.findByPk(vehicleId);
-  if (!vehicle) {
-    throw createError('Vehicle not found', 404);
-  }
-
-  if (!vehicle.isAvailable) {
-    Logger.warn('Booking attempted on unavailable vehicle', { vehicleId, userId });
-    throw createError('Vehicle is not available', 400);
-  }
+  // Validate and normalize dates
+  const { start, end } = normalizeBookingDates(startDatetime, endDatetime);
 
   // Use transaction to prevent race conditions
   const transaction = await sequelize.transaction();
 
   try {
+    // Check if vehicle exists and is available with a lock
+    const vehicle = await Vehicle.findByPk(vehicleId, {
+      transaction,
+      lock: true,
+    });
+
+    if (!vehicle) {
+      throw createError('Vehicle not found', 404);
+    }
+
+    if (!vehicle.isAvailable) {
+      Logger.warn('Booking attempted on unavailable vehicle', { vehicleId, userId });
+      throw createError('Vehicle is not available', 400);
+    }
+
     // Check for conflicting bookings within transaction
     const conflictingBooking = await Booking.findOne({
       where: {
@@ -51,7 +55,6 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     });
 
     if (conflictingBooking) {
-      await transaction.rollback();
       Logger.warn('Booking conflict detected', { vehicleId, start, end });
       throw createError('Vehicle is already booked for the selected dates', 409);
     }
@@ -155,12 +158,15 @@ export const updateBooking = async (
     throw createError('Cannot update cancelled or completed booking', 400);
   }
 
-  // Validate dates if provided
+  // Validate and normalize dates if provided
   if (updateData.startDatetime || updateData.endDatetime) {
-    const start = updateData.startDatetime ? new Date(updateData.startDatetime) : booking.startDatetime;
-    const end = updateData.endDatetime ? new Date(updateData.endDatetime) : booking.endDatetime;
+    const { start, end } = normalizeBookingDates(
+      updateData.startDatetime || booking.startDatetime,
+      updateData.endDatetime || booking.endDatetime,
+    );
 
-    validateDateRange(start, end);
+    updateData.startDatetime = start as any;
+    updateData.endDatetime = end as any;
   }
 
   // Update booking

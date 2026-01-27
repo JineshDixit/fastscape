@@ -31,6 +31,7 @@ export const validateDateRange = (
   startDate: Date | string,
   endDate: Date | string,
   allowPastDates: boolean = false,
+  allowSameDay: boolean = false,
 ): { start: Date; end: Date } => {
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -40,11 +41,12 @@ export const validateDateRange = (
     throw createError('Invalid date format', 400);
   }
 
-  if (start >= end) {
+  const isInvalidRange = allowSameDay ? start > end : start >= end;
+  if (isInvalidRange) {
     throw createError('End date must be after start date', 400);
   }
 
-  if (!allowPastDates && start < now) {
+  if (!allowPastDates && start < new Date(now.setHours(0, 0, 0, 0))) {
     throw createError('Start date cannot be in the past', 400);
   }
 
@@ -96,4 +98,20 @@ export const validateArrayLength = (array: any[], minLength: number, maxLength: 
   if (!Array.isArray(array) || array.length < minLength || array.length > maxLength) {
     throw createError(`${fieldName} must contain between ${minLength} and ${maxLength} items`, 400);
   }
+};
+
+/**
+ * Normalize booking dates to UTC full-day blocks (start of day to start of next day)
+ */
+export const normalizeBookingDates = (startDate: string | Date, endDate: string | Date): { start: Date; end: Date } => {
+  // Validate - allow same day as it will be normalized to 1 full day
+  const { start: startRaw, end: endRaw } = validateDateRange(startDate, endDate, false, true);
+
+  // Normalize to UTC full days
+  const start = new Date(
+    Date.UTC(startRaw.getUTCFullYear(), startRaw.getUTCMonth(), startRaw.getUTCDate(), 0, 0, 0, 0),
+  );
+  const end = new Date(Date.UTC(endRaw.getUTCFullYear(), endRaw.getUTCMonth(), endRaw.getUTCDate() + 1, 0, 0, 0, 0));
+
+  return { start, end };
 };

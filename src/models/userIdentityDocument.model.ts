@@ -1,3 +1,7 @@
+/*
+ * MANUAL MIGRATION QUERY:
+ * ALTER TABLE user_identity_documents ADD COLUMN verification_status VARCHAR(50) DEFAULT 'PENDING';
+ */
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class UserIdentityDocument extends Model {
@@ -9,6 +13,8 @@ export class UserIdentityDocument extends Model {
   public internationalDrivingPermit!: string;
   public selfieWithLicense!: string;
   public verified!: boolean;
+  public verificationStatus!: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  public verificationDate!: Date | null;
 }
 
 export const initUserIdentityDocumentModel = (sequelize: Sequelize) => {
@@ -35,6 +41,14 @@ export const initUserIdentityDocumentModel = (sequelize: Sequelize) => {
       verified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+      },
+      verificationStatus: {
+        type: DataTypes.ENUM('PENDING', 'VERIFIED', 'REJECTED'),
+        defaultValue: 'PENDING',
+      },
+      verificationDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {

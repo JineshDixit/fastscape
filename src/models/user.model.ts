@@ -1,7 +1,7 @@
 /*
- * MANUAL MIGRATION QUERY:
  * ALTER TABLE users ADD COLUMN reset_password_otp VARCHAR(255);
  * ALTER TABLE users ADD COLUMN reset_password_otp_expires TIMESTAMP WITH TIME ZONE;
+ * ALTER TABLE users ADD COLUMN verification_status VARCHAR(50) DEFAULT 'PENDING';
  */
 
 import { DataTypes, Model, Sequelize } from 'sequelize';
@@ -21,6 +21,8 @@ export class User extends Model {
   public isBlocked!: boolean;
   public resetPasswordOtp!: string | null;
   public resetPasswordOtpExpires!: Date | null;
+  public verificationStatus!: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  public verificationDate!: Date | null;
 }
 
 export const initUserModel = (sequelize: Sequelize) => {
@@ -84,6 +86,14 @@ export const initUserModel = (sequelize: Sequelize) => {
         allowNull: true,
       },
       resetPasswordOtpExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      verificationStatus: {
+        type: DataTypes.ENUM('PENDING', 'VERIFIED', 'REJECTED'),
+        defaultValue: 'PENDING',
+      },
+      verificationDate: {
         type: DataTypes.DATE,
         allowNull: true,
       },

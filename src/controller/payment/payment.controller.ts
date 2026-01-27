@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../common/types/expressTypes';
+import { createError } from '../../services/middleware/errorHandler';
 import {
   calculatePaymentBreakdown,
   processDepositPayment,
@@ -8,7 +9,8 @@ import {
   getPaymentSummary,
   markPaymentCompleted,
   getOverduePayments,
-} from '../../services/payment/enhancedPayment.service';
+  initiatePaymentIntent,
+} from '../../services/payment/payment.service';
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
 import { validateRequiredFields } from '../../utils/validation.utils';
@@ -27,13 +29,30 @@ class PaymentController extends BaseController {
   });
 
   /**
+   * Initiate a Stripe PaymentIntent
+   */
+  initiateIntent = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const { paymentType } = req.body;
+
+    validateRequiredFields({ paymentType }, ['paymentType']);
+
+    if (!['DEPOSIT', 'BALANCE', 'FULL'].includes(paymentType)) {
+      throw createError('Invalid payment type. Must be DEPOSIT, BALANCE or FULL', 400);
+    }
+
+    const intent = await initiatePaymentIntent(bookingId, paymentType as 'DEPOSIT' | 'BALANCE' | 'FULL');
+
+    sendSuccess(res, 'Payment intent created successfully', intent);
+  });
+
+  /**
    * Process deposit payment
    */
   processDeposit = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const bookingId = this.getValidatedId(req, 'bookingId');
-    const { paymentMethod = 'ONLINE', stripePaymentIntentId } = req.body;
-
-    const result = await processDepositPayment(bookingId, paymentMethod, stripePaymentIntentId);
+    const { paymentMethod = 'ONLINE', stripePaymentIntentId, paymentType } = req.body;
+    const result = await processDepositPayment(bookingId, paymentMethod, stripePaymentIntentId, undefined, paymentType);
 
     sendSuccess(res, 'Deposit payment processed successfully', {
       payment: result.payment,
@@ -160,6 +179,7 @@ const paymentController = new PaymentController();
 
 export const {
   calculatePayment,
+  initiateIntent,
   processDeposit,
   processBalance,
   applyDelayCharge,

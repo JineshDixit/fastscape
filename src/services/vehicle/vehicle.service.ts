@@ -2,6 +2,8 @@ import { PaginationOptions, VehicleFilterOptions, VehicleSearchQuery } from '../
 import { Vehicle, VehicleMedia, Booking } from '../../models';
 import { createError } from '../middleware/errorHandler';
 import { Op, Sequelize } from 'sequelize';
+import { normalizeBookingDates } from '../../utils/validation.utils';
+import { buildDateConflictConditions } from '../../utils/database.utils';
 
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
@@ -128,28 +130,8 @@ export const getAvailableVehicles = async (
   const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
   const offset = (page - 1) * limit;
 
-  // Normalize dates to UTC matching checkVehicleAvailability logic
-  const pickupDateObj = new Date(pickupDate);
-  const dropoffDateObj = new Date(dropoffDate);
-
-  if (isNaN(pickupDateObj.getTime()) || isNaN(dropoffDateObj.getTime())) {
-    throw createError('Invalid pickup or dropoff date', 400);
-  }
-
-  if (pickupDateObj > dropoffDateObj) {
-    throw createError('Pickup date must be before or equal to dropoff date', 400);
-  }
-
-  // Normalize to UTC: start of day for pickup, start of next day for dropoff
-  const start = new Date(
-    Date.UTC(pickupDateObj.getUTCFullYear(), pickupDateObj.getUTCMonth(), pickupDateObj.getUTCDate(), 0, 0, 0, 0),
-  );
-
-  const dropoffPlusOne = new Date(dropoffDateObj);
-  dropoffPlusOne.setUTCDate(dropoffPlusOne.getUTCDate() + 1);
-  const end = new Date(
-    Date.UTC(dropoffPlusOne.getUTCFullYear(), dropoffPlusOne.getUTCMonth(), dropoffPlusOne.getUTCDate(), 0, 0, 0, 0),
-  );
+  // Normalize dates
+  const { start, end } = normalizeBookingDates(pickupDate, dropoffDate);
 
   // 1. Find all vehicles that have conflicting bookings in the given range
   const conflictingBookings = await Booking.findAll({
@@ -158,7 +140,7 @@ export const getAvailableVehicles = async (
       bookingStatus: {
         [Op.notIn]: ['CANCELLED', 'COMPLETED'],
       },
-      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
+      ...buildDateConflictConditions(start, end),
     },
     raw: true,
   });
@@ -382,30 +364,8 @@ export const checkVehicleAvailability = async (
     return { isAvailable: false };
   }
 
-  // 2. Validate dates
-  const pickupDateObj = new Date(pickupDate);
-  const dropoffDateObj = new Date(dropoffDate);
-
-  if (isNaN(pickupDateObj.getTime()) || isNaN(dropoffDateObj.getTime())) {
-    throw createError('Invalid pickup or dropoff date', 400);
-  }
-
-  if (pickupDateObj > dropoffDateObj) {
-    throw createError('Pickup date must be before or equal to dropoff date', 400);
-  }
-
-  // Normalize to UTC: start of day for pickup, start of next day for dropoff
-  // This ensures full-day rentals are properly represented
-  const start = new Date(
-    Date.UTC(pickupDateObj.getUTCFullYear(), pickupDateObj.getUTCMonth(), pickupDateObj.getUTCDate(), 0, 0, 0, 0),
-  );
-
-  // For dropoff, add 1 day to make it the start of the next day (exclusive end)
-  const dropoffPlusOne = new Date(dropoffDateObj);
-  dropoffPlusOne.setUTCDate(dropoffPlusOne.getUTCDate() + 1);
-  const end = new Date(
-    Date.UTC(dropoffPlusOne.getUTCFullYear(), dropoffPlusOne.getUTCMonth(), dropoffPlusOne.getUTCDate(), 0, 0, 0, 0),
-  );
+  // 2. Validate and normalize dates
+  const { start, end } = normalizeBookingDates(pickupDate, dropoffDate);
 
   // 3. Check for conflicting bookings
   const conflictingBooking = await Booking.findOne({
@@ -414,7 +374,7 @@ export const checkVehicleAvailability = async (
       bookingStatus: {
         [Op.notIn]: ['CANCELLED', 'COMPLETED'],
       },
-      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
+      ...buildDateConflictConditions(start, end),
     },
   });
 

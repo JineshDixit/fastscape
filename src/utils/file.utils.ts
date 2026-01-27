@@ -3,29 +3,40 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Save an uploaded file from memory to disk
+ * Save an uploaded file from memory to disk with a deterministic structure
  * @param file The multer file object
- * @param subDir The subdirectory within 'uploads' to save the file
+ * @param userId The user ID to scope the storage
+ * @param docType The document type (e.g., 'driverLicenseFront')
  * @returns The relative path to the saved file
  */
-export const saveFile = async (file: Express.Multer.File, subDir: string = 'documents'): Promise<string> => {
+export const saveFile = async (
+  file: Express.Multer.File,
+  userId: string,
+  docType: string = 'general',
+): Promise<string> => {
   if (!file) {
     throw new Error('No file provided');
   }
 
-  // Define upload directory
-  const uploadDir = path.join(process.cwd(), 'uploads', subDir);
+  // Define upload directory: uploads/documents/{userId}/{docType}
+  const uploadDir = path.join(process.cwd(), 'uploads', 'documents', userId, docType);
 
-  // Ensure directory exists
+  // Ensure directory exists and CLEAN it (re-upload logic)
   try {
     await fs.access(uploadDir);
+    // If it exists, remove existing files to prevent duplicates
+    const files = await fs.readdir(uploadDir);
+    for (const f of files) {
+      await fs.unlink(path.join(uploadDir, f));
+    }
   } catch {
+    // If it doesn't exist, create it
     await fs.mkdir(uploadDir, { recursive: true });
   }
 
-  // Generate unique filename
+  // Generate unique filename to avoid cache issues but keep structure clean
   const fileExt = path.extname(file.originalname);
-  const fileName = `${uuidv4()}${fileExt}`;
+  const fileName = `${Date.now()}${fileExt}`;
   const filePath = path.join(uploadDir, fileName);
 
   // Write file to disk
@@ -33,5 +44,5 @@ export const saveFile = async (file: Express.Multer.File, subDir: string = 'docu
 
   // Return relative path (for database storage)
   // Converting backslashes to forward slashes for consistency
-  return path.join('uploads', subDir, fileName).replace(/\\/g, '/');
+  return path.join('uploads', 'documents', userId, docType, fileName).replace(/\\/g, '/');
 };

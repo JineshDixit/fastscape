@@ -68,17 +68,12 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 };
 
 /**
- * Updates a user by ID with the provided data
- */
-
-
-/**
  * Updates a user by ID with the provided data, including driving info and documents
  */
 export const updateUser = async (
-  userId: string, 
-  updateData: Partial<userModelType> & any, 
-  files?: { [fieldname: string]: Express.Multer.File[] }
+  userId: string,
+  updateData: Partial<userModelType> & any,
+  files?: { [fieldname: string]: Express.Multer.File[] },
 ): Promise<Partial<User>> => {
   if (!userId) {
     throw createError('User ID is required', 400);
@@ -136,7 +131,7 @@ export const updateUser = async (
       updateData.visaStatus
     ) {
       Logger.info('Updating user driving information', { userId });
-      
+
       const drivingInfoData = {
         userId,
         licenseIssuingCountry: updateData.licenseIssuingCountry,
@@ -157,14 +152,17 @@ export const updateUser = async (
     // 3. Update Identity Documents (if files provided)
     if (files && Object.keys(files).length > 0) {
       Logger.info('Processing user document uploads', { userId, fileCount: Object.keys(files).length });
-      
-      const documentUpdates: any = {};
-      
+
+      const documentUpdates: any = {
+        verificationStatus: 'PENDING', // Reset verification when new docs arrive
+        verified: false,
+      };
+
       // Helper to process file
       const processFile = async (fieldName: string) => {
         if (files[fieldName] && files[fieldName][0]) {
-           const relativePath = await saveFile(files[fieldName][0], 'documents');
-           documentUpdates[fieldName] = relativePath;
+          const relativePath = await saveFile(files[fieldName][0], userId, fieldName);
+          documentUpdates[fieldName] = relativePath;
         }
       };
 
@@ -174,15 +172,28 @@ export const updateUser = async (
       await processFile('internationalDrivingPermit');
       await processFile('selfieWithLicense');
 
-      if (Object.keys(documentUpdates).length > 0) {
-         // Upsert identity documents
+      if (Object.keys(documentUpdates).length > 2) {
+        // More than just status/verified
+        // Upsert identity documents
         const existingDocs = await UserIdentityDocument.findOne({ where: { userId }, transaction });
+
+        // Auto-verify for testing/demo purposes
+        await user.update({ verificationStatus: 'VERIFIED' }, { transaction });
+
+        // Ensure the IdentityDocument record is also marked as verified
         if (existingDocs) {
-          await existingDocs.update(documentUpdates, { transaction });
+          await existingDocs.update(
+            { ...documentUpdates, verificationStatus: 'VERIFIED', verified: true },
+            { transaction },
+          );
         } else {
-          await UserIdentityDocument.create({ userId, ...documentUpdates }, { transaction });
+          await UserIdentityDocument.create(
+            { userId, ...documentUpdates, verificationStatus: 'VERIFIED', verified: true },
+            { transaction },
+          );
         }
-        Logger.info('User documents updated successfully', { userId });
+
+        Logger.info('User documents updated and AUTO-VERIFIED successfully', { userId });
       }
     }
 
@@ -195,7 +206,6 @@ export const updateUser = async (
     });
 
     return finalUser!.toJSON();
-
   } catch (error: any) {
     await transaction.rollback();
     Logger.error('Error updating user profile', { userId, error: error.message });
@@ -284,18 +294,7 @@ export const getUsersByLocation = async (query: LocationSearchQuery): Promise<Us
 
   const users = await User.findAll({
     where: whereConditions,
-    attributes: [
-      'id',
-      'fullName',
-      'email',
-      'phone',
-      'city',
-      'state',
-      'zipCode',
-      'country',
-      'nationality',
-      'createdAt',
-    ],
+    attributes: ['id', 'fullName', 'email', 'phone', 'city', 'state', 'zipCode', 'country', 'nationality', 'createdAt'],
     order: [['fullName', 'ASC']],
   });
 

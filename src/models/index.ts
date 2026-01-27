@@ -91,6 +91,13 @@ const initPostgres_DB = async(): Promise<void> => {
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
 
   RefreshToken.belongsTo(User, { foreignKey: 'userId' });
+
+  // try {
+  //   await sequelize.sync({ alter: true });
+  //   console.log('Database connection has been established successfully.');
+  // } catch (error) {
+  //   console.error('Unable to connect to the database:', error);
+  // }
 };
 
 export {
