@@ -145,6 +145,109 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         <span className="text-sm font-semibold text-gray-700">{t('checkAvailability')}</span>
+        <div className="flex flex-col gap-4 mb-2">
+          <div className="relative">
+            {isSelfDrive ? (
+              <Combobox
+                open={undefined} // Let it be uncontrolled or controlled?
+                modal={false}
+                value={
+                  locations.find((l) => l.name === bookingData.pickupLocation)
+                    ? { id: bookingData.pickupLocation!, label: bookingData.pickupLocation! }
+                    : null
+                }
+                onValueChange={(val) => handleFromChange(val?.label || '')}
+              >
+                <ComboboxInput
+                  placeholder={tCar('from')}
+                  className="bg-background h-14 w-full"
+                  value={fromQuery}
+                  onChange={(e) => setFromQuery(e.target.value)}
+                  onBlur={() => {
+                    if (bookingData.pickupLocation) setFromQuery(bookingData.pickupLocation);
+                  }}
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    {filteredFromLocations.length > 0 ? (
+                      filteredFromLocations.map((location) => (
+                        <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
+                          {location.name}
+                        </ComboboxItem>
+                      ))
+                    ) : (
+                      <ComboboxEmpty>No locations found</ComboboxEmpty>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            ) : (
+              <FloatingInput
+                label={tCar('from')}
+                className="h-14 w-full"
+                value={bookingData.pickupLocation || ''}
+                onChange={(e) => handleFromChange(e.target.value)}
+              />
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Checkbox id="same-address-detail" checked={sameAddress} onCheckedChange={handleSameAddressChange} />
+            <label htmlFor="same-address-detail" className="cursor-pointer text-xs font-normal sm:text-sm">
+              {tCar('sameAsPickup')}
+            </label>
+          </div>
+
+          <div className="relative">
+            {/* 
+            Optimized Fix: When sameAddress is true, we render a simple FloatingInput instead of the Combobox.
+            This avoids potential scroll-lock bugs in the UI library when a component is portaled and then disabled.
+          */}
+            {isSelfDrive && !sameAddress ? (
+              <Combobox
+                modal={false}
+                value={
+                  locations.find((l) => l.name === bookingData.dropoffLocation)
+                    ? { id: bookingData.dropoffLocation!, label: bookingData.dropoffLocation! }
+                    : null
+                }
+                onValueChange={(val) => handleToChange(val?.label || '')}
+              >
+                <ComboboxInput
+                  placeholder={tCar('to')}
+                  className="bg-background h-14 w-full"
+                  value={toQuery}
+                  onChange={(e) => setToQuery(e.target.value)}
+                  onBlur={() => {
+                    if (bookingData.dropoffLocation) setToQuery(bookingData.dropoffLocation);
+                  }}
+                />
+                <ComboboxContent>
+                  <ComboboxList>
+                    {filteredToLocations.length > 0 ? (
+                      filteredToLocations.map((location) => (
+                        <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
+                          {location.name}
+                        </ComboboxItem>
+                      ))
+                    ) : (
+                      <ComboboxEmpty>No locations found</ComboboxEmpty>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
+            ) : (
+              <FloatingInput
+                label={tCar('to')}
+                className={cn('h-14 w-full', sameAddress && 'cursor-not-allowed opacity-50')}
+                value={bookingData.dropoffLocation || ''}
+                onChange={(e) => handleToChange(e.target.value)}
+                disabled={sameAddress}
+              />
+            )}
+          </div>
+        </div>
+        <span className="text-sm font-semibold text-gray-700">Select Dates</span>
         <div className="flex flex-wrap items-center gap-2">
           {visibleDates.map((date, idx) => {
             const d = startOfDay(date);
@@ -215,7 +318,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-semibold text-gray-700">{t('availableFor')}</span>
+        <span className="text-sm font-semibold text-gray-700">Select Service</span>
         <div className="flex flex-wrap items-center gap-3">
           <Button
             onClick={() => onServiceChange('SELF_DRIVE')}
@@ -239,109 +342,6 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
           >
             {t('chauffeur')}
           </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <div className="relative">
-          {isSelfDrive ? (
-            <Combobox
-              open={undefined} // Let it be uncontrolled or controlled?
-              modal={false}
-              value={
-                locations.find((l) => l.name === bookingData.pickupLocation)
-                  ? { id: bookingData.pickupLocation!, label: bookingData.pickupLocation! }
-                  : null
-              }
-              onValueChange={(val) => handleFromChange(val?.label || '')}
-            >
-              <ComboboxInput
-                placeholder={tCar('from')}
-                className="bg-background h-14 w-full"
-                value={fromQuery}
-                onChange={(e) => setFromQuery(e.target.value)}
-                onBlur={() => {
-                  if (bookingData.pickupLocation) setFromQuery(bookingData.pickupLocation);
-                }}
-              />
-              <ComboboxContent>
-                <ComboboxList>
-                  {filteredFromLocations.length > 0 ? (
-                    filteredFromLocations.map((location) => (
-                      <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
-                        {location.name}
-                      </ComboboxItem>
-                    ))
-                  ) : (
-                    <ComboboxEmpty>No locations found</ComboboxEmpty>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-          ) : (
-            <FloatingInput
-              label={tCar('from')}
-              className="h-14 w-full"
-              value={bookingData.pickupLocation || ''}
-              onChange={(e) => handleFromChange(e.target.value)}
-            />
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Checkbox id="same-address-detail" checked={sameAddress} onCheckedChange={handleSameAddressChange} />
-          <label htmlFor="same-address-detail" className="cursor-pointer text-xs font-normal sm:text-sm">
-            {tCar('sameAsPickup')}
-          </label>
-        </div>
-
-        <div className="relative">
-          {/* 
-            Optimized Fix: When sameAddress is true, we render a simple FloatingInput instead of the Combobox.
-            This avoids potential scroll-lock bugs in the UI library when a component is portaled and then disabled.
-          */}
-          {isSelfDrive && !sameAddress ? (
-            <Combobox
-              modal={false}
-              value={
-                locations.find((l) => l.name === bookingData.dropoffLocation)
-                  ? { id: bookingData.dropoffLocation!, label: bookingData.dropoffLocation! }
-                  : null
-              }
-              onValueChange={(val) => handleToChange(val?.label || '')}
-            >
-              <ComboboxInput
-                placeholder={tCar('to')}
-                className="bg-background h-14 w-full"
-                value={toQuery}
-                onChange={(e) => setToQuery(e.target.value)}
-                onBlur={() => {
-                  if (bookingData.dropoffLocation) setToQuery(bookingData.dropoffLocation);
-                }}
-              />
-              <ComboboxContent>
-                <ComboboxList>
-                  {filteredToLocations.length > 0 ? (
-                    filteredToLocations.map((location) => (
-                      <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
-                        {location.name}
-                      </ComboboxItem>
-                    ))
-                  ) : (
-                    <ComboboxEmpty>No locations found</ComboboxEmpty>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-          ) : (
-            <FloatingInput
-              label={tCar('to')}
-              className={cn('h-14 w-full', sameAddress && 'cursor-not-allowed opacity-50')}
-              value={bookingData.dropoffLocation || ''}
-              onChange={(e) => handleToChange(e.target.value)}
-              disabled={sameAddress}
-            />
-          )}
         </div>
       </div>
     </div>

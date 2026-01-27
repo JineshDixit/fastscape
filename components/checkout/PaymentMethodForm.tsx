@@ -13,65 +13,22 @@ interface PaymentMethodFormProps {
   onNext: (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => void;
   onBack: () => void;
   isLoading?: boolean;
-  vehicle?: any; // Add vehicle prop for fallback calculation
-  bookingData?: any; // Add booking data for fallback calculation
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
-  breakdown,
-  onNext,
-  onBack,
-  isLoading,
-  vehicle,
-  bookingData,
-}) => {
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext, onBack, isLoading }) => {
   const [method, setMethod] = useState<'ONLINE' | 'CARD' | 'CASH'>('ONLINE');
   const [payFull, setPayFull] = useState(false);
 
-  // Create fallback breakdown if none provided
-  const getBreakdown = (): PaymentBreakdown => {
-    if (breakdown) return breakdown;
-
-    // Calculate fallback breakdown from vehicle and booking data
-    const days =
-      bookingData?.pickupDate && bookingData?.dropoffDate
-        ? Math.ceil(
-            (new Date(bookingData.dropoffDate).getTime() - new Date(bookingData.pickupDate).getTime()) /
-              (1000 * 60 * 60 * 24),
-          )
-        : 1;
-
-    const dailyRate = vehicle ? parseFloat(vehicle.pricePerDay) : 1200;
-    const baseAmount = dailyRate * days;
-    const taxAmount = Math.round(baseAmount * 0.05); // 5% tax
-    const totalAmount = baseAmount + taxAmount;
-    const depositAmount = Math.round(totalAmount * 0.3); // 30% deposit
-
-    const balanceAmount = totalAmount - depositAmount;
-    const depositPercentage = vehicle?.depositPercentage ? parseFloat(vehicle.depositPercentage) : 30;
-
-    return {
-      baseAmount: baseAmount.toString(),
-      taxAmount: taxAmount.toString(),
-      totalAmount: totalAmount.toString(),
-      depositAmount: depositAmount.toString(),
-      balanceAmount: balanceAmount.toString(),
-      currency: vehicle?.currency || 'AED',
-      daysCount: days,
-      depositPercentage: depositPercentage,
-    };
-  };
-
-  const currentBreakdown = getBreakdown();
-
-  if (!currentBreakdown && !vehicle) {
+  if (!breakdown) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
         <div className="border-primary h-10 w-10 animate-spin rounded-full border-4 border-t-transparent" />
-        <p className="text-xs font-black tracking-widest text-gray-400 uppercase">Loading Financial Data</p>
+        <p className="text-xs font-black tracking-widest text-gray-400 uppercase">Synchronizing Financials...</p>
       </div>
     );
   }
+
+  const currentBreakdown = breakdown;
 
   return (
     <div className="animate-in fade-in space-y-6 duration-500">
@@ -108,19 +65,17 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                     key={item.id}
                     htmlFor={item.id.toLowerCase()}
                     className={cn(
-                      'relative flex cursor-pointer items-center justify-between overflow-hidden rounded-2xl border-2 p-4 transition-all duration-500',
+                      'relative flex cursor-pointer items-center justify-between overflow-hidden rounded-2xl border-2 p-4 transition-all duration-300',
                       isActive
-                        ? 'border-primary bg-primary/5 shadow-primary/10 ring-primary/5 shadow-2xl ring-4'
-                        : 'hover:border-primary/30 border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900',
+                        ? 'border-primary bg-primary/5 ring-primary/5 ring-2'
+                        : 'hover:border-primary/20 border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900',
                     )}
                   >
                     <div className="flex items-center gap-6">
                       <div
                         className={cn(
                           'flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-500',
-                          isActive
-                            ? 'bg-primary shadow-primary/30 text-white shadow-xl'
-                            : 'bg-gray-100 text-gray-400 dark:bg-gray-800',
+                          isActive ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800',
                         )}
                       >
                         <Icon className="h-7 w-7 stroke-[2.5]" />
@@ -203,10 +158,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   type="button"
                   onClick={() => setPayFull(false)}
                   className={cn(
-                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-500',
+                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-300',
                     !payFull
-                      ? 'border-primary bg-primary/5 ring-primary/5 scale-105 ring-4'
-                      : 'border-gray-50 bg-gray-50/30 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
+                      ? 'border-primary bg-primary/5 ring-primary/5 ring-2'
+                      : 'border-gray-50 bg-gray-50/10 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
                   )}
                 >
                   <span className="text-[9px] font-black tracking-[0.2em] text-gray-400 uppercase">
@@ -221,10 +176,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   type="button"
                   onClick={() => setPayFull(true)}
                   className={cn(
-                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-500',
+                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-300',
                     payFull
-                      ? 'border-primary bg-primary/5 ring-primary/5 scale-105 ring-4'
-                      : 'border-gray-50 bg-gray-50/30 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
+                      ? 'border-primary bg-primary/5 ring-primary/5 ring-2'
+                      : 'border-gray-50 bg-gray-50/10 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
                   )}
                 >
                   <span className="text-[9px] font-black tracking-[0.2em] text-gray-400 uppercase">
@@ -258,13 +213,22 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
         <Button
           onClick={() => onNext(method, payFull)}
           disabled={isLoading}
-          className="group bg-primary hover:shadow-primary/30 animate-in fade-in slide-in-from-right-10 relative overflow-hidden rounded-md px-5 py-5 text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto"
+          className="group bg-primary hover:bg-primary/90 relative overflow-hidden rounded-xl px-10 py-6 text-xs font-black tracking-widest uppercase transition-all duration-300 md:w-auto"
         >
           <span className="relative z-10 flex items-center gap-3">
-            {isLoading ? 'Synchronizing...' : 'Complete Booking'}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Synchronizing...
+              </>
+            ) : (
+              <>
+                Authorize Mission
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
           </span>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/5" />
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/10" />
         </Button>
       </div>
     </div>

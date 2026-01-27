@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from '@/localization/navigation';
-import { useVehicle, useUser, useBooking } from '@/app/axios/hooks';
+import { useVehicle, useUser, useBooking, useAddress } from '@/app/axios/hooks';
 import { vehicleService } from '@/app/axios/services/vehicle';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
-import JourneySummary from '@/components/checkout/JourneySummary';
 import IdentityStep from '@/components/checkout/IdentityStep';
+import DocumentStep from '@/components/checkout/DocumentStep';
 import PaymentMethodForm from '@/components/checkout/PaymentMethodForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,8 +27,8 @@ import { differenceInDays, parseISO } from 'date-fns';
 import { useAuth } from '@/app/axios';
 
 const STEPS: { id: CheckoutStep; label: string }[] = [
-  { id: 'JOURNEY', label: 'Journey' },
   { id: 'IDENTITY', label: 'Identity' },
+  { id: 'DOCUMENTS', label: 'Documents' },
   { id: 'PAYMENT', label: 'Payment' },
   { id: 'SUMMARY', label: 'Summary' },
 ];
@@ -39,26 +39,52 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
-  const { profile, fetchProfile, updateProfile, isLoading: profileLoading } = useUser();
+  const { profile, fetchProfile, isLoading: profileLoading } = useUser();
   const {
     createBooking,
-    getBookingQuote,
+    calculatePaymentBreakdown,
+    initiatePaymentIntent,
+    fetchUserBookings,
+    processDepositPayment,
+    currentBooking,
     paymentBreakdown,
+    intentId,
     isLoading: bookingLoading,
   } = useBooking();
 
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>('JOURNEY');
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>('IDENTITY');
   const [error, setError] = useState<string | null>(null);
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
-  const [enableSmartFlow, setEnableSmartFlow] = useState(false); // Disable enhanced booking flow
 
   useEffect(() => {
     if (id) {
       fetchVehicleById(id);
+    }
+  }, [id, fetchVehicleById]);
+
+  // Sync profile when user changes or session initialized
+  useEffect(() => {
+    if (user) {
       fetchProfile();
     }
-  }, [id, fetchVehicleById, fetchProfile]);
+  }, [user, fetchProfile]);
+
+  // Handle automatic step skipping (Smart Flow)
+  useEffect(() => {
+    if (currentStep === 'IDENTITY' && profile && user) {
+      const isVerified = profile.verificationStatus === 'VERIFIED';
+      const hasBasicInfo = !!(profile.fullName && profile.phone);
+
+      if (isVerified) {
+        console.log('Profile verified, skipping to payment.');
+        handleDocumentsNext();
+      } else if (hasBasicInfo) {
+        console.log('Identity confirmed, proceeding to documents for verification.');
+        setCurrentStep('DOCUMENTS');
+      }
+    }
+  }, [currentStep, profile, user]);
 
   // Check vehicle availability when checkout page loads
   useEffect(() => {
@@ -66,16 +92,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
       if (id && bookingData.pickupDate && bookingData.dropoffDate) {
         setIsCheckingAvailability(true);
         try {
-          const response = await vehicleService.checkAvailability(
-            id,
-            bookingData.pickupDate,
-            bookingData.dropoffDate
-          );
+          const response = await vehicleService.checkAvailability(id, bookingData.pickupDate, bookingData.dropoffDate);
 
           if (response.success) {
             setAvailabilityStatus(response.data?.isAvailable ?? false);
             if (!response.data?.isAvailable) {
-              setError('This vehicle is no longer available for the selected dates. Please choose different dates or another vehicle.');
+              setError(
+                'This vehicle is no longer available for the selected dates. Please choose different dates or another vehicle.',
+              );
             }
           }
         } catch (err) {
@@ -90,97 +114,134 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     checkInitialAvailability();
   }, [id, bookingData.pickupDate, bookingData.dropoffDate]);
 
-  const handleIdentityNext = async (profileData?: any, files?: Record<string, File>) => {
-    try {
-      if (profileData) {
-        await updateProfile(profileData);
+  // Session Recovery: Check for existing PENDING booking for this vehicle
+  useEffect(() => {
+    const recoverSession = async () => {
+      if (user && id) {
+        const response = await fetchUserBookings({ status: 'PENDING' });
+        if (response?.success && response.data?.bookings) {
+          const existingBooking = response.data.bookings.find(
+            (b) => b.vehicleId === id && b.bookingStatus === 'PENDING',
+          );
+          if (existingBooking) {
+            console.log('Recovered existing PENDING booking:', existingBooking.id);
+            // We found one, but we don't necessarily jump to PAYMENT yet
+            // unless they've passed documents.
+          }
+        }
       }
-      if (files && Object.keys(files).length > 0) {
-        await updateProfile(files as any);
+    };
+    recoverSession();
+  }, [user, id, fetchUserBookings]);
+
+  const handleIdentityNext = async (password: string) => {
+    try {
+      // Identity is confirmed (read-only anyway), transition to DOCUMENTS
+      // Security check could be added here
+      setCurrentStep('DOCUMENTS');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setError('Failed to confirm identity');
+    }
+  };
+
+  // Fetch breakdown when moving to payment step
+  useEffect(() => {
+    if (currentStep === 'PAYMENT' && currentBooking?.id) {
+      calculatePaymentBreakdown(currentBooking.id);
+    }
+  }, [currentStep, currentBooking?.id, calculatePaymentBreakdown]);
+
+  const handleDocumentsNext = async () => {
+    try {
+      if (profile?.verificationStatus !== 'VERIFIED') {
+        setError('Operational credentials not yet verified. Please wait for orbital sync.');
+        return;
       }
 
       // First, check vehicle availability before proceeding
       if (bookingData.pickupDate && bookingData.dropoffDate) {
-        console.log('Checking vehicle availability before proceeding to payment...');
-
+        setIsCheckingAvailability(true);
         const availabilityResponse = await vehicleService.checkAvailability(
           id,
           bookingData.pickupDate,
-          bookingData.dropoffDate
+          bookingData.dropoffDate,
         );
+        setIsCheckingAvailability(false);
 
         if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
-          setError('Sorry, this vehicle is no longer available for the selected dates. Please choose different dates or another vehicle.');
-          return;
-        }
-
-        console.log('Vehicle is available, proceeding with quote...');
-      }
-
-      // Generate quote data
-      const quoteData = {
-        vehicleId: id,
-        startDatetime: bookingData.pickupDate!,
-        endDatetime: bookingData.dropoffDate!,
-        pickupLocation: bookingData.pickupLocation || 'Dubai',
-        dropoffLocation: bookingData.pickupLocation || 'Dubai',
-        bookingType: bookingData.bookingType,
-      };
-
-      console.log('Quote data:', quoteData); // Debug log
-
-      const response = await getBookingQuote(quoteData as any);
-      if (response && response.success && response.data) {
-        setCurrentStep('PAYMENT');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setError(response?.message || 'Failed to generate quote. Please check your dates and try again.');
-      }
-    } catch (err) {
-      console.error('Identity next error:', err);
-      setError('Failed to process identity or documents');
-    }
-  };
-
-  const handlePaymentNext = async (method: string, payFull: boolean) => {
-    try {
-      // Final availability check before creating booking
-      if (bookingData.pickupDate && bookingData.dropoffDate) {
-        console.log('Final availability check before booking creation...');
-
-        const availabilityResponse = await vehicleService.checkAvailability(
-          id,
-          bookingData.pickupDate,
-          bookingData.dropoffDate
-        );
-
-        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
-          setError('Sorry, this vehicle was just booked by another user. Please choose different dates or another vehicle.');
+          setError('Sorry, this vehicle is no longer available for the selected dates.');
           return;
         }
       }
 
+      // Create PENDING booking on backend
       const finalBookingData = {
         vehicleId: id,
         startDatetime: bookingData.pickupDate!,
         endDatetime: bookingData.dropoffDate!,
-        pickupLocation: bookingData.pickupLocation || 'Dubai',
-        dropoffLocation: bookingData.pickupLocation || 'Dubai',
+        pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
+        dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
         bookingType: bookingData.bookingType,
-        paymentMethod: method as any,
-        paymentIntentId: method === 'ONLINE' ? 'pi_mock_123456' : undefined, // In reality, this comes from Stripe
-        notes: `Payment for ${payFull ? 'Full Amount' : 'Deposit'}`,
+        paymentMethod: 'ONLINE', // Default to ONLINE, can be changed in payment step
       };
 
       const response = await createBooking(finalBookingData as any);
-      if (response && response.success) {
-        setCurrentStep('SUMMARY');
+      if (response && response.success && response.data) {
+        // Success! createBooking already sets currentBooking in hook
+        setCurrentStep('PAYMENT');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        setError(response?.message || 'Final booking creation failed.');
+        setError(response?.message || 'Failed to initialize booking session.');
       }
     } catch (err) {
-      setError('An unexpected error occurred during final synchronization.');
+      setError('Failed to transition to financial synchronization.');
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  const handlePaymentNext = async (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => {
+    if (!currentBooking) {
+      setError('No active booking session found.');
+      return;
+    }
+
+    try {
+      if (method === 'ONLINE') {
+        const intentResponse = await initiatePaymentIntent(currentBooking.id, payFull ? 'FULL' : 'DEPOSIT');
+
+        if (!intentResponse || !intentResponse.success) {
+          setError('Failed to initiate secure payment gateway.');
+          return;
+        }
+
+        const response = await processDepositPayment(currentBooking.id, {
+          paymentMethod: 'ONLINE',
+          stripePaymentIntentId: intentResponse.data.id,
+          paymentType: payFull ? 'FULL' : 'DEPOSIT',
+        });
+
+        if (response && response.success) {
+          setCurrentStep('SUMMARY');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError(response?.message || 'Payment synchronization failed.');
+        }
+      } else {
+        const response = await processDepositPayment(currentBooking.id, {
+          paymentMethod: method as any,
+          paymentType: payFull ? 'FULL' : 'DEPOSIT',
+        });
+
+        if (response && response.success) {
+          setCurrentStep('SUMMARY');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError(response?.message || 'Failed to record manual payment.');
+        }
+      }
+    } catch (err) {
+      setError('Final synchronization failed.');
     }
   };
 
@@ -227,8 +288,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     return `${baseUrl}/${path.replace(/\\/g, '/')}`;
   };
 
-  // const showSummarySidebar = currentStep !== 'SUMMARY';
-
   return (
     <main className="selection:bg-primary min-h-screen pb-20 selection:text-white dark:bg-gray-950">
       {/* Dynamic Header Sticky Bar */}
@@ -269,8 +328,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
             <CheckoutSteppers currentStep={currentStep} steps={STEPS} />
 
-
-
             {error && (
               <Alert variant="destructive" className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
                 <AlertCircle className="h-5 w-5" />
@@ -289,15 +346,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
               </Alert>
             )}
 
-            {availabilityStatus === false && !error && (
-              <Alert variant="destructive" className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
-                <AlertCircle className="h-5 w-5" />
-                <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
-                  Vehicle not available for selected dates
-                </AlertDescription>
-              </Alert>
-            )}
-
             <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 transition-all duration-700 dark:bg-gray-900 dark:shadow-none dark:ring-gray-800">
               <CardHeader className="border-b border-gray-50/50 px-8 pt-8 pb-4 dark:border-gray-800">
                 <div className="flex items-center justify-between">
@@ -312,8 +360,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       {STEPS.find((s) => s.id === currentStep)?.label} Intel
                     </CardTitle>
                     <CardDescription className="text-sm font-medium text-gray-400 italic">
-                      {currentStep === 'JOURNEY' && 'Audit your temporal and spatial migration details.'}
                       {currentStep === 'IDENTITY' && 'Verify your identity and provide operational permissions.'}
+                      {currentStep === 'DOCUMENTS' && 'Synchronize your operational credentials.'}
                       {currentStep === 'PAYMENT' && 'Finalize the financial synchronization.'}
                       {currentStep === 'SUMMARY' && 'Your propulsion unit is synchronized and ready.'}
                     </CardDescription>
@@ -321,35 +369,20 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                 </div>
               </CardHeader>
               <CardContent className="p-8 pt-2">
-                {currentStep === 'JOURNEY' && (
-                  <JourneySummary
-                    vehicle={vehicle}
-                    bookingData={bookingData}
-                    availabilityStatus={availabilityStatus}
-                    isCheckingAvailability={isCheckingAvailability}
-                    onNext={() => {
-                      if (availabilityStatus === false) {
-                        setError('Cannot proceed - vehicle is not available for selected dates');
-                        return;
-                      }
-                      setCurrentStep('IDENTITY');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    onBackToVehicles={() => {
-                      router.push('/vehicles');
-                    }}
-                  />
-                )}
-
                 {currentStep === 'IDENTITY' && (
                   <IdentityStep
                     profile={profile}
                     onNext={handleIdentityNext}
-                    onBack={() => setCurrentStep('JOURNEY')}
                     isLoading={profileLoading || bookingLoading}
-                    bookingType={bookingData.bookingType as 'SELF_DRIVE' | 'CHAUFFEUR'}
-                    enableSmartDocumentHandling={false}
-                    showProgressIndicators={false}
+                  />
+                )}
+
+                {currentStep === 'DOCUMENTS' && (
+                  <DocumentStep
+                    profile={profile}
+                    onNext={handleDocumentsNext}
+                    onBack={() => setCurrentStep('IDENTITY')}
+                    isLoading={profileLoading || bookingLoading}
                   />
                 )}
 
@@ -357,10 +390,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <PaymentMethodForm
                     breakdown={paymentBreakdown}
                     onNext={handlePaymentNext}
-                    onBack={() => setCurrentStep('IDENTITY')}
+                    onBack={() => setCurrentStep('DOCUMENTS')}
                     isLoading={bookingLoading}
-                    vehicle={vehicle}
-                    bookingData={bookingData}
                   />
                 )}
 
@@ -403,7 +434,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
             </Card>
           </div>
 
-          {/* {showSummarySidebar && ( */}
           <div className="hidden lg:block">
             <div className="animate-in slide-in-from-right-10 sticky top-28 space-y-6 duration-700">
               <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
@@ -437,15 +467,63 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                 <CardContent className="space-y-6 p-8">
                   <div className="flex items-center gap-4 rounded-2xl bg-gray-50/50 p-4 dark:bg-gray-800/50">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-gray-900">
-                      <User className="h-8 w-8 rounded-lg" />
+                      <User className="text-primary h-6 w-6" />
                     </div>
                     <div className="overflow-hidden">
-                      <p className="truncate text-sm font-black tracking-tighter text-gray-950 uppercase dark:text-white">
-                        {profile?.fullName || 'Guest Pilot'}
+                      <p className="truncate text-xs font-black tracking-tighter text-gray-950 uppercase dark:text-white">
+                        {profile?.fullName || user?.fullName || 'Guest Pilot'}
                       </p>
                       <div className="mt-0.5 flex items-center gap-2">
                         <Mail className="text-primary h-3 w-3 opacity-50" />
-                        <p className="truncate text-[10px] font-bold tracking-tight text-gray-400">{profile?.email}</p>
+                        <p className="truncate text-[9px] font-bold tracking-tight text-gray-400">
+                          {profile?.email || user?.email || 'Awaiting Authentication'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Journey Breakdown in Sidebar */}
+                  <div className="space-y-4 border-y border-gray-50 py-6 dark:border-gray-800">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-primary/10 mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg">
+                        <Calendar className="text-primary h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Mission Window</p>
+                        <p className="text-xs font-bold text-gray-950 dark:text-white">
+                          {bookingData.pickupDate ? parseISO(bookingData.pickupDate).toLocaleDateString() : 'TBD'} —{' '}
+                          {bookingData.dropoffDate ? parseISO(bookingData.dropoffDate).toLocaleDateString() : 'TBD'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="bg-primary/10 mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg">
+                        <Info className="text-primary h-4 w-4" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">
+                          Operational Mode
+                        </p>
+                        <p className="text-xs font-bold text-gray-950 dark:text-white">
+                          {bookingData.bookingType === 'CHAUFFEUR'
+                            ? 'Premium Chauffeur'
+                            : 'Self-Drive (Pure Performance)'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="bg-primary/10 mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg">
+                        <ChevronLeft className="text-primary h-4 w-4 rotate-270" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">
+                          Deployment Sector
+                        </p>
+                        <p className="text-xs font-bold text-gray-950 dark:text-white">
+                          {bookingData.pickupLocation || 'Dubai Hub'}
+                        </p>
                       </div>
                     </div>
                   </div>

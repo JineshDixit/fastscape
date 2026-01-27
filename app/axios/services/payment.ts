@@ -1,10 +1,10 @@
 import { BaseApiService } from '../base';
-import type { 
-  ApiResponse, 
+import type {
+  ApiResponse,
   PaymentBreakdown,
   ProcessPaymentRequest,
   PaymentSummary,
-  Payment
+  Payment,
 } from '../../../common/interfaces';
 
 export class PaymentService extends BaseApiService {
@@ -46,6 +46,16 @@ export class PaymentService extends BaseApiService {
    */
   async getOverduePayments(): Promise<ApiResponse<Payment[]>> {
     return this.get<Payment[]>('/overdue');
+  }
+
+  /**
+   * Initiate a Stripe PaymentIntent for a booking
+   */
+  async initiatePaymentIntent(
+    bookingId: string,
+    paymentType: 'DEPOSIT' | 'BALANCE' | 'FULL',
+  ): Promise<ApiResponse<any>> {
+    return this.post<any>(`/intent/${bookingId}`, { paymentType });
   }
 }
 
