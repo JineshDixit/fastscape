@@ -1,6 +1,8 @@
 import { DelayChargeCalculation, PaymentCalculation } from 'paymentTypes';
 import { Booking, BookingFinancial, Payment, Vehicle, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
+import { validateRequiredFields, validateDateRange, normalizeBookingDates } from '../../utils/validation.utils';
+import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
 import { stripe } from './stripe.service';
 import { Op, Transaction } from 'sequelize';
 import Logger from '../../utils/logger';
@@ -132,6 +134,37 @@ export const processDepositPayment = async (
     const booking = await Booking.findByPk(bookingId, { transaction, lock: true });
     if (!booking) throw createError('Booking not found', 404);
 
+    // Check if booking has expired
+    if (booking.bookingStatus === 'PENDING' && booking.expiresAt && new Date() > new Date(booking.expiresAt)) {
+      Logger.warn('Processing payment for expired booking - re-checking availability', { bookingId });
+
+      // Re-check availability
+      const conflictingBooking = await Booking.findOne({
+        where: {
+          vehicleId: booking.vehicleId,
+          id: { [Op.ne]: bookingId }, // Exclude current booking
+          [Op.and]: [
+            buildDateConflictConditions(booking.startDatetime, booking.endDatetime),
+            {
+              [Op.or]: [
+                { bookingStatus: 'CONFIRMED' },
+                {
+                  bookingStatus: 'PENDING',
+                  [Op.or]: [{ expiresAt: { [Op.eq]: null } }, { expiresAt: { [Op.gt]: new Date() } }],
+                },
+              ],
+            },
+          ],
+        },
+        transaction,
+        lock: true,
+      });
+
+      if (conflictingBooking) {
+        throw createError('Booking expired and vehicle is no longer available', 409);
+      }
+    }
+
     // Idempotency check: prevent duplicate payment records for the same intent
     const effectiveIntentId = stripeData?.paymentIntentId || stripePaymentIntentId;
     if (effectiveIntentId) {
@@ -237,6 +270,7 @@ export const processDepositPayment = async (
       // Confirm booking if it was PENDING
       if (booking.bookingStatus === 'PENDING') {
         bookingUpdates.bookingStatus = 'CONFIRMED';
+        bookingUpdates.expiresAt = null;
       }
 
       await booking.update(bookingUpdates, { transaction });
@@ -658,14 +692,12 @@ export const initiatePaymentIntent = async (
         ? calculation.totalAmount
         : calculation.balanceAmount + calculation.delayChargeAmount;
 
-  const intent = await stripe.createPaymentIntent({
-    amount: Math.round(amount * 100), // Stripe expects cents
-    currency: calculation.currency.toLowerCase(),
-    metadata: {
-      bookingId,
-      paymentType,
-    },
-  });
-
-  return intent;
+  return await stripe.createPaymentIntent({
+      amount: Math.round(amount * 100), // Stripe expects cents
+      currency: calculation.currency.toLowerCase(),
+      metadata: {
+        bookingId,
+        paymentType,
+      },
+    });
 };

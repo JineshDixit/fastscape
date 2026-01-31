@@ -22,7 +22,7 @@ let sequelize: Sequelize;
  *
  * @returns {void} - nothing
  */
-const initPostgres_DB = async(): Promise<void> => {
+const initPostgres_DB = async (): Promise<void> => {
   const config = dbConfig;
 
   sequelize = new Sequelize(config.POSTGRES_DB.database, config.POSTGRES_DB.userName, config.POSTGRES_DB.password, {

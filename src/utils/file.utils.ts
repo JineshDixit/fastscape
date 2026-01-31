@@ -1,6 +1,25 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+
+const BASE_DIR = path.resolve(__dirname, '..', '..', 'data');
+
+/**
+ * Safely resolve a path under BASE_DIR using provided segments.
+ * Rejects absolute paths and directory traversal attempts.
+ */
+function resolveSafePath(...segments: string[]): string {
+  if (segments.some((s) => path.isAbsolute(s))) {
+    throw new Error('Absolute paths are not allowed');
+  }
+
+  const resolved = path.resolve(BASE_DIR, ...segments);
+
+  if (!resolved.startsWith(BASE_DIR + path.sep)) {
+    throw new Error('Path traversal is not allowed');
+  }
+
+  return resolved;
+}
 
 /**
  * Save an uploaded file from memory to disk with a deterministic structure
@@ -18,31 +37,24 @@ export const saveFile = async (
     throw new Error('No file provided');
   }
 
-  // Define upload directory: uploads/documents/{userId}/{docType}
-  const uploadDir = path.join(process.cwd(), 'uploads', 'documents', userId, docType);
+  const uploadDir = resolveSafePath('uploads', 'documents', userId, docType);
 
-  // Ensure directory exists and CLEAN it (re-upload logic)
   try {
     await fs.access(uploadDir);
-    // If it exists, remove existing files to prevent duplicates
     const files = await fs.readdir(uploadDir);
     for (const f of files) {
-      await fs.unlink(path.join(uploadDir, f));
+      const fileToDelete = resolveSafePath('uploads', 'documents', userId, docType, f);
+      await fs.unlink(fileToDelete);
     }
   } catch {
-    // If it doesn't exist, create it
     await fs.mkdir(uploadDir, { recursive: true });
   }
 
-  // Generate unique filename to avoid cache issues but keep structure clean
   const fileExt = path.extname(file.originalname);
   const fileName = `${Date.now()}${fileExt}`;
-  const filePath = path.join(uploadDir, fileName);
+  const filePath = resolveSafePath('uploads', 'documents', userId, docType, fileName);
 
-  // Write file to disk
   await fs.writeFile(filePath, file.buffer);
 
-  // Return relative path (for database storage)
-  // Converting backslashes to forward slashes for consistency
   return path.join('uploads', 'documents', userId, docType, fileName).replace(/\\/g, '/');
 };

@@ -1,5 +1,6 @@
 import { CreateBookingData, UpdateBookingData } from '../../common/types/bookingTypes';
 import { Booking, Vehicle, sequelize } from '../../models';
+import { Op } from 'sequelize';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateDateRange, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
@@ -44,11 +45,22 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     }
 
     // Check for conflicting bookings within transaction
+    const now = new Date();
     const conflictingBooking = await Booking.findOne({
       where: {
         vehicleId,
-        bookingStatus: ['PENDING', 'CONFIRMED'],
-        ...buildDateConflictConditions(start, end),
+        [Op.and]: [
+          buildDateConflictConditions(start, end),
+          {
+            [Op.or]: [
+              { bookingStatus: 'CONFIRMED' },
+              {
+                bookingStatus: 'PENDING',
+                [Op.or]: [{ expiresAt: { [Op.eq]: null } }, { expiresAt: { [Op.gt]: now } }],
+              },
+            ],
+          },
+        ],
       },
       transaction,
       lock: true, // Add row-level locking
@@ -58,6 +70,9 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
       Logger.warn('Booking conflict detected', { vehicleId, start, end });
       throw createError('Vehicle is already booked for the selected dates', 409);
     }
+
+    // Set expiration to 10 minutes from now
+    const expiresAt = new Date(now.getTime() + 10 * 60000);
 
     // Create booking within transaction
     const booking = await Booking.create(
@@ -70,6 +85,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
         dropoffLocation,
         bookingStatus: 'PENDING',
         paymentStatus: 'UNPAID',
+        expiresAt,
       },
       { transaction },
     );
@@ -92,19 +108,17 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
     throw createError('User ID is required', 400);
   }
 
-  const bookings = await Booking.findAll({
-    where: { userId },
-    attributes: BOOKING_ATTRIBUTES,
-    include: [
-      {
-        model: Vehicle,
-        attributes: VEHICLE_LIST_ATTRIBUTES,
-      },
-    ],
-    order: [['createdAt', 'DESC']],
-  });
-
-  return bookings;
+  return await Booking.findAll({
+      where: { userId },
+      attributes: BOOKING_ATTRIBUTES,
+      include: [
+        {
+          model: Vehicle,
+          attributes: VEHICLE_LIST_ATTRIBUTES,
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
 };
 
 /**

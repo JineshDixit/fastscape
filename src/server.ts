@@ -18,7 +18,7 @@ import Logger from './utils/logger';
 import httpLogger from './services/middleware/httpLogger';
 
 const server = express();
-const PORT = process.env.PORT;
+const {PORT} = process.env;
 
 // HTTP Logging
 server.use(httpLogger);

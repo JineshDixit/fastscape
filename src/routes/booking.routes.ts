@@ -18,12 +18,12 @@ router.post(
     body('endDatetime').isISO8601().withMessage('Valid end date is required'),
     body('pickupLocation')
       .trim()
-      .isLength({ min: 5, max: 200 })
-      .withMessage('Pickup location must be between 5 and 200 characters'),
+      .isLength({ min: 3, max: 200 })
+      .withMessage('Pickup location must be between 3 and 200 characters'),
     body('dropoffLocation')
       .trim()
-      .isLength({ min: 5, max: 200 })
-      .withMessage('Dropoff location must be between 5 and 200 characters'),
+      .isLength({ min: 3, max: 200 })
+      .withMessage('Dropoff location must be between 3 and 200 characters'),
     handleValidationErrors,
   ],
   bookingController.createBooking,
