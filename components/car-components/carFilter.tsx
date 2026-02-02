@@ -41,11 +41,11 @@ const CarFilter = () => {
     if (!filterMetadata) return map;
 
     filterMetadata.brands.forEach((brand) => {
-      map[brand.make] = brand.models.filter((m) => selectedModelsArr.includes(m));
+      map[brand.make] = (brand.models || []).filter((m) => selectedModelsArr.includes(m));
     });
 
     filterMetadata.bodyTypes.forEach((bt) => {
-      map[bt.bodyType] = bt.models.filter((m) => selectedModelsArr.includes(m));
+      map[bt.bodyType] = (bt.models || []).filter((m) => selectedModelsArr.includes(m));
     });
 
     return map;
@@ -59,14 +59,14 @@ const CarFilter = () => {
     const isSelected = currentModels.includes(model);
     const nextModels = isSelected ? currentModels.filter((m) => m !== model) : [...currentModels, model];
 
-    const brand = filterMetadata?.brands.find((b) => b.models.includes(model));
-    const bodyType = filterMetadata?.bodyTypes.find((bt) => bt.models.includes(model));
+    const brand = filterMetadata?.brands.find((b) => (b.models || []).includes(model));
+    const bodyType = filterMetadata?.bodyTypes.find((bt) => (bt.models || []).includes(model));
 
     let nextMakes = [...currentMakes];
     let nextBodyTypes = [...currentBodyTypes];
 
     if (brand) {
-      const brandModels = brand.models;
+      const brandModels = brand.models || [];
       const anyModelSelectedForBrand = nextModels.some((m) => brandModels.includes(m));
       if (anyModelSelectedForBrand && !nextMakes.includes(brand.make)) {
         nextMakes.push(brand.make);
@@ -76,7 +76,7 @@ const CarFilter = () => {
     }
 
     if (bodyType) {
-      const btModels = bodyType.models;
+      const btModels = bodyType.models || [];
       const anyModelSelectedForBT = nextModels.some((m) => btModels.includes(m));
       if (anyModelSelectedForBT && !nextBodyTypes.includes(bodyType.bodyType as any)) {
         nextBodyTypes.push(bodyType.bodyType as any);

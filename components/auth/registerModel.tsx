@@ -41,10 +41,14 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
 
   const registerSchema = z
     .object({
-      fullName: z
+      firstName: z
         .string()
         .trim()
-        .min(3, tVal('minLength', { min: 3 })),
+        .min(2, tVal('minLength', { min: 2 })),
+      lastName: z
+        .string()
+        .trim()
+        .min(2, tVal('minLength', { min: 2 })),
       email: z.string().email(tVal('emailInvalid')),
       countryCode: z.string(),
       phone: z.string().min(7, tVal('phoneInvalid')).max(15, tVal('phoneInvalid')),
@@ -70,7 +74,8 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: '',
+      firstName: '',
+      lastName: '',
       email: '',
       countryCode: '+1',
       phone: '',
@@ -84,7 +89,8 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       const response = await registerUser({
-        fullName: values.fullName,
+        firstName: values.firstName,
+        lastName: values.lastName,
         email: values.email,
         password: values.password,
         phone: `${values.countryCode}${values.phone}`,
@@ -122,18 +128,33 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {error && <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">{error}</div>}
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <FloatingInput label={t('fullName')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <FloatingInput label={t('firstName')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <FloatingInput label={t('lastName')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

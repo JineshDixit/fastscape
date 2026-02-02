@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -8,6 +6,7 @@ import { Upload, X, FileText, Camera, ShieldCheck, ArrowRight, CheckCircle2, Ale
 import { cn } from '@/lib/utils';
 import { useDocument } from '@/app/axios/hooks';
 import type { UserProfile } from '@/common/interfaces';
+import { toast } from 'sonner';
 
 interface DocumentUploadFormProps {
   initialData: Partial<UserProfile> | null;
@@ -15,29 +14,6 @@ interface DocumentUploadFormProps {
   onBack: () => void;
   isLoading?: boolean;
 }
-
-const documentFields = [
-  {
-    id: 'driverLicenseFront',
-    label: 'Driver License (Front)',
-    icon: FileText,
-    desc: 'Ensure all details are clearly visible',
-  },
-  {
-    id: 'driverLicenseBack',
-    label: 'Driver License (Back)',
-    icon: FileText,
-    desc: 'Optional if info is only on front',
-  },
-  { id: 'passportPhoto', label: 'Passport Bio Page', icon: FileText, desc: 'High resolution scan or photo' },
-  { id: 'internationalDrivingPermit', label: 'Intl. Permit', icon: FileText, desc: 'Recommended for travelers' },
-  {
-    id: 'selfieWithLicense',
-    label: 'Identity Verification',
-    icon: Camera,
-    desc: 'Holding your license next to your face',
-  },
-] as const;
 
 const getImageUrl = (path: string) => {
   if (!path) return '';
@@ -48,15 +24,49 @@ const getImageUrl = (path: string) => {
 
 const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, onChange, onBack, isLoading }) => {
   const tCommon = useTranslations('common');
+  const tDoc = useTranslations('documentStep.fields');
   const { uploadDocuments, isLoading: documentLoading } = useDocument();
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
   const [previews, setPreviews] = useState<Record<string, string>>({});
+
+  const documentFields = [
+    {
+      id: 'driverLicenseFront',
+      label: tDoc('driverLicenseFront'),
+      icon: FileText,
+      desc: tDoc('driverLicenseFrontDesc'),
+    },
+    {
+      id: 'driverLicenseBack',
+      label: tDoc('driverLicenseBack'),
+      icon: FileText,
+      desc: tDoc('driverLicenseBackDesc'),
+    },
+    {
+      id: 'passportPhoto',
+      label: tDoc('passportPhoto'),
+      icon: FileText,
+      desc: tDoc('passportPhotoDesc'),
+    },
+    {
+      id: 'internationalDrivingPermit',
+      label: tDoc('internationalDrivingPermit'),
+      icon: FileText,
+      desc: tDoc('internationalDrivingPermitDesc'),
+    },
+    {
+      id: 'selfieWithLicense',
+      label: tDoc('selfieWithLicense'),
+      icon: Camera,
+      desc: tDoc('selfieWithLicenseDesc'),
+    },
+  ] as const;
 
   const handleFileChange = (fieldId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size too large. Max 5MB.');
+        toast.error(tCommon('fileSizeTooLarge'));
         return;
       }
       const updatedFiles = { ...selectedFiles, [fieldId]: file };

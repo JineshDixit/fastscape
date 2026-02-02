@@ -65,7 +65,9 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 text-sm md:gap-3 md:text-base">
                   <UserRound className="size-4 md:size-5" />
-                  <span className="hidden sm:inline">{user?.fullName}</span>
+                  <span className="hidden sm:inline">
+                    {user?.firstName} {user?.lastName}
+                  </span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-background rounded-md p-4 shadow-lg">
                   <DropdownMenuLabel className="cursor-pointer">

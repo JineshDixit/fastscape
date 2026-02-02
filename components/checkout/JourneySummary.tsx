@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Car, Compass, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ArrowRight, Car, Compass, ShieldCheck, AlertCircle, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
@@ -28,156 +28,104 @@ const JourneySummary: React.FC<JourneySummaryProps> = ({
   onNext,
   onBackToVehicles,
   availabilityStatus,
-  isCheckingAvailability
+  isCheckingAvailability,
 }) => {
   const t = useTranslations('vehicleDetails');
-  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return 'N/A';
-    try {
-      return format(parseISO(dateStr), 'EEE, MMM d, yyyy');
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const getFullUrl = (path: string) => {
-    if (!path) return '';
-    return `${baseUrl}/${path.replace(/\\/g, '/')}`;
-  };
+  const tSummary = useTranslations('summaryStep');
+  const tCheckout = useTranslations('checkout');
 
   return (
-    <div className="animate-in fade-in space-y-6 duration-500">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.618fr_1fr]">
-        <div className="group relative overflow-hidden rounded-4xl bg-gray-50 dark:bg-gray-800/50">
-          <div className="aspect-video overflow-hidden">
-            <img
-              src={getFullUrl(vehicle.media?.[0]?.leftSideImage || '/placeholder-car.png')}
-              alt={vehicle.model}
-              className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
-            />
+    <div className="animate-in fade-in space-y-8 py-4 duration-500">
+      <div className="space-y-6">
+        <div className="bg-primary/5 border-primary/20 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-10 text-center">
+          <div className="bg-primary/10 text-primary mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
+            <ShieldCheck className="h-8 w-8" />
           </div>
-
-          <div className="absolute inset-0 bg-linear-to-t from-gray-900 via-transparent to-transparent opacity-60" />
-
-          <div className="absolute right-8 bottom-8 left-8 flex items-end justify-between">
-            <div className="space-y-1">
-              <span className="text-[9px] font-black tracking-[0.3em] text-white uppercase">Selected Machine</span>
-              <h3 className="text-2xl font-black text-white md:text-3xl">
-                {vehicle.make} <span className="text-primary italic">{vehicle.model}</span>
-              </h3>
-            </div>
-
-            <div className="hidden flex-col items-end gap-1 sm:flex">
-              <div className="flex gap-2">
-                <span className="flex items-center rounded-full bg-white/5 px-4 py-1.5 text-[10px] font-bold tracking-widest text-white uppercase ring-1 ring-white/20 backdrop-blur-md">
-                  {vehicle.transmission}
-                </span>
-                <span className="bg-primary flex items-center shadow-primary/20 rounded-full px-4 py-1.5 text-[10px] font-bold tracking-widest text-white uppercase shadow-lg">
-                  {bookingData.bookingType === 'CHAUFFEUR' ? 'Premium Chauffeur' : 'Pure Performance'}
-                </span>
-              </div>
-            </div>
-          </div>
+          <h3 className="text-2xl font-black tracking-tight text-gray-950 uppercase italic dark:text-white">
+            {tSummary('readinessConfirmed')}
+          </h3>
+          <p className="mt-2 max-w-sm text-sm font-medium text-gray-500">
+            {tSummary.rich('primedDesc', {
+              make: vehicle.make,
+              model: vehicle.model,
+              span: (chunks) => <span className="font-bold text-gray-950 dark:text-white">{chunks}</span>,
+            })}
+          </p>
         </div>
 
-        <div className="flex flex-col justify-center space-y-6 px-4 lg:px-0">
-          <div className="relative space-y-6">
-            <div className="from-primary via-primary/50 absolute top-8 bottom-8 left-[23px] w-[2px] bg-linear-to-b to-transparent opacity-20" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl bg-gray-50 p-6 dark:bg-gray-800/50">
+            <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+              {tSummary('stepObjectives')}
+            </p>
+            <ul className="mt-4 space-y-3">
+              <li className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
+                <Check className="text-primary h-4 w-4" /> {tSummary('identityVerification')}
+              </li>
+              <li className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
+                <Check className="text-primary h-4 w-4" /> {tSummary('licenseSync')}
+              </li>
+              <li className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
+                <Check className="text-primary h-4 w-4" /> {tSummary('financialAuth')}
+              </li>
+            </ul>
+          </div>
 
-            <div className="group relative flex items-center gap-4">
-              <div className="group-hover:ring-primary/20 z-10 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-md ring-1 shadow-gray-200/50 ring-gray-50 transition-all duration-300 group-hover:scale-110 dark:bg-gray-900 dark:shadow-none dark:ring-gray-800">
-                <Compass className="text-primary h-5 w-5" />
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Departure</p>
-                <p className="text-lg font-bold text-gray-950 dark:text-white">{formatDate(bookingData.pickupDate)}</p>
-                <p className="text-xs font-medium text-gray-400">
-                  {bookingData.pickupLocation || 'Dubai International'}
-                </p>
-              </div>
+          <div className="flex flex-col justify-between rounded-2xl border-2 border-gray-100 p-6 dark:border-gray-800">
+            <div>
+              <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                {tSummary('protectionLevel')}
+              </p>
+              <p className="mt-1 text-sm font-black text-gray-900 dark:text-white">{tSummary('protectionValue')}</p>
             </div>
-
-            <div className="ml-4 flex items-center gap-4 py-2">
-              <div className="border-primary/20 h-4 w-4 rounded-full border-2 bg-white dark:bg-gray-900" />
-              <div className="from-primary/20 h-px flex-1 bg-linear-to-r to-transparent" />
-              <span className="text-primary/60 text-[9px] font-black tracking-[0.2em] uppercase italic">
-                Elite Rental
-              </span>
-            </div>
-
-            <div className="group relative flex items-center gap-4">
-              <div className="group-hover:ring-primary/20 z-10 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-md ring-1 shadow-gray-200/50 ring-gray-50 transition-all duration-300 group-hover:scale-110 dark:bg-gray-900 dark:shadow-none dark:ring-gray-800">
-                <Car className="text-primary h-5 w-5" />
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Return</p>
-                <p className="text-lg font-bold text-gray-950 dark:text-white">{formatDate(bookingData.dropoffDate)}</p>
-                <p className="text-xs font-medium text-gray-400">Same as Pickup Location</p>
-              </div>
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-2 text-[10px] font-black text-green-600 uppercase">
+              <ShieldCheck className="h-4 w-4" /> {tSummary('secureGaranted')}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-5 md:flex-row dark:border-gray-800">
-        <div className="flex items-center gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10 text-green-500">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-xs font-black tracking-tight text-gray-950 uppercase dark:text-white">
-              Price Protection Enabled
-            </p>
-            <p className="text-[10px] font-medium text-gray-400 italic">No hidden fees at pickup, guaranteed.</p>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-8 md:flex-row dark:border-gray-800">
+        <Button
+          onClick={onBackToVehicles}
+          variant="outline"
+          className="h-12 w-full rounded-xl border-2 px-8 text-xs font-black tracking-widest uppercase md:w-auto"
+        >
+          {tSummary('abort')}
+        </Button>
 
-        <div className="flex gap-3">
-          {availabilityStatus === false && onBackToVehicles && (
-            <Button
-              onClick={onBackToVehicles}
-              variant="outline"
-              className="h-12 rounded-xl border-2 px-6 text-xs font-black tracking-widest uppercase"
-            >
-              Choose Another Vehicle
-            </Button>
+        <Button
+          onClick={onNext}
+          disabled={availabilityStatus === false || isCheckingAvailability}
+          className={cn(
+            'group relative overflow-hidden rounded-xl px-10 py-6 text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl md:w-auto',
+            availabilityStatus === false
+              ? 'cursor-not-allowed bg-red-500 hover:bg-red-600'
+              : isCheckingAvailability
+                ? 'cursor-not-allowed bg-gray-400'
+                : 'bg-primary shadow-primary/20 shadow-xl',
           )}
-
-          <Button
-            onClick={onNext}
-            disabled={availabilityStatus === false || isCheckingAvailability}
-            className={cn(
-              "group relative px-5 py-5 overflow-hidden rounded-md text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto animate-in fade-in slide-in-from-right-10",
-              availabilityStatus === false
-                ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
-                : isCheckingAvailability
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-primary hover:shadow-primary/30"
+        >
+          <span className="relative z-10 flex items-center gap-3">
+            {isCheckingAvailability ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                {tCheckout('verifyingAvailability')}
+              </>
+            ) : availabilityStatus === false ? (
+              <>
+                <AlertCircle className="h-4 w-4" />
+                {t('unavailable')}
+              </>
+            ) : (
+              <>
+                {tSummary('initializeHandshake')}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </>
             )}
-          >
-            <span className="relative z-10 flex items-center gap-3">
-              {isCheckingAvailability ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Checking Availability
-                </>
-              ) : availabilityStatus === false ? (
-                <>
-                  <AlertCircle className="h-4 w-4" />
-                  Not Available
-                </>
-              ) : (
-                <>
-                  Configure Profile
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </>
-              )}
-            </span>
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/5" />
-          </Button>
-        </div>
+          </span>
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/5" />
+        </Button>
       </div>
     </div>
   );

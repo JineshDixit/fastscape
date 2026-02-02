@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useRouter } from '@/localization/navigation';
+import { toast } from 'sonner';
 
 const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
@@ -81,6 +82,10 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
     }
   };
 
+  const handleLocationChange = (data: { pickupLocation?: string; dropoffLocation?: string }) => {
+    setBookingData(data);
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -111,7 +116,13 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
     return new Intl.NumberFormat('en-US').format(price);
   };
 
-  const isFormValid = !!(bookingData.pickupDate && bookingData.dropoffDate && availabilityStatus === true);
+  const isFormValid = !!(
+    bookingData.pickupDate &&
+    bookingData.dropoffDate &&
+    bookingData.pickupLocation?.trim() &&
+    bookingData.dropoffLocation?.trim() &&
+    availabilityStatus === true
+  );
   const canProceedToCheckout = isFormValid && !isChecking;
 
   return (
@@ -182,6 +193,7 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
             bookingData={bookingData}
             onServiceChange={handleServiceChange}
             onDateChange={handleDateChange}
+            onLocationChange={handleLocationChange}
           />
 
           <div className="mt-2 flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -213,21 +225,24 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
               onClick={() => {
                 if (canProceedToCheckout) {
                   router.push(`/checkout/${vehicle.id}`);
-                } else if (availabilityStatus === false) {
-                  alert('This vehicle is not available for the selected dates. Please choose different dates.');
                 } else if (!bookingData.pickupDate || !bookingData.dropoffDate) {
-                  alert('Please select pickup and dropoff dates.');
+                  toast.error(t('pleaseSelectPickupAndDropoffDates'));
+                } else if (!bookingData.pickupLocation?.trim() || !bookingData.dropoffLocation?.trim()) {
+                  toast.error(t('pleaseSelectPickupAndDropoffLocations'));
+                } else if (availabilityStatus === false) {
+                  toast.error(t('vehicleNotAvailable'));
                 }
               }}
             >
               {isChecking
                 ? t('checking')
-                : availabilityStatus === false
-                  ? 'Not Available'
-                  : !bookingData.pickupDate || !bookingData.dropoffDate
-                    ? 'Select Dates'
-                    : t('makePayment')
-              }
+                : !bookingData.pickupDate || !bookingData.dropoffDate
+                  ? 'Select Dates'
+                  : !bookingData.pickupLocation?.trim() || !bookingData.dropoffLocation?.trim()
+                    ? 'Select Locations'
+                    : availabilityStatus === false
+                      ? 'Not Available'
+                      : t('makePayment')}
             </Button>
           </div>
         </div>

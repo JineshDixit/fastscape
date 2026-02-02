@@ -40,6 +40,8 @@ export const useBooking = () => {
 
   // Error State
   const [error, setError] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [intentId, setIntentId] = useState<string | null>(null);
 
   // Helper function to handle API calls
   const handleApiCall = useCallback(
@@ -62,7 +64,7 @@ export const useBooking = () => {
       } catch (err: any) {
         const errorMessage = err?.response?.data?.message || err?.message || 'An error occurred';
         setError(errorMessage);
-        return null;
+        return { success: false, message: errorMessage, data: null as any };
       } finally {
         if (setLoadingState) setLoadingState(false);
       }
@@ -74,21 +76,6 @@ export const useBooking = () => {
   const checkAvailability = useCallback(
     async (data: CheckAvailabilityRequest) => {
       return handleApiCall(() => bookingService.checkAvailability(data));
-    },
-    [handleApiCall],
-  );
-
-  const getBookingQuote = useCallback(
-    async (data: CreateBookingRequest) => {
-      return handleApiCall(
-        () => bookingService.getBookingQuote(data),
-        (response) => {
-          if (response.calculation) {
-            setPaymentBreakdown(response.calculation);
-          }
-        },
-        setIsLoading,
-      );
     },
     [handleApiCall],
   );
@@ -233,6 +220,24 @@ export const useBooking = () => {
     [handleApiCall],
   );
 
+  const initiatePaymentIntent = useCallback(
+    async (bookingId: string, paymentType: 'DEPOSIT' | 'BALANCE' | 'FULL') => {
+      return handleApiCall(
+        () => paymentService.initiatePaymentIntent(bookingId, paymentType),
+        (data) => {
+          if (data.client_secret) {
+            setClientSecret(data.client_secret);
+          }
+          if (data.id) {
+            setIntentId(data.id);
+          }
+        },
+        setIsLoading,
+      );
+    },
+    [handleApiCall],
+  );
+
   const fetchOverduePayments = useCallback(async () => {
     return handleApiCall(() => paymentService.getOverduePayments());
   }, [handleApiCall]);
@@ -272,7 +277,6 @@ export const useBooking = () => {
     extendBooking,
     updateBooking,
     cancelBooking,
-    getBookingQuote,
 
     // Payment Operations
     calculatePaymentBreakdown,
@@ -280,6 +284,13 @@ export const useBooking = () => {
     processBalancePayment,
     fetchPaymentSummary,
     fetchOverduePayments,
+    initiatePaymentIntent,
+
+    // Intent related state
+    clientSecret,
+    intentId,
+    setClientSecret,
+    setIntentId,
 
     // Utility Functions
     clearError,

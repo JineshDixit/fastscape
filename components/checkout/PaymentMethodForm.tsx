@@ -7,68 +7,30 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Wallet, Banknote, ArrowRight, Zap, Info, Lock, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PaymentBreakdown } from '@/common/interfaces';
+import { useTranslations } from 'next-intl';
 
 interface PaymentMethodFormProps {
   breakdown: PaymentBreakdown | null;
   onNext: (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => void;
   onBack: () => void;
   isLoading?: boolean;
-  vehicle?: any; // Add vehicle prop for fallback calculation
-  bookingData?: any; // Add booking data for fallback calculation
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
-  breakdown,
-  onNext,
-  onBack,
-  isLoading,
-  vehicle,
-  bookingData
-}) => {
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext, onBack, isLoading }) => {
+  const t = useTranslations('paymentStep');
   const [method, setMethod] = useState<'ONLINE' | 'CARD' | 'CASH'>('ONLINE');
   const [payFull, setPayFull] = useState(false);
 
-  // Create fallback breakdown if none provided
-  const getBreakdown = (): PaymentBreakdown => {
-    if (breakdown) return breakdown;
-
-    // Calculate fallback breakdown from vehicle and booking data
-    const days = bookingData?.pickupDate && bookingData?.dropoffDate
-      ? Math.ceil((new Date(bookingData.dropoffDate).getTime() - new Date(bookingData.pickupDate).getTime()) / (1000 * 60 * 60 * 24))
-      : 1;
-
-    const dailyRate = vehicle ? parseFloat(vehicle.pricePerDay) : 1200;
-    const baseAmount = dailyRate * days;
-    const taxAmount = Math.round(baseAmount * 0.05); // 5% tax
-    const totalAmount = baseAmount + taxAmount;
-    const depositAmount = Math.round(totalAmount * 0.3); // 30% deposit
-
-    return {
-      baseAmount,
-      taxAmount,
-      totalAmount,
-      depositAmount,
-      currency: vehicle?.currency || 'AED',
-      breakdown: {
-        dailyRate,
-        days,
-        subtotal: baseAmount,
-        tax: taxAmount,
-        total: totalAmount
-      }
-    };
-  };
-
-  const currentBreakdown = getBreakdown();
-
-  if (!currentBreakdown && !vehicle) {
+  if (!breakdown) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
         <div className="border-primary h-10 w-10 animate-spin rounded-full border-4 border-t-transparent" />
-        <p className="text-xs font-black tracking-widest text-gray-400 uppercase">Loading Financial Data</p>
+        <p className="text-xs font-black tracking-widest text-gray-400 uppercase">{t('synchronizing')}</p>
       </div>
     );
   }
+
+  const currentBreakdown = breakdown;
 
   return (
     <div className="animate-in fade-in space-y-6 duration-500">
@@ -78,24 +40,24 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-sm font-black tracking-[0.2em] text-gray-900 uppercase dark:text-white">
               <Zap className="text-primary h-4 w-4" />
-              Transaction Protocol
+              {t('protocol')}
             </h3>
 
             <RadioGroup value={method} onValueChange={(v) => setMethod(v as any)} className="grid grid-cols-1 gap-5">
               {[
                 {
                   id: 'ONLINE',
-                  label: 'Digital Payment',
-                  desc: 'Secure encryption via Stripe / Apple Pay',
+                  label: t('digitalPayment'),
+                  desc: t('digitalDesc'),
                   icon: Wallet,
                 },
                 {
                   id: 'CARD',
-                  label: 'Physical Terminal',
-                  desc: 'Pay with Credit/Debit at pickup counter',
+                  label: t('physicalTerminal'),
+                  desc: t('physicalDesc'),
                   icon: CreditCard,
                 },
-                { id: 'CASH', label: 'Currency', desc: 'Settle via physical cash on arrival', icon: Banknote },
+                { id: 'CASH', label: t('currency'), desc: t('currencyDesc'), icon: Banknote },
               ].map((item) => {
                 const isActive = method === item.id;
                 const Icon = item.icon;
@@ -105,19 +67,17 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                     key={item.id}
                     htmlFor={item.id.toLowerCase()}
                     className={cn(
-                      'relative flex cursor-pointer items-center justify-between overflow-hidden rounded-2xl border-2 p-4 transition-all duration-500',
+                      'relative flex cursor-pointer items-center justify-between overflow-hidden rounded-2xl border-2 p-4 transition-all duration-300',
                       isActive
-                        ? 'border-primary bg-primary/5 shadow-primary/10 ring-primary/5 shadow-2xl ring-4'
-                        : 'hover:border-primary/30 border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900',
+                        ? 'border-primary bg-primary/5 ring-primary/5 ring-2'
+                        : 'hover:border-primary/20 border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900',
                     )}
                   >
                     <div className="flex items-center gap-6">
                       <div
                         className={cn(
                           'flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-500',
-                          isActive
-                            ? 'bg-primary shadow-primary/30 text-white shadow-xl'
-                            : 'bg-gray-100 text-gray-400 dark:bg-gray-800',
+                          isActive ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800',
                         )}
                       >
                         <Icon className="h-7 w-7 stroke-[2.5]" />
@@ -149,12 +109,9 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
             </div>
             <div className="space-y-1 text-center sm:text-left">
               <p className="text-xs font-black tracking-tight text-gray-950 uppercase dark:text-white">
-                Encrypted Settlement
+                {t('encryptedSettlement')}
               </p>
-              <p className="text-[10px] leading-relaxed font-medium text-gray-400">
-                We utilize AES-256 bank-level encryption. Your financial footprint is never permanently stored on our
-                cloud architecture.
-              </p>
+              <p className="text-[10px] leading-relaxed font-medium text-gray-400">{t('encryptionDesc')}</p>
             </div>
           </div>
         </div>
@@ -164,12 +121,12 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           <div className="transform overflow-hidden rounded-4xl bg-white shadow-md ring-1 shadow-gray-200/50 ring-gray-100 transition-all hover:scale-[1.01] dark:bg-gray-900 dark:shadow-none dark:ring-gray-800">
             <div className="bg-primary/5 border-primary/10 border-b px-6 pt-8 pb-5">
               <h3 className="text-primary text-[9px] font-black tracking-[0.3em] uppercase italic">
-                Investment Summary
+                {t('investmentSummary')}
               </h3>
               <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-primary text-base font-black">{currentBreakdown.currency}</span>
                 <span className="text-4xl font-black tracking-tighter text-gray-950 dark:text-white">
-                  {currentBreakdown.totalAmount.toLocaleString()}
+                  {Number(currentBreakdown.totalAmount).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -178,17 +135,17 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-xs font-bold tracking-tight text-gray-500 uppercase">
                   <span className="flex items-center gap-2">
-                    Base Performance
+                    {t('basePerformance')}
                     <Info className="h-3.5 w-3.5 cursor-help opacity-40" />
                   </span>
                   <span className="text-gray-900 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.baseAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.baseAmount).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-bold tracking-tight text-gray-500 uppercase">
-                  <span>Fees & Regulations</span>
+                  <span>{t('feesRegulations')}</span>
                   <span className="text-gray-900 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.taxAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.taxAmount).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -200,17 +157,17 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   type="button"
                   onClick={() => setPayFull(false)}
                   className={cn(
-                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-500',
+                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-300',
                     !payFull
-                      ? 'border-primary bg-primary/5 ring-primary/5 scale-105 ring-4'
-                      : 'border-gray-50 bg-gray-50/30 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
+                      ? 'border-primary bg-primary/5 ring-primary/5 ring-2'
+                      : 'border-gray-50 bg-gray-50/10 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
                   )}
                 >
                   <span className="text-[9px] font-black tracking-[0.2em] text-gray-400 uppercase">
-                    Secure Deposit Only
+                    {t('secureDepositOnly')}
                   </span>
                   <span className="mt-1 text-xl font-black text-gray-950 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.depositAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.depositAmount).toLocaleString()}
                   </span>
                 </button>
 
@@ -218,24 +175,22 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
                   type="button"
                   onClick={() => setPayFull(true)}
                   className={cn(
-                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-500',
+                    'group/btn flex w-full flex-col items-center justify-center rounded-xl border-2 p-4 transition-all duration-300',
                     payFull
-                      ? 'border-primary bg-primary/5 ring-primary/5 scale-105 ring-4'
-                      : 'border-gray-50 bg-gray-50/30 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
+                      ? 'border-primary bg-primary/5 ring-primary/5 ring-2'
+                      : 'border-gray-50 bg-gray-50/10 opacity-60 grayscale hover:opacity-100 hover:grayscale-0',
                   )}
                 >
                   <span className="text-[9px] font-black tracking-[0.2em] text-gray-400 uppercase">
-                    Full Journey Access
+                    {t('fullJourneyAccess')}
                   </span>
                   <span className="mt-1 text-xl font-black text-gray-950 dark:text-white">
-                    {currentBreakdown.currency} {currentBreakdown.totalAmount.toLocaleString()}
+                    {currentBreakdown.currency} {Number(currentBreakdown.totalAmount).toLocaleString()}
                   </span>
                 </button>
               </div>
 
-              <p className="mt-6 text-center text-[9px] font-bold text-gray-400 italic">
-                * Remaining balance will be settled at the performance counter.
-              </p>
+              <p className="mt-6 text-center text-[9px] font-bold text-gray-400 italic">{t('balanceDisclaimer')}</p>
             </div>
           </div>
         </div>
@@ -249,19 +204,28 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           onClick={onBack}
           className="h-12 w-full rounded-xl border-2 px-10 text-xs font-black tracking-widest uppercase transition-all hover:bg-gray-50 active:scale-95 md:w-auto"
         >
-          Modify
+          {t('modify')}
         </Button>
 
         <Button
           onClick={() => onNext(method, payFull)}
           disabled={isLoading}
-          className="group bg-primary hover:shadow-primary/30 animate-in fade-in slide-in-from-right-10 relative px-5 py-5 overflow-hidden rounded-md text-xs font-black tracking-widest uppercase transition-all duration-500 hover:scale-[1.02] hover:shadow-xl md:w-auto"
+          className="group bg-primary hover:bg-primary/90 relative overflow-hidden rounded-xl px-10 py-6 text-xs font-black tracking-widest uppercase transition-all duration-300 md:w-auto"
         >
           <span className="relative z-10 flex items-center gap-3">
-            {isLoading ? 'Synchronizing...' : 'Complete Booking'}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                {t('synchronizing')}
+              </>
+            ) : (
+              <>
+                {t('authorizeMission')}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </>
+            )}
           </span>
-          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/5" />
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transition-all duration-500 group-hover:h-full group-hover:bg-white/10" />
         </Button>
       </div>
     </div>
