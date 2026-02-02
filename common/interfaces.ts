@@ -183,7 +183,8 @@ export interface Location {
 export interface User {
   id: string;
   email: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   role: 'USER' | 'ADMIN';
   avatar?: string;
@@ -208,7 +209,8 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   phone: string;
@@ -265,7 +267,8 @@ export interface UserProfile extends User {
 }
 
 export interface UpdateProfileRequest {
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   city?: string;
   state?: string;

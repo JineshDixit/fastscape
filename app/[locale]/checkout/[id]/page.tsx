@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from '@/localization/navigation';
-import { useVehicle, useUser, useBooking, useAddress } from '@/app/axios/hooks';
+import { useVehicle, useUser, useBooking } from '@/app/axios/hooks';
 import { vehicleService } from '@/app/axios/services/vehicle';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
 import IdentityStep from '@/components/checkout/IdentityStep';
@@ -25,17 +25,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useAuth } from '@/app/axios';
-
-const STEPS: { id: CheckoutStep; label: string }[] = [
-  { id: 'IDENTITY', label: 'Identity' },
-  { id: 'DOCUMENTS', label: 'Documents' },
-  { id: 'PAYMENT', label: 'Payment' },
-  { id: 'SUMMARY', label: 'Summary' },
-];
+import { useTranslations } from 'next-intl';
 
 const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
   const router = useRouter();
+  const t = useTranslations('checkout');
 
   const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
@@ -48,7 +43,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     processDepositPayment,
     currentBooking,
     paymentBreakdown,
-    intentId,
     isLoading: bookingLoading,
   } = useBooking();
 
@@ -56,6 +50,13 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const [error, setError] = useState<string | null>(null);
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+
+  const STEPS: { id: CheckoutStep; label: string }[] = [
+    { id: 'IDENTITY', label: t('steps.identity') },
+    { id: 'DOCUMENTS', label: t('steps.documents') },
+    { id: 'PAYMENT', label: t('steps.payment') },
+    { id: 'SUMMARY', label: t('steps.summary') },
+  ];
 
   useEffect(() => {
     if (id) {
@@ -74,7 +75,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   useEffect(() => {
     if (currentStep === 'IDENTITY' && profile && user) {
       const isVerified = profile.verificationStatus === 'VERIFIED';
-      const hasBasicInfo = !!(profile.fullName && profile.phone);
+      const hasBasicInfo = !!(profile.firstName && profile.lastName && profile.phone);
 
       if (isVerified) {
         console.log('Profile verified, skipping to payment.');
@@ -97,14 +98,12 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           if (response.success) {
             setAvailabilityStatus(response.data?.isAvailable ?? false);
             if (!response.data?.isAvailable) {
-              setError(
-                'This vehicle is no longer available for the selected dates. Please choose different dates or another vehicle.',
-              );
+              setError(t('errorAvailability'));
             }
           }
         } catch (err) {
           console.error('Availability check failed:', err);
-          setError('Unable to verify vehicle availability. Please try again.');
+          setError(t('errorAvailabilityGeneric'));
         } finally {
           setIsCheckingAvailability(false);
         }
@@ -141,7 +140,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
       setCurrentStep('DOCUMENTS');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setError('Failed to confirm identity');
+      setError(t('errorIdentity'));
     }
   };
 
@@ -155,7 +154,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const handleDocumentsNext = async () => {
     try {
       if (profile?.verificationStatus !== 'VERIFIED') {
-        setError('Operational credentials not yet verified. Please wait for orbital sync.');
+        setError(t('errorCredentials'));
         return;
       }
 
@@ -170,7 +169,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         setIsCheckingAvailability(false);
 
         if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
-          setError('Sorry, this vehicle is no longer available for the selected dates.');
+          setError(t('errorAvailability'));
           return;
         }
       }
@@ -195,7 +194,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         setError(response?.message || 'Failed to initialize booking session.');
       }
     } catch (err) {
-      setError('Failed to transition to financial synchronization.');
+      setError(t('errorFinalSync'));
       setIsCheckingAvailability(false);
     }
   };
@@ -211,7 +210,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         const intentResponse = await initiatePaymentIntent(currentBooking.id, payFull ? 'FULL' : 'DEPOSIT');
 
         if (!intentResponse || !intentResponse.success) {
-          setError('Failed to initiate secure payment gateway.');
+          setError(t('errorPaymentIntent'));
           return;
         }
 
@@ -225,7 +224,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           setCurrentStep('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-          setError(response?.message || 'Payment synchronization failed.');
+          setError(response?.message || t('errorPaymentSync'));
         }
       } else {
         const response = await processDepositPayment(currentBooking.id, {
@@ -237,11 +236,11 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           setCurrentStep('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-          setError(response?.message || 'Failed to record manual payment.');
+          setError(response?.message || t('errorPaymentManual'));
         }
       }
     } catch (err) {
-      setError('Final synchronization failed.');
+      setError(t('errorFinalSync'));
     }
   };
 
@@ -254,7 +253,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
             <Loader2 className="text-primary animation-duration-[3s] absolute inset-0 h-16 w-16 animate-spin" />
           </div>
           <p className="animate-pulse text-[10px] font-black tracking-[0.4em] text-gray-400 uppercase">
-            Initializing Protocol
+            {t('initializingProtocol')}
           </p>
         </div>
       </div>
@@ -264,14 +263,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   if (!vehicle) {
     return (
       <div className="global-container py-20 text-center">
-        <h2 className="text-3xl font-black text-gray-900">Vehicle Not Found</h2>
-        <p className="mt-2 text-gray-500">The requested machine is unavailable or does not exist.</p>
+        <h2 className="text-3xl font-black text-gray-900">{t('vehicleNotFound')}</h2>
+        <p className="mt-2 text-gray-500">{t('vehicleNotFoundDesc')}</p>
         <Button
           onClick={() => router.back()}
           variant="outline"
           className="mt-8 h-14 rounded-2xl border-2 px-10 text-xs font-black tracking-widest uppercase"
         >
-          Return to Hub
+          {t('returnToHub')}
         </Button>
       </div>
     );
@@ -300,14 +299,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="group-hover:bg-primary/10 flex h-8 w-8 items-center justify-center rounded-xl bg-gray-50 transition-colors dark:bg-gray-900">
               <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             </div>
-            <span className="hidden sm:inline">Abort Checkout</span>
+            <span className="hidden sm:inline">{t('abortCheckout')}</span>
           </button>
 
           <div className="flex items-center gap-6">
             <div className="hidden items-center gap-2.5 rounded-full border border-green-500/10 bg-green-500/5 px-4 py-2 lg:flex">
               <ShieldCheck className="h-4 w-4 text-green-500" />
               <span className="text-[9px] font-black tracking-widest text-green-600 uppercase">
-                Enterprise Security
+                {t('enterpriseSecurity')}
               </span>
             </div>
           </div>
@@ -319,11 +318,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           <div className="space-y-6">
             <div className="space-y-1">
               <h1 className="text-3xl font-black tracking-tighter text-gray-950 md:text-4xl dark:text-white">
-                Elevate your <span className="text-primary italic">Drive.</span>
+                {t('elevateYour')} <span className="text-primary italic">{t('drive')}</span>
               </h1>
-              <p className="max-w-xl text-base font-medium text-gray-400">
-                Configure your elite rental experience with precision.
-              </p>
+              <p className="max-w-xl text-base font-medium text-gray-400">{t('subtitle')}</p>
             </div>
 
             <CheckoutSteppers currentStep={currentStep} steps={STEPS} />
@@ -341,7 +338,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
               <Alert className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
-                  Verifying vehicle availability...
+                  {t('verifyingAvailability')}
                 </AlertDescription>
               </Alert>
             )}
@@ -353,17 +350,17 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="flex items-center gap-2">
                       <span className="bg-primary/20 h-1.5 w-10 rounded-full" />
                       <span className="text-primary text-[9px] font-black tracking-[0.4em] uppercase">
-                        Step {STEPS.findIndex((s) => s.id === currentStep) + 1}
+                        {t('step', { number: STEPS.findIndex((s) => s.id === currentStep) + 1 })}
                       </span>
                     </div>
                     <CardTitle className="text-2xl font-black tracking-tight text-gray-950 dark:text-white">
-                      {STEPS.find((s) => s.id === currentStep)?.label} Intel
+                      {STEPS.find((s) => s.id === currentStep)?.label} {t('intel')}
                     </CardTitle>
                     <CardDescription className="text-sm font-medium text-gray-400 italic">
-                      {currentStep === 'IDENTITY' && 'Verify your identity and provide operational permissions.'}
-                      {currentStep === 'DOCUMENTS' && 'Synchronize your operational credentials.'}
-                      {currentStep === 'PAYMENT' && 'Finalize the financial synchronization.'}
-                      {currentStep === 'SUMMARY' && 'Your propulsion unit is synchronized and ready.'}
+                      {currentStep === 'IDENTITY' && t('identityDesc')}
+                      {currentStep === 'DOCUMENTS' && t('documentsDesc')}
+                      {currentStep === 'PAYMENT' && t('paymentDesc')}
+                      {currentStep === 'SUMMARY' && t('summaryDesc')}
                     </CardDescription>
                   </div>
                 </div>
@@ -406,10 +403,10 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
                     <div className="space-y-4">
                       <h2 className="text-4xl font-black tracking-tighter text-gray-950 dark:text-white">
-                        Mission Success.
+                        {t('successMessage')}
                       </h2>
                       <p className="mx-auto max-w-sm text-lg leading-relaxed font-medium text-gray-400">
-                        Your elite machine is reserved. A confirmation packet has been dispatched to your inbox.
+                        {t('successDesc')}
                       </p>
                     </div>
 
@@ -418,14 +415,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                         onClick={() => router.push('/bookings')}
                         className="shadow-primary/30 h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase shadow-xl transition-all hover:scale-105 active:scale-95"
                       >
-                        Manage Assets
+                        {t('manageAssets')}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => router.push('/vehicles')}
                         className="h-12 flex-1 rounded-xl border-2 text-xs font-black tracking-widest uppercase transition-all hover:bg-gray-50 active:scale-95"
                       >
-                        Explore More
+                        {t('exploreMore')}
                       </Button>
                     </div>
                   </div>
@@ -447,7 +444,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="mb-1 flex items-center gap-2">
                       <span className="bg-primary h-1 w-6 rounded-full" />
                       <span className="text-[9px] font-black tracking-[0.3em] text-white/70 uppercase">
-                        Selected Asset
+                        {t('selectedAsset')}
                       </span>
                     </div>
                     <h3 className="text-2xl font-black tracking-tight text-white">
@@ -471,12 +468,16 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
                     <div className="overflow-hidden">
                       <p className="truncate text-xs font-black tracking-tighter text-gray-950 uppercase dark:text-white">
-                        {profile?.fullName || user?.fullName || 'Guest Pilot'}
+                        {profile?.firstName && profile?.lastName
+                          ? `${profile.firstName} ${profile.lastName}`
+                          : user?.firstName && user?.lastName
+                            ? `${user.firstName} ${user.lastName}`
+                            : t('guestPilot')}
                       </p>
                       <div className="mt-0.5 flex items-center gap-2">
                         <Mail className="text-primary h-3 w-3 opacity-50" />
                         <p className="truncate text-[9px] font-bold tracking-tight text-gray-400">
-                          {profile?.email || user?.email || 'Awaiting Authentication'}
+                          {profile?.email || user?.email || t('awaitingAuth')}
                         </p>
                       </div>
                     </div>
@@ -489,10 +490,12 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                         <Calendar className="text-primary h-4 w-4" />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">Mission Window</p>
+                        <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">
+                          {t('missionWindow')}
+                        </p>
                         <p className="text-xs font-bold text-gray-950 dark:text-white">
-                          {bookingData.pickupDate ? parseISO(bookingData.pickupDate).toLocaleDateString() : 'TBD'} —{' '}
-                          {bookingData.dropoffDate ? parseISO(bookingData.dropoffDate).toLocaleDateString() : 'TBD'}
+                          {bookingData.pickupDate ? parseISO(bookingData.pickupDate).toLocaleDateString() : t('tbd')} —{' '}
+                          {bookingData.dropoffDate ? parseISO(bookingData.dropoffDate).toLocaleDateString() : t('tbd')}
                         </p>
                       </div>
                     </div>
@@ -503,12 +506,10 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       </div>
                       <div className="space-y-1">
                         <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">
-                          Operational Mode
+                          {t('operationalMode')}
                         </p>
                         <p className="text-xs font-bold text-gray-950 dark:text-white">
-                          {bookingData.bookingType === 'CHAUFFEUR'
-                            ? 'Premium Chauffeur'
-                            : 'Self-Drive (Pure Performance)'}
+                          {bookingData.bookingType === 'CHAUFFEUR' ? t('premiumChauffeur') : t('selfDrive')}
                         </p>
                       </div>
                     </div>
@@ -519,7 +520,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       </div>
                       <div className="space-y-1">
                         <p className="text-[9px] font-black tracking-widest text-gray-400 uppercase">
-                          Deployment Sector
+                          {t('deploymentSector')}
                         </p>
                         <p className="text-xs font-bold text-gray-950 dark:text-white">
                           {bookingData.pickupLocation || 'Dubai Hub'}
@@ -532,17 +533,19 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="flex items-center justify-between rounded-2xl bg-gray-50/50 px-6 py-4 dark:bg-gray-800/50">
                       <div className="flex items-center gap-3">
                         <Calendar className="text-primary h-4 w-4" />
-                        <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Duration</span>
+                        <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                          {t('duration')}
+                        </span>
                       </div>
                       <span className="text-xs font-black text-gray-950 dark:text-white">
-                        {days} {days === 1 ? 'Cycle' : 'Cycles'}
+                        {days} {days === 1 ? t('cycle') : t('cycles')}
                       </span>
                     </div>
 
                     <div className="group flex cursor-help items-center justify-between px-2">
                       <div className="space-y-1">
                         <span className="group-hover:text-primary text-[10px] font-black tracking-[0.2em] text-gray-300 uppercase transition-colors">
-                          Projected Total
+                          {t('projectedTotal')}
                         </span>
                         <div className="mt-1 flex items-baseline gap-1.5">
                           <span className="text-primary text-3xl font-black">{vehicle.currency || '$'}</span>
@@ -560,7 +563,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
                     <Info className="text-primary z-10 h-5 w-5 shrink-0" />
                     <p className="z-10 text-[10px] leading-relaxed font-bold tracking-tight text-gray-500 uppercase">
-                      Pricing includes full comprehensive insurance and maintenance coverage for the entire cycle.
+                      {t('pricingDisclaimer')}
                     </p>
                   </div>
                 </CardContent>

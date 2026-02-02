@@ -31,6 +31,8 @@ const JourneySummary: React.FC<JourneySummaryProps> = ({
   isCheckingAvailability,
 }) => {
   const t = useTranslations('vehicleDetails');
+  const tSummary = useTranslations('summaryStep');
+  const tCheckout = useTranslations('checkout');
 
   return (
     <div className="animate-in fade-in space-y-8 py-4 duration-500">
@@ -40,40 +42,44 @@ const JourneySummary: React.FC<JourneySummaryProps> = ({
             <ShieldCheck className="h-8 w-8" />
           </div>
           <h3 className="text-2xl font-black tracking-tight text-gray-950 uppercase italic dark:text-white">
-            Operational Readiness Confirmed
+            {tSummary('readinessConfirmed')}
           </h3>
           <p className="mt-2 max-w-sm text-sm font-medium text-gray-500">
-            Your selection of the{' '}
-            <span className="font-bold text-gray-950 dark:text-white">
-              {vehicle.make} {vehicle.model}
-            </span>{' '}
-            is primed. All configurations have been successfully cached in the mission sidebar.
+            {tSummary.rich('primedDesc', {
+              make: vehicle.make,
+              model: vehicle.model,
+              span: (chunks) => <span className="font-bold text-gray-950 dark:text-white">{chunks}</span>,
+            })}
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-2xl bg-gray-50 p-6 dark:bg-gray-800/50">
-            <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Step Objectives</p>
+            <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+              {tSummary('stepObjectives')}
+            </p>
             <ul className="mt-4 space-y-3">
               <li className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
-                <Check className="text-primary h-4 w-4" /> Identity Verification
+                <Check className="text-primary h-4 w-4" /> {tSummary('identityVerification')}
               </li>
               <li className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
-                <Check className="text-primary h-4 w-4" /> License Synchronization
+                <Check className="text-primary h-4 w-4" /> {tSummary('licenseSync')}
               </li>
               <li className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
-                <Check className="text-primary h-4 w-4" /> Financial Authorization
+                <Check className="text-primary h-4 w-4" /> {tSummary('financialAuth')}
               </li>
             </ul>
           </div>
 
           <div className="flex flex-col justify-between rounded-2xl border-2 border-gray-100 p-6 dark:border-gray-800">
             <div>
-              <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Protection Level</p>
-              <p className="mt-1 text-sm font-black text-gray-900 dark:text-white">Comprehensive Elite</p>
+              <p className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+                {tSummary('protectionLevel')}
+              </p>
+              <p className="mt-1 text-sm font-black text-gray-900 dark:text-white">{tSummary('protectionValue')}</p>
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-2 text-[10px] font-black text-green-600 uppercase">
-              <ShieldCheck className="h-4 w-4" /> SECURE HANDOFF GUARANTEED
+              <ShieldCheck className="h-4 w-4" /> {tSummary('secureGaranted')}
             </div>
           </div>
         </div>
@@ -85,7 +91,7 @@ const JourneySummary: React.FC<JourneySummaryProps> = ({
           variant="outline"
           className="h-12 w-full rounded-xl border-2 px-8 text-xs font-black tracking-widest uppercase md:w-auto"
         >
-          Abort Mission
+          {tSummary('abort')}
         </Button>
 
         <Button
@@ -104,16 +110,16 @@ const JourneySummary: React.FC<JourneySummaryProps> = ({
             {isCheckingAvailability ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Synchronizing...
+                {tCheckout('verifyingAvailability')}
               </>
             ) : availabilityStatus === false ? (
               <>
                 <AlertCircle className="h-4 w-4" />
-                Unit Unavailable
+                {t('unavailable')}
               </>
             ) : (
               <>
-                Initialize Handshake
+                {tSummary('initializeHandshake')}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </>
             )}

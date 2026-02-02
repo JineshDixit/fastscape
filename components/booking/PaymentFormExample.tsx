@@ -4,6 +4,7 @@ import { useState } from 'react';
 import PaymentForm from './PaymentForm';
 import PaymentOptionsForm from './PaymentOptionsForm';
 import type { PaymentBreakdown } from '@/common/interfaces';
+import { toast } from 'sonner';
 
 /**
  * Example component demonstrating the enhanced PaymentForm usage
@@ -53,7 +54,7 @@ export default function PaymentFormExample() {
     };
 
     const handlePaymentSuccess = () => {
-        alert('Payment processed successfully!');
+        toast.success('Payment Processed Successfully');
         setCurrentStep('options');
     };
 

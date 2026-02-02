@@ -64,7 +64,7 @@ export const useBooking = () => {
       } catch (err: any) {
         const errorMessage = err?.response?.data?.message || err?.message || 'An error occurred';
         setError(errorMessage);
-        return null;
+        return { success: false, message: errorMessage, data: null as any };
       } finally {
         if (setLoadingState) setLoadingState(false);
       }

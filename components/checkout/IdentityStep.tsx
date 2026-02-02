@@ -9,6 +9,7 @@ import { useAuth } from '@/app/axios';
 import loginModel from '@/components/auth/loginModel';
 import registerModel from '@/components/auth/registerModel';
 import forgotPassword from '@/components/auth/forgotPassword';
+import { useTranslations } from 'next-intl';
 
 const LoginModel = loginModel;
 const RegisterModel = registerModel;
@@ -21,6 +22,7 @@ interface IdentityStepProps {
 }
 
 const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading }) => {
+  const t = useTranslations('identityStep');
   const { user } = useAuth();
   const [password, setPassword] = useState('');
   const [authView, setAuthView] = useState<'NONE' | 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD'>('NONE');
@@ -32,16 +34,14 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
           <LogIn className="h-12 w-12" />
         </div>
         <div className="space-y-3 text-center">
-          <h3 className="text-3xl font-black tracking-tighter uppercase italic">Terminal Access Restricted</h3>
-          <p className="mx-auto max-w-sm text-base font-medium text-gray-400">
-            Authentication is required to initialize the elite machine reservation protocol.
-          </p>
+          <h3 className="text-3xl font-black tracking-tighter uppercase italic">{t('restricted')}</h3>
+          <p className="mx-auto max-w-sm text-base font-medium text-gray-400">{t('authRequired')}</p>
         </div>
         <Button
           onClick={() => setAuthView('LOGIN')}
           className="shadow-primary/20 h-14 rounded-2xl px-12 text-xs font-black tracking-[0.2em] uppercase shadow-2xl transition-all hover:scale-105 active:scale-95"
         >
-          Initialize Login
+          {t('initializeLogin')}
         </Button>
         <LoginModel
           open={authView === 'LOGIN'}
@@ -67,12 +67,9 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       {/* Header Info */}
       <div className="space-y-2">
         <h3 className="text-xl font-black tracking-tight text-gray-950 uppercase italic dark:text-white">
-          Identity <span className="text-primary">Verification.</span>
+          {t('title')} <span className="text-primary">{t('verification')}</span>
         </h3>
-        <p className="max-w-lg text-sm leading-relaxed font-medium text-gray-500">
-          Review your pilot credentials. This information will be used for the insurance underwriting and official
-          mission logs.
-        </p>
+        <p className="max-w-lg text-sm leading-relaxed font-medium text-gray-500">{t('description')}</p>
       </div>
 
       {/* Read-only Profile Grid */}
@@ -80,17 +77,17 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
         <div className="group hover:border-primary/20 flex flex-col justify-center rounded-2xl border border-gray-100 bg-gray-50/50 p-6 transition-all dark:border-gray-800 dark:bg-gray-800/50">
           <div className="mb-3 flex items-center gap-3">
             <User className="text-primary h-4 w-4" />
-            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Callsign</span>
+            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">{t('callsign')}</span>
           </div>
           <p className="truncate text-lg font-black text-gray-950 uppercase dark:text-white">
-            {profile?.fullName || 'Awaiting Intel'}
+            {profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : t('awaitingIntel')}
           </p>
         </div>
 
         <div className="group hover:border-primary/20 flex flex-col justify-center rounded-2xl border border-gray-100 bg-gray-50/50 p-6 transition-all dark:border-gray-800 dark:bg-gray-800/50">
           <div className="mb-3 flex items-center gap-3">
             <Mail className="text-primary h-4 w-4" />
-            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Comm-Link</span>
+            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">{t('commLink')}</span>
           </div>
           <p className="truncate text-base font-bold text-gray-600 dark:text-gray-400">{profile?.email}</p>
         </div>
@@ -98,22 +95,22 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
         <div className="group hover:border-primary/20 flex flex-col justify-center rounded-2xl border border-gray-100 bg-gray-50/50 p-6 transition-all dark:border-gray-800 dark:bg-gray-800/50">
           <div className="mb-3 flex items-center gap-3">
             <Phone className="text-primary h-4 w-4" />
-            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Secure Line</span>
+            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">{t('secureLine')}</span>
           </div>
           <p className="truncate text-base font-bold text-gray-600 dark:text-gray-400">
-            {profile?.phone || 'Field Missing'}
+            {profile?.phone || t('fieldMissing')}
           </p>
         </div>
 
         <div className="group hover:border-primary/20 flex flex-col justify-center rounded-2xl border border-gray-100 bg-gray-50/50 p-6 transition-all dark:border-gray-800 dark:bg-gray-800/50">
           <div className="mb-3 flex items-center gap-3">
             <ShieldCheck className="text-primary h-4 w-4" />
-            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">Status</span>
+            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">{t('status')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
             <p className="text-[11px] font-black tracking-tighter text-green-600 uppercase dark:text-green-500">
-              Active Authorized Profile
+              {t('activeAuthorized')}
             </p>
           </div>
         </div>
@@ -123,7 +120,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       <div className="border-primary/10 bg-primary/5 dark:bg-primary/5 space-y-6 rounded-3xl border-2 p-8">
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase">
-            <Lock className="h-3 w-3" /> Mission Confirmation Password
+            <Lock className="h-3 w-3" /> {t('missionConfirmation')}
           </label>
           <div className="relative">
             <input
@@ -131,7 +128,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="focus:border-primary w-full rounded-2xl border-2 border-gray-100 bg-white px-6 py-4 pr-12 text-sm font-bold transition-all focus:outline-none dark:border-gray-800 dark:bg-gray-950"
-              placeholder="Provide terminal password to authorize"
+              placeholder={t('passwordPlaceholder')}
             />
             <div className="absolute top-1/2 right-4 -translate-y-1/2">
               <ShieldCheck
@@ -147,15 +144,13 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
           className="group relative h-16 w-full overflow-hidden rounded-2xl bg-gray-950 font-black tracking-widest text-white uppercase transition-all hover:bg-black active:scale-[0.98] disabled:opacity-50"
         >
           <div className="relative z-10 flex items-center justify-center gap-4">
-            {isLoading ? 'Processing Protocol...' : 'Authorize and Proceed'}
+            {isLoading ? t('processing') : t('authorizeAndProceed')}
             <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
           </div>
         </Button>
       </div>
 
-      <p className="text-center text-[9px] font-bold tracking-widest text-gray-400 uppercase">
-        * By authorizing, you confirm that the pilot credentials above are accurate and valid.
-      </p>
+      <p className="text-center text-[9px] font-bold tracking-widest text-gray-400 uppercase">{t('disclaimer')}</p>
     </div>
   );
 };

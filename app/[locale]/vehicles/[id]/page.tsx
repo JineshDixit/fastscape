@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { differenceInDays, parseISO } from 'date-fns';
 import { useRouter } from '@/localization/navigation';
+import { toast } from 'sonner';
 
 const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = use(params);
@@ -225,11 +226,11 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
                 if (canProceedToCheckout) {
                   router.push(`/checkout/${vehicle.id}`);
                 } else if (!bookingData.pickupDate || !bookingData.dropoffDate) {
-                  alert('Please select pickup and dropoff dates.');
+                  toast.error(t('pleaseSelectPickupAndDropoffDates'));
                 } else if (!bookingData.pickupLocation?.trim() || !bookingData.dropoffLocation?.trim()) {
-                  alert('Please select pickup and dropoff locations.');
+                  toast.error(t('pleaseSelectPickupAndDropoffLocations'));
                 } else if (availabilityStatus === false) {
-                  alert('This vehicle is not available for the selected dates. Please choose different dates.');
+                  toast.error(t('vehicleNotAvailable'));
                 }
               }}
             >
