@@ -63,7 +63,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-5 space-y-10 duration-700">
+    <div className="space-y-10">
       {/* Header Info */}
       <div className="space-y-2">
         <h3 className="text-xl font-black tracking-tight text-gray-950 uppercase italic dark:text-white">
@@ -119,28 +119,17 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       {/* Confirmation Section */}
       <div className="border-primary/10 bg-primary/5 dark:bg-primary/5 space-y-6 rounded-3xl border-2 p-8">
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase">
-            <Lock className="h-3 w-3" /> {t('missionConfirmation')}
-          </label>
-          <div className="relative">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="focus:border-primary w-full rounded-2xl border-2 border-gray-100 bg-white px-6 py-4 pr-12 text-sm font-bold transition-all focus:outline-none dark:border-gray-800 dark:bg-gray-950"
-              placeholder={t('passwordPlaceholder')}
-            />
-            <div className="absolute top-1/2 right-4 -translate-y-1/2">
-              <ShieldCheck
-                className={cn('h-5 w-5 transition-colors', password.length > 5 ? 'text-green-500' : 'text-gray-200')}
-              />
-            </div>
-          </div>
+          <h4 className="text-lg font-black tracking-tight text-gray-950 dark:text-white">
+            Profile Verification
+          </h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Your profile information will be used for this booking. Please ensure all details are correct.
+          </p>
         </div>
 
         <Button
-          onClick={() => onNext(password)}
-          disabled={!password || isLoading}
+          onClick={() => onNext('')}
+          disabled={isLoading || !profile?.firstName || !profile?.lastName || !profile?.phone}
           className="group relative h-16 w-full overflow-hidden rounded-2xl bg-gray-950 font-black tracking-widest text-white uppercase transition-all hover:bg-black active:scale-[0.98] disabled:opacity-50"
         >
           <div className="relative z-10 flex items-center justify-center gap-4">

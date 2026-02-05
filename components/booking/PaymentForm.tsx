@@ -102,14 +102,33 @@ export default function PaymentForm({
 
     // Validate minimum amounts
     const paymentAmount = getPaymentAmount();
-    if (parseFloat(paymentAmount) <= 0) {
+    const numericAmount = parseFloat(paymentAmount);
+    
+    if (isNaN(numericAmount) || numericAmount <= 0) {
       errors.push('Payment amount must be greater than zero');
     }
 
     // Validate dropoff payments have proper additional charges calculation
     if (paymentType === 'balance' && (delayHours > 0 || chauffeurCharges > 0)) {
-      if (additionalCharges.length === 0) {
+      if (additionalCharges.length === 0 && (delayHours > 0 || chauffeurCharges > 0)) {
         errors.push('Additional charges not calculated for dropoff payment');
+      }
+    }
+
+    // Validate payment method selection
+    if (!paymentMethod) {
+      errors.push('Please select a payment method');
+    }
+
+    // Validate online payment requirements
+    if (paymentMethod === 'ONLINE') {
+      if (!currentBreakdown && paymentType !== 'balance') {
+        errors.push('Payment calculation required for online payment');
+      }
+      
+      // In a real implementation, you'd validate Stripe setup here
+      if (numericAmount > 999999) {
+        errors.push('Payment amount exceeds maximum allowed limit');
       }
     }
 
@@ -124,26 +143,39 @@ export default function PaymentForm({
       return;
     }
 
-    const paymentData = {
-      paymentMethod,
-      // In a real app, you'd integrate with Stripe or other payment processor
-      stripePaymentIntentId: paymentMethod === 'ONLINE' ? `pi_${Date.now()}` : undefined,
-    };
+    try {
+      const paymentData = {
+        paymentMethod,
+        // In a real app, you'd integrate with Stripe or other payment processor
+        stripePaymentIntentId: paymentMethod === 'ONLINE' ? `pi_${Date.now()}` : undefined,
+        paymentType: paymentType === 'full' ? (selectedPaymentOption.toUpperCase() as 'DEPOSIT' | 'FULL') : undefined,
+      };
 
-    let response;
+      let response;
 
-    // Determine which payment method to use based on type and option
-    if (paymentType === 'deposit' || (paymentType === 'full' && selectedPaymentOption === 'deposit')) {
-      response = await processDepositPayment(bookingId, paymentData);
-    } else if (paymentType === 'balance' || (paymentType === 'full' && selectedPaymentOption === 'full')) {
-      response = await processBalancePayment(bookingId, paymentData);
-    } else {
-      // Handle full payment option
-      response = await processBalancePayment(bookingId, paymentData);
-    }
+      // Determine which payment method to use based on type and option
+      if (paymentType === 'deposit' || (paymentType === 'full' && selectedPaymentOption === 'deposit')) {
+        response = await processDepositPayment(bookingId, paymentData);
+      } else if (paymentType === 'balance') {
+        response = await processBalancePayment(bookingId, paymentData);
+      } else if (paymentType === 'full' && selectedPaymentOption === 'full') {
+        // Handle full payment option
+        response = await processDepositPayment(bookingId, {
+          ...paymentData,
+          paymentType: 'FULL' as const,
+        });
+      } else {
+        throw new Error('Invalid payment configuration');
+      }
 
-    if (response?.success) {
-      onPaymentSuccess?.();
+      if (response?.success) {
+        onPaymentSuccess?.();
+      } else {
+        throw new Error(response?.message || 'Payment processing failed');
+      }
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      // Error is already set by the hook, no need to set it again
     }
   };
 

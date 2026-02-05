@@ -2,7 +2,8 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from '@/localization/navigation';
-import { useVehicle, useUser, useBooking } from '@/app/axios/hooks';
+import { useVehicle, useBooking } from '@/app/axios/hooks';
+import { useBookingFlow } from '@/app/axios/hooks/useBookingFlow';
 import { vehicleService } from '@/app/axios/services/vehicle';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
 import IdentityStep from '@/components/checkout/IdentityStep';
@@ -34,22 +35,31 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
-  const { profile, fetchProfile, isLoading: profileLoading } = useUser();
   const {
     createBooking,
     calculatePaymentBreakdown,
     initiatePaymentIntent,
-    fetchUserBookings,
     processDepositPayment,
     currentBooking,
     paymentBreakdown,
     isLoading: bookingLoading,
   } = useBooking();
 
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>('IDENTITY');
-  const [error, setError] = useState<string | null>(null);
+  const {
+    currentStep,
+    profile,
+    isInitialized,
+    isLoading: flowLoading,
+    error: flowError,
+    initializeFlow,
+    proceedToNextStep,
+    goToStep,
+    clearError,
+  } = useBookingFlow();
+
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const STEPS: { id: CheckoutStep; label: string }[] = [
     { id: 'IDENTITY', label: t('steps.identity') },
@@ -64,28 +74,19 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     }
   }, [id, fetchVehicleById]);
 
-  // Sync profile when user changes or session initialized
+  // Initialize the booking flow when user is available and not already initialized
   useEffect(() => {
-    if (user) {
-      fetchProfile();
+    if (user && !isInitialized) {
+      initializeFlow();
     }
-  }, [user, fetchProfile]);
+  }, [user, isInitialized, initializeFlow]);
 
-  // Handle automatic step skipping (Smart Flow)
+  // Sync flow error with local error
   useEffect(() => {
-    if (currentStep === 'IDENTITY' && profile && user) {
-      const isVerified = profile.verificationStatus === 'VERIFIED';
-      const hasBasicInfo = !!(profile.firstName && profile.lastName && profile.phone);
-
-      if (isVerified) {
-        console.log('Profile verified, skipping to payment.');
-        handleDocumentsNext();
-      } else if (hasBasicInfo) {
-        console.log('Identity confirmed, proceeding to documents for verification.');
-        setCurrentStep('DOCUMENTS');
-      }
+    if (flowError) {
+      setError(flowError);
     }
-  }, [currentStep, profile, user]);
+  }, [flowError]);
 
   // Check vehicle availability when checkout page loads
   useEffect(() => {
@@ -113,51 +114,17 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     checkInitialAvailability();
   }, [id, bookingData.pickupDate, bookingData.dropoffDate]);
 
-  // Session Recovery: Check for existing PENDING booking for this vehicle
-  useEffect(() => {
-    const recoverSession = async () => {
-      if (user && id) {
-        const response = await fetchUserBookings({ status: 'PENDING' });
-        if (response?.success && response.data?.bookings) {
-          const existingBooking = response.data.bookings.find(
-            (b) => b.vehicleId === id && b.bookingStatus === 'PENDING',
-          );
-          if (existingBooking) {
-            console.log('Recovered existing PENDING booking:', existingBooking.id);
-            // We found one, but we don't necessarily jump to PAYMENT yet
-            // unless they've passed documents.
-          }
-        }
-      }
-    };
-    recoverSession();
-  }, [user, id, fetchUserBookings]);
-
-  const handleIdentityNext = async (password: string) => {
+  const handleIdentityNext = async () => {
     try {
-      // Identity is confirmed (read-only anyway), transition to DOCUMENTS
-      // Security check could be added here
-      setCurrentStep('DOCUMENTS');
+      await proceedToNextStep();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      setError(t('errorIdentity'));
+    } catch (err: any) {
+      setError(err.message || t('errorIdentity'));
     }
   };
 
-  // Fetch breakdown when moving to payment step
-  useEffect(() => {
-    if (currentStep === 'PAYMENT' && currentBooking?.id) {
-      calculatePaymentBreakdown(currentBooking.id);
-    }
-  }, [currentStep, currentBooking?.id, calculatePaymentBreakdown]);
-
   const handleDocumentsNext = async () => {
     try {
-      if (profile?.verificationStatus !== 'VERIFIED') {
-        setError(t('errorCredentials'));
-        return;
-      }
-
       // First, check vehicle availability before proceeding
       if (bookingData.pickupDate && bookingData.dropoffDate) {
         setIsCheckingAvailability(true);
@@ -187,17 +154,23 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       const response = await createBooking(finalBookingData as any);
       if (response && response.success && response.data) {
-        // Success! createBooking already sets currentBooking in hook
-        setCurrentStep('PAYMENT');
+        await proceedToNextStep();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setError(response?.message || 'Failed to initialize booking session.');
       }
-    } catch (err) {
-      setError(t('errorFinalSync'));
+    } catch (err: any) {
+      setError(err.message || t('errorFinalSync'));
       setIsCheckingAvailability(false);
     }
   };
+
+  // Fetch breakdown when moving to payment step
+  useEffect(() => {
+    if (currentStep === 'PAYMENT' && currentBooking?.id) {
+      calculatePaymentBreakdown(currentBooking.id);
+    }
+  }, [currentStep, currentBooking?.id, calculatePaymentBreakdown]);
 
   const handlePaymentNext = async (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => {
     if (!currentBooking) {
@@ -221,7 +194,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
-          setCurrentStep('SUMMARY');
+          goToStep('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setError(response?.message || t('errorPaymentSync'));
@@ -233,18 +206,24 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
-          setCurrentStep('SUMMARY');
+          goToStep('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setError(response?.message || t('errorPaymentManual'));
         }
       }
-    } catch (err) {
-      setError(t('errorFinalSync'));
+    } catch (err: any) {
+      setError(err.message || t('errorFinalSync'));
     }
   };
 
-  if (vehicleLoading || profileLoading) {
+  const clearAllErrors = () => {
+    setError(null);
+    clearError();
+  };
+
+  // Vehicle and basic flow data must be loaded
+  if (vehicleLoading || (flowLoading && !isInitialized)) {
     return (
       <div className="flex h-[80vh] items-center justify-center bg-gray-50/10 dark:bg-gray-950">
         <div className="flex flex-col items-center gap-6">
@@ -325,17 +304,17 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
             <CheckoutSteppers currentStep={currentStep} steps={STEPS} />
 
-            {error && (
-              <Alert variant="destructive" className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
+            {(error || flowError) && (
+              <Alert variant="destructive" className="rounded-xl border-2">
                 <AlertCircle className="h-5 w-5" />
                 <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
-                  {error}
+                  {error || flowError}
                 </AlertDescription>
               </Alert>
             )}
 
             {isCheckingAvailability && (
-              <Alert className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
+              <Alert className="rounded-xl border-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
                   {t('verifyingAvailability')}
@@ -343,7 +322,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
               </Alert>
             )}
 
-            <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 transition-all duration-700 dark:bg-gray-900 dark:shadow-none dark:ring-gray-800">
+            <Card className="overflow-hidden rounded-xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
               <CardHeader className="border-b border-gray-50/50 px-8 pt-8 pb-4 dark:border-gray-800">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1.5">
@@ -354,9 +333,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       </span>
                     </div>
                     <CardTitle className="text-2xl font-black tracking-tight text-gray-950 dark:text-white">
-                      {STEPS.find((s) => s.id === currentStep)?.label} {t('intel')}
+                      {STEPS.find((s) => s.id === currentStep)?.label}
                     </CardTitle>
-                    <CardDescription className="text-sm font-medium text-gray-400 italic">
+                    <CardDescription className="text-sm font-medium text-gray-400">
                       {currentStep === 'IDENTITY' && t('identityDesc')}
                       {currentStep === 'DOCUMENTS' && t('documentsDesc')}
                       {currentStep === 'PAYMENT' && t('paymentDesc')}
@@ -370,7 +349,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <IdentityStep
                     profile={profile}
                     onNext={handleIdentityNext}
-                    isLoading={profileLoading || bookingLoading}
+                    isLoading={flowLoading || bookingLoading}
                   />
                 )}
 
@@ -378,8 +357,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <DocumentStep
                     profile={profile}
                     onNext={handleDocumentsNext}
-                    onBack={() => setCurrentStep('IDENTITY')}
-                    isLoading={profileLoading || bookingLoading}
+                    onBack={() => goToStep('IDENTITY')}
+                    isLoading={flowLoading || bookingLoading}
                   />
                 )}
 
@@ -387,17 +366,16 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <PaymentMethodForm
                     breakdown={paymentBreakdown}
                     onNext={handlePaymentNext}
-                    onBack={() => setCurrentStep('DOCUMENTS')}
+                    onBack={() => goToStep('DOCUMENTS')}
                     isLoading={bookingLoading}
                   />
                 )}
 
                 {currentStep === 'SUMMARY' && (
-                  <div className="animate-in fade-in zoom-in flex flex-col items-center justify-center space-y-8 py-16 text-center duration-1000">
-                    <div className="group relative cursor-none">
-                      <div className="bg-primary/30 group-hover:bg-primary/50 absolute inset-0 rounded-full blur-[80px] transition-all duration-700" />
-                      <div className="from-primary ring-primary/10 relative rounded-full bg-linear-to-tr via-[#06b0fc] to-[#3ac1fd] p-8 text-white shadow-[0_20px_50px_rgba(6,176,252,0.4)] ring-12">
-                        <BadgeCheck className="animate-in zoom-in spin-in-12 h-20 w-20 stroke-[2.5] delay-300 duration-1000" />
+                  <div className="flex flex-col items-center justify-center space-y-8 py-16 text-center">
+                    <div className="relative">
+                      <div className="bg-primary/20 rounded-full p-8 text-white">
+                        <BadgeCheck className="h-20 w-20 stroke-[2.5]" />
                       </div>
                     </div>
 
@@ -413,14 +391,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="flex w-full max-w-md flex-col gap-4 pt-4 sm:flex-row">
                       <Button
                         onClick={() => router.push('/bookings')}
-                        className="shadow-primary/30 h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase shadow-xl transition-all hover:scale-105 active:scale-95"
+                        className="h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase"
                       >
                         {t('manageAssets')}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => router.push('/vehicles')}
-                        className="h-12 flex-1 rounded-xl border-2 text-xs font-black tracking-widest uppercase transition-all hover:bg-gray-50 active:scale-95"
+                        className="h-12 flex-1 rounded-xl border-2 text-xs font-black tracking-widest uppercase"
                       >
                         {t('exploreMore')}
                       </Button>
@@ -432,8 +410,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           <div className="hidden lg:block">
-            <div className="animate-in slide-in-from-right-10 sticky top-28 space-y-6 duration-700">
-              <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
+            <div className="sticky top-28 space-y-6">
+              <Card className="overflow-hidden rounded-xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
                 <div className="group relative h-56 w-full overflow-hidden">
                   <img
                     src={getFullUrl(vehicle.media?.[0]?.frontImage || '/placeholder-car.png')}

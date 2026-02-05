@@ -43,7 +43,7 @@ export const useBooking = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentId, setIntentId] = useState<string | null>(null);
 
-  // Helper function to handle API calls
+  // Helper function to handle API calls with enhanced error handling
   const handleApiCall = useCallback(
     async <T>(
       apiCall: () => Promise<ApiResponse<T>>,
@@ -58,11 +58,36 @@ export const useBooking = () => {
 
         if (response.success && response.data && onSuccess) {
           onSuccess(response.data);
+        } else if (!response.success) {
+          // Handle API errors properly
+          const errorMessage = response.message || 'An error occurred';
+          setError(errorMessage);
+          return { success: false, message: errorMessage, data: null as any };
         }
 
         return response;
       } catch (err: any) {
-        const errorMessage = err?.response?.data?.message || err?.message || 'An error occurred';
+        // Enhanced error handling
+        let errorMessage = 'An unexpected error occurred';
+        
+        if (err?.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+        
+        // Handle specific error codes
+        if (err?.response?.status === 401) {
+          errorMessage = 'Authentication required. Please log in again.';
+          // Could trigger logout here
+        } else if (err?.response?.status === 403) {
+          errorMessage = 'You do not have permission to perform this action.';
+        } else if (err?.response?.status === 409) {
+          errorMessage = 'Conflict: ' + errorMessage;
+        } else if (err?.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+        
         setError(errorMessage);
         return { success: false, message: errorMessage, data: null as any };
       } finally {
