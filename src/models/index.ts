@@ -8,6 +8,14 @@ import { initAdminUserRoleModel, AdminUserRole } from './AdminUserRole';
 import { initAdminRefreshTokenModel, AdminRefreshToken } from './AdminRefreshToken';
 import { initVehicleModel, Vehicle } from './vehicle.model';
 import { initVehicleMediaModel, VehicleMedia } from './vehicleMedia.model';
+import { initUserModel, User } from './user.model';
+import { initUserIdentityDocumentModel, UserIdentityDocument } from './userIdentityDocument.model';
+import { initUserDrivingInfoModel, UserDrivingInfo } from './userDrivingInfo.model';
+import { Booking, initBookingModel } from './booking.model';
+import { initPaymentModel, Payment } from './payment.model';
+import { ChauffeurReview, initChauffeurReviewModel } from './chauffeurReview.model';
+import { Chauffeur, initChauffeurModel } from './chauffeur.model';
+import { BookingFinancial, initBookingFinancialModel } from './bookingFinancial.model';
 
 let sequelize: Sequelize;
 
@@ -44,6 +52,14 @@ const initPostgres_DB = (): void => {
   initAdminRefreshTokenModel(sequelize);
   initVehicleModel(sequelize);
   initVehicleMediaModel(sequelize);
+  initUserModel(sequelize);
+  initUserIdentityDocumentModel(sequelize);
+  initUserDrivingInfoModel(sequelize);
+  initBookingModel(sequelize);
+  initPaymentModel(sequelize);
+  initChauffeurReviewModel(sequelize);
+  initChauffeurModel(sequelize);
+  initBookingFinancialModel(sequelize);
 
   // Associations
   AdminUser.belongsToMany(Role, { 
@@ -96,10 +112,53 @@ const initPostgres_DB = (): void => {
     foreignKey: 'vehicleId',
     as: 'vehicle'
   });
+
+  User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
+  User.hasOne(UserDrivingInfo, { foreignKey: 'userId' });
+  User.hasMany(Booking, { foreignKey: 'userId' });
+  User.hasMany(Payment, { foreignKey: 'userId' });
+  User.hasMany(ChauffeurReview, { foreignKey: 'userId' });
+
+  Vehicle.hasMany(Booking, { foreignKey: 'vehicleId' });
+
+  Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId' });
+  Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId' });
+
+  Booking.belongsTo(User, { foreignKey: 'userId' });
+  Booking.belongsTo(Vehicle, { foreignKey: 'vehicleId' });
+  Booking.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
+  Booking.hasOne(BookingFinancial, { foreignKey: 'bookingId' });
+  Booking.hasMany(Payment, { foreignKey: 'bookingId' });
+  Booking.hasOne(ChauffeurReview, { foreignKey: 'bookingId' });
+
+  BookingFinancial.belongsTo(Booking, { foreignKey: 'bookingId' });
+
+  Payment.belongsTo(Booking, { foreignKey: 'bookingId' });
+  Payment.belongsTo(User, { foreignKey: 'userId' });
+
+  ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
+  ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
+  ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
 };
 
 export {
   initPostgres_DB,
+  initAdminUserModel,
+  initRoleModel,
+  initPolicyModel,
+  initRolePolicyModel,
+  initAdminUserRoleModel,
+  initAdminRefreshTokenModel,
+  initVehicleModel,
+  initVehicleMediaModel,
+  initUserModel,
+  initUserIdentityDocumentModel,
+  initUserDrivingInfoModel,
+  initBookingModel,
+  initPaymentModel,
+  initChauffeurReviewModel,
+  initChauffeurModel,
+  initBookingFinancialModel,
   sequelize,
   AdminUser,
   Role,
@@ -108,5 +167,13 @@ export {
   AdminUserRole,
   AdminRefreshToken,
   Vehicle,
-  VehicleMedia
+  VehicleMedia,
+  User,
+  UserIdentityDocument,
+  UserDrivingInfo,
+  Booking,
+  Payment,
+  ChauffeurReview,
+  Chauffeur,
+  BookingFinancial
 };
