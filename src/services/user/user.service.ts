@@ -56,6 +56,61 @@ export const getUserById = async (userId: string): Promise<Partial<User>> => {
 };
 
 /**
+ * Retrieves complete user profile including driving info and documents
+ */
+export const getUserProfile = async (userId: string): Promise<any> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const user = await User.findByPk(userId, {
+    attributes: USER_SAFE_ATTRIBUTES,
+    include: [
+      {
+        model: UserDrivingInfo,
+        as: 'drivingInfo',
+        required: false,
+      },
+      {
+        model: UserIdentityDocument,
+        as: 'identityDocuments',
+        required: false,
+      },
+    ],
+  });
+
+  if (!user) {
+    throw createError('User not found', 404);
+  }
+
+  const userJson = user.toJSON() as any;
+  
+  // Flatten the structure for frontend compatibility
+  if (userJson.drivingInfo) {
+    userJson.licenseIssuingCountry = userJson.drivingInfo.licenseIssuingCountry;
+    userJson.licenseExpiryDate = userJson.drivingInfo.licenseExpiryDate;
+    userJson.drivingExperienceYears = userJson.drivingInfo.drivingExperienceYears;
+    userJson.visaStatus = userJson.drivingInfo.visaStatus;
+  }
+
+  if (userJson.identityDocuments) {
+    userJson.driverLicenseFront = userJson.identityDocuments.driverLicenseFront;
+    userJson.driverLicenseBack = userJson.identityDocuments.driverLicenseBack;
+    userJson.passportPhoto = userJson.identityDocuments.passportPhoto;
+    userJson.internationalDrivingPermit = userJson.identityDocuments.internationalDrivingPermit;
+    userJson.selfieWithLicense = userJson.identityDocuments.selfieWithLicense;
+    userJson.documentVerificationStatus = userJson.identityDocuments.verificationStatus;
+    userJson.documentVerified = userJson.identityDocuments.verified;
+  }
+
+  // Clean up nested objects
+  delete userJson.drivingInfo;
+  delete userJson.identityDocuments;
+
+  return userJson;
+};
+
+/**
  * Retrieves a user by email
  */
 export const getUserByEmail = async (email: string): Promise<User | null> => {
@@ -237,10 +292,18 @@ export const deleteUser = async (userId: string): Promise<void> => {
  * Creates a new user
  */
 export const createUser = async (userData: userModelType): Promise<Partial<User>> => {
-  const { fullName, dateOfBirth, nationality, email: rawEmail, phone, passwordHash } = userData;
+  const { firstName, lastName, dateOfBirth, nationality, email: rawEmail, phone, passwordHash } = userData;
 
   // Validate required fields
-  validateRequiredFields(userData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'passwordHash']);
+  validateRequiredFields(userData, [
+    'firstName',
+    'lastName',
+    'dateOfBirth',
+    'nationality',
+    'email',
+    'phone',
+    'passwordHash',
+  ]);
 
   const email = sanitizeEmail(rawEmail);
   validateEmail(email);
@@ -256,7 +319,8 @@ export const createUser = async (userData: userModelType): Promise<Partial<User>
 
   // Create user
   const user = await User.create({
-    fullName,
+    firstName,
+    lastName,
     dateOfBirth: new Date(dateOfBirth),
     nationality,
     email,
@@ -294,8 +358,23 @@ export const getUsersByLocation = async (query: LocationSearchQuery): Promise<Us
 
   const users = await User.findAll({
     where: whereConditions,
-    attributes: ['id', 'fullName', 'email', 'phone', 'city', 'state', 'zipCode', 'country', 'nationality', 'createdAt'],
-    order: [['fullName', 'ASC']],
+    attributes: [
+      'id',
+      'firstName',
+      'lastName',
+      'email',
+      'phone',
+      'city',
+      'state',
+      'zipCode',
+      'country',
+      'nationality',
+      'createdAt',
+    ],
+    order: [
+      ['firstName', 'ASC'],
+      ['lastName', 'ASC'],
+    ],
   });
 
   return users.map((user) => ({

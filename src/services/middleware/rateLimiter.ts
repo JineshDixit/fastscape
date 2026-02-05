@@ -22,7 +22,7 @@ export const authLimiter = createRateLimiter({
 
 // Rate limiter for general API endpoints
 export const generalLimiter = createRateLimiter({
-  max: 5000,
+  max: 50000,
   messageStr: 'Too many requests, please try again later.',
 });
 

@@ -83,7 +83,8 @@ export const EXCLUDE_SENSITIVE_ATTRIBUTES = ['passwordHash', 'password'];
  */
 export const USER_SAFE_ATTRIBUTES = [
   'id',
-  'fullName',
+  'firstName',
+  'lastName',
   'email',
   'phone',
   'dateOfBirth',

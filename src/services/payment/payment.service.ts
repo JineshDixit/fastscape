@@ -1,10 +1,11 @@
-import { DelayChargeCalculation, PaymentCalculation } from 'paymentTypes';
+import { DelayChargeCalculation, PaymentCalculation } from '../../common/types/paymentTypes';
 import { Booking, BookingFinancial, Payment, Vehicle, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { validateRequiredFields, validateDateRange, normalizeBookingDates } from '../../utils/validation.utils';
-import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
+import { validateRequiredFields, normalizeBookingDates } from '../../utils/validation.utils';
+import { buildDateConflictConditions } from '../../utils/database.utils';
 import { stripe } from './stripe.service';
-import { Op, Transaction } from 'sequelize';
+import { Op } from 'sequelize';
+import { dbEnums } from '../../common/enum/dbEnums';
 import Logger from '../../utils/logger';
 
 export interface ExternalStripeData {
@@ -134,8 +135,15 @@ export const processDepositPayment = async (
     const booking = await Booking.findByPk(bookingId, { transaction, lock: true });
     if (!booking) throw createError('Booking not found', 404);
 
+    // Store old booking state for audit
+    const oldBookingState = {
+      bookingStatus: booking.bookingStatus,
+      paymentStatus: booking.paymentStatus,
+      paymentMethod: booking.paymentMethod,
+    };
+
     // Check if booking has expired
-    if (booking.bookingStatus === 'PENDING' && booking.expiresAt && new Date() > new Date(booking.expiresAt)) {
+    if (booking.bookingStatus === dbEnums.BOOKING_STATUS[0] && booking.expiresAt && new Date() > new Date(booking.expiresAt)) { // 'PENDING'
       Logger.warn('Processing payment for expired booking - re-checking availability', { bookingId });
 
       // Re-check availability
@@ -147,9 +155,9 @@ export const processDepositPayment = async (
             buildDateConflictConditions(booking.startDatetime, booking.endDatetime),
             {
               [Op.or]: [
-                { bookingStatus: 'CONFIRMED' },
+                { bookingStatus: dbEnums.BOOKING_STATUS[1] }, // 'CONFIRMED'
                 {
-                  bookingStatus: 'PENDING',
+                  bookingStatus: dbEnums.BOOKING_STATUS[0], // 'PENDING'
                   [Op.or]: [{ expiresAt: { [Op.eq]: null } }, { expiresAt: { [Op.gt]: new Date() } }],
                 },
               ],
@@ -169,10 +177,17 @@ export const processDepositPayment = async (
     const effectiveIntentId = stripeData?.paymentIntentId || stripePaymentIntentId;
     if (effectiveIntentId) {
       const existingPayment = await Payment.findOne({
-        where: { stripePaymentIntentId: effectiveIntentId, paymentType: 'DEPOSIT' },
+        where: { 
+          stripePaymentIntentId: effectiveIntentId, 
+          paymentType: { [Op.in]: [dbEnums.PAYMENT_TYPE[0], dbEnums.PAYMENT_TYPE[4]] } // 'DEPOSIT' and 'FULL'
+        },
         transaction,
       });
       if (existingPayment) {
+        Logger.info('Duplicate payment attempt detected - returning existing payment', { 
+          intentId: effectiveIntentId, 
+          existingPaymentId: existingPayment.id 
+        });
         await transaction.rollback();
         return { payment: existingPayment, financial };
       }
@@ -225,7 +240,8 @@ export const processDepositPayment = async (
           : 0;
 
     // Determine payment type from metadata or override
-    const paymentType = effectiveStripeData?.metadata?.paymentType || paymentTypeOverride || 'DEPOSIT';
+    const paymentTypeValue = effectiveStripeData?.metadata?.paymentType || paymentTypeOverride || 'DEPOSIT';
+    const paymentTypeEnum = paymentTypeValue === 'FULL' ? dbEnums.PAYMENT_TYPE[4] : dbEnums.PAYMENT_TYPE[0]; // 'FULL' or 'DEPOSIT'
 
     const payment = await Payment.create(
       {
@@ -233,8 +249,8 @@ export const processDepositPayment = async (
         userId: booking.userId,
         amount: finalAmount,
         currency: finalCurrency,
-        paymentType: paymentType as any,
-        paymentStatus: paymentMethod === 'ONLINE' ? 'PAID' : 'UNPAID',
+        paymentType: paymentTypeEnum,
+        paymentStatus: paymentMethod === 'ONLINE' ? dbEnums.PAYMENT_STATUS[2] : dbEnums.PAYMENT_STATUS[0], // 'PAID' or 'UNPAID'
         paymentMethod,
         stripePaymentIntentId: effectiveIntentId,
         stripeChargeId: stripeData?.chargeId,
@@ -263,13 +279,13 @@ export const processDepositPayment = async (
       // Dynamically determine payment status: if paid >= total, it's PAID, else PARTIALLY_PAID
       const isFullyPaid = newPaidAmount >= calculation.totalAmount - 0.01; // Small delta for float comparison
       const bookingUpdates: any = {
-        paymentStatus: isFullyPaid ? 'PAID' : 'PARTIALLY_PAID',
+        paymentStatus: isFullyPaid ? dbEnums.PAYMENT_STATUS[2] : dbEnums.PAYMENT_STATUS[1], // 'PAID' or 'PARTIALLY_PAID'
         paymentMethod,
       };
 
       // Confirm booking if it was PENDING
-      if (booking.bookingStatus === 'PENDING') {
-        bookingUpdates.bookingStatus = 'CONFIRMED';
+      if (booking.bookingStatus === dbEnums.BOOKING_STATUS[0]) { // 'PENDING'
+        bookingUpdates.bookingStatus = dbEnums.BOOKING_STATUS[1]; // 'CONFIRMED'
         bookingUpdates.expiresAt = null;
       }
 
@@ -318,10 +334,17 @@ export const processBalancePayment = async (
     const effectiveIntentId = stripeData?.paymentIntentId || stripePaymentIntentId;
     if (effectiveIntentId) {
       const existingPayment = await Payment.findOne({
-        where: { stripePaymentIntentId: effectiveIntentId, paymentType: 'BALANCE' },
+        where: { 
+          stripePaymentIntentId: effectiveIntentId, 
+          paymentType: dbEnums.PAYMENT_TYPE[1] // 'BALANCE'
+        },
         transaction,
       });
       if (existingPayment) {
+        Logger.info('Duplicate balance payment attempt detected - returning existing payment', { 
+          intentId: effectiveIntentId, 
+          existingPaymentId: existingPayment.id 
+        });
         await transaction.rollback();
         return { payment: existingPayment, financial };
       }
@@ -351,8 +374,8 @@ export const processBalancePayment = async (
         userId: booking.userId,
         amount: finalAmount,
         currency: finalCurrency,
-        paymentType: 'BALANCE',
-        paymentStatus: paymentMethod === 'ONLINE' ? 'PAID' : 'UNPAID',
+        paymentType: dbEnums.PAYMENT_TYPE[1], // 'BALANCE'
+        paymentStatus: paymentMethod === 'ONLINE' ? dbEnums.PAYMENT_STATUS[2] : dbEnums.PAYMENT_STATUS[0], // 'PAID' or 'UNPAID'
         paymentMethod,
         stripePaymentIntentId: effectiveIntentId,
         stripeChargeId: stripeData?.chargeId,
@@ -378,7 +401,7 @@ export const processBalancePayment = async (
       // Update booking payment status
       await booking.update(
         {
-          paymentStatus: 'PAID',
+          paymentStatus: dbEnums.PAYMENT_STATUS[2], // 'PAID'
         },
         { transaction },
       );
@@ -488,9 +511,9 @@ export const applyDelayCharges = async (
         userId: booking.userId,
         amount: delayCalculation.delayChargeAmount,
         currency: financial.currency,
-        paymentType: 'DELAY_CHARGE',
-        paymentStatus: 'UNPAID',
-        paymentMethod: 'DROPOFF',
+        paymentType: dbEnums.PAYMENT_TYPE[2], // 'DELAY_CHARGE'
+        paymentStatus: dbEnums.PAYMENT_STATUS[0], // 'UNPAID'
+        paymentMethod: dbEnums.PAYMENT_METHOD[1], // 'DROPOFF'
       },
       { transaction },
     );
@@ -499,7 +522,7 @@ export const applyDelayCharges = async (
     if (financial.remainingAmount > 0) {
       await booking.update(
         {
-          paymentStatus: 'PARTIALLY_PAID',
+          paymentStatus: dbEnums.PAYMENT_STATUS[1], // 'PARTIALLY_PAID'
         },
         { transaction },
       );
@@ -631,7 +654,7 @@ export const markPaymentCompleted = async (paymentId: string, stripePaymentInten
         const isFullyPaid = newPaidAmount >= Number(financial.totalAmount) - 0.01;
         await booking.update(
           {
-            paymentStatus: isFullyPaid ? 'PAID' : 'PARTIALLY_PAID',
+            paymentStatus: isFullyPaid ? dbEnums.PAYMENT_STATUS[2] : dbEnums.PAYMENT_STATUS[1], // 'PAID' or 'PARTIALLY_PAID'
           },
           { transaction },
         );
@@ -662,7 +685,7 @@ export const getOverduePayments = async (): Promise<Payment[]> => {
 
   return Payment.findAll({
     where: {
-      paymentStatus: 'UNPAID',
+      paymentStatus: dbEnums.PAYMENT_STATUS[0], // 'UNPAID'
       createdAt: {
         [Op.lt]: overdueDate,
       },

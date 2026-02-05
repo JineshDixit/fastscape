@@ -12,6 +12,7 @@ yarn-error.log*
 .env
 .env.development
 .env.production
+.env.production.example
 
 # Build output
 dist/

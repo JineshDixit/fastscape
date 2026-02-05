@@ -2,9 +2,28 @@ import { CreateBookingData, UpdateBookingData } from '../../common/types/booking
 import { Booking, Vehicle, sequelize } from '../../models';
 import { Op } from 'sequelize';
 import { createError } from '../middleware/errorHandler';
-import { validateRequiredFields, validateDateRange, normalizeBookingDates } from '../../utils/validation.utils';
+import { validateRequiredFields, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
+import { dbEnums } from '../../common/enum/dbEnums';
 import Logger from '../../utils/logger';
+
+// Booking status state machine using enum values
+const BOOKING_STATUS_TRANSITIONS: Record<string, string[]> = {
+  [dbEnums.BOOKING_STATUS[0]]: [dbEnums.BOOKING_STATUS[1], dbEnums.BOOKING_STATUS[4]], // PENDING -> [CONFIRMED, CANCELLED]
+  [dbEnums.BOOKING_STATUS[1]]: [dbEnums.BOOKING_STATUS[2], dbEnums.BOOKING_STATUS[4]], // CONFIRMED -> [PICKED_UP, CANCELLED]
+  [dbEnums.BOOKING_STATUS[2]]: [dbEnums.BOOKING_STATUS[3], dbEnums.BOOKING_STATUS[4]], // PICKED_UP -> [DROPPED_OFF, CANCELLED]
+  [dbEnums.BOOKING_STATUS[3]]: [dbEnums.BOOKING_STATUS[5]], // DROPPED_OFF -> [COMPLETED]
+  [dbEnums.BOOKING_STATUS[5]]: [], // COMPLETED -> [] (terminal state)
+  [dbEnums.BOOKING_STATUS[4]]: [], // CANCELLED -> [] (terminal state)
+};
+
+/**
+ * Validate booking status transition
+ */
+const validateStatusTransition = (currentStatus: string, newStatus: string): boolean => {
+  const allowedTransitions = BOOKING_STATUS_TRANSITIONS[currentStatus];
+  return allowedTransitions?.includes(newStatus) || false;
+};
 
 /**
  * Create a new booking
@@ -29,6 +48,21 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
   const transaction = await sequelize.transaction();
 
   try {
+    const now = new Date();
+    
+    // First, clean up expired bookings for this vehicle to prevent false conflicts
+    await Booking.update(
+      { bookingStatus: dbEnums.BOOKING_STATUS[4] }, // 'CANCELLED'
+      {
+        where: {
+          vehicleId,
+          bookingStatus: dbEnums.BOOKING_STATUS[0], // 'PENDING'
+          expiresAt: { [Op.lt]: now },
+        },
+        transaction,
+      }
+    );
+
     // Check if vehicle exists and is available with a lock
     const vehicle = await Vehicle.findByPk(vehicleId, {
       transaction,
@@ -44,8 +78,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
       throw createError('Vehicle is not available', 400);
     }
 
-    // Check for conflicting bookings within transaction
-    const now = new Date();
+    // Check for conflicting bookings within transaction (after cleanup)
     const conflictingBooking = await Booking.findOne({
       where: {
         vehicleId,
@@ -53,9 +86,11 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
           buildDateConflictConditions(start, end),
           {
             [Op.or]: [
-              { bookingStatus: 'CONFIRMED' },
+              { bookingStatus: dbEnums.BOOKING_STATUS[1] }, // 'CONFIRMED'
+              { bookingStatus: dbEnums.BOOKING_STATUS[2] }, // 'PICKED_UP'
+              { bookingStatus: dbEnums.BOOKING_STATUS[3] }, // 'DROPPED_OFF'
               {
-                bookingStatus: 'PENDING',
+                bookingStatus: dbEnums.BOOKING_STATUS[0], // 'PENDING'
                 [Op.or]: [{ expiresAt: { [Op.eq]: null } }, { expiresAt: { [Op.gt]: now } }],
               },
             ],
@@ -67,7 +102,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     });
 
     if (conflictingBooking) {
-      Logger.warn('Booking conflict detected', { vehicleId, start, end });
+      Logger.warn('Booking conflict detected', { vehicleId, start, end, conflictingBookingId: conflictingBooking.id });
       throw createError('Vehicle is already booked for the selected dates', 409);
     }
 
@@ -83,8 +118,11 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
         endDatetime: end,
         pickupLocation,
         dropoffLocation,
-        bookingStatus: 'PENDING',
-        paymentStatus: 'UNPAID',
+        bookingType: bookingData.bookingType || dbEnums.BOOKING_TYPE[0], // 'SELF_DRIVE'
+        paymentMethod: bookingData.paymentMethod || dbEnums.PAYMENT_METHOD[2], // 'ONLINE'
+        bookingStatus: dbEnums.BOOKING_STATUS[0], // 'PENDING'
+        paymentStatus: dbEnums.PAYMENT_STATUS[0], // 'UNPAID'
+        notes: bookingData.notes,
         expiresAt,
       },
       { transaction },
@@ -168,8 +206,18 @@ export const updateBooking = async (
   }
 
   // Check if booking can be updated
-  if (booking.bookingStatus === 'CANCELLED' || booking.bookingStatus === 'COMPLETED') {
+  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[4] || booking.bookingStatus === dbEnums.BOOKING_STATUS[5]) { // 'CANCELLED' or 'COMPLETED'
     throw createError('Cannot update cancelled or completed booking', 400);
+  }
+
+  // Validate status transition if bookingStatus is being updated
+  if (updateData.bookingStatus && updateData.bookingStatus !== booking.bookingStatus) {
+    if (!validateStatusTransition(booking.bookingStatus, updateData.bookingStatus)) {
+      throw createError(
+        `Invalid status transition from ${booking.bookingStatus} to ${updateData.bookingStatus}`,
+        400
+      );
+    }
   }
 
   // Validate and normalize dates if provided
@@ -207,15 +255,15 @@ export const cancelBooking = async (bookingId: string, userId: string): Promise<
   }
 
   // Check if booking can be cancelled
-  if (booking.bookingStatus === 'CANCELLED') {
+  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[4]) { // 'CANCELLED'
     throw createError('Booking is already cancelled', 400);
   }
 
-  if (booking.bookingStatus === 'COMPLETED') {
+  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[5]) { // 'COMPLETED'
     throw createError('Cannot cancel completed booking', 400);
   }
 
   // Update booking status
-  await booking.update({ bookingStatus: 'CANCELLED' });
+  await booking.update({ bookingStatus: dbEnums.BOOKING_STATUS[4] }); // 'CANCELLED'
   Logger.info('Booking cancelled', { bookingId, userId });
 };

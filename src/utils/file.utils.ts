@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const BASE_DIR = path.resolve(__dirname, '..', '..', 'data');
+const BASE_DIR = path.resolve(__dirname, '..', '..', 'uploads');
 
 /**
  * Safely resolve a path under BASE_DIR using provided segments.
@@ -37,13 +37,13 @@ export const saveFile = async (
     throw new Error('No file provided');
   }
 
-  const uploadDir = resolveSafePath('uploads', 'documents', userId, docType);
+  const uploadDir = resolveSafePath('documents', userId, docType);
 
   try {
     await fs.access(uploadDir);
     const files = await fs.readdir(uploadDir);
     for (const f of files) {
-      const fileToDelete = resolveSafePath('uploads', 'documents', userId, docType, f);
+      const fileToDelete = resolveSafePath('documents', userId, docType, f);
       await fs.unlink(fileToDelete);
     }
   } catch {
@@ -52,7 +52,7 @@ export const saveFile = async (
 
   const fileExt = path.extname(file.originalname);
   const fileName = `${Date.now()}${fileExt}`;
-  const filePath = resolveSafePath('uploads', 'documents', userId, docType, fileName);
+  const filePath = resolveSafePath('documents', userId, docType, fileName);
 
   await fs.writeFile(filePath, file.buffer);
 

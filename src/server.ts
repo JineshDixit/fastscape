@@ -13,6 +13,7 @@ import { configPassport } from './config/passport';
 import routes from './routes';
 import { sanitizeInput, preventParameterPollution } from './services/middleware/security';
 import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
+import { scheduleBookingCleanup } from './services/cleanup/bookingCleanup.service';
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
 import Logger from './utils/logger';
 import httpLogger from './services/middleware/httpLogger';
@@ -68,6 +69,7 @@ server.listen(PORT, () => {
     initPostgres_DB();
 
     startTokenCleanupJob();
+    scheduleBookingCleanup();
 
     Logger.info('Database initialized successfully');
   } catch (error) {

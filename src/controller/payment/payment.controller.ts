@@ -14,6 +14,7 @@ import {
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
 import { validateRequiredFields } from '../../utils/validation.utils';
+import { dbEnums } from '../../common/enum/dbEnums';
 
 class PaymentController extends BaseController {
   /**
@@ -144,7 +145,7 @@ class PaymentController extends BaseController {
     }
 
     await booking.update({
-      bookingStatus: 'PICKED_UP',
+      bookingStatus: dbEnums.BOOKING_STATUS[2], // 'PICKED_UP'
       actualPickupDatetime: new Date(actualPickupTime),
     });
 
@@ -163,7 +164,7 @@ class PaymentController extends BaseController {
 
     // Update booking status
     await result.booking.update({
-      bookingStatus: 'DROPPED_OFF',
+      bookingStatus: dbEnums.BOOKING_STATUS[3], // 'DROPPED_OFF'
     });
 
     sendSuccess(res, 'Vehicle marked as dropped off', {

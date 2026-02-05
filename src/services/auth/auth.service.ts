@@ -32,7 +32,8 @@ const revokeUserTokens = async (userId: string): Promise<void> => {
  */
 const formatUserResponse = (user: User) => ({
   id: user.id,
-  fullName: user.fullName,
+  firstName: user.firstName,
+  lastName: user.lastName,
   email: user.email,
   phone: user.phone,
   nationality: user.nationality,
@@ -42,10 +43,18 @@ const formatUserResponse = (user: User) => ({
  * Registers a new user
  */
 export const registerUser = async (registerData: RegisterRequest): Promise<AuthResponse> => {
-  const { fullName, dateOfBirth, nationality, email: rawEmail, phone, password } = registerData;
+  const { firstName, lastName, dateOfBirth, nationality, email: rawEmail, phone, password } = registerData;
 
   // Validate required fields
-  validateRequiredFields(registerData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'password']);
+  validateRequiredFields(registerData, [
+    'firstName',
+    'lastName',
+    'dateOfBirth',
+    'nationality',
+    'email',
+    'phone',
+    'password',
+  ]);
 
   const email = sanitizeEmail(rawEmail);
   validateEmail(email);
@@ -62,7 +71,8 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
 
   // Create user
   const user = await User.create({
-    fullName,
+    firstName,
+    lastName,
     dateOfBirth: new Date(dateOfBirth),
     nationality,
     email,
@@ -214,7 +224,7 @@ export const logoutUser = async (token: string): Promise<void> => {
 
   // Revoke the refresh token
   await RefreshToken.update({ isRevoked: true }, { where: { token, isRevoked: false } });
-  
+
   Logger.info('User logged out');
 };
 
@@ -246,7 +256,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
 
   // Generate OTP
   const otp = generateOtp();
-  
+
   // Hash OTP for storage
   const otpHash = await hashPassword(otp);
 
@@ -286,8 +296,7 @@ export const verifyOtp = async (email: string, otp: string): Promise<boolean> =>
   }
 
   // Verify OTP hash
-  const isValid = await comparePassword(otp, user.resetPasswordOtp);
-  return isValid;
+  return await comparePassword(otp, user.resetPasswordOtp);
 };
 
 /**
@@ -305,7 +314,7 @@ export const resetPassword = async (email: string, otp: string, newPassword: str
 
   const user = await User.findOne({ where: { email } });
   if (!user) {
-     throw createError('User not found', 404);
+    throw createError('User not found', 404);
   }
 
   // Hash new password

@@ -57,12 +57,15 @@ const initPostgres_DB = async (): Promise<void> => {
   initLocationModel(sequelize);
 
   //Associations
-  User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
-  User.hasOne(UserDrivingInfo, { foreignKey: 'userId' });
+  User.hasOne(UserIdentityDocument, { foreignKey: 'userId', as: 'identityDocuments' });
+  User.hasOne(UserDrivingInfo, { foreignKey: 'userId', as: 'drivingInfo' });
   User.hasMany(Booking, { foreignKey: 'userId' });
   User.hasMany(Payment, { foreignKey: 'userId' });
   User.hasMany(RefreshToken, { foreignKey: 'userId' });
   User.hasMany(ChauffeurReview, { foreignKey: 'userId' });
+
+  UserIdentityDocument.belongsTo(User, { foreignKey: 'userId' });
+  UserDrivingInfo.belongsTo(User, { foreignKey: 'userId' });
 
   Vehicle.hasMany(VehicleMedia, { foreignKey: 'vehicleId', as: 'media' });
   Vehicle.hasMany(Booking, { foreignKey: 'vehicleId' });

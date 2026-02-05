@@ -8,7 +8,8 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class User extends Model {
   public id!: string;
-  public fullName!: string;
+  public firstName!: string;
+  public lastName!: string;
   public dateOfBirth!: Date;
   public nationality!: string;
   public email!: string;
@@ -33,13 +34,17 @@ export const initUserModel = (sequelize: Sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      fullName: {
-        type: DataTypes.STRING(150),
-        allowNull: false,
+      firstName: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      lastName: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
       },
       dateOfBirth: {
         type: DataTypes.DATEONLY,
-        allowNull: false,
+        allowNull: true,
       },
       nationality: {
         type: DataTypes.STRING(100),

@@ -20,6 +20,7 @@ export class BookingFinancial extends Model {
   public refundPolicy!: string;
   public refundableUntil!: Date;
   public depositPercentage!: number;
+  public version!: number;
 }
 
 export const initBookingFinancialModel = (sequelize: Sequelize) => {
@@ -117,6 +118,12 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
         allowNull: false,
         defaultValue: 20.0,
         comment: 'Percentage of base amount for deposit',
+      },
+      version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Version field for optimistic locking',
       },
     },
     {
