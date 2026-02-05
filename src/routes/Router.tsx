@@ -5,9 +5,17 @@ import PublicRoute from '@/components/auth/PublicRoute';
 import RoleGuard from '@/components/auth/RoleGuard';
 import Dashboard from '@/pages/Dashboard';
 import Bookings from '@/pages/Bookings';
+import BookingDetails from '@/pages/BookingDetails';
+import Documents from '@/pages/Documents';
 import Units from '@/pages/Units';
 import Clients from '@/pages/Clients';
-import Drivers from '@/pages/Drivers';
+import ChauffeurList from '@/pages/Chauffeurs/ChauffeurList';
+
+// ... (existing imports, but I need to be careful not to replace too much context)
+// Actually I'll target the import and the route separately.
+
+// Chunk 1: Import
+
 import Financials from '@/pages/Financials';
 import NotFound from '@/pages/NotFound';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
@@ -44,6 +52,14 @@ export const router = createBrowserRouter([
         element: <Bookings />,
       },
       {
+        path: 'bookings/:id',
+        element: <BookingDetails />,
+      },
+      {
+        path: 'documents',
+        element: <Documents />,
+      },
+      {
         path: 'units',
         element: <UnitsLayout />,
         children: [
@@ -63,7 +79,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'drivers',
-        element: <Drivers />,
+        element: <ChauffeurList />,
       },
       {
         path: 'financials',

@@ -5,6 +5,8 @@ export { BaseApiService } from './base';
 export { authService };
 export { roleService, policyService } from './services/admin';
 export { vehicleService } from './services/vehicle';
+export { bookingService } from './services/bookingService';
+export { paymentService } from './services/paymentService';
 export { authCookies, COOKIE_NAMES } from '@/utils/cookies';
 
 // Export common interfaces

@@ -15,7 +15,7 @@ const sidebarItems: SidebarItem[] = [
   { icon: Calendar, label: 'Bookings', path: '/bookings' },
   { icon: Car, label: 'Units', path: '/units' },
   { icon: Users, label: 'Clients', path: '/clients' },
-  { icon: BookUser, label: 'Drivers', path: '/drivers' },
+  { icon: BookUser, label: 'Chauffeurs', path: '/drivers' },
   { icon: ChartPie, label: 'Financials', path: '/financials' },
 ];
 
