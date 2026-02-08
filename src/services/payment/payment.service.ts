@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { Payment, Booking, BookingFinancial, User, sequelize } from '../../models';
+import logger from '../../config/logger';
 
 interface PaymentFilters {
   bookingId?: string;
@@ -25,6 +26,9 @@ interface PaymentListResult {
  * Get all payments with filtering and pagination
  */
 export const getAllPayments = async (filters: PaymentFilters): Promise<PaymentListResult> => {
+  const startTime = Date.now();
+  logger.debug('Fetching payments with filters', { filters });
+
   const page = filters.page || 1;
   const limit = Math.min(filters.limit || 20, 100);
   const offset = (page - 1) * limit;
@@ -68,6 +72,14 @@ export const getAllPayments = async (filters: PaymentFilters): Promise<PaymentLi
     offset,
   });
 
+  const duration = Date.now() - startTime;
+  logger.info('Payments fetched successfully', {
+    count: payments.length,
+    total,
+    page,
+    duration: `${duration}ms`,
+  });
+
   return {
     payments,
     pagination: {
@@ -83,7 +95,9 @@ export const getAllPayments = async (filters: PaymentFilters): Promise<PaymentLi
  * Get single payment by ID
  */
 export const getPaymentById = async (paymentId: string): Promise<Payment | null> => {
-  return await Payment.findByPk(paymentId, {
+  logger.debug('Fetching payment by ID', { paymentId });
+
+  const payment = await Payment.findByPk(paymentId, {
     include: [
       {
         model: User,
@@ -95,17 +109,28 @@ export const getPaymentById = async (paymentId: string): Promise<Payment | null>
       },
     ],
   });
+
+  if (payment) {
+    logger.debug('Payment found', { paymentId, amount: payment.amount, status: payment.paymentStatus });
+  } else {
+    logger.warn('Payment not found', { paymentId });
+  }
+
+  return payment;
 };
 
 /**
  * Get payment summary for a booking
  */
 export const getPaymentSummary = async (bookingId: string) => {
+  logger.debug('Fetching payment summary', { bookingId });
+
   const booking = await Booking.findByPk(bookingId, {
     include: [{ model: BookingFinancial }, { model: Payment }],
   });
 
   if (!booking) {
+    logger.error('Booking not found for payment summary', { bookingId });
     throw new Error('Booking not found');
   }
 
@@ -118,6 +143,19 @@ export const getPaymentSummary = async (bookingId: string) => {
     where: { bookingId },
   });
 
+  const summary = {
+    totalPayments: payments.length,
+    totalPaid: payments.reduce((sum, p) => (p.paymentStatus === 'PAID' ? sum + Number(p.amount) : sum), 0),
+    pendingPayments: payments.filter((p) => p.paymentStatus === 'UNPAID').length,
+  };
+
+  logger.info('Payment summary retrieved', {
+    bookingId,
+    totalPayments: summary.totalPayments,
+    totalPaid: summary.totalPaid,
+    pendingPayments: summary.pendingPayments,
+  });
+
   return {
     booking: {
       id: booking.id,
@@ -127,11 +165,7 @@ export const getPaymentSummary = async (bookingId: string) => {
     },
     financial: financial || null,
     payments,
-    summary: {
-      totalPayments: payments.length,
-      totalPaid: payments.reduce((sum, p) => (p.paymentStatus === 'PAID' ? sum + Number(p.amount) : sum), 0),
-      pendingPayments: payments.filter((p) => p.paymentStatus === 'UNPAID').length,
-    },
+    summary,
   };
 };
 
@@ -139,10 +173,13 @@ export const getPaymentSummary = async (bookingId: string) => {
  * Get overdue payments (UNPAID payments created more than 24 hours ago)
  */
 export const getOverduePayments = async (): Promise<Payment[]> => {
+  const startTime = Date.now();
+  logger.debug('Fetching overdue payments');
+
   const yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 24);
 
-  return await Payment.findAll({
+  const payments = await Payment.findAll({
     where: {
       paymentStatus: 'UNPAID',
       createdAt: {
@@ -161,12 +198,23 @@ export const getOverduePayments = async (): Promise<Payment[]> => {
     ],
     order: [['createdAt', 'ASC']],
   });
+
+  const duration = Date.now() - startTime;
+  logger.info('Overdue payments retrieved', {
+    count: payments.length,
+    duration: `${duration}ms`,
+  });
+
+  return payments;
 };
 
 /**
  * Mark a payment as paid (admin override for manual payments)
  */
 export const markPaymentPaid = async (paymentId: string, paidAt?: Date, notes?: string): Promise<Payment> => {
+  const startTime = Date.now();
+  logger.info('Starting mark payment as paid operation', { paymentId, paidAt, notes });
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -176,12 +224,23 @@ export const markPaymentPaid = async (paymentId: string, paidAt?: Date, notes?: 
     });
 
     if (!payment) {
+      logger.error('Payment not found for marking as paid', { paymentId });
       throw new Error('Payment not found');
     }
 
     if (payment.paymentStatus === 'PAID') {
+      logger.warn('Attempted to mark already paid payment', {
+        paymentId,
+        currentStatus: payment.paymentStatus,
+      });
       throw new Error('Payment is already marked as paid');
     }
+
+    logger.debug('Updating payment status to PAID', {
+      paymentId,
+      previousStatus: payment.paymentStatus,
+      amount: payment.amount,
+    });
 
     // Update payment record
     await payment.update(
@@ -208,6 +267,13 @@ export const markPaymentPaid = async (paymentId: string, paidAt?: Date, notes?: 
       const newPaidAmount = Number(financial.paidAmount) + Number(payment.amount);
       const newRemainingAmount = Math.max(0, Number(financial.totalAmount) - newPaidAmount);
 
+      logger.debug('Updating booking financial record', {
+        bookingId: payment.bookingId,
+        previousPaidAmount: financial.paidAmount,
+        newPaidAmount,
+        newRemainingAmount,
+      });
+
       await financial.update(
         {
           paidAmount: newPaidAmount,
@@ -220,9 +286,18 @@ export const markPaymentPaid = async (paymentId: string, paidAt?: Date, notes?: 
       const booking = await Booking.findByPk(payment.bookingId, { transaction });
       if (booking) {
         const isFullyPaid = newPaidAmount >= Number(financial.totalAmount) - 0.01;
+        const newPaymentStatus = isFullyPaid ? 'PAID' : 'PARTIALLY_PAID';
+
+        logger.debug('Updating booking payment status', {
+          bookingId: payment.bookingId,
+          previousStatus: booking.paymentStatus,
+          newStatus: newPaymentStatus,
+          isFullyPaid,
+        });
+
         await booking.update(
           {
-            paymentStatus: isFullyPaid ? 'PAID' : 'PARTIALLY_PAID',
+            paymentStatus: newPaymentStatus,
           },
           { transaction },
         );
@@ -230,9 +305,23 @@ export const markPaymentPaid = async (paymentId: string, paidAt?: Date, notes?: 
     }
 
     await transaction.commit();
+
+    const duration = Date.now() - startTime;
+    logger.info('Payment marked as paid successfully', {
+      paymentId,
+      bookingId: payment.bookingId,
+      amount: payment.amount,
+      duration: `${duration}ms`,
+    });
+
     return payment;
   } catch (error) {
     await transaction.rollback();
+    logger.error('Failed to mark payment as paid, transaction rolled back', {
+      paymentId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 };
@@ -247,6 +336,14 @@ export const processRefund = async (
   reason: string,
   stripeRefundId?: string,
 ): Promise<{ payment: Payment; financial: BookingFinancial | null }> => {
+  const startTime = Date.now();
+  logger.info('Starting refund processing', {
+    bookingId,
+    refundAmount,
+    reason,
+    stripeRefundId,
+  });
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -257,8 +354,16 @@ export const processRefund = async (
     });
 
     if (!booking) {
+      logger.error('Booking not found for refund', { bookingId });
       throw new Error('Booking not found');
     }
+
+    logger.debug('Booking found for refund', {
+      bookingId,
+      userId: booking.userId,
+      bookingStatus: booking.bookingStatus,
+      paymentStatus: booking.paymentStatus,
+    });
 
     // Get financial record
     const financial = await BookingFinancial.findOne({
@@ -268,19 +373,39 @@ export const processRefund = async (
     });
 
     if (!financial) {
+      logger.error('Financial record not found for refund', { bookingId });
       throw new Error('Financial record not found for this booking');
     }
 
+    logger.debug('Financial record retrieved', {
+      bookingId,
+      totalAmount: financial.totalAmount,
+      paidAmount: financial.paidAmount,
+      remainingAmount: financial.remainingAmount,
+    });
+
     // Validate refund amount
     if (refundAmount <= 0) {
+      logger.warn('Invalid refund amount (must be > 0)', { bookingId, refundAmount });
       throw new Error('Refund amount must be greater than 0');
     }
 
     if (refundAmount > Number(financial.paidAmount)) {
-      throw new Error(`Refund amount ($${refundAmount}) cannot exceed paid amount ($${financial.paidAmount})`);
+      logger.warn('Refund amount exceeds paid amount', {
+        bookingId,
+        refundAmount,
+        paidAmount: financial.paidAmount,
+      });
+      throw new Error(`Refund amount (${refundAmount}) cannot exceed paid amount (${financial.paidAmount})`);
     }
 
     // Create refund payment record
+    logger.debug('Creating refund payment record', {
+      bookingId,
+      userId: booking.userId,
+      refundAmount,
+    });
+
     const refundPayment = await Payment.create(
       {
         bookingId,
@@ -301,9 +426,22 @@ export const processRefund = async (
       { transaction },
     );
 
+    logger.info('Refund payment record created', {
+      refundPaymentId: refundPayment.id,
+      bookingId,
+      amount: refundAmount,
+    });
+
     // Update financial record
     const newPaidAmount = Number(financial.paidAmount) - refundAmount;
     const newRemainingAmount = Number(financial.totalAmount) - newPaidAmount;
+
+    logger.debug('Updating financial record after refund', {
+      bookingId,
+      previousPaidAmount: financial.paidAmount,
+      newPaidAmount,
+      newRemainingAmount,
+    });
 
     await financial.update(
       {
@@ -323,6 +461,13 @@ export const processRefund = async (
       newPaymentStatus = 'PAID';
     }
 
+    logger.debug('Updating booking payment status after refund', {
+      bookingId,
+      previousStatus: booking.paymentStatus,
+      newStatus: newPaymentStatus,
+      newPaidAmount,
+    });
+
     await booking.update(
       {
         paymentStatus: newPaymentStatus,
@@ -332,12 +477,27 @@ export const processRefund = async (
 
     await transaction.commit();
 
+    const duration = Date.now() - startTime;
+    logger.info('Refund processed successfully', {
+      bookingId,
+      refundPaymentId: refundPayment.id,
+      refundAmount,
+      newPaymentStatus,
+      duration: `${duration}ms`,
+    });
+
     return {
       payment: refundPayment,
       financial,
     };
   } catch (error) {
     await transaction.rollback();
+    logger.error('Refund processing failed, transaction rolled back', {
+      bookingId,
+      refundAmount,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 };

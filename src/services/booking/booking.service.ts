@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { Booking, BookingFinancial, Payment, User, Vehicle, Chauffeur, sequelize } from '../../models';
 import { dbEnums } from '../../common/enum/dbEnums';
+import logger from '../../config/logger';
 
 interface BookingFilters {
   status?: string;
@@ -190,6 +191,9 @@ export const getBookingById = async (bookingId: string): Promise<Booking | null>
  * Update booking status with validation
  */
 export const updateBookingStatus = async (bookingId: string, newStatus: string): Promise<Booking> => {
+  const startTime = Date.now();
+  logger.info('Updating booking status', { bookingId, newStatus });
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -199,8 +203,16 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string):
     });
 
     if (!booking) {
+      logger.error('Booking not found for status update', { bookingId });
       throw new Error('Booking not found');
     }
+
+    logger.debug('Current booking state', {
+      bookingId,
+      currentStatus: booking.bookingStatus,
+      paymentStatus: booking.paymentStatus,
+      chauffeurId: booking.chauffeurId,
+    });
 
     // Validate status transitions
     if (newStatus === 'CONFIRMED') {
@@ -214,11 +226,19 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string):
       });
 
       if (!hasPayment) {
+        logger.warn('Cannot confirm booking without payment', { bookingId });
         throw new Error('Cannot confirm booking without payment');
       }
+
+      logger.debug('Payment verified for booking confirmation', { bookingId });
     }
 
     if (newStatus === 'CANCELLED' && booking.chauffeurId) {
+      logger.debug('Releasing chauffeur due to cancellation', {
+        bookingId,
+        chauffeurId: booking.chauffeurId,
+      });
+
       await Chauffeur.update(
         { status: 'AVAILABLE' },
         {
@@ -226,16 +246,27 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string):
           transaction,
         },
       );
+
+      logger.info('Chauffeur released', { chauffeurId: booking.chauffeurId });
     }
 
     if (newStatus === 'COMPLETED') {
       // Cannot complete without being dropped off
       if (booking.bookingStatus !== 'DROPPED_OFF') {
+        logger.warn('Cannot complete booking without DROPPED_OFF status', {
+          bookingId,
+          currentStatus: booking.bookingStatus,
+        });
         throw new Error('Booking must be in DROPPED_OFF status before completion');
       }
 
       // Increment chauffeur trip count if applicable
       if (booking.chauffeurId) {
+        logger.debug('Incrementing chauffeur trip count', {
+          bookingId,
+          chauffeurId: booking.chauffeurId,
+        });
+
         await Chauffeur.increment('totalTrips', {
           where: { id: booking.chauffeurId },
           transaction,
@@ -247,15 +278,33 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string):
             transaction,
           },
         );
+
+        logger.info('Chauffeur trip count incremented and status updated', {
+          chauffeurId: booking.chauffeurId,
+        });
       }
     }
 
     await booking.update({ bookingStatus: newStatus }, { transaction });
     await transaction.commit();
 
+    const duration = Date.now() - startTime;
+    logger.info('Booking status updated successfully', {
+      bookingId,
+      previousStatus: booking.bookingStatus,
+      newStatus,
+      duration: `${duration}ms`,
+    });
+
     return booking;
   } catch (error) {
     await transaction.rollback();
+    logger.error('Failed to update booking status, transaction rolled back', {
+      bookingId,
+      newStatus,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 };
@@ -264,6 +313,9 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string):
  * Cancel booking with optional reason
  */
 export const cancelBooking = async (bookingId: string, reason?: string): Promise<Booking> => {
+  const startTime = Date.now();
+  logger.info('Cancelling booking', { bookingId, reason });
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -273,15 +325,25 @@ export const cancelBooking = async (bookingId: string, reason?: string): Promise
     });
 
     if (!booking) {
+      logger.error('Booking not found for cancellation', { bookingId });
       throw new Error('Booking not found');
     }
 
     if (booking.bookingStatus === 'COMPLETED' || booking.bookingStatus === 'CANCELLED') {
+      logger.warn('Cannot cancel booking with current status', {
+        bookingId,
+        currentStatus: booking.bookingStatus,
+      });
       throw new Error(`Cannot cancel booking with status ${booking.bookingStatus}`);
     }
 
     // Release chauffeur if assigned
     if (booking.chauffeurId) {
+      logger.debug('Releasing chauffeur due to booking cancellation', {
+        bookingId,
+        chauffeurId: booking.chauffeurId,
+      });
+
       await Chauffeur.update(
         { status: 'AVAILABLE' },
         {
@@ -289,6 +351,8 @@ export const cancelBooking = async (bookingId: string, reason?: string): Promise
           transaction,
         },
       );
+
+      logger.info('Chauffeur released', { chauffeurId: booking.chauffeurId });
     }
 
     await booking.update(
@@ -300,9 +364,23 @@ export const cancelBooking = async (bookingId: string, reason?: string): Promise
     );
 
     await transaction.commit();
+
+    const duration = Date.now() - startTime;
+    logger.info('Booking cancelled successfully', {
+      bookingId,
+      reason,
+      duration: `${duration}ms`,
+    });
+
     return booking;
   } catch (error) {
     await transaction.rollback();
+    logger.error('Failed to cancel booking, transaction rolled back', {
+      bookingId,
+      reason,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 };
@@ -336,6 +414,9 @@ export const getExpiredBookings = async (): Promise<Booking[]> => {
  * Cleanup (soft delete) an expired booking
  */
 export const cleanupExpiredBooking = async (bookingId: string): Promise<void> => {
+  const startTime = Date.now();
+  logger.info('Cleaning up expired booking', { bookingId });
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -345,19 +426,34 @@ export const cleanupExpiredBooking = async (bookingId: string): Promise<void> =>
     });
 
     if (!booking) {
+      logger.error('Booking not found for cleanup', { bookingId });
       throw new Error('Booking not found');
     }
 
     if (booking.bookingStatus !== 'PENDING') {
+      logger.warn('Can only cleanup PENDING bookings', {
+        bookingId,
+        currentStatus: booking.bookingStatus,
+      });
       throw new Error('Can only cleanup PENDING bookings');
     }
 
     if (booking.expiresAt && new Date() <= new Date(booking.expiresAt)) {
+      logger.warn('Booking has not expired yet', {
+        bookingId,
+        expiresAt: booking.expiresAt,
+        now: new Date(),
+      });
       throw new Error('Booking has not expired yet');
     }
 
     // Release chauffeur if assigned
     if (booking.chauffeurId) {
+      logger.debug('Releasing chauffeur during expired booking cleanup', {
+        bookingId,
+        chauffeurId: booking.chauffeurId,
+      });
+
       await Chauffeur.update(
         { status: 'AVAILABLE' },
         {
@@ -377,8 +473,20 @@ export const cleanupExpiredBooking = async (bookingId: string): Promise<void> =>
     );
 
     await transaction.commit();
+
+    const duration = Date.now() - startTime;
+    logger.info('Expired booking cleaned up successfully', {
+      bookingId,
+      expiresAt: booking.expiresAt,
+      duration: `${duration}ms`,
+    });
   } catch (error) {
     await transaction.rollback();
+    logger.error('Failed to cleanup expired booking, transaction rolled back', {
+      bookingId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 };

@@ -1,18 +1,23 @@
 import cron from 'node-cron';
 import { Op } from 'sequelize';
 import { AdminRefreshToken } from '../../models';
+import logger from '../../config/logger';
 
 /**
  * Handle individual cleanup tasks to reduce redundancy
  */
 const runCleanup = async (label: string, where: any) => {
+  const startTime = Date.now();
   try {
     const deletedCount = await AdminRefreshToken.destroy({ where });
+    const duration = Date.now() - startTime;
     if (deletedCount > 0) {
-      console.log(`[Cleanup] ${label}: Removed ${deletedCount} tokens`);
+      logger.info(`[Cleanup] ${label}: Removed ${deletedCount} tokens in ${duration}ms`);
+    } else {
+      logger.debug(`[Cleanup] ${label}: No tokens to remove (${duration}ms)`);
     }
   } catch (error) {
-    console.error(`[Cleanup] Error in ${label}:`, error);
+    logger.error(`[Cleanup] Error in ${label}:`, error);
   }
 };
 
@@ -47,7 +52,7 @@ export const getTokenStatistics = async () => {
 
     return { total: stats[0], active: stats[1], expired: stats[2], revoked: stats[3] };
   } catch (error) {
-    console.error('Error getting token statistics:', error);
+    logger.error('Error getting token statistics:', error);
     return { total: 0, active: 0, expired: 0, revoked: 0 };
   }
 };
@@ -56,19 +61,22 @@ export const getTokenStatistics = async () => {
  * Start the token cleanup job
  */
 export const startTokenCleanupJob = (): void => {
-  // Run consolidated cleanup every hour
-  cron.schedule('0 * * * *', async () => {
-    console.log('Starting token cleanup job...');
+  // Run consolidated cleanup every 4 hours
+  cron.schedule('0 */4 * * *', async () => {
+    logger.info('Starting scheduled token cleanup job...');
+    const startTime = Date.now();
     await cleanupTokens();
+    const duration = Date.now() - startTime;
+    logger.info(`Token cleanup job completed in ${duration}ms`);
   });
 
   // Log token statistics daily at 1 AM
   cron.schedule('0 1 * * *', async () => {
     const stats = await getTokenStatistics();
-    console.log('Token Statistics:', stats);
+    logger.info('Token Statistics:', stats);
   });
 
-  console.log('Token cleanup jobs scheduled');
+  logger.info('Token cleanup jobs scheduled (every 4 hours + daily stats at 1 AM)');
 };
 
 /**
@@ -76,5 +84,5 @@ export const startTokenCleanupJob = (): void => {
  */
 export const stopTokenCleanupJob = (): void => {
   cron.getTasks().forEach(task => task.stop());
-  console.log('Token cleanup jobs stopped');
+  logger.info('Token cleanup jobs stopped');
 };

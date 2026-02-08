@@ -9,9 +9,13 @@ import { initPostgres_DB } from './models';
 import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
 import { configPassport } from './config/passport';
 import apiRoutes from './routes';
+import { logger, morganMiddleware } from './config/logger';
 
 const server = express();
 const PORT = process.env.PORT || 3001;
+
+// HTTP request logging
+server.use(morganMiddleware);
 
 // Security middleware
 server.use(applySecurityMiddlewares);
@@ -58,18 +62,22 @@ server.use(notFoundHandler);
 server.use(errorHandler);
 
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
+  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Log level: ${logger.level}`);
 });
 
 (async () => {
   try {
+    logger.info('Initializing database connection...');
     initPostgres_DB();
 
+    logger.info('Starting token cleanup job...');
     startTokenCleanupJob();
 
-    console.log('Database initialized successfully');
+    logger.info('Database initialized successfully');
   } catch (error) {
-    console.log('Failed to initialize database', error);
+    logger.error('Failed to initialize database', error);
     process.exit(1);
   }
 })();

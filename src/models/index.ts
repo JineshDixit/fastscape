@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import dbConfig from '../config/database/dbConfig';
+import logger from '../config/logger';
 import { initAdminUserModel, AdminUser } from './AdminUser';
 import { initRoleModel, Role } from './Role';
 import { initPolicyModel, Policy } from './Policy';
@@ -27,13 +28,20 @@ let sequelize: Sequelize;
  * @returns {void} - nothing
  */
 const initPostgres_DB = (): void => {
+  const startTime = Date.now();
   const config = dbConfig;
+
+  logger.info('Initializing PostgreSQL database connection', {
+    host: config.POSTGRES_DB.host,
+    database: config.POSTGRES_DB.database,
+    port: config.POSTGRES_DB.port,
+  });
 
   sequelize = new Sequelize(config.POSTGRES_DB.database, config.POSTGRES_DB.userName, config.POSTGRES_DB.password, {
     host: config.POSTGRES_DB.host,
     port: +config.POSTGRES_DB.port,
     dialect: 'postgres',
-    logging: false,
+    logging: (sql: string) => logger.debug('SQL Query', { sql }),
     pool: {
       max: 5,
       min: 0,
@@ -43,6 +51,8 @@ const initPostgres_DB = (): void => {
     },
     ssl: true,
   });
+  
+  logger.debug('Initializing database models');
   
   initAdminUserModel(sequelize);
   initRoleModel(sequelize);
@@ -60,6 +70,8 @@ const initPostgres_DB = (): void => {
   initChauffeurReviewModel(sequelize);
   initChauffeurModel(sequelize);
   initBookingFinancialModel(sequelize);
+
+  logger.debug('Setting up model associations');
 
   // Associations
   AdminUser.belongsToMany(Role, { 
@@ -139,26 +151,16 @@ const initPostgres_DB = (): void => {
   ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
   ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
+
+  const duration = Date.now() - startTime;
+  logger.info('Database initialization completed', {
+    duration: `${duration}ms`,
+    modelsCount: 16,
+  });
 };
 
 export {
   initPostgres_DB,
-  initAdminUserModel,
-  initRoleModel,
-  initPolicyModel,
-  initRolePolicyModel,
-  initAdminUserRoleModel,
-  initAdminRefreshTokenModel,
-  initVehicleModel,
-  initVehicleMediaModel,
-  initUserModel,
-  initUserIdentityDocumentModel,
-  initUserDrivingInfoModel,
-  initBookingModel,
-  initPaymentModel,
-  initChauffeurReviewModel,
-  initChauffeurModel,
-  initBookingFinancialModel,
   sequelize,
   AdminUser,
   Role,

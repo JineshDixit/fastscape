@@ -1,6 +1,7 @@
 import { AppError } from '../../common/interfaces/errorInterfaces';
 import '../../config/env/envConfig'
 import { Request, Response, NextFunction } from 'express';
+import logger from '../../config/logger';
 
 /**
  * Global error handler middleware
@@ -18,14 +19,16 @@ export const errorHandler = (
     message = 'Something went wrong';
   }
 
-  // Log error for debugging
-  console.error('Error:', {
+  // Log error with full context
+  logger.error('Request error', {
     message: error.message,
-    stack: error.stack,
+    statusCode,
+    isOperational: error.isOperational,
     url: req.url,
     method: req.method,
     ip: req.ip,
     userAgent: req.get('User-Agent'),
+    stack: error.stack,
   });
 
   res.status(statusCode).json({
@@ -39,6 +42,12 @@ export const errorHandler = (
  * Handle 404 errors
  */
 export const notFoundHandler = (req: Request, res: Response): void => {
+  logger.warn('Route not found', {
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.ip,
+  });
+
   res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} not found`,

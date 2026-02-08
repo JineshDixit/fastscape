@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as documentService from '../../services/document/document.service';
+import logger from '../../config/logger';
 
 /**
  * GET /api/documents/pending
@@ -69,7 +70,14 @@ export const verifyDocuments = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { notes } = req.body;
 
+    logger.info(`Verifying documents for user identity document ${id}`, { notes });
+
     const document = await documentService.verifyDocuments(id, notes);
+
+    logger.info(`Documents verified successfully for user identity document ${id}`, {
+      userId: document.userId,
+      verificationStatus: document.verificationStatus
+    });
 
     res.status(200).json({
       success: true,
@@ -77,6 +85,10 @@ export const verifyDocuments = async (req: Request, res: Response) => {
       message: 'Documents verified successfully',
     });
   } catch (error: any) {
+    logger.error(`Failed to verify documents for identity document ${req.params.id}`, {
+      error: error.message,
+      stack: error.stack
+    });
     res.status(400).json({
       success: false,
       error: {
@@ -97,6 +109,7 @@ export const rejectDocuments = async (req: Request, res: Response) => {
     const { rejectionReason } = req.body;
 
     if (!rejectionReason) {
+      logger.warn(`Document rejection attempted without reason for identity document ${id}`);
       return res.status(400).json({
         success: false,
         error: {
@@ -106,7 +119,15 @@ export const rejectDocuments = async (req: Request, res: Response) => {
       });
     }
 
+    logger.info(`Rejecting documents for user identity document ${id}`, { rejectionReason });
+
     const document = await documentService.rejectDocuments(id, rejectionReason);
+
+    logger.info(`Documents rejected successfully for user identity document ${id}`, {
+      userId: document.userId,
+      verificationStatus: document.verificationStatus,
+      rejectionReason
+    });
 
     res.status(200).json({
       success: true,
@@ -114,6 +135,10 @@ export const rejectDocuments = async (req: Request, res: Response) => {
       message: 'Documents rejected successfully',
     });
   } catch (error: any) {
+    logger.error(`Failed to reject documents for identity document ${req.params.id}`, {
+      error: error.message,
+      stack: error.stack
+    });
     res.status(400).json({
       success: false,
       error: {
