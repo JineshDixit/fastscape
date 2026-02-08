@@ -96,7 +96,7 @@ const CarFilter = () => {
   const renderFilterSection = (title: string, items: { label: string; count: number; models: string[] }[]) => {
     return (
       <div className="mb-8">
-        <h4 className="text-md mb-4 font-bold text-gray-900">{title}</h4>
+        <h4 className="mb-4 text-base font-bold md:text-lg">{title}</h4>
         <Accordion type="multiple" className="w-full space-y-3">
           {items.map((item) => {
             const models = item.models || [];
@@ -107,32 +107,32 @@ const CarFilter = () => {
                 <AccordionTrigger className="cursor-pointer p-0 hover:no-underline [&[data-state=open]_.minus]:scale-100 [&[data-state=open]_.plus]:scale-0">
                   <div className="group flex w-full items-center justify-between">
                     <div className="flex flex-1 items-center gap-3">
-                      <div className="bg-primary relative flex h-5 w-5 cursor-pointer items-center justify-center rounded-[4px] text-white">
+                      <div className="relative flex h-5 w-5 cursor-pointer items-center justify-center rounded bg-primary text-primary-foreground">
                         <Plus className="plus absolute h-3.5 w-3.5 transition-transform duration-200" />
                         <Minus className="minus absolute h-3.5 w-3.5 scale-0 transition-transform duration-200" />
                       </div>
 
-                      <span className="text-sm text-gray-800 select-none">{item.label}</span>
+                      <span className="select-none text-sm">{item.label}</span>
                     </div>
 
-                    <span className="text-sm text-gray-800">[{item.count}]</span>
+                    <span className="text-sm text-muted-foreground">[{item.count}]</span>
                   </div>
                 </AccordionTrigger>
 
                 {models.length > 0 && (
                   <AccordionContent>
-                    <div className="flex flex-col gap-3 pt-3 pl-8">
+                    <div className="flex flex-col gap-3 pl-8 pt-3">
                       {models.map((model) => (
                         <div key={model} className="flex items-center gap-3">
                           <Checkbox
                             id={`${item.label}-${model}`}
                             checked={activeModelsForCategory.includes(model)}
                             onCheckedChange={() => handleModelToggle(model)}
-                            className="data-[state=checked]:border-primary data-[state=checked]:bg-primary h-4 w-4 rounded border-gray-300"
+                            className="h-4 w-4 rounded border-input data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                           />
                           <label
                             htmlFor={`${item.label}-${model}`}
-                            className="cursor-pointer text-sm text-gray-700 select-none"
+                            className="select-none cursor-pointer text-sm"
                           >
                             {model}
                           </label>
@@ -160,9 +160,9 @@ const CarFilter = () => {
     return (
       <div className="p-3 md:p-4">
         <div className="animate-pulse">
-          <div className="mb-2 h-3 w-3/4 rounded bg-gray-200 md:h-4"></div>
-          <div className="mb-2 h-3 w-1/2 rounded bg-gray-200 md:h-4"></div>
-          <div className="h-3 w-2/3 rounded bg-gray-200 md:h-4"></div>
+          <div className="mb-2 h-3 w-3/4 rounded bg-muted md:h-4"></div>
+          <div className="mb-2 h-3 w-1/2 rounded bg-muted md:h-4"></div>
+          <div className="h-3 w-2/3 rounded bg-muted md:h-4"></div>
         </div>
       </div>
     );
@@ -170,8 +170,8 @@ const CarFilter = () => {
 
   if (error) {
     return (
-      <div className="rounded border border-red-200 bg-red-50 p-3 md:p-4">
-        <p className="text-xs text-red-700 md:text-sm">
+      <div className="rounded border border-destructive/20 bg-destructive/10 p-3 md:p-4">
+        <p className="text-xs text-destructive md:text-sm">
           {t('error')}: {error}
         </p>
         <button
@@ -179,7 +179,7 @@ const CarFilter = () => {
             clearError();
             fetchFilterMetadata();
           }}
-          className="mt-2 rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700 md:text-sm"
+          className="mt-2 rounded bg-destructive px-3 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 md:text-sm"
         >
           {t('retry')}
         </button>
@@ -188,11 +188,11 @@ const CarFilter = () => {
   }
 
   if (!filterMetadata) {
-    return <div className="p-4 text-gray-500">{t('noData')}</div>;
+    return <div className="p-4 text-muted-foreground">{t('noData')}</div>;
   }
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-card">
       {filterMetadata.bodyTypes &&
         filterMetadata.bodyTypes.length > 0 &&
         renderFilterSection(

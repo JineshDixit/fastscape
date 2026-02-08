@@ -1,6 +1,7 @@
 'use client';
 
 import { CarSearchForm } from '@/components/car-components/carSearchForm';
+import { MobileSearchSheet } from '@/components/car-components/MobileSearchSheet';
 import Image from 'next/image';
 import { useVehicle } from '@/app/axios';
 import { useEffect, useMemo } from 'react';
@@ -36,10 +37,13 @@ const Home = () => {
   }, [bodyTypeSummary]);
 
   return (
-    <main className="global-container mb-8">
+    <main className="relative global-container mb-8">
+      {/* Mobile Search FAB */}
+      <MobileSearchSheet />
+      
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-        <aside className="border-2 border-gray-100 sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
-          <span className="text-lg leading-6 font-bold md:text-xl">{t('rentCar')}</span>
+        <aside className="sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl border-2 border-border bg-card px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+          <span className="text-lg font-bold leading-6 md:text-xl">{t('rentCar')}</span>
           <CarSearchForm />
         </aside>
         <div className="space-y-6">
@@ -98,11 +102,11 @@ const Home = () => {
                     />
                   </div>
 
-                  <div className="border-gray-100 bg-gray-50 flex w-full items-center flex-col gap-2 rounded-2xl px-6 pt-10 pb-5">
+                  <div className="flex w-full flex-col items-center gap-2 rounded-2xl border border-border bg-muted px-6 pb-5 pt-10">
                     <span className="text-sm font-semibold">
                       {tFilter(item.label.toLowerCase().replace(' ', '') as any)}
                     </span>
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-sm text-muted-foreground">
                       {item.count} {tFilter('options')}
                     </span>
                   </div>
@@ -118,9 +122,9 @@ const Home = () => {
               ))}
             </div>
           </section>
-          <section className="mt-15">
+          <section className="mt-15 px-4">
             <h3 className="text-center text-lg font-semibold">{t('brands')}</h3>
-            <div className="mt-5 flex items-center justify-center gap-5 opacity-55 select-none">
+            <div className="mt-5 grid grid-cols-2 gap-4 opacity-55 select-none sm:grid-cols-3 md:flex md:items-center md:justify-center md:gap-5">
               {[
                 { label: 'BMW', img: '/brands/bmw-brand.png' },
                 { label: 'Jaguar', img: '/brands/jaguar-brand.png' },
@@ -129,22 +133,23 @@ const Home = () => {
                 { label: 'Volkswagen', img: '/brands/volkswagen-brand.png' },
                 { label: 'Hyundai', img: '/brands/hyundai-brand.png' },
               ].map((brand, index) => (
-                <Image
-                  key={`${brand.label}-${index}`}
-                  src={brand.img}
-                  alt={brand.label}
-                  width={90}
-                  height={90}
-                  className="aspect-7/4 object-contain bg-blend-color-burn"
-                />
+                <div key={`${brand.label}-${index}`} className="flex items-center justify-center">
+                  <Image
+                    src={brand.img}
+                    alt={brand.label}
+                    width={90}
+                    height={90}
+                    className="aspect-7/4 object-contain bg-blend-color-burn w-full max-w-[90px]"
+                  />
+                </div>
               ))}
             </div>
           </section>
-          <section className="mt-15 w-full rounded-3xl border-gray-100 bg-gray-100 py-14">
+          <section className="mt-15 w-full rounded-3xl border border-border bg-muted py-14">
             <h3 className="mb-14 text-center text-lg font-semibold">{t('easyRide.title')}</h3>
 
             <div className="relative mx-auto max-w-3xl px-12">
-              <Separator className="relative mx-auto -mb-6 max-w-2/3 bg-gray-500" />
+              <Separator className="relative mx-auto -mb-6 max-w-2/3 bg-border" />
 
               <div className="relative z-10 flex justify-between">
                 {[
@@ -166,12 +171,12 @@ const Home = () => {
                 ].map((item) => (
                   <div key={item.step} className="flex max-w-[200px] flex-col items-center text-center">
                     <div className="relative mb-5 flex h-12 w-12 items-center justify-center">
-                      <div className="absolute h-12 w-12 rotate-45 rounded-lg bg-sky-500" />
-                      <span className="relative text-sm font-semibold text-white">{item.step}</span>
+                      <div className="absolute h-12 w-12 rotate-45 rounded-lg bg-primary" />
+                      <span className="relative text-sm font-semibold text-primary-foreground">{item.step}</span>
                     </div>
 
                     <h4 className="text-sm font-semibold">{item.title}</h4>
-                    <p className="mt-1 text-xs text-gray-600">{item.desc}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
                   </div>
                 ))}
               </div>

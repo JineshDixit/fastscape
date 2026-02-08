@@ -107,11 +107,17 @@ export function CarSearchForm() {
   const [fromQuery, setFromQuery] = useState('');
   const [toQuery, setToQuery] = useState('');
 
+  const fromValue = form.watch('from');
+  const toValue = form.watch('to');
+
   // Sync query with form value (initial load or external change)
   useEffect(() => {
-    if (form.getValues('from')) setFromQuery(form.getValues('from'));
-    if (form.getValues('to')) setToQuery(form.getValues('to'));
-  }, [form.getValues('from'), form.getValues('to'), form]);
+    setFromQuery(fromValue || '');
+  }, [fromValue]);
+
+  useEffect(() => {
+    setToQuery(toValue || '');
+  }, [toValue]);
 
   // Robust Fix for persistent scroll-lock bugs
   useEffect(() => {
@@ -203,13 +209,6 @@ export function CarSearchForm() {
                       value={fromQuery}
                       onChange={(e) => {
                         setFromQuery(e.target.value);
-                        // Optional: Clear selection if user types something new?
-                        // field.onChange(''); // Uncomment if strict selection is required immediately
-                      }}
-                      onBlur={() => {
-                        // Restore value if nothing selected? Or keep query?
-                        // If field.value exists, maybe reset query to it?
-                        if (field.value) setFromQuery(field.value);
                       }}
                     />
                     <ComboboxContent>
@@ -279,9 +278,6 @@ export function CarSearchForm() {
                       className="bg-background h-14 w-full"
                       value={toQuery}
                       onChange={(e) => setToQuery(e.target.value)}
-                      onBlur={() => {
-                        if (field.value) setToQuery(field.value);
-                      }}
                     />
                     <ComboboxContent>
                       <ComboboxList>

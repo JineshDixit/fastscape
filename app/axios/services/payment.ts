@@ -16,8 +16,16 @@ export class PaymentService extends BaseApiService {
    * Calculate payment breakdown for a booking
    */
   async calculatePaymentBreakdown(bookingId: string, delayHours?: number): Promise<ApiResponse<PaymentBreakdown>> {
+    console.log('[PaymentService] Calculating breakdown for booking:', bookingId, 'delayHours:', delayHours);
     const params = delayHours ? { delayHours } : undefined;
-    return this.get<PaymentBreakdown>(`/calculate/${bookingId}`, { params });
+    try {
+      const result = await this.get<PaymentBreakdown>(`/calculate/${bookingId}`, { params });
+      console.log('[PaymentService] Breakdown result:', result);
+      return result;
+    } catch (error) {
+      console.error('[PaymentService] Error calculating breakdown:', error);
+      throw error;
+    }
   }
 
   /**

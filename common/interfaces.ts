@@ -257,6 +257,7 @@ export interface UserProfile extends User {
   licenseIssuingCountry?: string;
   licenseExpiryDate?: string;
   drivingExperienceYears?: number;
+  visaStatus?: 'Resident' | 'Tourist' | 'Visit';
   // Document URLs after upload
   driverLicenseFront?: string;
   driverLicenseBack?: string;
@@ -276,6 +277,7 @@ export interface UpdateProfileRequest {
   licenseIssuingCountry?: string;
   licenseExpiryDate?: string;
   drivingExperienceYears?: number;
+  visaStatus?: 'Resident' | 'Tourist' | 'Visit';
   // Files for document upload
   driverLicenseFront?: File;
   driverLicenseBack?: File;

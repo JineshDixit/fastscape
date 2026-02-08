@@ -1,6 +1,7 @@
 'use client';
 
 import CarFilter from '@/components/car-components/carFilter';
+import { MobileFilterSheet } from '@/components/car-components/MobileFilterSheet';
 import { useVehicle } from '@/app/axios';
 import VehicleCard from '@/components/car-components/vehicleCard';
 import { useEffect } from 'react';
@@ -118,9 +119,12 @@ const VehiclePage = () => {
 
   return (
     <main className="global-container mb-8">
+      {/* Mobile Filter FAB */}
+      <MobileFilterSheet />
+      
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-        <aside className="border-2 border-gray-100  sticky top-24 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
-          <span className="text-base leading-6 font-bold md:text-lg">{t('title')}</span>
+        <aside className="sticky top-24 hidden h-fit flex-col gap-3 rounded-2xl border-2 border-border bg-card px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+          <span className="text-base font-bold leading-6 md:text-lg">{t('title')}</span>
           <CarFilter />
         </aside>
         <div className="flex flex-col gap-10">
@@ -135,15 +139,15 @@ const VehiclePage = () => {
                 ))
               ) : !isLoading ? (
                 <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                  <div className="text-gray-400 mb-4">
-                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="mb-4 text-muted-foreground">
+                    <svg className="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="mb-2 text-lg font-semibold">
                     {hasSearchCriteria ? 'No vehicles available' : 'No vehicles found'}
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="mb-4 text-muted-foreground">
                     {hasSearchCriteria
                       ? 'No vehicles are available for your selected dates and location. Try different dates or location.'
                       : 'No vehicles are currently available. Please check back later.'
@@ -154,7 +158,7 @@ const VehiclePage = () => {
                       onClick={() => {
                         window.location.href = '/vehicles';
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       View All Vehicles
                     </button>

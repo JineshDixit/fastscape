@@ -38,7 +38,7 @@ const CheckoutSteppers: React.FC<CheckoutSteppersProps> = ({ currentStep, steps 
                 className={cn(
                   'relative flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-500',
                   isCompleted
-                    ? 'border-primary bg-primary shadow-primary/20 text-white shadow-lg'
+                    ? 'border-primary bg-primary text-white'
                     : isActive
                       ? 'border-primary text-primary ring-primary/10 group scale-110 bg-white ring-6 dark:bg-gray-900'
                       : 'border-gray-200 bg-white text-gray-300 dark:border-gray-800 dark:bg-gray-950',

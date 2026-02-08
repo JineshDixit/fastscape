@@ -203,11 +203,21 @@ export const useBooking = () => {
   // Payment Operations
   const calculatePaymentBreakdown = useCallback(
     async (bookingId: string, delayHours?: number) => {
-      return handleApiCall(
+      console.log('[useBooking] Calculating payment breakdown for booking:', bookingId);
+      const result = await handleApiCall(
         () => paymentService.calculatePaymentBreakdown(bookingId, delayHours),
-        (breakdown) => setPaymentBreakdown(breakdown),
+        (breakdown) => {
+          console.log('[useBooking] Payment breakdown received:', breakdown);
+          setPaymentBreakdown(breakdown);
+        },
         setIsLoading,
       );
+      
+      if (!result?.success) {
+        console.error('[useBooking] Failed to calculate payment breakdown:', result?.message);
+      }
+      
+      return result;
     },
     [handleApiCall],
   );

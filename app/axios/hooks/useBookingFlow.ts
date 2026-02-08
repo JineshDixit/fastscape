@@ -67,6 +67,27 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
       return false;
     }
 
+    // Check if driving info is complete
+    const hasDrivingInfo = !!(
+      profile.licenseIssuingCountry &&
+      profile.licenseExpiryDate &&
+      profile.drivingExperienceYears !== undefined
+    );
+
+    if (!hasDrivingInfo) {
+      setError('Please provide your driving license information');
+      return false;
+    }
+
+    // Check if license is not expired
+    if (profile.licenseExpiryDate) {
+      const expiryDate = new Date(profile.licenseExpiryDate);
+      if (expiryDate <= new Date()) {
+        setError('Your driving license has expired');
+        return false;
+      }
+    }
+
     return true;
   }, [profile, setError]);
 
@@ -105,26 +126,55 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
 
   const determineInitialStep = useCallback(
     async (userProfile: UserProfile | null): Promise<BookingFlowStep> => {
+      console.log('[useBookingFlow] Determining initial step for profile:', userProfile);
+      
       if (!userProfile) {
+        console.log('[useBookingFlow] No profile, starting at IDENTITY');
         return 'IDENTITY';
       }
 
       // Check if basic info is complete
       const hasBasicInfo = !!(userProfile.firstName && userProfile.lastName && userProfile.phone && userProfile.email);
       if (!hasBasicInfo) {
+        console.log('[useBookingFlow] Basic info incomplete, starting at IDENTITY');
         return 'IDENTITY';
+      }
+
+      // Check if driving info is complete
+      const hasDrivingInfo = !!(
+        userProfile.licenseIssuingCountry &&
+        userProfile.licenseExpiryDate &&
+        userProfile.drivingExperienceYears !== undefined
+      );
+      if (!hasDrivingInfo) {
+        console.log('[useBookingFlow] Driving info incomplete, starting at IDENTITY');
+        return 'IDENTITY';
+      }
+
+      // Check if license is not expired
+      if (userProfile.licenseExpiryDate) {
+        const expiryDate = new Date(userProfile.licenseExpiryDate);
+        if (expiryDate <= new Date()) {
+          console.log('[useBookingFlow] License expired, starting at IDENTITY');
+          return 'IDENTITY';
+        }
       }
 
       // Check if documents can be skipped
       try {
         const skip = await shouldSkipDocumentStep();
+        console.log('[useBookingFlow] Should skip documents?', skip);
         if (skip) {
-          return 'PAYMENT';
+          // Documents are verified, but we still need to start at IDENTITY
+          // The booking will be created when user clicks "Proceed" from identity step
+          console.log('[useBookingFlow] Documents verified, but starting at IDENTITY (booking not created yet)');
+          return 'IDENTITY';
         }
       } catch (err) {
         console.warn('Failed to check document skip status:', err);
       }
 
+      console.log('[useBookingFlow] Starting at DOCUMENTS');
       return 'DOCUMENTS';
     },
     [shouldSkipDocumentStep],
@@ -155,8 +205,11 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
   }, [fetchProfile, determineInitialStep, setLoading, clearError, setError, state.isInitialized, profile]);
 
   const proceedToNextStep = useCallback(async () => {
+    console.log('[useBookingFlow] proceedToNextStep called, current step:', state.currentStep);
+    
     const isValid = await validateCurrentStep();
     if (!isValid) {
+      console.log('[useBookingFlow] Current step validation failed');
       return;
     }
 
@@ -165,12 +218,15 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
 
     if (currentIndex < stepOrder.length - 1) {
       const nextStep = stepOrder[currentIndex + 1];
+      console.log('[useBookingFlow] Next step would be:', nextStep);
 
       // Special logic: skip documents if they're already verified
       if (nextStep === 'DOCUMENTS') {
         try {
           const skip = await shouldSkipDocumentStep();
+          console.log('[useBookingFlow] Should skip documents?', skip);
           if (skip) {
+            console.log('[useBookingFlow] Skipping to PAYMENT');
             setState((prev) => ({ ...prev, currentStep: 'PAYMENT' }));
             return;
           }
@@ -179,6 +235,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
         }
       }
 
+      console.log('[useBookingFlow] Moving to step:', nextStep);
       setState((prev) => ({ ...prev, currentStep: nextStep }));
     }
   }, [state.currentStep, validateCurrentStep, shouldSkipDocumentStep]);

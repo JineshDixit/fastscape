@@ -3,7 +3,7 @@
 import { FC, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Link } from '@/localization/navigation';
-import { UserRound } from 'lucide-react';
+import { UserRound, Menu, X } from 'lucide-react';
 
 import { HeaderPropType } from '@/common/propTypes';
 import { useTranslations } from 'next-intl';
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@radix-ui/react-dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
   const t = useTranslations('navigation');
@@ -25,15 +26,16 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
   const NAV_ITEMS = [
     {
       label: t('activeBookings'),
-      href: '/',
+      href: '/profile?tab=active',
     },
     {
       label: t('bookingHistory'),
-      href: '/',
+      href: '/profile?tab=history',
     },
   ];
 
   const [mounted, setMounted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;
@@ -61,6 +63,35 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
                 </Link>
               ))}
             </nav>
+
+            {/* Mobile Menu */}
+            {isAuthenticated && (
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <Button variant="ghost" size="sm" className="px-2">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px]">
+                  <SheetHeader>
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <nav className="mt-6 flex flex-col gap-4">
+                    {NAV_ITEMS.map(({ label, href }, index) => (
+                      <Link
+                        key={index}
+                        href={href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="hover:text-primary rounded-md px-3 py-2 text-base transition-colors"
+                      >
+                        {label}
+                      </Link>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            )}
+
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 text-sm md:gap-3 md:text-base">
@@ -69,26 +100,19 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
                     {user?.firstName} {user?.lastName}
                   </span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-background rounded-md p-4 shadow-lg">
-                  <DropdownMenuLabel className="cursor-pointer">
-                    <Button
-                      variant={'link'}
-                      onClick={logout}
-                      className="text-foreground p-0 text-start hover:no-underline"
-                    >
+                <DropdownMenuContent className="bg-background z-50 min-w-[200px] rounded-lg border p-2 shadow-lg">
+                  <Link href="/profile" className="block">
+                    <div className="hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-md px-2 py-2 text-sm transition-colors">
                       {t('myAccount')}
-                    </Button>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="cursor-pointer">
-                    <Button
-                      variant={'link'}
-                      onClick={logout}
-                      className="text-foreground p-0 text-start hover:no-underline"
-                    >
-                      {t('logout')}
-                    </Button>
-                  </DropdownMenuLabel>
+                    </div>
+                  </Link>
+                  <DropdownMenuSeparator className="bg-border my-1 h-px" />
+                  <div
+                    onClick={logout}
+                    className="hover:bg-destructive hover:text-white cursor-pointer rounded-md px-2 py-2 text-sm transition-colors"
+                  >
+                    {t('logout')}
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (

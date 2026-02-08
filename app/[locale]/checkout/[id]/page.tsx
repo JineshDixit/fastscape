@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from '@/localization/navigation';
-import { useVehicle, useBooking } from '@/app/axios/hooks';
+import { useVehicle, useBooking, useDocument } from '@/app/axios/hooks';
 import { useBookingFlow } from '@/app/axios/hooks/useBookingFlow';
 import { vehicleService } from '@/app/axios/services/vehicle';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
@@ -35,6 +35,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
+  const { shouldSkipDocumentStep } = useDocument();
   const {
     createBooking,
     calculatePaymentBreakdown,
@@ -67,6 +68,16 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     { id: 'PAYMENT', label: t('steps.payment') },
     { id: 'SUMMARY', label: t('steps.summary') },
   ];
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[Checkout] Component state:', {
+      currentStep,
+      currentBooking: currentBooking?.id,
+      paymentBreakdown,
+      isLoading: flowLoading || bookingLoading,
+    });
+  }, [currentStep, currentBooking, paymentBreakdown, flowLoading, bookingLoading]);
 
   useEffect(() => {
     if (id) {
@@ -116,9 +127,72 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const handleIdentityNext = async () => {
     try {
-      await proceedToNextStep();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      clearAllErrors();
+      
+      // Check if documents will be skipped
+      const skipDocs = await shouldSkipDocumentStep();
+      
+      if (skipDocs) {
+        // If documents are skipped, create booking here before proceeding to payment
+        console.log('[Checkout] Documents will be skipped, creating booking now');
+        
+        if (!bookingData.pickupDate || !bookingData.dropoffDate) {
+          setError('Booking dates are missing');
+          return;
+        }
+        
+        // Check availability first
+        setIsCheckingAvailability(true);
+        const availabilityResponse = await vehicleService.checkAvailability(
+          id,
+          bookingData.pickupDate,
+          bookingData.dropoffDate,
+        );
+        setIsCheckingAvailability(false);
+
+        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
+          setError(t('errorAvailability'));
+          return;
+        }
+        
+        // Create booking
+        const finalBookingData = {
+          vehicleId: id,
+          startDatetime: bookingData.pickupDate,
+          endDatetime: bookingData.dropoffDate,
+          pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
+          dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
+          bookingType: bookingData.bookingType,
+          paymentMethod: 'ONLINE',
+        };
+
+        console.log('[Checkout] Creating booking with data:', finalBookingData);
+        const response = await createBooking(finalBookingData as any);
+        console.log('[Checkout] Booking creation response:', response);
+        
+        if (response && response.success && response.data) {
+          console.log('[Checkout] Booking created successfully, ID:', response.data.id);
+          // Calculate payment breakdown
+          console.log('[Checkout] Calculating payment breakdown...');
+          const breakdownResponse = await calculatePaymentBreakdown(response.data.id);
+          console.log('[Checkout] Payment breakdown response:', breakdownResponse);
+          
+          if (breakdownResponse && breakdownResponse.success) {
+            await proceedToNextStep();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
+          }
+        } else {
+          setError(response?.message || 'Failed to initialize booking session.');
+        }
+      } else {
+        // Documents step is needed, just proceed normally
+        await proceedToNextStep();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (err: any) {
+      console.error('[Checkout] Error in handleIdentityNext:', err);
       setError(err.message || t('errorIdentity'));
     }
   };
@@ -152,25 +226,48 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         paymentMethod: 'ONLINE', // Default to ONLINE, can be changed in payment step
       };
 
+      console.log('[Checkout] Creating booking with data:', finalBookingData);
       const response = await createBooking(finalBookingData as any);
+      console.log('[Checkout] Booking creation response:', response);
+      
       if (response && response.success && response.data) {
-        await proceedToNextStep();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        console.log('[Checkout] Booking created successfully, ID:', response.data.id);
+        // Immediately calculate payment breakdown
+        console.log('[Checkout] Calculating payment breakdown...');
+        const breakdownResponse = await calculatePaymentBreakdown(response.data.id);
+        console.log('[Checkout] Payment breakdown response:', breakdownResponse);
+        
+        if (breakdownResponse && breakdownResponse.success) {
+          await proceedToNextStep();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
+        }
       } else {
         setError(response?.message || 'Failed to initialize booking session.');
       }
     } catch (err: any) {
+      console.error('[Checkout] Error in handleDocumentsNext:', err);
       setError(err.message || t('errorFinalSync'));
       setIsCheckingAvailability(false);
     }
   };
 
-  // Fetch breakdown when moving to payment step
+  // Fetch breakdown when moving to payment step OR when payment step is loaded with existing booking
   useEffect(() => {
-    if (currentStep === 'PAYMENT' && currentBooking?.id) {
-      calculatePaymentBreakdown(currentBooking.id);
-    }
-  }, [currentStep, currentBooking?.id, calculatePaymentBreakdown]);
+    const fetchBreakdown = async () => {
+      if (currentStep === 'PAYMENT' && currentBooking?.id) {
+        console.log('[Checkout] Payment step loaded, fetching breakdown for booking:', currentBooking.id);
+        const result = await calculatePaymentBreakdown(currentBooking.id);
+        if (!result?.success) {
+          console.error('[Checkout] Failed to fetch payment breakdown:', result?.message);
+          setError(result?.message || 'Failed to load payment information');
+        }
+      }
+    };
+
+    fetchBreakdown();
+  }, [currentStep, currentBooking?.id]);
 
   const handlePaymentNext = async (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => {
     if (!currentBooking) {
@@ -390,7 +487,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
                     <div className="flex w-full max-w-md flex-col gap-4 pt-4 sm:flex-row">
                       <Button
-                        onClick={() => router.push('/bookings')}
+                        onClick={() => router.push('/profile?tab=active')}
                         className="h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase"
                       >
                         {t('manageAssets')}

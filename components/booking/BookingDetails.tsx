@@ -125,7 +125,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
   const needsPayment = booking.paymentStatus === 'UNPAID' || booking.paymentStatus === 'PARTIALLY_PAID';
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
