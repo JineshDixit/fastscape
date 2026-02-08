@@ -32,6 +32,18 @@ router.post(
 // Get user bookings
 router.get('/', bookingController.getUserBookings);
 
+// Get upcoming bookings
+router.get('/upcoming', bookingController.getUpcomingBookings);
+
+// Get active bookings
+router.get('/active', bookingController.getActiveBookings);
+
+// Get booking statistics
+router.get('/stats', bookingController.getBookingStats);
+
+// Get booking history
+router.get('/history', bookingController.getBookingHistory);
+
 // Get booking by ID
 router.get('/:bookingId', bookingController.getBookingById);
 

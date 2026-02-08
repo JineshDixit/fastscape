@@ -27,7 +27,9 @@ const GATEWAY_FEE_FIXED = 0.3; // Stripe example 30 cents
 export const calculatePaymentBreakdown = async (
   bookingId: string,
   delayHours: number = 0,
-): Promise<PaymentCalculation> => {
+): Promise<any> => {
+  Logger.info('Starting payment breakdown calculation', { bookingId, delayHours });
+
   const booking = await Booking.findByPk(bookingId, {
     include: [
       {
@@ -42,11 +44,23 @@ export const calculatePaymentBreakdown = async (
   });
 
   if (!booking) {
+    Logger.error('Booking not found for payment calculation', { bookingId });
     throw createError('Booking not found', 404);
   }
 
   const vehicle = (booking as any).Vehicle;
   const existingFinancial = (booking as any).BookingFinancial;
+
+  Logger.info('Booking and vehicle data retrieved', {
+    bookingId,
+    hasVehicle: !!vehicle,
+    hasFinancial: !!existingFinancial,
+  });
+
+  if (!vehicle) {
+    Logger.error('Vehicle not found for booking', { bookingId });
+    throw createError('Vehicle information not found for this booking', 404);
+  }
 
   // Calculate rental duration in days
   const startDate = new Date(booking.startDatetime);
@@ -60,7 +74,7 @@ export const calculatePaymentBreakdown = async (
   const balanceAmount = baseAmount - depositAmount;
 
   // Delay charge calculation
-  const delayChargeRate = vehicle.delayChargePerHour;
+  const delayChargeRate = vehicle.delayChargePerHour || 0;
   const delayChargeAmount = delayHours > 0 ? delayHours * delayChargeRate : 0;
 
   // Tax calculation (example: 10% tax)
@@ -74,17 +88,23 @@ export const calculatePaymentBreakdown = async (
 
   const totalAmount = subtotal + taxAmount;
 
-  return {
-    baseAmount,
-    depositAmount,
-    balanceAmount,
-    delayChargeAmount,
-    taxAmount,
-    platformChargeAmount,
-    platformChargeRate,
-    totalAmount,
-    currency: vehicle.currency,
+  // Return in frontend-compatible format (strings)
+  const result = {
+    baseAmount: baseAmount.toFixed(2),
+    depositAmount: depositAmount.toFixed(2),
+    balanceAmount: balanceAmount.toFixed(2),
+    taxAmount: taxAmount.toFixed(2),
+    delayCharges: delayChargeAmount > 0 ? delayChargeAmount.toFixed(2) : undefined,
+    totalAmount: totalAmount.toFixed(2),
+    currency: vehicle.currency || 'USD',
+    daysCount: rentalDays,
+    delayHours: delayHours > 0 ? delayHours : undefined,
+    depositPercentage: depositPercentage,
   };
+
+  Logger.info('Payment breakdown calculated successfully', { bookingId, result });
+
+  return result;
 };
 
 /**

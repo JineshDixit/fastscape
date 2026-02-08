@@ -15,6 +15,7 @@ import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
 import { validateRequiredFields } from '../../utils/validation.utils';
 import { dbEnums } from '../../common/enum/dbEnums';
+import Logger from '../../utils/logger';
 
 class PaymentController extends BaseController {
   /**
@@ -24,7 +25,11 @@ class PaymentController extends BaseController {
     const bookingId = this.getValidatedId(req, 'bookingId');
     const { delayHours = 0 } = req.query;
 
+    Logger.info('Calculating payment breakdown', { bookingId, delayHours });
+
     const calculation = await calculatePaymentBreakdown(bookingId, Number(delayHours));
+
+    Logger.info('Payment calculation completed', { bookingId, calculation });
 
     sendSuccess(res, 'Payment calculation completed', calculation);
   });

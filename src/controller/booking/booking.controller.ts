@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../../common/types/expressTypes';
 import * as bookingService from '../../services/booking/booking.service';
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess, sendCreated } from '../../utils/response.utils';
+import Logger from '../../utils/logger';
 
 class BookingController extends BaseController {
   /**
@@ -11,7 +12,13 @@ class BookingController extends BaseController {
   createBooking = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
     const bookingData = { ...req.body, userId };
+    
+    Logger.info('Creating booking', { userId, bookingData });
+    
     const booking = await bookingService.createBooking(bookingData);
+    
+    Logger.info('Booking created successfully', { bookingId: booking.id, userId });
+    
     sendCreated(res, 'Booking created successfully', booking);
   });
 
@@ -22,6 +29,49 @@ class BookingController extends BaseController {
     const userId = this.ensureAuthenticated(req);
     const bookings = await bookingService.getUserBookings(userId);
     sendSuccess(res, 'Bookings retrieved successfully', bookings);
+  });
+
+  /**
+   * Get upcoming bookings (next 30 days)
+   */
+  getUpcomingBookings = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookings = await bookingService.getUpcomingBookings(userId);
+    sendSuccess(res, 'Upcoming bookings retrieved successfully', bookings);
+  });
+
+  /**
+   * Get active bookings (currently ongoing)
+   */
+  getActiveBookings = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const bookings = await bookingService.getActiveBookings(userId);
+    sendSuccess(res, 'Active bookings retrieved successfully', bookings);
+  });
+
+  /**
+   * Get booking statistics
+   */
+  getBookingStats = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const stats = await bookingService.getBookingStats(userId);
+    sendSuccess(res, 'Booking statistics retrieved successfully', stats);
+  });
+
+  /**
+   * Get booking history with filters
+   */
+  getBookingHistory = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const userId = this.ensureAuthenticated(req);
+    const { year, month, status, vehicleType } = req.query;
+    const params = {
+      year: year ? parseInt(year as string) : undefined,
+      month: month ? parseInt(month as string) : undefined,
+      status: status as string,
+      vehicleType: vehicleType as string,
+    };
+    const bookings = await bookingService.getBookingHistory(userId, params);
+    sendSuccess(res, 'Booking history retrieved successfully', bookings);
   });
 
   /**
@@ -58,4 +108,14 @@ class BookingController extends BaseController {
 
 const bookingController = new BookingController();
 
-export const { createBooking, getUserBookings, getBookingById, updateBooking, cancelBooking } = bookingController;
+export const { 
+  createBooking, 
+  getUserBookings, 
+  getUpcomingBookings,
+  getActiveBookings,
+  getBookingStats,
+  getBookingHistory,
+  getBookingById, 
+  updateBooking, 
+  cancelBooking 
+} = bookingController;

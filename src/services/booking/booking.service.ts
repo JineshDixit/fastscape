@@ -1,11 +1,22 @@
 import { CreateBookingData, UpdateBookingData } from '../../common/types/bookingTypes';
-import { Booking, Vehicle, sequelize } from '../../models';
+import { Booking, Vehicle, Chauffeur, sequelize } from '../../models';
 import { Op } from 'sequelize';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
 import { dbEnums } from '../../common/enum/dbEnums';
 import Logger from '../../utils/logger';
+
+// Chauffeur attributes for booking responses
+const CHAUFFEUR_ATTRIBUTES = [
+  'id',
+  'fullName',
+  'phone',
+  'rating',
+  'totalTrips',
+  'experienceLevel',
+  'languages',
+];
 
 // Booking status state machine using enum values
 const BOOKING_STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -154,9 +165,202 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
           model: Vehicle,
           attributes: VEHICLE_LIST_ATTRIBUTES,
         },
+        {
+          model: Chauffeur,
+          attributes: CHAUFFEUR_ATTRIBUTES,
+          required: false,
+        },
       ],
       order: [['createdAt', 'DESC']],
     });
+};
+
+/**
+ * Get upcoming bookings (next 30 days)
+ */
+export const getUpcomingBookings = async (userId: string): Promise<Booking[]> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const now = new Date();
+  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  return await Booking.findAll({
+    where: {
+      userId,
+      startDatetime: {
+        [Op.gt]: now,
+        [Op.lte]: thirtyDaysFromNow,
+      },
+      bookingStatus: {
+        [Op.in]: [
+          dbEnums.BOOKING_STATUS[0], // PENDING
+          dbEnums.BOOKING_STATUS[1], // CONFIRMED
+        ],
+      },
+    },
+    attributes: BOOKING_ATTRIBUTES,
+    include: [
+      {
+        model: Vehicle,
+        attributes: VEHICLE_LIST_ATTRIBUTES,
+      },
+      {
+        model: Chauffeur,
+        attributes: CHAUFFEUR_ATTRIBUTES,
+        required: false,
+      },
+    ],
+    order: [['startDatetime', 'ASC']],
+  });
+};
+
+/**
+ * Get active bookings (currently ongoing)
+ */
+export const getActiveBookings = async (userId: string): Promise<Booking[]> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const now = new Date();
+
+  return await Booking.findAll({
+    where: {
+      userId,
+      [Op.or]: [
+        {
+          // Currently picked up
+          bookingStatus: dbEnums.BOOKING_STATUS[2], // PICKED_UP
+        },
+        {
+          // Confirmed and within booking period
+          bookingStatus: dbEnums.BOOKING_STATUS[1], // CONFIRMED
+          startDatetime: { [Op.lte]: now },
+          endDatetime: { [Op.gte]: now },
+        },
+      ],
+    },
+    attributes: BOOKING_ATTRIBUTES,
+    include: [
+      {
+        model: Vehicle,
+        attributes: VEHICLE_LIST_ATTRIBUTES,
+      },
+      {
+        model: Chauffeur,
+        attributes: CHAUFFEUR_ATTRIBUTES,
+        required: false,
+      },
+    ],
+    order: [['startDatetime', 'ASC']],
+  });
+};
+
+/**
+ * Get booking statistics for a user
+ */
+export const getBookingStats = async (userId: string): Promise<any> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const bookings = await Booking.findAll({
+    where: { userId },
+    attributes: ['bookingStatus'],
+  });
+
+  const stats = {
+    total: bookings.length,
+    pending: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[0]).length,
+    confirmed: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[1]).length,
+    active: bookings.filter(
+      (b) => b.bookingStatus === dbEnums.BOOKING_STATUS[2] || b.bookingStatus === dbEnums.BOOKING_STATUS[1]
+    ).length,
+    completed: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[5]).length,
+    cancelled: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[4]).length,
+    totalSpent: 0, // TODO: Calculate from payments
+    averageRating: 0, // TODO: Calculate from reviews
+  };
+
+  return stats;
+};
+
+/**
+ * Get booking history with optional filters
+ */
+export const getBookingHistory = async (
+  userId: string,
+  params?: {
+    year?: number;
+    month?: number;
+    status?: string;
+    vehicleType?: string;
+  }
+): Promise<Booking[]> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const whereConditions: any = {
+    userId,
+    bookingStatus: {
+      [Op.in]: [
+        dbEnums.BOOKING_STATUS[3], // DROPPED_OFF
+        dbEnums.BOOKING_STATUS[4], // CANCELLED
+        dbEnums.BOOKING_STATUS[5], // COMPLETED
+      ],
+    },
+  };
+
+  // Filter by specific status if provided
+  if (params?.status) {
+    whereConditions.bookingStatus = params.status;
+  }
+
+  // Filter by year
+  if (params?.year) {
+    const startOfYear = new Date(params.year, 0, 1);
+    const endOfYear = new Date(params.year, 11, 31, 23, 59, 59);
+    whereConditions.startDatetime = {
+      [Op.between]: [startOfYear, endOfYear],
+    };
+  }
+
+  // Filter by month (requires year)
+  if (params?.month && params?.year) {
+    const startOfMonth = new Date(params.year, params.month - 1, 1);
+    const endOfMonth = new Date(params.year, params.month, 0, 23, 59, 59);
+    whereConditions.startDatetime = {
+      [Op.between]: [startOfMonth, endOfMonth],
+    };
+  }
+
+  const includeOptions: any = [
+    {
+      model: Vehicle,
+      attributes: VEHICLE_LIST_ATTRIBUTES,
+    },
+  ];
+
+  // Filter by vehicle type if provided
+  if (params?.vehicleType) {
+    includeOptions[0].where = { bodyType: params.vehicleType };
+  }
+
+  return await Booking.findAll({
+    where: whereConditions,
+    attributes: BOOKING_ATTRIBUTES,
+    include: includeOptions.concat([
+      {
+        model: Chauffeur,
+        attributes: CHAUFFEUR_ATTRIBUTES,
+        required: false,
+      },
+    ]),
+    order: [['startDatetime', 'DESC']],
+  });
 };
 
 /**
@@ -174,6 +378,11 @@ export const getBookingById = async (bookingId: string, userId: string): Promise
       {
         model: Vehicle,
         attributes: [...VEHICLE_LIST_ATTRIBUTES, 'exteriorColor'],
+      },
+      {
+        model: Chauffeur,
+        attributes: CHAUFFEUR_ATTRIBUTES,
+        required: false,
       },
     ],
   });
