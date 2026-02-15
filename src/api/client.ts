@@ -102,18 +102,24 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${validToken}`;
           // Retry the request
           return apiClient(originalRequest);
+        } else {
+          // Only logout if refresh token is actually expired
+          if (import.meta.env.DEV) {
+            console.log('No valid token available - checking if refresh token expired');
+          }
+          const { authService: authSvc } = await import('./services/auth');
+          if (authSvc.isRefreshTokenExpired()) {
+            authSvc.forceLogout();
+          }
         }
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         console.error('Token refresh failed during 401 retry:', refreshError);
+        // Only force logout if it's an auth error, not network error
+        if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+          const { authService } = await import('./services/auth');
+          authService.forceLogout();
+        }
       }
-
-      // If refresh failed or was not possible, force logout
-      if (import.meta.env.DEV) {
-        console.error('Unauthorized and refresh failed - Force logout');
-      }
-
-      const { authService } = await import('./services/auth');
-      authService.forceLogout();
     }
 
     // Log other errors

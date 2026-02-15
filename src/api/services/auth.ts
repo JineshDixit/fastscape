@@ -147,6 +147,15 @@ class AuthService extends BaseApiService {
    * Get a valid access token, refreshing if necessary
    */
   async getValidAccessToken(): Promise<string | null> {
+    // If we're already refreshing, wait for that to complete
+    if (this.refreshPromise) {
+      try {
+        return await this.refreshPromise;
+      } catch {
+        // If the refresh failed, continue with normal flow
+      }
+    }
+
     const currentToken = authCookies.getAccessToken();
 
     // If we have a valid non-expired access token, return it
@@ -154,13 +163,21 @@ class AuthService extends BaseApiService {
       return currentToken;
     }
 
-    // Checking if we CAN refresh
-    const hasRefreshToken = !!authCookies.getRefreshToken();
-    if (!hasRefreshToken || this.isRefreshTokenExpired()) {
+    // Check if we have refresh token
+    const refreshToken = authCookies.getRefreshToken();
+    if (!refreshToken) {
       if (import.meta.env.DEV) {
-        console.warn('Cannot refresh: No refresh token or it is expired');
+        console.warn('Cannot refresh: No refresh token available');
       }
-      this.handleRefreshTokenExpiry();
+      return null;
+    }
+
+    // Check if refresh token is actually expired
+    if (this.isRefreshTokenExpired()) {
+      if (import.meta.env.DEV) {
+        console.warn('Refresh token expired - cannot refresh access token');
+      }
+      // Don't immediately logout here - let the calling code handle it
       return null;
     }
 
@@ -171,8 +188,7 @@ class AuthService extends BaseApiService {
       return await this.refreshAccessToken();
     } catch (error) {
       console.error('Failed to get valid access token:', error);
-      // We don't always want to logout here if it was a network error during refreshAccessToken
-      // but usually refreshAccessToken handles its own 401/403 logouts.
+      // Don't automatically logout here - let the calling code handle auth errors
       return null;
     }
   }
@@ -190,12 +206,64 @@ class AuthService extends BaseApiService {
       throw new Error('No refresh token available');
     }
 
+    // Implement cross-tab lock using localStorage
+    if (typeof window !== 'undefined') {
+      const isLocked = () => {
+        const lock = localStorage.getItem('auth_refresh_lock');
+        if (!lock) return false;
+        const lockTime = parseInt(lock, 10);
+        return !isNaN(lockTime) && Date.now() - lockTime < 10000; // 10s timeout
+      };
+
+      if (isLocked()) {
+        if (import.meta.env.DEV) {
+          console.log('🔄 Token refresh currently locked by another tab, waiting...');
+        }
+
+        // Wait for lock to be released or new tokens to appear
+        let waitAttempts = 0;
+        const maxAttempts = 10; // Max 5 seconds
+
+        while (isLocked() && waitAttempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          waitAttempts++;
+
+          // Check if tokens were updated while we were waiting
+          const currentToken = authCookies.getAccessToken();
+          if (currentToken && !this.isTokenExpired()) {
+            if (import.meta.env.DEV) {
+              console.log('✅ New token detected from another tab, skipping redundant refresh');
+            }
+            return currentToken;
+          }
+        }
+
+        // If we timed out and it's still locked, something might be wrong with the lock,
+        // but let's check one last time for the token.
+        const finalCheckToken = authCookies.getAccessToken();
+        if (finalCheckToken && !this.isTokenExpired()) {
+          return finalCheckToken;
+        }
+
+        if (import.meta.env.DEV && isLocked()) {
+          console.warn('⚠️ Refresh lock timeout - proceeding anyway');
+        }
+      }
+
+      // Acquire lock
+      localStorage.setItem('auth_refresh_lock', Date.now().toString());
+    }
+
     this.refreshPromise = this.performTokenRefresh(refreshToken);
 
     try {
       return await this.refreshPromise;
     } finally {
       this.refreshPromise = null;
+      // Release lock
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_refresh_lock');
+      }
     }
   }
 
@@ -266,12 +334,25 @@ class AuthService extends BaseApiService {
    */
   isTokenExpired(): boolean {
     const expiresAt = authCookies.getTokenExpiresAt();
-    if (!expiresAt) return true;
+    if (!expiresAt) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ No access token expiration found');
+      }
+      return true;
+    }
 
     const now = Date.now();
     const expires = new Date(expiresAt).getTime();
+    const timeUntilExpiry = expires - now;
+    const isExpired = now >= expires - AUTH.REFRESH_THRESHOLD;
 
-    return now >= expires - AUTH.REFRESH_THRESHOLD;
+    if (import.meta.env.DEV && timeUntilExpiry < AUTH.REFRESH_THRESHOLD * 2) {
+      console.log(
+        `🕐 Token expires in ${Math.round(timeUntilExpiry / 1000)}s, threshold: ${AUTH.REFRESH_THRESHOLD / 1000}s, should refresh: ${isExpired}`,
+      );
+    }
+
+    return isExpired;
   }
 
   /**
@@ -279,12 +360,24 @@ class AuthService extends BaseApiService {
    */
   isRefreshTokenExpired(): boolean {
     const refreshExpiresAt = authCookies.getRefreshExpiresAt();
-    if (!refreshExpiresAt) return true;
+    if (!refreshExpiresAt) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ No refresh token expiration found');
+      }
+      return true;
+    }
 
     const now = Date.now();
     const expires = new Date(refreshExpiresAt).getTime();
+    const timeUntilExpiry = expires - now;
+    const isExpired = now >= expires;
 
-    return now >= expires;
+    if (import.meta.env.DEV && timeUntilExpiry < 10 * 60 * 1000) {
+      // Log if less than 10 minutes left
+      console.log(`🔄 Refresh token expires in ${Math.round(timeUntilExpiry / 1000)}s, expired: ${isExpired}`);
+    }
+
+    return isExpired;
   }
 
   // ===== AUTO-REFRESH METHODS =====
@@ -420,10 +513,26 @@ class AuthService extends BaseApiService {
     const refreshExpiresAt = authCookies.getRefreshExpiresAt();
 
     let timeUntilExpiry: number | null = null;
+    const now = Date.now();
+
+    // Prioritize refresh token expiry if access token is expired or missing
     if (accessExpiresAt) {
-      const now = Date.now();
-      const expires = new Date(accessExpiresAt).getTime();
-      timeUntilExpiry = Math.max(0, expires - now);
+      const accessExpires = new Date(accessExpiresAt).getTime();
+      const accessTimeUntil = accessExpires - now;
+
+      if (accessTimeUntil > 0) {
+        timeUntilExpiry = accessTimeUntil;
+      }
+    }
+
+    // If access token is expired or missing, check refresh token
+    if ((!timeUntilExpiry || timeUntilExpiry <= 0) && refreshExpiresAt) {
+      const refreshExpires = new Date(refreshExpiresAt).getTime();
+      const refreshTimeUntil = refreshExpires - now;
+
+      if (refreshTimeUntil > 0) {
+        timeUntilExpiry = refreshTimeUntil;
+      }
     }
 
     return {

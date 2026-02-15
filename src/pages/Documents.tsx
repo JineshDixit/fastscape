@@ -90,7 +90,7 @@ const Documents = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col space-y-8 p-8">
+    <div className="mx-auto flex h-full w-full max-w-400 flex-col space-y-8 p-8">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-gray-900">Document Verification</h2>

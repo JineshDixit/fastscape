@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { type Chauffeur, chauffeurService } from '@/api/services/chauffeurService';
+import { useEffect, useState, useMemo } from 'react';
+import { type Chauffeur, ChauffeurStatus, chauffeurService } from '@/api/services/chauffeurService';
 import { columns } from './columns';
 import { DataTable } from '@/components/ui/data-table';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Users, UserCheck, UserX, Clock } from 'lucide-react';
 import { ChauffeurForm } from './ChauffeurForm';
+import { Card, CardContent } from '@/components/ui/card';
 
 const ChauffeurList = () => {
   const [data, setData] = useState<Chauffeur[]>([]);
@@ -34,34 +34,89 @@ const ChauffeurList = () => {
     }
   };
 
-  if (loading) {
+  const stats = useMemo(() => {
+    const total = data.length;
+    const available = data.filter((c) => c.status === ChauffeurStatus.AVAILABLE).length;
+    const busy = data.filter((c) => c.status === ChauffeurStatus.BUSY).length;
+    const offDuty = data.filter((c) => c.status === ChauffeurStatus.OFF_DUTY).length;
+
+    return [
+      {
+        title: 'Total Chauffeurs',
+        value: total,
+        icon: Users,
+        description: 'Registered drivers',
+        color: 'text-blue-600',
+        bg: 'bg-blue-50',
+      },
+      {
+        title: 'Available Now',
+        value: available,
+        icon: UserCheck,
+        description: 'Ready for booking',
+        color: 'text-green-600',
+        bg: 'bg-green-50',
+      },
+      {
+        title: 'Currently Busy',
+        value: busy,
+        icon: Clock,
+        description: 'On active trips',
+        color: 'text-amber-600',
+        bg: 'bg-amber-50',
+      },
+      {
+        title: 'Off Duty',
+        value: offDuty,
+        icon: UserX,
+        description: 'Not working today',
+        color: 'text-red-600',
+        bg: 'bg-red-50',
+      },
+    ];
+  }, [data]);
+
+  if (loading && data.length === 0) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center bg-gray-50">
+      <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center bg-gray-50/50">
         <Spinner className="text-primary h-8 w-8" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col space-y-8 p-8">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Chauffeurs</h2>
-          <p className="text-muted-foreground mt-1">Manage your chauffeur fleet.</p>
-        </div>
-        <div>
-          <Button onClick={() => setOpenCreate(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Chauffeur
-          </Button>
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="p-1">
-          <DataTable columns={columns} data={data} searchKey="fullName" searchPlaceholder="Filter by name..." />
-        </div>
+    <div className="space-y-8">
+      {/* Stats Section */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, idx) => (
+          <Card key={idx} className="border bg-gray-50/50 shadow-none">
+            <CardContent className="flex flex-col items-center justify-center text-center">
+              <div className="flex items-center gap-2">
+                <stat.icon
+                  className={`h-5 w-5 ${stat.color.replace('text-', 'fill-').includes('amber') || stat.color.includes('blue') ? stat.color : 'text-gray-400'}`}
+                />
+                <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
+              </div>
+              <span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+                {stat.title}
+              </span>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Dialog for Create will go here */}
+      <DataTable
+        columns={columns}
+        data={data}
+        searchKey="fullName"
+        searchPlaceholder="Search chauffeurs by name or email..."
+        showAddButton={true}
+        addButtonText="Add New Chauffeur"
+        addButtonIcon={<Plus className="h-4 w-4" />}
+        addButtonOnClick={() => setOpenCreate(true)}
+        tableContainerClassName='!h-[calc(100vh-22.5rem)]'
+      />
+
       <ChauffeurForm open={openCreate} onOpenChange={setOpenCreate} onSuccess={fetchChauffeurs} />
     </div>
   );

@@ -10,6 +10,7 @@ import Documents from '@/pages/Documents';
 import Units from '@/pages/Units';
 import Clients from '@/pages/Clients';
 import ChauffeurList from '@/pages/Chauffeurs/ChauffeurList';
+import ChauffeurDetails from '@/pages/Chauffeurs/ChauffeurDetails';
 
 // ... (existing imports, but I need to be careful not to replace too much context)
 // Actually I'll target the import and the route separately.
@@ -79,7 +80,16 @@ export const router = createBrowserRouter([
       },
       {
         path: 'drivers',
-        element: <ChauffeurList />,
+        children: [
+          {
+            index: true,
+            element: <ChauffeurList />,
+          },
+          {
+            path: ':id',
+            element: <ChauffeurDetails />,
+          },
+        ],
       },
       {
         path: 'financials',

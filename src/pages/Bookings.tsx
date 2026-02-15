@@ -95,6 +95,7 @@ const Bookings = () => {
           sorting={sorting}
           onSortingChange={handleSortingChange}
           onSearchChange={handleSearchChange}
+          tableContainerClassName="!h-[calc(100vh-15rem)]"
         />
       </div>
     </div>

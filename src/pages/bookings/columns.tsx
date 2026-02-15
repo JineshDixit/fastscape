@@ -178,7 +178,7 @@ export const columns: ColumnDef<Booking>[] = [
               <MoreHorizontal className="h-4 w-4 text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[160px]">
+          <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuLabel className="text-muted-foreground text-xs">Booking Actions</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(booking.id)}

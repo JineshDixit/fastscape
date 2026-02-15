@@ -24,6 +24,10 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  showAddButton?: boolean;
+  addButtonText?: string;
+  addButtonIcon?: React.ReactNode;
+  addButtonOnClick?: () => void;
   // Server-side props
   pageCount?: number;
   pageIndex?: number;
@@ -34,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   onSortingChange?: (sorting: SortingState) => void;
   onSearchChange?: (value: string) => void;
   totalRows?: number;
+  tableContainerClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -41,6 +46,10 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = 'Filter...',
+  showAddButton,
+  addButtonText,
+  addButtonIcon,
+  addButtonOnClick,
   pageCount,
   pageIndex,
   pageSize,
@@ -50,6 +59,7 @@ export function DataTable<TData, TValue>({
   onSortingChange,
   onSearchChange,
   totalRows,
+  tableContainerClassName,
 }: DataTableProps<TData, TValue>) {
   const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -86,12 +96,14 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination: isServerSide
+      ...(isServerSide
         ? {
-            pageIndex: pageIndex ?? 0,
-            pageSize: pageSize ?? 10,
+            pagination: {
+              pageIndex: pageIndex ?? 0,
+              pageSize: pageSize ?? 10,
+            },
           }
-        : undefined,
+        : {}),
     },
   });
 
@@ -111,26 +123,32 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-between gap-2">
           {onSearchChange ? (
             <Input
               placeholder={searchPlaceholder}
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
-              className="h-9 w-[200px] bg-white lg:w-[300px]"
+              className="h-9 w-50 bg-white lg:w-75"
             />
           ) : searchKey ? (
             <Input
               placeholder={searchPlaceholder}
               value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
               onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
-              className="h-9 w-[200px] bg-white lg:w-[300px]"
+              className="h-9 w-50 bg-white lg:w-75"
             />
           ) : null}
+          {showAddButton && (
+            <Button onClick={addButtonOnClick} className="gap-2">
+              {addButtonIcon}
+              {addButtonText}
+            </Button>
+          )}
         </div>
       </div>
 
-      <Table>
+      <Table tableContainerClassName={tableContainerClassName}>
         <TableHeader className="sticky top-0 bg-gray-50">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="border-gray-200 hover:bg-transparent">
@@ -189,7 +207,7 @@ export function DataTable<TData, TValue>({
           <div className="flex items-center space-x-2">
             <p className="text-sm font-medium">Rows per page</p>
             <Select
-              value={`${isServerSide ? pageSize : table.getState().pagination.pageSize}`}
+              value={`${isServerSide ? pageSize : table.getState().pagination?.pageSize || 10}`}
               onValueChange={(value) => {
                 if (isServerSide && onPageSizeChange) {
                   onPageSizeChange(Number(value));
@@ -198,8 +216,8 @@ export function DataTable<TData, TValue>({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px] bg-white">
-                <SelectValue placeholder={isServerSide ? pageSize : table.getState().pagination.pageSize} />
+              <SelectTrigger className="h-8 w-17.5 bg-white">
+                <SelectValue placeholder={isServerSide ? pageSize : table.getState().pagination?.pageSize || 10} />
               </SelectTrigger>
               <SelectContent side="top" className="bg-white">
                 {[5, 10, 20, 30, 40, 50].map((pageSizeOption) => (
@@ -210,9 +228,9 @@ export function DataTable<TData, TValue>({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {isServerSide ? (pageIndex ?? 0) + 1 : table.getState().pagination.pageIndex + 1} of{' '}
-            {isServerSide ? pageCount : table.getPageCount()}
+          <div className="flex w-25 items-center justify-center text-sm font-medium">
+            Page {isServerSide ? (pageIndex ?? 0) + 1 : (table.getState().pagination?.pageIndex ?? 0) + 1} of{' '}
+            {isServerSide ? pageCount : (table.getPageCount?.() ?? 1)}
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -225,7 +243,7 @@ export function DataTable<TData, TValue>({
                   table.previousPage();
                 }
               }}
-              disabled={isServerSide ? (pageIndex ?? 0) === 0 : !table.getCanPreviousPage()}
+              disabled={isServerSide ? (pageIndex ?? 0) === 0 : !(table.getCanPreviousPage?.() ?? true)}
             >
               <span className="sr-only">Go to previous page</span>
               <ChevronLeft className="h-4 w-4" />
@@ -240,7 +258,7 @@ export function DataTable<TData, TValue>({
                   table.nextPage();
                 }
               }}
-              disabled={isServerSide ? (pageIndex ?? 0) >= (pageCount ?? 0) - 1 : !table.getCanNextPage()}
+              disabled={isServerSide ? (pageIndex ?? 0) >= (pageCount ?? 0) - 1 : !(table.getCanNextPage?.() ?? true)}
             >
               <span className="sr-only">Go to next page</span>
               <ChevronRight className="h-4 w-4" />

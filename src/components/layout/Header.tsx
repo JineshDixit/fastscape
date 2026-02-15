@@ -2,14 +2,17 @@ import { Bell, Settings, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useSidebar } from '@/context/sidebarContext';
 import { useAuthContext } from '@/context/authContext';
+import { useNavigate } from 'react-router-dom';
 import type { FC } from 'react';
 import type { HeaderProps } from '@/common/interface/headerInterface';
 
-const Header: FC<HeaderProps> = ({ title }) => {
+const Header: FC<HeaderProps> = ({ breadcrumbs }) => {
   const { toggleSidebar } = useSidebar();
   const { user } = useAuthContext();
+  const navigate = useNavigate();
 
   const fullName = user?.fullName || 'Guest User';
   const initials = user?.firstName && user?.lastName ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : 'GU';
@@ -23,7 +26,38 @@ const Header: FC<HeaderProps> = ({ title }) => {
             <PanelLeft className="text-foreground h-5! w-5!" />
           </Button>
           <Separator orientation="vertical" className="bg-foreground/20 h-4.5! w-[1.5px]! rounded-full"></Separator>
-          <h1 className="text-foreground pb-0.5 text-xl font-semibold">{title}</h1>
+          <div className="flex flex-col gap-1">
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <Breadcrumb>
+                <BreadcrumbList className="items-center">
+                  {breadcrumbs.map((item, index) => (
+                    <div key={index} className="flex items-center">
+                      <BreadcrumbItem>
+                        {index === breadcrumbs.length - 1 ? (
+                          <BreadcrumbPage className="text-foreground pb-0.5 text-xl font-semibold">{item.label}</BreadcrumbPage>
+                        ) : (
+                          <BreadcrumbLink 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (item.href) {
+                                navigate(item.href);
+                              }
+                            }}
+                          >
+                            {item.label}
+                          </BreadcrumbLink>
+                        )}
+                      </BreadcrumbItem>
+                      {index < breadcrumbs.length - 1 && (
+                        <BreadcrumbSeparator />
+                      )}
+                    </div>
+                  ))}
+                </BreadcrumbList>
+              </Breadcrumb>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

@@ -2,22 +2,13 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { SidebarProvider, useSidebar } from '@/context/sidebarContext';
-
-// Page titles mapping
-const pageTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/bookings': 'Bookings',
-  '/units': 'Units',
-  '/clients': 'Clients',
-  '/drivers': 'Drivers',
-  '/financials': 'Financials',
-};
+import { generateBreadcrumbs } from '@/utils/breadcrumb.utils';
 
 const LayoutInner = () => {
   const location = useLocation();
   const { isMobile, isOpen, closeSidebar } = useSidebar();
 
-  const currentTitle = pageTitles[location.pathname] || 'Dashboard';
+  const breadcrumbs = generateBreadcrumbs(location.pathname);
 
   return (
     <div className="bg-background flex h-full w-full overflow-hidden">
@@ -31,7 +22,7 @@ const LayoutInner = () => {
       <Sidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header title={currentTitle} />
+        <Header breadcrumbs={breadcrumbs} />
 
         <main className="flex-1 overflow-y-auto p-6 transition-all duration-300 ease-in-out">
           <Outlet />

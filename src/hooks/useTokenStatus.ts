@@ -47,10 +47,8 @@ export const useTokenStatus = (refreshInterval: number = 30000) => {
       shouldLogout,
     });
 
-    if (shouldLogout) {
-      console.log('Refresh token expired - triggering logout from useTokenStatus');
-      authService.clearTokens();
-    }
+    // Don't handle logout here - let authService handle it centrally
+    // This prevents race conditions with multiple logout mechanisms
   };
 
   useEffect(() => {

@@ -130,7 +130,7 @@ export const authCookies = {
   setAccessToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
     const isDevelopment = window.location.protocol === 'http:';
-    
+
     setCookie(COOKIE_NAMES.ACCESS_TOKEN, token, {
       expires: expiresDate,
       secure: !isDevelopment, // Only secure in production (HTTPS)
@@ -141,13 +141,18 @@ export const authCookies = {
       secure: !isDevelopment,
       sameSite: isDevelopment ? 'lax' : 'strict',
     });
+
+    // Trigger storage event for other tabs to notice the update
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_sync_timestamp', Date.now().toString());
+    }
   },
 
   // Set refresh token with expiration
   setRefreshToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
     const isDevelopment = window.location.protocol === 'http:';
-    
+
     setCookie(COOKIE_NAMES.REFRESH_TOKEN, token, {
       expires: expiresDate,
       secure: !isDevelopment, // Only secure in production (HTTPS)
@@ -158,12 +163,17 @@ export const authCookies = {
       secure: !isDevelopment,
       sameSite: isDevelopment ? 'lax' : 'strict',
     });
+
+    // Trigger storage event for other tabs to notice the update
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_sync_timestamp', Date.now().toString());
+    }
   },
 
   // Set remember me
   setRememberMe: (remember: boolean) => {
     const isDevelopment = window.location.protocol === 'http:';
-    
+
     if (remember) {
       setCookie(COOKIE_NAMES.REMEMBER_ME, 'true', {
         expires: 30, // 30 days
@@ -187,6 +197,11 @@ export const authCookies = {
     Object.values(COOKIE_NAMES).forEach((cookieName) => {
       deleteCookie(cookieName);
     });
+    // Trigger storage event for other tabs to notice logout
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_sync_timestamp');
+      localStorage.setItem('auth_logout_timestamp', Date.now().toString());
+    }
   },
 
   // Check if user is authenticated (simple check)

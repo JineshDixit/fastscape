@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { authService } from '@/api/services/auth';
-import { authCookies, COOKIE_NAMES } from '@/utils/cookies';
+import { authCookies } from '@/utils/cookies';
 import type { User, LoginResponse } from '@/common/interface/authInterface';
 
 interface AuthContextType {
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       // Try to get a valid access token (this will handle refresh automatically)
       const validToken = await authService.getValidAccessToken();
-      
+
       if (!validToken) {
         // No valid token could be obtained (refresh token expired)
         setIsAuthenticated(false);
@@ -134,11 +134,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     initAuth();
 
-    // Listen for storage events (e.g. logout from another tab)
+    // Listen for storage events (e.g. logout or token refresh from another tab)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === COOKIE_NAMES.ACCESS_TOKEN && !e.newValue) {
+      if (e.key === 'auth_logout_timestamp') {
+        if (import.meta.env.DEV) console.log('🚪 Logout detected from another tab');
         setIsAuthenticated(false);
         setUser(null);
+        // Ensure tokens are cleared locally too
+        authService.clearTokens();
+      } else if (e.key === 'auth_sync_timestamp') {
+        if (import.meta.env.DEV) console.log('🔄 Token update detected from another tab, syncing profile...');
+        refreshProfile();
       }
     };
     window.addEventListener('storage', handleStorageChange);
