@@ -5,18 +5,11 @@ import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTES } from '../../utils/database.utils';
 import { dbEnums } from '../../common/enum/dbEnums';
+import { releaseChauffeurOnBookingEnd } from './chauffeurAssignment.service';
 import Logger from '../../utils/logger';
 
 // Chauffeur attributes for booking responses
-const CHAUFFEUR_ATTRIBUTES = [
-  'id',
-  'fullName',
-  'phone',
-  'rating',
-  'totalTrips',
-  'experienceLevel',
-  'languages',
-];
+const CHAUFFEUR_ATTRIBUTES = ['id', 'fullName', 'phone', 'rating', 'totalTrips', 'experienceLevel', 'languages'];
 
 // Booking status state machine using enum values
 const BOOKING_STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -60,7 +53,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
 
   try {
     const now = new Date();
-    
+
     // First, clean up expired bookings for this vehicle to prevent false conflicts
     await Booking.update(
       { bookingStatus: dbEnums.BOOKING_STATUS[4] }, // 'CANCELLED'
@@ -71,7 +64,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
           expiresAt: { [Op.lt]: now },
         },
         transaction,
-      }
+      },
     );
 
     // Check if vehicle exists and is available with a lock
@@ -158,21 +151,23 @@ export const getUserBookings = async (userId: string): Promise<Booking[]> => {
   }
 
   return await Booking.findAll({
-      where: { userId },
-      attributes: BOOKING_ATTRIBUTES,
-      include: [
-        {
-          model: Vehicle,
-          attributes: VEHICLE_LIST_ATTRIBUTES,
-        },
-        {
-          model: Chauffeur,
-          attributes: CHAUFFEUR_ATTRIBUTES,
-          required: false,
-        },
-      ],
-      order: [['createdAt', 'DESC']],
-    });
+    where: { userId },
+    attributes: BOOKING_ATTRIBUTES,
+    include: [
+      {
+        model: Vehicle,
+        as: 'vehicle',
+        attributes: VEHICLE_LIST_ATTRIBUTES,
+      },
+      {
+        model: Chauffeur,
+        as: 'chauffeur',
+        attributes: CHAUFFEUR_ATTRIBUTES,
+        required: false,
+      },
+    ],
+    order: [['createdAt', 'DESC']],
+  });
 };
 
 /**
@@ -204,10 +199,12 @@ export const getUpcomingBookings = async (userId: string): Promise<Booking[]> =>
     include: [
       {
         model: Vehicle,
+        as: 'vehicle',
         attributes: VEHICLE_LIST_ATTRIBUTES,
       },
       {
         model: Chauffeur,
+        as: 'chauffeur',
         attributes: CHAUFFEUR_ATTRIBUTES,
         required: false,
       },
@@ -246,10 +243,12 @@ export const getActiveBookings = async (userId: string): Promise<Booking[]> => {
     include: [
       {
         model: Vehicle,
+        as: 'vehicle',
         attributes: VEHICLE_LIST_ATTRIBUTES,
       },
       {
         model: Chauffeur,
+        as: 'chauffeur',
         attributes: CHAUFFEUR_ATTRIBUTES,
         required: false,
       },
@@ -271,20 +270,18 @@ export const getBookingStats = async (userId: string): Promise<any> => {
     attributes: ['bookingStatus'],
   });
 
-  const stats = {
+  return {
     total: bookings.length,
     pending: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[0]).length,
     confirmed: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[1]).length,
     active: bookings.filter(
-      (b) => b.bookingStatus === dbEnums.BOOKING_STATUS[2] || b.bookingStatus === dbEnums.BOOKING_STATUS[1]
+      (b) => b.bookingStatus === dbEnums.BOOKING_STATUS[2] || b.bookingStatus === dbEnums.BOOKING_STATUS[1],
     ).length,
     completed: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[5]).length,
     cancelled: bookings.filter((b) => b.bookingStatus === dbEnums.BOOKING_STATUS[4]).length,
     totalSpent: 0, // TODO: Calculate from payments
     averageRating: 0, // TODO: Calculate from reviews
   };
-
-  return stats;
 };
 
 /**
@@ -297,7 +294,7 @@ export const getBookingHistory = async (
     month?: number;
     status?: string;
     vehicleType?: string;
-  }
+  },
 ): Promise<Booking[]> => {
   if (!userId) {
     throw createError('User ID is required', 400);
@@ -340,6 +337,7 @@ export const getBookingHistory = async (
   const includeOptions: any = [
     {
       model: Vehicle,
+      as: 'vehicle',
       attributes: VEHICLE_LIST_ATTRIBUTES,
     },
   ];
@@ -355,6 +353,7 @@ export const getBookingHistory = async (
     include: includeOptions.concat([
       {
         model: Chauffeur,
+        as: 'chauffeur',
         attributes: CHAUFFEUR_ATTRIBUTES,
         required: false,
       },
@@ -377,10 +376,12 @@ export const getBookingById = async (bookingId: string, userId: string): Promise
     include: [
       {
         model: Vehicle,
+        as: 'vehicle',
         attributes: [...VEHICLE_LIST_ATTRIBUTES, 'exteriorColor'],
       },
       {
         model: Chauffeur,
+        as: 'chauffeur',
         attributes: CHAUFFEUR_ATTRIBUTES,
         required: false,
       },
@@ -415,18 +416,18 @@ export const updateBooking = async (
   }
 
   // Check if booking can be updated
-  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[4] || booking.bookingStatus === dbEnums.BOOKING_STATUS[5]) { // 'CANCELLED' or 'COMPLETED'
+  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[4] || booking.bookingStatus === dbEnums.BOOKING_STATUS[5]) {
+    // 'CANCELLED' or 'COMPLETED'
     throw createError('Cannot update cancelled or completed booking', 400);
   }
 
   // Validate status transition if bookingStatus is being updated
-  if (updateData.bookingStatus && updateData.bookingStatus !== booking.bookingStatus) {
-    if (!validateStatusTransition(booking.bookingStatus, updateData.bookingStatus)) {
-      throw createError(
-        `Invalid status transition from ${booking.bookingStatus} to ${updateData.bookingStatus}`,
-        400
-      );
-    }
+  if (
+    updateData.bookingStatus &&
+    updateData.bookingStatus !== booking.bookingStatus &&
+    !validateStatusTransition(booking.bookingStatus, updateData.bookingStatus)
+  ) {
+    throw createError(`Invalid status transition from ${booking.bookingStatus} to ${updateData.bookingStatus}`, 400);
   }
 
   // Validate and normalize dates if provided
@@ -464,15 +465,24 @@ export const cancelBooking = async (bookingId: string, userId: string): Promise<
   }
 
   // Check if booking can be cancelled
-  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[4]) { // 'CANCELLED'
+  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[4]) {
+    // 'CANCELLED'
     throw createError('Booking is already cancelled', 400);
   }
 
-  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[5]) { // 'COMPLETED'
+  if (booking.bookingStatus === dbEnums.BOOKING_STATUS[5]) {
+    // 'COMPLETED'
     throw createError('Cannot cancel completed booking', 400);
   }
 
   // Update booking status
   await booking.update({ bookingStatus: dbEnums.BOOKING_STATUS[4] }); // 'CANCELLED'
+
+  // Release chauffeur if this was a chauffeur booking
+  if (booking.bookingType === dbEnums.BOOKING_TYPE[1]) {
+    // 'CHAUFFEUR'
+    await releaseChauffeurOnBookingEnd(bookingId);
+  }
+
   Logger.info('Booking cancelled', { bookingId, userId });
 };

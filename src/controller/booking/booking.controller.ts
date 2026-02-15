@@ -12,13 +12,16 @@ class BookingController extends BaseController {
   createBooking = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
     const bookingData = { ...req.body, userId };
-    
-    Logger.info('Creating booking', { userId, bookingData });
-    
+
+    Logger.info(`Creating ${bookingData.bookingType || 'UNKNOWN'} booking`, { userId, bookingData });
+
     const booking = await bookingService.createBooking(bookingData);
-    
-    Logger.info('Booking created successfully', { bookingId: booking.id, userId });
-    
+
+    Logger.info(`Booking created successfully: ${booking.id} (${booking.bookingType})`, {
+      bookingId: booking.id,
+      userId,
+    });
+
     sendCreated(res, 'Booking created successfully', booking);
   });
 
@@ -108,14 +111,14 @@ class BookingController extends BaseController {
 
 const bookingController = new BookingController();
 
-export const { 
-  createBooking, 
-  getUserBookings, 
+export const {
+  createBooking,
+  getUserBookings,
   getUpcomingBookings,
   getActiveBookings,
   getBookingStats,
   getBookingHistory,
-  getBookingById, 
-  updateBooking, 
-  cancelBooking 
+  getBookingById,
+  updateBooking,
+  cancelBooking,
 } = bookingController;

@@ -5,6 +5,7 @@ import vehicleRoutes from './vehicle.routes';
 import bookingRoutes from './booking.routes';
 import paymentRoutes from './payment.routes';
 import chauffeurRoutes from './chauffeur.routes';
+import chauffeurAssignmentRoutes from './chauffeurAssignment.routes';
 import locationRoutes from './location.routes';
 import { generalLimiter } from '../services/middleware/rateLimiter';
 
@@ -20,6 +21,7 @@ router.use('/vehicles', vehicleRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/chauffeurs', chauffeurRoutes);
+router.use('/chauffeur-assignment', chauffeurAssignmentRoutes);
 router.use('/locations', locationRoutes);
 
 // Health check endpoint

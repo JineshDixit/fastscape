@@ -5,6 +5,67 @@ import { Op, Sequelize } from 'sequelize';
 import { normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions } from '../../utils/database.utils';
 
+interface MostPopularCar extends Vehicle {
+  media: VehicleMedia[];
+  bookingCount: number;
+}
+
+/**
+ * Get most popular car (most booked vehicle)
+ */
+export const getMostPopularCar = async (): Promise<MostPopularCar> => {
+  // Find vehicle with most bookings
+  const bookingStats = await Booking.findAll({
+    attributes: [
+      ['vehicle_id', 'vehicleId'],
+      [Sequelize.fn('COUNT', Sequelize.col('vehicle_id')), 'bookingCount']
+    ],
+    group: ['vehicle_id'],
+    order: [[Sequelize.literal('"bookingCount"'), 'DESC']],
+    limit: 1,
+    raw: true
+  });
+
+  if (!bookingStats || bookingStats.length === 0) {
+    // If no bookings found, return most recently added available vehicle
+    const fallbackVehicle = await Vehicle.findOne({
+      where: { isAvailable: true },
+      include: [
+        {
+          model: VehicleMedia,
+          as: 'media',
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!fallbackVehicle) {
+      throw createError('No vehicles available', 404);
+    }
+
+    return { ...fallbackVehicle.toJSON(), bookingCount: 0 } as MostPopularCar;
+  }
+
+  const mostBookedVehicleId = (bookingStats[0] as any).vehicleId;
+  const bookingCount = parseInt((bookingStats[0] as any).bookingCount);
+
+  // Get full vehicle details with media
+  const vehicle = await Vehicle.findByPk(mostBookedVehicleId, {
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+  });
+
+  if (!vehicle) {
+    throw createError('Most popular vehicle not found', 404);
+  }
+
+  return { ...vehicle.toJSON(), bookingCount } as MostPopularCar;
+};
+
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
     include: [

@@ -98,6 +98,14 @@ class VehicleController extends BaseController {
   });
 
   /**
+   * Get most popular car (most booked vehicle)
+   */
+  getMostPopularCar = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await vehicleService.getMostPopularCar();
+    sendSuccess(res, 'Most popular car retrieved successfully', result);
+  });
+
+  /**
    * Check if a specific vehicle is available for a date range
    */
   checkVehicleAvailability = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -123,5 +131,6 @@ export const {
   getVehicleBodyTypeSummary,
   getVehicleFilterMetadata,
   getAvailableVehicles,
+  getMostPopularCar,
   checkVehicleAvailability,
 } = vehicleController;

@@ -7,6 +7,7 @@ export interface ChauffeurAvailabilityQuery {
   maxHourlyRate?: number;
   languages?: string[];
   experienceLevel?: string;
+  isVerified?: boolean;
 }
 
 export interface CreateChauffeurData {

@@ -14,6 +14,8 @@ router.get('/filters/metadata', vehicleController.getVehicleFilterMetadata);
 
 router.get('/available', vehicleController.getAvailableVehicles);
 
+router.get('/most-popular', vehicleController.getMostPopularCar);
+
 router.get(
   '/:id/availability',
   vehicleIdValidation,

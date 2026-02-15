@@ -4,6 +4,7 @@ import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions } from '../../utils/database.utils';
 import { stripe } from './stripe.service';
+import { triggerChauffeurAssignmentOnPayment } from '../booking/chauffeurAssignment.service';
 import { Op } from 'sequelize';
 import { dbEnums } from '../../common/enum/dbEnums';
 import Logger from '../../utils/logger';
@@ -24,20 +25,19 @@ const GATEWAY_FEE_FIXED = 0.3; // Stripe example 30 cents
 /**
  * Calculate payment breakdown for a booking
  */
-export const calculatePaymentBreakdown = async (
-  bookingId: string,
-  delayHours: number = 0,
-): Promise<any> => {
+export const calculatePaymentBreakdown = async (bookingId: string, delayHours: number = 0): Promise<any> => {
   Logger.info('Starting payment breakdown calculation', { bookingId, delayHours });
 
   const booking = await Booking.findByPk(bookingId, {
     include: [
       {
         model: Vehicle,
+        as: 'vehicle',
         attributes: ['pricePerDay', 'delayChargePerHour', 'depositPercentage', 'currency'],
       },
       {
         model: BookingFinancial,
+        as: 'financial',
         attributes: ['baseAmount', 'depositPercentage', 'taxAmount'],
       },
     ],
@@ -48,8 +48,8 @@ export const calculatePaymentBreakdown = async (
     throw createError('Booking not found', 404);
   }
 
-  const vehicle = (booking as any).Vehicle;
-  const existingFinancial = (booking as any).BookingFinancial;
+  const { vehicle } = booking as any;
+  const existingFinancial = (booking as any).financial;
 
   Logger.info('Booking and vehicle data retrieved', {
     bookingId,
@@ -163,7 +163,12 @@ export const processDepositPayment = async (
     };
 
     // Check if booking has expired
-    if (booking.bookingStatus === dbEnums.BOOKING_STATUS[0] && booking.expiresAt && new Date() > new Date(booking.expiresAt)) { // 'PENDING'
+    if (
+      booking.bookingStatus === dbEnums.BOOKING_STATUS[0] &&
+      booking.expiresAt &&
+      new Date() > new Date(booking.expiresAt)
+    ) {
+      // 'PENDING'
       Logger.warn('Processing payment for expired booking - re-checking availability', { bookingId });
 
       // Re-check availability
@@ -197,16 +202,16 @@ export const processDepositPayment = async (
     const effectiveIntentId = stripeData?.paymentIntentId || stripePaymentIntentId;
     if (effectiveIntentId) {
       const existingPayment = await Payment.findOne({
-        where: { 
-          stripePaymentIntentId: effectiveIntentId, 
-          paymentType: { [Op.in]: [dbEnums.PAYMENT_TYPE[0], dbEnums.PAYMENT_TYPE[4]] } // 'DEPOSIT' and 'FULL'
+        where: {
+          stripePaymentIntentId: effectiveIntentId,
+          paymentType: { [Op.in]: [dbEnums.PAYMENT_TYPE[0], dbEnums.PAYMENT_TYPE[4]] }, // 'DEPOSIT' and 'FULL'
         },
         transaction,
       });
       if (existingPayment) {
-        Logger.info('Duplicate payment attempt detected - returning existing payment', { 
-          intentId: effectiveIntentId, 
-          existingPaymentId: existingPayment.id 
+        Logger.info('Duplicate payment attempt detected - returning existing payment', {
+          intentId: effectiveIntentId,
+          existingPaymentId: existingPayment.id,
         });
         await transaction.rollback();
         return { payment: existingPayment, financial };
@@ -304,7 +309,8 @@ export const processDepositPayment = async (
       };
 
       // Confirm booking if it was PENDING
-      if (booking.bookingStatus === dbEnums.BOOKING_STATUS[0]) { // 'PENDING'
+      if (booking.bookingStatus === dbEnums.BOOKING_STATUS[0]) {
+        // 'PENDING'
         bookingUpdates.bookingStatus = dbEnums.BOOKING_STATUS[1]; // 'CONFIRMED'
         bookingUpdates.expiresAt = null;
       }
@@ -317,6 +323,29 @@ export const processDepositPayment = async (
     }
 
     await transaction.commit();
+
+    // Trigger chauffeur assignment for CHAUFFEUR bookings AFTER commit to avoid race conditions
+    if (paymentMethod === 'ONLINE' && booking.bookingType === dbEnums.BOOKING_TYPE[1]) {
+      // 'CHAUFFEUR'
+      // Re-fetch or check state to see if assignment is needed
+      const isInitialConfirmation =
+        oldBookingState.bookingStatus === dbEnums.BOOKING_STATUS[0] &&
+        booking.bookingStatus === dbEnums.BOOKING_STATUS[1];
+
+      // Small delta for float comparison (same as in logic above)
+      const isFullyPaid = Number(financial.paidAmount) >= calculation.totalAmount - 0.01;
+
+      if (isFullyPaid || isInitialConfirmation) {
+        // Don't wait for assignment to complete - trigger asynchronously
+        triggerChauffeurAssignmentOnPayment(
+          bookingId,
+          paymentTypeEnum === dbEnums.PAYMENT_TYPE[4] ? 'FULL' : 'DEPOSIT',
+        ).catch((error) => {
+          Logger.error('Async chauffeur assignment failed after transaction commit', { bookingId, error });
+        });
+      }
+    }
+
     return { payment, financial };
   } catch (error) {
     await transaction.rollback();
@@ -354,16 +383,16 @@ export const processBalancePayment = async (
     const effectiveIntentId = stripeData?.paymentIntentId || stripePaymentIntentId;
     if (effectiveIntentId) {
       const existingPayment = await Payment.findOne({
-        where: { 
-          stripePaymentIntentId: effectiveIntentId, 
-          paymentType: dbEnums.PAYMENT_TYPE[1] // 'BALANCE'
+        where: {
+          stripePaymentIntentId: effectiveIntentId,
+          paymentType: dbEnums.PAYMENT_TYPE[1], // 'BALANCE'
         },
         transaction,
       });
       if (existingPayment) {
-        Logger.info('Duplicate balance payment attempt detected - returning existing payment', { 
-          intentId: effectiveIntentId, 
-          existingPaymentId: existingPayment.id 
+        Logger.info('Duplicate balance payment attempt detected - returning existing payment', {
+          intentId: effectiveIntentId,
+          existingPaymentId: existingPayment.id,
         });
         await transaction.rollback();
         return { payment: existingPayment, financial };
@@ -425,12 +454,23 @@ export const processBalancePayment = async (
         },
         { transaction },
       );
+
       Logger.info('Balance payment processed successfully', { bookingId, amount: balanceAmount });
     } else {
       Logger.info('Balance payment initiated (manual)', { bookingId, method: paymentMethod });
     }
 
     await transaction.commit();
+
+    // Trigger chauffeur assignment for CHAUFFEUR bookings AFTER commit to avoid race conditions
+    if (paymentMethod === 'ONLINE' && booking.bookingType === dbEnums.BOOKING_TYPE[1]) {
+      // 'CHAUFFEUR'
+      // Don't wait for assignment to complete - trigger asynchronously
+      triggerChauffeurAssignmentOnPayment(bookingId, 'BALANCE').catch((error) => {
+        Logger.error('Async chauffeur assignment failed after transaction commit (balance)', { bookingId, error });
+      });
+    }
+
     return { payment, financial };
   } catch (error) {
     await transaction.rollback();
@@ -447,7 +487,7 @@ export const calculateDelayCharges = async (
   actualDropoffTime: Date,
 ): Promise<DelayChargeCalculation> => {
   const booking = await Booking.findByPk(bookingId, {
-    include: [{ model: Vehicle, attributes: ['delayChargePerHour'] }],
+    include: [{ model: Vehicle, as: 'vehicle', attributes: ['delayChargePerHour'] }],
   });
 
   if (!booking) {
@@ -461,7 +501,7 @@ export const calculateDelayCharges = async (
   const delayMilliseconds = actualDropoff.getTime() - scheduledDropoff.getTime();
   const delayHours = Math.max(0, Math.ceil(delayMilliseconds / (1000 * 60 * 60)));
 
-  const delayChargeRate = (booking as any).Vehicle.delayChargePerHour;
+  const delayChargeRate = (booking as any).vehicle.delayChargePerHour;
   const delayChargeAmount = delayHours * delayChargeRate;
 
   return {
@@ -565,13 +605,16 @@ export const getPaymentSummary = async (bookingId: string) => {
     include: [
       {
         model: BookingFinancial,
+        as: 'financial',
       },
       {
         model: Payment,
+        as: 'payments',
         order: [['createdAt', 'ASC']],
       },
       {
         model: Vehicle,
+        as: 'vehicle',
         attributes: ['make', 'model', 'year', 'pricePerDay', 'delayChargePerHour'],
       },
     ],
@@ -581,8 +624,18 @@ export const getPaymentSummary = async (bookingId: string) => {
     throw createError('Booking not found', 404);
   }
 
-  const payments = (booking as any).Payments || [];
-  const financial = (booking as any).BookingFinancial;
+  const payments = (booking as any).payments || [];
+  const { financial } = booking as any;
+
+  // Calculate total paid amount from successful payments
+  const totalPaid = payments
+    .filter((payment: any) => payment.paymentStatus === 'PAID')
+    .reduce((sum: number, payment: any) => sum + parseFloat(payment.amount || 0), 0)
+    .toString();
+
+  // Calculate remaining balance
+  const totalAmount = financial ? parseFloat(financial.totalAmount || 0) : 0;
+  const remainingBalance = (totalAmount - parseFloat(totalPaid || 0)).toString();
 
   return {
     booking: {
@@ -619,7 +672,9 @@ export const getPaymentSummary = async (bookingId: string) => {
       paidAt: payment.paidAt,
       createdAt: payment.createdAt,
     })),
-    vehicle: (booking as any).Vehicle,
+    totalPaid,
+    remainingBalance,
+    vehicle: (booking as any).vehicle,
   };
 };
 
@@ -682,6 +737,20 @@ export const markPaymentCompleted = async (paymentId: string, stripePaymentInten
     }
 
     await transaction.commit();
+
+    // Trigger chauffeur assignment for CHAUFFEUR bookings AFTER commit to avoid race conditions
+    // This is useful for manual payment confirmations (pickup/dropoff payments)
+    const booking = await Booking.findByPk(payment.bookingId);
+    if (booking && booking.bookingType === dbEnums.BOOKING_TYPE[1]) {
+      // 'CHAUFFEUR'
+      triggerChauffeurAssignmentOnPayment(payment.bookingId, 'BALANCE').catch((error) => {
+        Logger.error('Async chauffeur assignment failed after manual payment confirmation commit', {
+          bookingId: payment.bookingId,
+          error,
+        });
+      });
+    }
+
     Logger.info('Payment marked as completed and booking status updated', {
       paymentId,
       amount: payment.amount,
@@ -713,6 +782,7 @@ export const getOverduePayments = async (): Promise<Payment[]> => {
     include: [
       {
         model: Booking,
+        as: 'booking',
         attributes: ['id', 'bookingStatus', 'endDatetime'],
       },
     ],
@@ -736,11 +806,11 @@ export const initiatePaymentIntent = async (
         : calculation.balanceAmount + calculation.delayChargeAmount;
 
   return await stripe.createPaymentIntent({
-      amount: Math.round(amount * 100), // Stripe expects cents
-      currency: calculation.currency.toLowerCase(),
-      metadata: {
-        bookingId,
-        paymentType,
-      },
-    });
+    amount: Math.round(amount * 100), // Stripe expects cents
+    currency: calculation.currency.toLowerCase(),
+    metadata: {
+      bookingId,
+      paymentType,
+    },
+  });
 };

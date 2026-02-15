@@ -73,7 +73,7 @@ export const getUserProfile = async (userId: string): Promise<any> => {
       },
       {
         model: UserIdentityDocument,
-        as: 'identityDocuments',
+        as: 'identityDocument',
         required: false,
       },
     ],
@@ -84,7 +84,7 @@ export const getUserProfile = async (userId: string): Promise<any> => {
   }
 
   const userJson = user.toJSON() as any;
-  
+
   // Flatten the structure for frontend compatibility
   if (userJson.drivingInfo) {
     userJson.licenseIssuingCountry = userJson.drivingInfo.licenseIssuingCountry;
@@ -93,19 +93,19 @@ export const getUserProfile = async (userId: string): Promise<any> => {
     userJson.visaStatus = userJson.drivingInfo.visaStatus;
   }
 
-  if (userJson.identityDocuments) {
-    userJson.driverLicenseFront = userJson.identityDocuments.driverLicenseFront;
-    userJson.driverLicenseBack = userJson.identityDocuments.driverLicenseBack;
-    userJson.passportPhoto = userJson.identityDocuments.passportPhoto;
-    userJson.internationalDrivingPermit = userJson.identityDocuments.internationalDrivingPermit;
-    userJson.selfieWithLicense = userJson.identityDocuments.selfieWithLicense;
-    userJson.documentVerificationStatus = userJson.identityDocuments.verificationStatus;
-    userJson.documentVerified = userJson.identityDocuments.verified;
+  if (userJson.identityDocument) {
+    userJson.driverLicenseFront = userJson.identityDocument.driverLicenseFront;
+    userJson.driverLicenseBack = userJson.identityDocument.driverLicenseBack;
+    userJson.passportPhoto = userJson.identityDocument.passportPhoto;
+    userJson.internationalDrivingPermit = userJson.identityDocument.internationalDrivingPermit;
+    userJson.selfieWithLicense = userJson.identityDocument.selfieWithLicense;
+    userJson.documentVerificationStatus = userJson.identityDocument.verificationStatus;
+    userJson.documentVerified = userJson.identityDocument.verified;
   }
 
   // Clean up nested objects
   delete userJson.drivingInfo;
-  delete userJson.identityDocuments;
+  delete userJson.identityDocument;
 
   return userJson;
 };

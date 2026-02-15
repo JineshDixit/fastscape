@@ -169,18 +169,36 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
     throw createError('Invalid or expired refresh token', 401);
   }
 
-  // Check if refresh token exists in database and is not revoked
+  // Check if refresh token exists in database
   const storedToken = await RefreshToken.findOne({
     where: {
       token,
       userId: decoded.userId,
-      isRevoked: false,
     },
   });
 
   if (!storedToken) {
-    Logger.warn('Token refresh failed: Token not found or revoked', { userId: decoded.userId });
-    throw createError('Refresh token not found or revoked', 401);
+    Logger.warn('Token refresh failed: Token not found', { userId: decoded.userId });
+    throw createError('Refresh token not found', 401);
+  }
+
+  // Check if token is revoked
+  if (storedToken.isRevoked) {
+    // Implement grace period: if revoked within the last 30 seconds, allow it
+    // This handles race conditions when multiple tabs refresh simultaneously
+    const GRACE_PERIOD_MS = 30 * 1000; // 30 seconds
+    const isWithinGracePeriod =
+      storedToken.rotatedAt && new Date().getTime() - new Date(storedToken.rotatedAt).getTime() < GRACE_PERIOD_MS;
+
+    if (!isWithinGracePeriod) {
+      Logger.warn('Token refresh failed: Token revoked and grace period expired', {
+        userId: decoded.userId,
+        rotatedAt: storedToken.rotatedAt,
+      });
+      throw createError('Refresh token revoked', 401);
+    }
+
+    Logger.info('Allowing refresh using recently rotated token (grace period)', { userId: decoded.userId });
   }
 
   // Check if token is expired
@@ -197,8 +215,11 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
     throw createError('User not found or blocked', 401);
   }
 
-  // Revoke old refresh token
-  await storedToken.update({ isRevoked: true });
+  // Revoke old refresh token and mark rotation time
+  await storedToken.update({
+    isRevoked: true,
+    rotatedAt: new Date(),
+  });
 
   // Generate new token pair
   const newTokenPair = generateTokenPair({

@@ -57,43 +57,43 @@ const initPostgres_DB = async (): Promise<void> => {
   initLocationModel(sequelize);
 
   //Associations
-  User.hasOne(UserIdentityDocument, { foreignKey: 'userId', as: 'identityDocuments' });
+  User.hasOne(UserIdentityDocument, { foreignKey: 'userId', as: 'identityDocument' });
   User.hasOne(UserDrivingInfo, { foreignKey: 'userId', as: 'drivingInfo' });
-  User.hasMany(Booking, { foreignKey: 'userId' });
-  User.hasMany(Payment, { foreignKey: 'userId' });
-  User.hasMany(RefreshToken, { foreignKey: 'userId' });
-  User.hasMany(ChauffeurReview, { foreignKey: 'userId' });
+  User.hasMany(Booking, { foreignKey: 'userId', as: 'bookings' });
+  User.hasMany(Payment, { foreignKey: 'userId', as: 'payments' });
+  User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' });
+  User.hasMany(ChauffeurReview, { foreignKey: 'userId', as: 'reviews' });
 
-  UserIdentityDocument.belongsTo(User, { foreignKey: 'userId' });
-  UserDrivingInfo.belongsTo(User, { foreignKey: 'userId' });
+  UserIdentityDocument.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  UserDrivingInfo.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
   Vehicle.hasMany(VehicleMedia, { foreignKey: 'vehicleId', as: 'media' });
-  Vehicle.hasMany(Booking, { foreignKey: 'vehicleId' });
+  Vehicle.hasMany(Booking, { foreignKey: 'vehicleId', as: 'bookings' });
   VehicleMedia.belongsTo(Vehicle, {
     foreignKey: 'vehicleId',
     as: 'vehicle',
   });
 
-  Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId' });
-  Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId' });
+  Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId', as: 'bookings' });
+  Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId', as: 'reviews' });
 
-  Booking.belongsTo(User, { foreignKey: 'userId' });
-  Booking.belongsTo(Vehicle, { foreignKey: 'vehicleId' });
-  Booking.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
-  Booking.hasOne(BookingFinancial, { foreignKey: 'bookingId' });
-  Booking.hasMany(Payment, { foreignKey: 'bookingId' });
-  Booking.hasOne(ChauffeurReview, { foreignKey: 'bookingId' });
+  Booking.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  Booking.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' });
+  Booking.belongsTo(Chauffeur, { foreignKey: 'chauffeurId', as: 'chauffeur' });
+  Booking.hasOne(BookingFinancial, { foreignKey: 'bookingId', as: 'financial' });
+  Booking.hasMany(Payment, { foreignKey: 'bookingId', as: 'payments' });
+  Booking.hasOne(ChauffeurReview, { foreignKey: 'bookingId', as: 'review' });
 
-  BookingFinancial.belongsTo(Booking, { foreignKey: 'bookingId' });
+  BookingFinancial.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
-  Payment.belongsTo(Booking, { foreignKey: 'bookingId' });
-  Payment.belongsTo(User, { foreignKey: 'userId' });
+  Payment.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+  Payment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-  ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
-  ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
-  ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
+  ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+  ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId', as: 'chauffeur' });
+  ChauffeurReview.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-  RefreshToken.belongsTo(User, { foreignKey: 'userId' });
+  RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
   // try {
   //   await sequelize.sync({ alter: true });
