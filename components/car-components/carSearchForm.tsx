@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import DatePicker from '@/components/ui/date-picker';
 import { ChipToggle } from '@/components/ui/chip-toggle';
+import { GooglePlacesInput } from '@/components/ui/google-places-input';
 import z from 'zod';
 import { useVehicle } from '@/app/axios';
 import { useRouter } from '@/localization/navigation';
@@ -45,7 +46,7 @@ export function CarSearchForm() {
         { message: tVal('pickupDateFuture') },
       ),
       dropDate: z.date(),
-      needDriver: z.boolean().optional(),
+      needChauffeur: z.boolean().optional(),
     })
     .refine((data) => data.dropDate >= data.pickupDate, {
       message: tVal('dropDateAfterPickup'),
@@ -61,20 +62,30 @@ export function CarSearchForm() {
       to: '',
       pickupDate: undefined,
       dropDate: undefined,
-      needDriver: false,
+      needChauffeur: false,
     },
   });
 
   const { locations } = useLocation();
   const sameAddress = form.watch('sameAddress');
   const fromAddress = form.watch('from');
-  const needDriver = form.watch('needDriver');
+  const needChauffeur = form.watch('needChauffeur');
 
+  const [fromQuery, setFromQuery] = useState('');
+  const [toQuery, setToQuery] = useState('');
+
+  // Sync 'to' address when 'sameAddress' is checked
   useEffect(() => {
     if (sameAddress) {
       form.setValue('to', fromAddress);
     }
   }, [sameAddress, fromAddress, form]);
+
+  const filteredFromLocations =
+    fromQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(fromQuery.toLowerCase()));
+
+  const filteredToLocations =
+    toQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(toQuery.toLowerCase()));
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const onSubmit = (data: any) => {
@@ -91,7 +102,7 @@ export function CarSearchForm() {
       dropoffLocation: data.to,
       pickupDate: formatDateForAPI(data.pickupDate),
       dropoffDate: formatDateForAPI(data.dropDate),
-      bookingType: (data.needDriver ? 'SELF_DRIVE' : 'CHAUFFEUR') as 'SELF_DRIVE' | 'CHAUFFEUR',
+      bookingType: (data.needChauffeur ? 'CHAUFFEUR' : 'SELF_DRIVE') as 'SELF_DRIVE' | 'CHAUFFEUR',
     };
 
     setBookingData(bookingData);
@@ -103,47 +114,6 @@ export function CarSearchForm() {
     router.push('/vehicles');
     form.reset();
   };
-
-  const [fromQuery, setFromQuery] = useState('');
-  const [toQuery, setToQuery] = useState('');
-
-  const fromValue = form.watch('from');
-  const toValue = form.watch('to');
-
-  // Sync query with form value (initial load or external change)
-  useEffect(() => {
-    setFromQuery(fromValue || '');
-  }, [fromValue]);
-
-  useEffect(() => {
-    setToQuery(toValue || '');
-  }, [toValue]);
-
-  // Robust Fix for persistent scroll-lock bugs
-  useEffect(() => {
-    const fixScroll = () => {
-      if (typeof document !== 'undefined' && document.body) {
-        if (document.body.style.overflow === 'hidden' || document.body.dataset.scrollLocked) {
-          document.body.style.overflow = '';
-          document.body.style.pointerEvents = '';
-          delete document.body.dataset.scrollLocked;
-        }
-      }
-    };
-
-    fixScroll();
-    const timer = setTimeout(fixScroll, 100);
-    return () => {
-      clearTimeout(timer);
-      fixScroll();
-    };
-  }, [needDriver, sameAddress]);
-
-  const filteredFromLocations =
-    fromQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(fromQuery.toLowerCase()));
-
-  const filteredToLocations =
-    toQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(toQuery.toLowerCase()));
 
   return (
     <Form {...form}>
@@ -167,7 +137,7 @@ export function CarSearchForm() {
 
         <FormField
           control={form.control}
-          name="needDriver"
+          name="needChauffeur"
           render={({ field }) => (
             <FormItem className="flex items-center gap-2 sm:gap-3">
               <FormControl>
@@ -184,7 +154,20 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                {needDriver ? (
+                {!needChauffeur ? (
+                  <GooglePlacesInput
+                    label={t('from')}
+                    value={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      if (sameAddress) {
+                        form.setValue('to', value);
+                      }
+                    }}
+                    restrictToDubai={true}
+                    disabled={field.disabled}
+                  />
+                ) : (
                   <Combobox
                     modal={false}
                     value={
@@ -193,13 +176,13 @@ export function CarSearchForm() {
                     onValueChange={(val) => {
                       if (val) {
                         field.onChange(val.label);
-                        setFromQuery(''); // Reset query on selection or set to label? usually reset or set to label.
-                        // Actually, if we want the input to show the selected value, we rely on the Combobox rendering the value.
-                        if (form.getValues('sameAddress')) {
+                        setFromQuery(val.label);
+                        if (sameAddress) {
                           form.setValue('to', val.label);
                         }
                       } else {
                         field.onChange('');
+                        setFromQuery('');
                       }
                     }}
                   >
@@ -207,9 +190,7 @@ export function CarSearchForm() {
                       placeholder={t('from')}
                       className="bg-background h-14 w-full"
                       value={fromQuery}
-                      onChange={(e) => {
-                        setFromQuery(e.target.value);
-                      }}
+                      onChange={(e) => setFromQuery(e.target.value)}
                     />
                     <ComboboxContent>
                       <ComboboxList>
@@ -225,8 +206,6 @@ export function CarSearchForm() {
                       </ComboboxList>
                     </ComboboxContent>
                   </Combobox>
-                ) : (
-                  <FloatingInput label={t('from')} {...field} />
                 )}
               </FormControl>
               <FormMessage />
@@ -253,12 +232,15 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                {/* 
-                   Fix: When sameAddress is true, we render a simple FloatingInput instead of the Combobox.
-                   This avoids potential scroll-lock bugs in the UI library when a component is portaled and then disabled.
-                   It also ensures the 'To' field correctly displays the synced value.
-                */}
-                {needDriver && !sameAddress ? (
+                {!needChauffeur && !sameAddress ? (
+                  <GooglePlacesInput
+                    label={t('to')}
+                    value={field.value}
+                    onChange={(value) => field.onChange(value)}
+                    restrictToDubai={true}
+                    disabled={field.disabled}
+                  />
+                ) : needChauffeur && !sameAddress ? (
                   <Combobox
                     modal={false}
                     value={
@@ -267,9 +249,10 @@ export function CarSearchForm() {
                     onValueChange={(val) => {
                       if (val) {
                         field.onChange(val.label);
-                        setToQuery('');
+                        setToQuery(val.label);
                       } else {
                         field.onChange('');
+                        setToQuery('');
                       }
                     }}
                   >

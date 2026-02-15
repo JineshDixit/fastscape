@@ -16,6 +16,7 @@ import {
   ComboboxEmpty,
 } from '@/components/ui/combobox';
 import { FloatingInput } from '@/components/ui/input';
+import { GooglePlacesInput } from '@/components/ui/google-places-input';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface AvailabilitySelectorProps {
@@ -53,33 +54,6 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
     setFromQuery(bookingData.pickupLocation || '');
     setToQuery(bookingData.dropoffLocation || '');
   }, [bookingData.pickupLocation, bookingData.dropoffLocation]);
-
-  // Robust Fix for persistent scroll-lock bugs
-  useEffect(() => {
-    const fixScroll = () => {
-      if (typeof document !== 'undefined' && document.body) {
-        const isLocked =
-          document.body.style.overflow === 'hidden' ||
-          document.body.hasAttribute('data-scroll-locked') ||
-          document.documentElement.style.overflow === 'hidden';
-
-        if (isLocked) {
-          document.body.style.setProperty('overflow', 'auto', 'important');
-          document.documentElement.style.setProperty('overflow', 'auto', 'important');
-          document.body.style.setProperty('pointer-events', 'auto', 'important');
-          document.body.removeAttribute('data-scroll-locked');
-          document.body.classList.remove('no-scroll'); // Extra check for common classes
-        }
-      }
-    };
-
-    fixScroll();
-    const timer = setTimeout(fixScroll, 300); // Wait a bit longer for transition completions
-    return () => {
-      clearTimeout(timer);
-      fixScroll();
-    };
-  }, [bookingData, sameAddress]);
 
   const filteredFromLocations =
     fromQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(fromQuery.toLowerCase()));
@@ -149,7 +123,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
           <div className="relative">
             {isSelfDrive ? (
               <Combobox
-                open={undefined} // Let it be uncontrolled or controlled?
+                open={undefined}
                 modal={false}
                 value={
                   locations.find((l) => l.name === bookingData.pickupLocation)
@@ -182,11 +156,11 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
                 </ComboboxContent>
               </Combobox>
             ) : (
-              <FloatingInput
+              <GooglePlacesInput
                 label={tCar('from')}
-                className="h-14 w-full"
                 value={bookingData.pickupLocation || ''}
-                onChange={(e) => handleFromChange(e.target.value)}
+                onChange={(value) => handleFromChange(value)}
+                restrictToDubai={true}
               />
             )}
           </div>
@@ -199,10 +173,6 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
           </div>
 
           <div className="relative">
-            {/* 
-            Optimized Fix: When sameAddress is true, we render a simple FloatingInput instead of the Combobox.
-            This avoids potential scroll-lock bugs in the UI library when a component is portaled and then disabled.
-          */}
             {isSelfDrive && !sameAddress ? (
               <Combobox
                 modal={false}
@@ -236,6 +206,13 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
                   </ComboboxList>
                 </ComboboxContent>
               </Combobox>
+            ) : !isSelfDrive && !sameAddress ? (
+              <GooglePlacesInput
+                label={tCar('to')}
+                value={bookingData.dropoffLocation || ''}
+                onChange={(value) => handleToChange(value)}
+                restrictToDubai={true}
+              />
             ) : (
               <FloatingInput
                 label={tCar('to')}
