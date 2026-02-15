@@ -27,7 +27,7 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle, onClick }) => {
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <div className="relative z-10 -mb-8 w-[240px]">
+      <div className="relative z-10 -mb-8 w-60">
         <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg">
           <img src={getDisplayImage()} alt={vehicle.model} className="h-full w-full object-cover" />
         </AspectRatio>

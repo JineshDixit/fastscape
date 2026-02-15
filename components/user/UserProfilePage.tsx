@@ -85,7 +85,7 @@ export const UserProfilePage: React.FC = () => {
 
   if (profileLoading || statsLoading) {
     return (
-      <div className="container mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
+      <div className="container mx-auto max-w-7xl space-y-6 sm:p-6">
         <div className="animate-pulse space-y-6">
           <div className="h-48 rounded-xl bg-muted" />
           <div className="grid gap-6 md:grid-cols-3">
@@ -109,10 +109,10 @@ export const UserProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
+    <div className="container mx-auto max-w-7xl space-y-6">
       {/* Profile Header Card */}
-      <Card className="overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-blue-500 to-purple-600 sm:h-32" />
+      <Card className="overflow-hidden pt-0">
+        <div className="h-24 bg-linear-to-r from-blue-500 to-purple-600 sm:h-32" />
         <CardContent className="relative px-6 pb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">

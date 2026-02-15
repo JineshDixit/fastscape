@@ -49,10 +49,11 @@ export const useBooking = () => {
       apiCall: () => Promise<ApiResponse<T>>,
       onSuccess?: (data: T) => void,
       setLoadingState?: (loading: boolean) => void,
+      silent: boolean = false,
     ): Promise<ApiResponse<T> | null> => {
       try {
         setError(null);
-        if (setLoadingState) setLoadingState(true);
+        if (setLoadingState && !silent) setLoadingState(true);
 
         const response = await apiCall();
 
@@ -69,13 +70,13 @@ export const useBooking = () => {
       } catch (err: any) {
         // Enhanced error handling
         let errorMessage = 'An unexpected error occurred';
-        
+
         if (err?.response?.data?.message) {
           errorMessage = err.response.data.message;
         } else if (err?.message) {
           errorMessage = err.message;
         }
-        
+
         // Handle specific error codes
         if (err?.response?.status === 401) {
           errorMessage = 'Authentication required. Please log in again.';
@@ -87,11 +88,11 @@ export const useBooking = () => {
         } else if (err?.response?.status >= 500) {
           errorMessage = 'Server error. Please try again later.';
         }
-        
+
         setError(errorMessage);
         return { success: false, message: errorMessage, data: null as any };
       } finally {
-        if (setLoadingState) setLoadingState(false);
+        if (setLoadingState && !silent) setLoadingState(false);
       }
     },
     [],
@@ -163,11 +164,12 @@ export const useBooking = () => {
   );
 
   const fetchBookingById = useCallback(
-    async (bookingId: string) => {
+    async (bookingId: string, silent: boolean = false) => {
       return handleApiCall(
         () => bookingService.getBookingById(bookingId),
         (booking) => setCurrentBooking(booking),
         setIsLoading,
+        silent,
       );
     },
     [handleApiCall],
@@ -212,11 +214,11 @@ export const useBooking = () => {
         },
         setIsLoading,
       );
-      
+
       if (!result?.success) {
         console.error('[useBooking] Failed to calculate payment breakdown:', result?.message);
       }
-      
+
       return result;
     },
     [handleApiCall],

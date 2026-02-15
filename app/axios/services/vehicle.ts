@@ -64,6 +64,13 @@ export class VehicleService extends BaseApiService {
     }>('/filters/metadata');
   }
   /**
+   * Get most popular car (most booked vehicle)
+   */
+  async getMostPopularCar(): Promise<ApiResponse<Vehicle & { bookingCount: number }>> {
+    return this.get<Vehicle & { bookingCount: number }>('/most-popular');
+  }
+
+  /**
    * Check if a specific vehicle is available for a date range
    */
   async checkAvailability(

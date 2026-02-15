@@ -36,8 +36,7 @@ export default function PaymentOptionsForm({
         paymentBreakdown,
         calculatePaymentBreakdown,
         isLoading,
-        error,
-        clearError
+        error
     } = useBooking();
 
     const [selectedOption, setSelectedOption] = useState<PaymentOption>('deposit');
@@ -52,9 +51,11 @@ export default function PaymentOptionsForm({
         }
     };
 
-    const formatCurrency = (amount: string | undefined) => {
+    const formatCurrency = (amount: string | number | null | undefined) => {
         if (!amount) return '$0.00';
-        return `$${parseFloat(amount).toFixed(2)}`;
+        const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (isNaN(numAmount)) return '$0.00';
+        return `$${numAmount.toFixed(2)}`;
     };
 
     const getDepositPercentage = () => {

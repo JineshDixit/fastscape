@@ -17,6 +17,7 @@ interface FilterMetadata {
 export interface VehicleState {
   vehicles: Vehicle[];
   vehicle: Vehicle | null;
+  mostPopularCar: (Vehicle & { bookingCount: number }) | null;
   stats: VehicleStats | null;
   bodyTypeSummary: BodyTypeSummary[];
   filterMetadata: FilterMetadata | null;
@@ -41,6 +42,7 @@ interface VehicleContextType extends VehicleState {
 const initialState: VehicleState = {
   vehicles: [],
   vehicle: null,
+  mostPopularCar: null,
   stats: null,
   bodyTypeSummary: [],
   filterMetadata: null,

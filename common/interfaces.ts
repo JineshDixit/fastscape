@@ -196,6 +196,8 @@ export interface User {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
 }
 
 export interface AuthResponse {
@@ -492,4 +494,20 @@ export interface CancelBookingResponse {
   booking: Booking;
   refundAmount: number;
   refundPolicy: string;
+}
+
+export interface AssignmentStatusResponse {
+  bookingId: string;
+  bookingType: BookingType;
+  paymentStatus: PaymentStatus;
+  bookingStatus: BookingStatus;
+  chauffeurId?: string;
+  chauffeur?: {
+    id: string;
+    fullName: string;
+    phone: string;
+    rating: number;
+    experienceLevel?: string;
+  };
+  isEligibleForAssignment: boolean;
 }

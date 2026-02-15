@@ -128,19 +128,19 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const handleIdentityNext = async () => {
     try {
       clearAllErrors();
-      
+
       // Check if documents will be skipped
-      const skipDocs = await shouldSkipDocumentStep();
-      
+      const skipDocs = await shouldSkipDocumentStep(bookingData.bookingType);
+
       if (skipDocs) {
         // If documents are skipped, create booking here before proceeding to payment
         console.log('[Checkout] Documents will be skipped, creating booking now');
-        
+
         if (!bookingData.pickupDate || !bookingData.dropoffDate) {
           setError('Booking dates are missing');
           return;
         }
-        
+
         // Check availability first
         setIsCheckingAvailability(true);
         const availabilityResponse = await vehicleService.checkAvailability(
@@ -154,7 +154,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           setError(t('errorAvailability'));
           return;
         }
-        
+
         // Create booking
         const finalBookingData = {
           vehicleId: id,
@@ -169,14 +169,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         console.log('[Checkout] Creating booking with data:', finalBookingData);
         const response = await createBooking(finalBookingData as any);
         console.log('[Checkout] Booking creation response:', response);
-        
+
         if (response && response.success && response.data) {
           console.log('[Checkout] Booking created successfully, ID:', response.data.id);
           // Calculate payment breakdown
           console.log('[Checkout] Calculating payment breakdown...');
           const breakdownResponse = await calculatePaymentBreakdown(response.data.id);
           console.log('[Checkout] Payment breakdown response:', breakdownResponse);
-          
+
           if (breakdownResponse && breakdownResponse.success) {
             await proceedToNextStep();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -229,14 +229,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
       console.log('[Checkout] Creating booking with data:', finalBookingData);
       const response = await createBooking(finalBookingData as any);
       console.log('[Checkout] Booking creation response:', response);
-      
+
       if (response && response.success && response.data) {
         console.log('[Checkout] Booking created successfully, ID:', response.data.id);
         // Immediately calculate payment breakdown
         console.log('[Checkout] Calculating payment breakdown...');
         const breakdownResponse = await calculatePaymentBreakdown(response.data.id);
         console.log('[Checkout] Payment breakdown response:', breakdownResponse);
-        
+
         if (breakdownResponse && breakdownResponse.success) {
           await proceedToNextStep();
           window.scrollTo({ top: 0, behavior: 'smooth' });

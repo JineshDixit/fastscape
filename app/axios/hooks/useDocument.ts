@@ -61,6 +61,7 @@ export const useDocument = (): UseDocumentReturn => {
 
   const getRequiredDocuments = useCallback(async (bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE') => {
     try {
+      console.log(`[useDocument] getRequiredDocuments for ${bookingType}`);
       setIsLoading(true);
       setError(null);
 
@@ -80,6 +81,7 @@ export const useDocument = (): UseDocumentReturn => {
 
   const validateDocumentForBooking = useCallback(async (bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE') => {
     try {
+      console.log(`[useDocument] validateDocumentForBooking for ${bookingType}`);
       setIsLoading(true);
       setError(null);
 
@@ -100,6 +102,7 @@ export const useDocument = (): UseDocumentReturn => {
   const checkBookingEligibility = useCallback(
     async (bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE'): Promise<ApiResponse<EligibilityResult>> => {
       try {
+        console.log(`[useDocument] checkBookingEligibility for ${bookingType}`);
         setIsLoading(true);
         setError(null);
 
@@ -155,6 +158,7 @@ export const useDocument = (): UseDocumentReturn => {
   const shouldSkipDocumentStep = useCallback(
     async (bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE'): Promise<boolean> => {
       try {
+        console.log(`[useDocument] shouldSkipDocumentStep check for: ${bookingType}`);
         const response = await documentService.shouldSkipDocumentStep(bookingType);
 
         if (response.success && response.data !== undefined) {

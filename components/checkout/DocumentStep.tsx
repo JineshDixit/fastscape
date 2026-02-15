@@ -3,17 +3,11 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import {
-  ShieldCheck,
-  Loader2,
-  AlertOctagon,
-  ChevronRight,
-  ChevronLeft,
-} from 'lucide-react';
+import { ShieldCheck, Loader2, AlertOctagon, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UserProfile } from '@/common/interfaces';
 import DocumentUploadForm from './DocumentUploadForm';
-import { useDocument } from '@/app/axios/hooks';
+import { useDocument, useVehicle } from '@/app/axios/hooks';
 
 interface DocumentStepProps {
   profile: UserProfile | null;
@@ -26,6 +20,7 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
   const t = useTranslations('documentStep');
   const tCheckout = useTranslations('checkout');
   const { checkBookingEligibility, isLoading: documentLoading } = useDocument();
+  const { bookingData } = useVehicle();
 
   const handleDocumentsChange = async (files: Record<string, File>) => {
     // Files are automatically uploaded via the user profile update endpoint
@@ -35,7 +30,7 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
   const handleNext = async () => {
     // Validate that user is eligible for booking before proceeding
     try {
-      const response = await checkBookingEligibility();
+      const response = await checkBookingEligibility(bookingData.bookingType);
       if (response?.success && response.data?.eligible) {
         await onNext();
       } else {
@@ -121,19 +116,14 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          className="flex items-center gap-2"
-        >
+        <Button type="button" variant="outline" onClick={onBack} className="flex items-center gap-2">
           <ChevronLeft className="h-4 w-4" />
           Back
         </Button>
         <Button
           onClick={handleNext}
           disabled={isLoading || documentLoading || !canProceed}
-          className="flex-1 flex items-center justify-center gap-2"
+          className="flex flex-1 items-center justify-center gap-2"
         >
           {isLoading || documentLoading ? (
             <>

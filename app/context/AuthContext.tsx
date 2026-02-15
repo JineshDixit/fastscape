@@ -90,15 +90,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (response.success) {
           console.log('Token refreshed successfully');
-          // After successful token refresh, fetch updated user data
-          await fetchCurrentUser();
+          // Wait a moment for cookies to be properly set
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          // Verify the new token is valid before fetching user data
+          if (authCookies.isAuthenticated()) {
+            // After successful token refresh, fetch updated user data
+            await fetchCurrentUser();
+          } else {
+            throw new Error('New token validation failed after refresh');
+          }
         } else {
           throw new Error('Token refresh failed');
         }
+      } else {
+        throw new Error('No refresh token available');
       }
     } catch (error) {
       console.error('Token refresh failed:', error);
       clearAuthState();
+      throw error; // Re-throw to let caller handle it
     }
   }, [fetchCurrentUser, clearAuthState]);
 
@@ -115,7 +126,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Check if token needs refresh
         if (authCookies.needsRefresh()) {
           console.log('Token needs refresh, refreshing...');
-          await refreshAuth();
+          try {
+            await refreshAuth();
+          } catch (error) {
+            console.error('Failed to refresh token during auth check:', error);
+            // Don't immediately clear state, let periodic check handle it
+          }
         }
       } else {
         // Check if we have a refresh token to try refreshing
@@ -124,9 +140,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log('Access token expired but refresh token exists, attempting refresh...');
           try {
             await refreshAuth();
-          } catch (error) {
+            console.log('Token refresh successful during auth check');
+          } catch (error: any) {
             console.error('Failed to refresh token during auth check:', error);
-            clearAuthState();
+            // Only clear state if refresh token is invalid/expired
+            if (
+              error?.message?.includes('Invalid or expired refresh token') ||
+              error?.message?.includes('Refresh token not found')
+            ) {
+              console.log('Refresh token is invalid, clearing auth state');
+              clearAuthState();
+            } else {
+              console.log('Refresh failed but token might still be valid, keeping state');
+            }
           }
         } else {
           console.log('No valid token found');
@@ -146,19 +172,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     checkAuth();
 
-    // Set up periodic auth check every 10 minutes (increased from 5 minutes)
-    const interval = setInterval(() => {
-      if (authCookies.isAuthenticated()) {
-        // Only check if token needs refresh, don't fetch user data unnecessarily
-        if (authCookies.needsRefresh()) {
-          console.log('Periodic check: Token needs refresh');
-          refreshAuth();
-        }
+    // Listen for storage events from other tabs (token updates)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth_new_access_token' && e.newValue) {
+        console.log('Detected token refresh in another tab, updating state...');
+        fetchCurrentUser();
       }
-    }, 10 * TIME_CONSTANTS.ONE_MINUTE);
+      if (e.key === 'access_token' && !e.newValue) {
+        console.log('Detected logout in another tab, clearing state...');
+        clearAuthState();
+        router.push('/');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
 
-    return () => clearInterval(interval);
-  }, [checkAuth, refreshAuth]);
+    // Set up periodic auth check every 1 minute
+    const interval = setInterval(() => {
+      const hasValidToken = authCookies.isAuthenticated();
+      const needsRefresh = authCookies.needsRefresh();
+      const hasRefreshToken = !!authCookies.getRefreshToken();
+
+      // If token is valid but nearing expiry, or if token is expired but we have a refresh token
+      if ((hasValidToken && needsRefresh) || (!hasValidToken && hasRefreshToken)) {
+        console.log('Periodic check: Attempting to refresh/recover session...');
+        refreshAuth().catch((err) => {
+          console.error('Periodic refresh/recovery failed:', err);
+          // Only clear state if it's a definitive auth failure (400 or 401)
+          if (err?.response?.status === 401 || err?.response?.status === 400) {
+            clearAuthState();
+          }
+        });
+      }
+    }, 1 * TIME_CONSTANTS.ONE_MINUTE);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [checkAuth, refreshAuth, fetchCurrentUser, clearAuthState, router]);
 
   const login = useCallback(
     async (data: LoginRequest) => {

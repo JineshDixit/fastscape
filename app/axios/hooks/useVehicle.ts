@@ -190,6 +190,31 @@ export const useVehicle = () => {
   }, [startLoading, setState, handleError]);
 
   /**
+   * Fetch most popular car
+   */
+  const fetchMostPopularCar = useCallback(async () => {
+    startLoading();
+    try {
+      const response = await vehicleService.getMostPopularCar();
+      if (response.success && response.data) {
+        setState((prev) => ({ 
+          ...prev, 
+          mostPopularCar: response.data!, 
+          isLoading: false 
+        }));
+      } else {
+        setState((prev) => ({ 
+          ...prev, 
+          error: response.message || 'Failed to fetch most popular car', 
+          isLoading: false 
+        }));
+      }
+    } catch (err: any) {
+      handleError(err, 'Failed to fetch most popular car');
+    }
+  }, [startLoading, setState, handleError]);
+
+  /**
    * Cleanup on unmount
    */
   useEffect(() => {
@@ -218,6 +243,7 @@ export const useVehicle = () => {
     fetchStats,
     fetchBodyTypeSummary,
     fetchFilterMetadata,
+    fetchMostPopularCar,
     clearError,
     resetVehicle,
     setBookingData,

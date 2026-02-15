@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useUser } from './useUser';
 import { useDocument } from './useDocument';
 import { useBooking } from './useBooking';
+import { useVehicle } from './useVehicle';
 import type { UserProfile } from '@/common/interfaces';
 
 export type BookingFlowStep = 'IDENTITY' | 'DOCUMENTS' | 'PAYMENT' | 'SUMMARY';
@@ -37,6 +38,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
   const { profile, fetchProfile, isLoading: profileLoading } = useUser();
   const { shouldSkipDocumentStep, checkBookingEligibility, isLoading: documentLoading } = useDocument();
   const { isLoading: bookingLoading } = useBooking();
+  const { bookingData } = useVehicle();
 
   // isLoading is derived from hook states and local state
   const isLoading = profileLoading || documentLoading || bookingLoading || state.isLoading;
@@ -127,7 +129,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
   const determineInitialStep = useCallback(
     async (userProfile: UserProfile | null): Promise<BookingFlowStep> => {
       console.log('[useBookingFlow] Determining initial step for profile:', userProfile);
-      
+
       if (!userProfile) {
         console.log('[useBookingFlow] No profile, starting at IDENTITY');
         return 'IDENTITY';
@@ -162,7 +164,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
 
       // Check if documents can be skipped
       try {
-        const skip = await shouldSkipDocumentStep();
+        const skip = await shouldSkipDocumentStep(bookingData.bookingType);
         console.log('[useBookingFlow] Should skip documents?', skip);
         if (skip) {
           // Documents are verified, but we still need to start at IDENTITY
@@ -206,7 +208,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
 
   const proceedToNextStep = useCallback(async () => {
     console.log('[useBookingFlow] proceedToNextStep called, current step:', state.currentStep);
-    
+
     const isValid = await validateCurrentStep();
     if (!isValid) {
       console.log('[useBookingFlow] Current step validation failed');
@@ -223,7 +225,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
       // Special logic: skip documents if they're already verified
       if (nextStep === 'DOCUMENTS') {
         try {
-          const skip = await shouldSkipDocumentStep();
+          const skip = await shouldSkipDocumentStep(bookingData.bookingType);
           console.log('[useBookingFlow] Should skip documents?', skip);
           if (skip) {
             console.log('[useBookingFlow] Skipping to PAYMENT');
