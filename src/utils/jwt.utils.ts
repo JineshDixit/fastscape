@@ -46,9 +46,12 @@ export const generateTokenPair = (payload: Omit<JwtPayload, 'type'>): TokenPair 
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  // Calculate expiration dates
-  const accessTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-  const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  // Calculate expiration dates based on environment variables
+  const accessExpiryMs = parseTimeStringToMs(process.env.ACCESS_TOKEN_EXPIRY || '15m');
+  const refreshExpiryMs = parseTimeStringToMs(process.env.REFRESH_TOKEN_EXPIRY || '7d');
+  
+  const accessTokenExpiresAt = new Date(Date.now() + accessExpiryMs);
+  const refreshTokenExpiresAt = new Date(Date.now() + refreshExpiryMs);
 
   return {
     accessToken,
@@ -56,6 +59,27 @@ export const generateTokenPair = (payload: Omit<JwtPayload, 'type'>): TokenPair 
     accessTokenExpiresAt,
     refreshTokenExpiresAt,
   };
+};
+
+/**
+ * Parse time string (like '15m', '7d', '1h') to milliseconds
+ */
+const parseTimeStringToMs = (timeString: string): number => {
+  const match = timeString.match(/^(\d+)([smhd])$/);
+  if (!match) {
+    throw new Error(`Invalid time string format: ${timeString}`);
+  }
+  
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  
+  switch (unit) {
+    case 's': return value * 1000;
+    case 'm': return value * 60 * 1000;
+    case 'h': return value * 60 * 60 * 1000;
+    case 'd': return value * 24 * 60 * 60 * 1000;
+    default: throw new Error(`Unknown time unit: ${unit}`);
+  }
 };
 
 /**

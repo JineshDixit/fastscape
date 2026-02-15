@@ -1,10 +1,11 @@
+import { Op } from 'sequelize';
 import { AdminUser, AdminRefreshToken } from '../../models';
-import { 
-  AdminLoginRequest, 
-  AdminRegisterRequest, 
-  AdminAuthResponse, 
+import {
+  AdminLoginRequest,
+  AdminRegisterRequest,
+  AdminAuthResponse,
   RefreshTokenResponse,
-  AdminUserResponse 
+  AdminUserResponse,
 } from '../../common/interfaces/authTypes';
 import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
@@ -18,14 +19,14 @@ import logger from '../../config/logger';
  * Create and store refresh token
  */
 const storeRefreshToken = async (
-  adminUserId: string, 
-  token: string, 
+  adminUserId: string,
+  token: string,
   expiresAt: Date,
   deviceInfo?: string,
-  ipAddress?: string
+  ipAddress?: string,
 ): Promise<void> => {
   logger.debug('Storing refresh token', { adminUserId, deviceInfo, ipAddress, expiresAt });
-  
+
   await AdminRefreshToken.create({
     adminUserId,
     token,
@@ -34,7 +35,7 @@ const storeRefreshToken = async (
     deviceInfo,
     ipAddress,
   });
-  
+
   logger.debug('Refresh token stored successfully', { adminUserId });
 };
 
@@ -43,12 +44,9 @@ const storeRefreshToken = async (
  */
 const revokeAllRefreshTokens = async (adminUserId: string): Promise<void> => {
   logger.debug('Revoking all refresh tokens', { adminUserId });
-  
-  const result = await AdminRefreshToken.update(
-    { isRevoked: true },
-    { where: { adminUserId, isRevoked: false } }
-  );
-  
+
+  const result = await AdminRefreshToken.update({ isRevoked: true }, { where: { adminUserId, isRevoked: false } });
+
   logger.info('All refresh tokens revoked', { adminUserId, count: result[0] });
 };
 
@@ -58,10 +56,10 @@ const revokeAllRefreshTokens = async (adminUserId: string): Promise<void> => {
 export const register = async (
   registerData: AdminRegisterRequest,
   deviceInfo?: string,
-  ipAddress?: string
+  ipAddress?: string,
 ): Promise<AdminAuthResponse> => {
   const { firstName, lastName, email: rawEmail, password } = registerData;
-  
+
   logger.info('Admin user registration initiated', { email: rawEmail, firstName, lastName, ipAddress });
 
   // Validate required fields
@@ -89,7 +87,7 @@ export const register = async (
     passwordHash,
     isActive: true,
   });
-  
+
   logger.info('Admin user created successfully', { userId: user.id, email: user.email });
 
   // Generate tokens
@@ -99,17 +97,11 @@ export const register = async (
   });
 
   // Store refresh token
-  await storeRefreshToken(
-    user.id, 
-    tokenPair.refreshToken, 
-    tokenPair.refreshTokenExpiresAt,
-    deviceInfo,
-    ipAddress
-  );
+  await storeRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt, deviceInfo, ipAddress);
 
   // Get user with permissions for response
   const userWithPermissions = await getAdminUserWithRolesAndPermissions(user.id);
-  
+
   logger.info('Admin user registration completed', { userId: user.id, email: user.email });
 
   return {
@@ -124,10 +116,10 @@ export const register = async (
 export const login = async (
   loginData: AdminLoginRequest,
   deviceInfo?: string,
-  ipAddress?: string
+  ipAddress?: string,
 ): Promise<AdminAuthResponse> => {
   const { email: rawEmail, password } = loginData;
-  
+
   logger.info('Admin user login attempt', { email: rawEmail, ipAddress, deviceInfo });
 
   // Validate required fields
@@ -167,17 +159,11 @@ export const login = async (
   });
 
   // Store new refresh token
-  await storeRefreshToken(
-    user.id, 
-    tokenPair.refreshToken, 
-    tokenPair.refreshTokenExpiresAt,
-    deviceInfo,
-    ipAddress
-  );
+  await storeRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt, deviceInfo, ipAddress);
 
   // Get user with permissions for response
   const userWithPermissions = await getAdminUserWithRolesAndPermissions(user.id);
-  
+
   logger.info('Admin user login successful', { userId: user.id, email: user.email });
 
   return {
@@ -191,7 +177,7 @@ export const login = async (
  */
 export const refreshToken = async (token: string): Promise<RefreshTokenResponse> => {
   logger.debug('Refresh token request received');
-  
+
   if (!token) {
     logger.warn('Refresh token request missing token');
     throw createError('Refresh token is required', 400);
@@ -203,18 +189,25 @@ export const refreshToken = async (token: string): Promise<RefreshTokenResponse>
     decoded = verifyRefreshToken(token);
     logger.debug('Refresh token verified', { userId: decoded.userId });
   } catch (error) {
-    logger.warn('Refresh token verification failed', { 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    logger.warn('Refresh token verification failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     throw createError('Invalid or expired refresh token', 401);
   }
 
   // Check if refresh token exists in database and is not revoked
+  // OR was revoked very recently (grace period for concurrent requests)
   const storedToken = await AdminRefreshToken.findOne({
     where: {
       token,
       adminUserId: decoded.userId,
-      isRevoked: false,
+      [Op.or]: [
+        { isRevoked: false },
+        {
+          isRevoked: true,
+          updatedAt: { [Op.gte]: new Date(Date.now() - 30 * 1000) },
+        },
+      ],
     },
   });
 
@@ -237,9 +230,16 @@ export const refreshToken = async (token: string): Promise<RefreshTokenResponse>
     throw createError('Admin user not found or deactivated', 401);
   }
 
-  // Revoke old refresh token
-  logger.debug('Revoking old refresh token', { userId: user.id });
-  await storedToken.update({ isRevoked: true });
+  // Revoke old refresh token (only if not already revoked)
+  if (!storedToken.isRevoked) {
+    logger.debug('Revoking old refresh token', { userId: user.id });
+    await storedToken.update({ isRevoked: true });
+  } else {
+    logger.info('Using recently rotated refresh token (grace period)', {
+      userId: user.id,
+      tokenSnippet: token.substring(0, 10),
+    });
+  }
 
   // Generate new token pair
   const newTokenPair = generateTokenPair({
@@ -249,13 +249,13 @@ export const refreshToken = async (token: string): Promise<RefreshTokenResponse>
 
   // Store new refresh token
   await storeRefreshToken(
-    user.id, 
-    newTokenPair.refreshToken, 
+    user.id,
+    newTokenPair.refreshToken,
     newTokenPair.refreshTokenExpiresAt,
     storedToken.deviceInfo,
-    storedToken.ipAddress
+    storedToken.ipAddress,
   );
-  
+
   logger.info('Refresh token renewed successfully', { userId: user.id });
 
   return newTokenPair;
@@ -266,18 +266,15 @@ export const refreshToken = async (token: string): Promise<RefreshTokenResponse>
  */
 export const logout = async (token: string): Promise<void> => {
   logger.info('Admin user logout initiated');
-  
+
   if (!token) {
     logger.warn('Logout request missing token');
     throw createError('Refresh token is required', 400);
   }
 
   // Revoke the refresh token
-  const result = await AdminRefreshToken.update(
-    { isRevoked: true },
-    { where: { token, isRevoked: false } }
-  );
-  
+  const result = await AdminRefreshToken.update({ isRevoked: true }, { where: { token, isRevoked: false } });
+
   logger.info('Admin user logout completed', { tokensRevoked: result[0] });
 };
 
@@ -286,14 +283,14 @@ export const logout = async (token: string): Promise<void> => {
  */
 export const logoutFromAllDevices = async (adminUserId: string): Promise<void> => {
   logger.info('Logout from all devices initiated', { adminUserId });
-  
+
   if (!adminUserId) {
     logger.warn('Logout from all devices missing adminUserId');
     throw createError('Admin User ID is required', 400);
   }
 
   await revokeAllRefreshTokens(adminUserId);
-  
+
   logger.info('Logout from all devices completed', { adminUserId });
 };
 
@@ -302,7 +299,7 @@ export const logoutFromAllDevices = async (adminUserId: string): Promise<void> =
  */
 export const getCurrentProfile = async (adminUserId: string): Promise<AdminUserResponse> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
-  
+
   if (!user) {
     throw createError('Admin user not found', 404);
   }
@@ -319,7 +316,7 @@ export const getCurrentProfile = async (adminUserId: string): Promise<AdminUserR
  */
 export const checkPermission = async (adminUserId: string, permission: string): Promise<boolean> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
-  
+
   if (!user || !user.isActive) {
     return false;
   }
@@ -333,11 +330,11 @@ export const checkPermission = async (adminUserId: string, permission: string): 
  */
 export const checkAnyPermission = async (adminUserId: string, permissions: string[]): Promise<boolean> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
-  
+
   if (!user || !user.isActive) {
     return false;
   }
 
   const userResponse = formatAdminUserResponse(user);
-  return permissions.some(permission => userResponse.permissions?.includes(permission)) || false;
+  return permissions.some((permission) => userResponse.permissions?.includes(permission)) || false;
 };
