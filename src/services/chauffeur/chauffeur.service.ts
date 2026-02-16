@@ -42,14 +42,20 @@ export const findAvailableChauffeurs = async (
     where: { status: 'AVAILABLE' },
     attributes: ['id', 'isVerified', 'specializations'],
   });
-  console.log(
-    '>>> ANTIGRAVITY_DEBUG: Available chauffeurs details:',
-    availableChauffeursList.map((c) => ({ id: c.id, verified: c.isVerified, specs: c.specializations })),
-  );
-  console.log('>>> ANTIGRAVITY_DEBUG: Chauffeur counts:', {
-    total: totalChauffeurs,
-    available: availableChauffeursList.length,
-  });
+  
+  if (process.env.NODE_ENV === 'development') {
+    Logger.debug('Available chauffeurs details', {
+      chauffeurs: availableChauffeursList.map((c) => ({ 
+        id: c.id, 
+        verified: c.isVerified, 
+        specs: c.specializations 
+      })),
+      counts: {
+        total: totalChauffeurs,
+        available: availableChauffeursList.length,
+      },
+    });
+  }
 
   if (city) {
     whereConditions.city = { [Op.iLike]: `%${city}%` };
@@ -153,14 +159,17 @@ export const autoAssignChauffeur = async (
   const { vehicle } = booking as any;
   const requestedVehicleType = preferences?.vehicleType || vehicle?.bodyType;
 
-  console.log('>>> ANTIGRAVITY_DEBUG: autoAssignChauffeur search params:', {
-    start: booking.startDatetime,
-    end: booking.endDatetime,
-    vehicleType: requestedVehicleType,
-    minRating: preferences?.minRating ?? 4.0,
-    maxHourlyRate: preferences?.maxHourlyRate,
-    hasTransaction: !!transaction,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    Logger.debug('Auto-assign chauffeur search params', {
+      bookingId,
+      start: booking.startDatetime,
+      end: booking.endDatetime,
+      vehicleType: requestedVehicleType,
+      minRating: preferences?.minRating ?? 4.0,
+      maxHourlyRate: preferences?.maxHourlyRate,
+      hasTransaction: !!transaction,
+    });
+  }
 
   let availableChauffeurs = await findAvailableChauffeurs(
     {
@@ -177,9 +186,10 @@ export const autoAssignChauffeur = async (
 
   // Fallback: If no specialized chauffeur found, try without vehicleType filter
   if (availableChauffeurs.length === 0 && requestedVehicleType) {
-    console.log(
-      '>>> ANTIGRAVITY_DEBUG: No specialized chauffeur found, trying fallback matching any available chauffeur',
-    );
+    if (process.env.NODE_ENV === 'development') {
+      Logger.debug('No specialized chauffeur found, trying fallback without vehicle type filter');
+    }
+    
     availableChauffeurs = await findAvailableChauffeurs(
       {
         startDatetime: booking.startDatetime,
@@ -193,7 +203,9 @@ export const autoAssignChauffeur = async (
     );
   }
 
-  console.log('>>> ANTIGRAVITY_DEBUG: Final availableChauffeurs found:', availableChauffeurs.length);
+  if (process.env.NODE_ENV === 'development') {
+    Logger.debug('Final available chauffeurs found', { count: availableChauffeurs.length });
+  }
 
   if (availableChauffeurs.length === 0) {
     Logger.warn('Auto-assignment failed: No available chauffeurs found', {

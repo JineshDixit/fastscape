@@ -8,6 +8,7 @@ import { validateRequiredFields, validateEmail } from '../../utils/validation.ut
 import { USER_SAFE_ATTRIBUTES } from '../../utils/database.utils';
 import { Op } from 'sequelize';
 import Logger from '../../utils/logger';
+import { verificationConfig, canUserBook } from '../../config/verification/verificationConfig';
 
 /**
  * Validate and normalize address data
@@ -232,23 +233,29 @@ export const updateUser = async (
         // Upsert identity documents
         const existingDocs = await UserIdentityDocument.findOne({ where: { userId }, transaction });
 
-        // Auto-verify for testing/demo purposes
-        await user.update({ verificationStatus: 'VERIFIED' }, { transaction });
-
-        // Ensure the IdentityDocument record is also marked as verified
-        if (existingDocs) {
-          await existingDocs.update(
-            { ...documentUpdates, verificationStatus: 'VERIFIED', verified: true },
-            { transaction },
-          );
+        // Check if auto-verification is enabled
+        const shouldAutoVerify = verificationConfig.autoVerifyDocuments;
+        
+        if (shouldAutoVerify) {
+          Logger.info('Auto-verifying documents (enabled in config)', { userId });
+          documentUpdates.verificationStatus = 'VERIFIED';
+          documentUpdates.verified = true;
+          await user.update({ verificationStatus: 'VERIFIED' }, { transaction });
         } else {
-          await UserIdentityDocument.create(
-            { userId, ...documentUpdates, verificationStatus: 'VERIFIED', verified: true },
-            { transaction },
-          );
+          Logger.info('Documents uploaded - pending manual verification', { userId });
+          // Keep as PENDING - admin will verify later
         }
 
-        Logger.info('User documents updated and AUTO-VERIFIED successfully', { userId });
+        if (existingDocs) {
+          await existingDocs.update(documentUpdates, { transaction });
+        } else {
+          await UserIdentityDocument.create({ userId, ...documentUpdates }, { transaction });
+        }
+
+        Logger.info(
+          `User documents updated ${shouldAutoVerify ? 'and AUTO-VERIFIED' : '- PENDING verification'}`,
+          { userId },
+        );
       }
     }
 
@@ -425,5 +432,75 @@ export const getLocationStatistics = async () => {
     totalUsers,
     locationBreakdown: stats,
     addressCompleteness,
+  };
+};
+
+
+/**
+ * Check if user can proceed with booking
+ */
+export const checkBookingEligibility = async (userId: string): Promise<{
+  eligible: boolean;
+  reason?: string;
+  restrictions?: any;
+  missingDocuments?: string[];
+  verificationStatus?: string;
+}> => {
+  const user = await User.findByPk(userId, {
+    include: [
+      {
+        model: UserIdentityDocument,
+        as: 'identityDocument',
+        required: false,
+      },
+      {
+        model: UserDrivingInfo,
+        as: 'drivingInfo',
+        required: false,
+      },
+    ],
+  });
+
+  if (!user) {
+    throw createError('User not found', 404);
+  }
+
+  const userJson = user.toJSON() as any;
+
+  // Check if user has driving info
+  if (!userJson.drivingInfo) {
+    return {
+      eligible: false,
+      reason: 'Please complete your driving license information first.',
+    };
+  }
+
+  // Check if user has uploaded documents
+  const identityDoc = userJson.identityDocument;
+  const missingDocuments: string[] = [];
+
+  verificationConfig.requiredDocuments.forEach((doc) => {
+    if (!identityDoc || !identityDoc[doc]) {
+      missingDocuments.push(doc);
+    }
+  });
+
+  if (missingDocuments.length > 0) {
+    return {
+      eligible: false,
+      reason: 'Please upload all required identity documents.',
+      missingDocuments,
+    };
+  }
+
+  // Check verification status
+  const verificationStatus = identityDoc?.verificationStatus || 'PENDING';
+  const bookingCheck = canUserBook(verificationStatus);
+
+  return {
+    eligible: bookingCheck.allowed,
+    reason: bookingCheck.reason,
+    restrictions: bookingCheck.restrictions,
+    verificationStatus,
   };
 };

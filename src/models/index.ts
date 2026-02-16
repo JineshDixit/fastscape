@@ -12,6 +12,7 @@ import { initRefreshTokenModel, RefreshToken } from './refreshToken.model';
 import { initChauffeurModel, Chauffeur } from './chauffeur.model';
 import { initChauffeurReviewModel, ChauffeurReview } from './chauffeurReview.model';
 import { initLocationModel, Location } from './location.model';
+import { initWebhookEventModel, WebhookEvent } from './webhookEvent.model';
 
 let sequelize: Sequelize;
 
@@ -55,6 +56,7 @@ const initPostgres_DB = async (): Promise<void> => {
   initChauffeurModel(sequelize);
   initChauffeurReviewModel(sequelize);
   initLocationModel(sequelize);
+  initWebhookEventModel(sequelize);
 
   //Associations
   User.hasOne(UserIdentityDocument, { foreignKey: 'userId', as: 'identityDocument' });
@@ -118,4 +120,5 @@ export {
   Chauffeur,
   ChauffeurReview,
   Location,
+  WebhookEvent,
 };

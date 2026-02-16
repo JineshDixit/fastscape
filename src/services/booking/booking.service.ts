@@ -7,6 +7,8 @@ import { buildDateConflictConditions, BOOKING_ATTRIBUTES, VEHICLE_LIST_ATTRIBUTE
 import { dbEnums } from '../../common/enum/dbEnums';
 import { releaseChauffeurOnBookingEnd } from './chauffeurAssignment.service';
 import Logger from '../../utils/logger';
+import { sendBookingCancellation } from '../../utils/email.utils';
+import { paymentConfig } from '../../config/payment/paymentConfig';
 
 // Chauffeur attributes for booking responses
 const CHAUFFEUR_ATTRIBUTES = ['id', 'fullName', 'phone', 'rating', 'totalTrips', 'experienceLevel', 'languages'];
@@ -110,8 +112,8 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
       throw createError('Vehicle is already booked for the selected dates', 409);
     }
 
-    // Set expiration to 10 minutes from now
-    const expiresAt = new Date(now.getTime() + 10 * 60000);
+    // Set expiration using config
+    const expiresAt = new Date(now.getTime() + paymentConfig.bookingExpirationMinutes * 60000);
 
     // Create booking within transaction
     const booking = await Booking.create(
@@ -483,6 +485,11 @@ export const cancelBooking = async (bookingId: string, userId: string): Promise<
     // 'CHAUFFEUR'
     await releaseChauffeurOnBookingEnd(bookingId);
   }
+
+  // Send cancellation email (non-blocking)
+  sendBookingCancellation(bookingId).catch((error) => {
+    Logger.error('Failed to send booking cancellation email', { bookingId, error });
+  });
 
   Logger.info('Booking cancelled', { bookingId, userId });
 };

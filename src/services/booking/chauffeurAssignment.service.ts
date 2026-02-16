@@ -3,6 +3,8 @@ import { autoAssignChauffeur } from '../chauffeur/chauffeur.service';
 import { dbEnums } from '../../common/enum/dbEnums';
 import Logger from '../../utils/logger';
 import { Op } from 'sequelize';
+import { sendChauffeurAssignment } from '../../utils/email.utils';
+import { paymentConfig } from '../../config/payment/paymentConfig';
 
 /**
  * Automatic chauffeur assignment service
@@ -46,10 +48,8 @@ export const assignChauffeurToBooking = async (
 }> => {
   const transaction = await sequelize.transaction();
 
-  console.log('>>> ANTIGRAVITY_DEBUG: assignChauffeurToBooking called for', bookingId);
   Logger.info('Assigning chauffeur to booking', {
     bookingId,
-    transaction,
   });
 
   try {
@@ -98,14 +98,14 @@ export const assignChauffeurToBooking = async (
       endDatetime: booking.endDatetime,
     });
 
-    // Attempt to assign chauffeur
+    // Attempt to assign chauffeur using config values
     const chauffeurAssignment = await autoAssignChauffeur(
       bookingId,
       {
         vehicleType: (booking as any).vehicle?.bodyType,
-        minRating: 0.0, // Relaxed from 4.0
-        maxHourlyRate: 2000,
-        isVerified: false, // Don't require verification for auto-assignment in this flow
+        minRating: paymentConfig.minChauffeurRating,
+        maxHourlyRate: paymentConfig.maxChauffeurHourlyRate,
+        isVerified: paymentConfig.requireVerifiedChauffeurs,
       },
       transaction,
     );
@@ -118,6 +118,11 @@ export const assignChauffeurToBooking = async (
         chauffeurId: chauffeurAssignment.chauffeur.id,
         chauffeurName: chauffeurAssignment.chauffeur.fullName,
         chauffeurRating: chauffeurAssignment.chauffeur.rating,
+      });
+
+      // Send chauffeur assignment email (non-blocking)
+      sendChauffeurAssignment(bookingId).catch((error) => {
+        Logger.error('Failed to send chauffeur assignment email', { bookingId, error });
       });
 
       return {
@@ -140,11 +145,10 @@ export const assignChauffeurToBooking = async (
   } catch (error: any) {
     if (transaction) await transaction.rollback();
 
-    console.error('>>> ANTIGRAVITY_ERROR: assignChauffeurToBooking exception:', error);
     Logger.error('Failed to assign chauffeur to booking - Exception caught', {
       bookingId,
       error: error?.message || 'Unknown error',
-      stack: error?.stack,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
     });
 
     return {
@@ -247,7 +251,6 @@ export const triggerChauffeurAssignmentOnPayment = async (
   paymentType: 'DEPOSIT' | 'BALANCE' | 'FULL',
 ): Promise<void> => {
   try {
-    console.log('>>> ANTIGRAVITY_DEBUG: triggerChauffeurAssignmentOnPayment called for', bookingId);
     Logger.info('Triggering chauffeur assignment on payment completion', {
       bookingId,
       paymentType,
@@ -270,12 +273,11 @@ export const triggerChauffeurAssignmentOnPayment = async (
       });
     }
   } catch (error: any) {
-    console.error('>>> ANTIGRAVITY_ERROR: triggerChauffeurAssignmentOnPayment exception:', error);
     Logger.error('Error triggering chauffeur assignment on payment - Exception caught', {
       bookingId,
       paymentType,
       error: error?.message || 'Unknown error',
-      stack: error?.stack,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
     });
   }
 };

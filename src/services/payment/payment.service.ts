@@ -1,13 +1,23 @@
-import { DelayChargeCalculation, PaymentCalculation } from '../../common/types/paymentTypes';
+import { DelayChargeCalculation } from '../../common/types/paymentTypes';
 import { Booking, BookingFinancial, Payment, Vehicle, sequelize } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { validateRequiredFields, normalizeBookingDates } from '../../utils/validation.utils';
 import { buildDateConflictConditions } from '../../utils/database.utils';
 import { stripe } from './stripe.service';
 import { triggerChauffeurAssignmentOnPayment } from '../booking/chauffeurAssignment.service';
 import { Op } from 'sequelize';
 import { dbEnums } from '../../common/enum/dbEnums';
 import Logger from '../../utils/logger';
+import { sendBookingConfirmation, sendPaymentConfirmation } from '../../utils/email.utils';
+import { paymentConfig } from '../../config/payment/paymentConfig';
+import {
+  roundDecimal,
+  addDecimal,
+  subtractDecimal,
+  multiplyDecimal,
+  isGreaterOrEqualDecimal,
+  calculatePercentage,
+  toCents,
+} from '../../utils/decimal.utils';
 
 export interface ExternalStripeData {
   amountReceived: number; // in final currency unit (e.g. 100.50)
@@ -17,10 +27,6 @@ export interface ExternalStripeData {
   gatewayFee?: number;
   metadata?: Record<string, any>;
 }
-
-const PLATFORM_CHARGE_RATE = 5.0; // 5% platform fee
-const GATEWAY_FEE_PERCENT = 2.9; // Stripe example
-const GATEWAY_FEE_FIXED = 0.3; // Stripe example 30 cents
 
 /**
  * Calculate payment breakdown for a booking
@@ -75,18 +81,18 @@ export const calculatePaymentBreakdown = async (bookingId: string, delayHours: n
 
   // Delay charge calculation
   const delayChargeRate = vehicle.delayChargePerHour || 0;
-  const delayChargeAmount = delayHours > 0 ? delayHours * delayChargeRate : 0;
+  const delayChargeAmount = delayHours > 0 ? multiplyDecimal(delayHours, delayChargeRate) : 0;
 
-  // Tax calculation (example: 10% tax)
-  const taxRate = 0.1;
+  // Tax calculation using config
+  const taxRate = paymentConfig.taxRate;
   // Platform charge calculation
-  const platformChargeRate = existingFinancial?.platformChargeRate || PLATFORM_CHARGE_RATE;
-  const platformChargeAmount = existingFinancial?.platformChargeAmount || (baseAmount * platformChargeRate) / 100;
+  const platformChargeRate = existingFinancial?.platformChargeRate || paymentConfig.platformChargeRate;
+  const platformChargeAmount = existingFinancial?.platformChargeAmount || calculatePercentage(baseAmount, platformChargeRate);
 
-  const subtotal = baseAmount + delayChargeAmount + platformChargeAmount;
-  const taxAmount = existingFinancial?.taxAmount || subtotal * taxRate;
+  const subtotal = addDecimal(addDecimal(baseAmount, delayChargeAmount), platformChargeAmount);
+  const taxAmount = existingFinancial?.taxAmount || multiplyDecimal(subtotal, taxRate);
 
-  const totalAmount = subtotal + taxAmount;
+  const totalAmount = addDecimal(subtotal, taxAmount);
 
   // Return in frontend-compatible format (strings)
   const result = {
@@ -261,7 +267,10 @@ export const processDepositPayment = async (
       effectiveStripeData?.gatewayFee !== undefined
         ? effectiveStripeData.gatewayFee
         : paymentMethod === 'ONLINE'
-          ? (finalAmount * GATEWAY_FEE_PERCENT) / 100 + GATEWAY_FEE_FIXED
+          ? addDecimal(
+              calculatePercentage(finalAmount, paymentConfig.gatewayFeePercent),
+              paymentConfig.gatewayFeeFixed,
+            )
           : 0;
 
     // Determine payment type from metadata or override
@@ -289,8 +298,8 @@ export const processDepositPayment = async (
 
     // Update financial record if payment is completed
     if (paymentMethod === 'ONLINE') {
-      const newPaidAmount = Number(financial.paidAmount) + finalAmount;
-      const newRemainingAmount = Math.max(0, calculation.totalAmount - newPaidAmount);
+      const newPaidAmount = addDecimal(Number(financial.paidAmount), finalAmount);
+      const newRemainingAmount = Math.max(0, subtractDecimal(calculation.totalAmount, newPaidAmount));
 
       await financial.update(
         {
@@ -302,7 +311,11 @@ export const processDepositPayment = async (
 
       // Update booking status and payment status
       // Dynamically determine payment status: if paid >= total, it's PAID, else PARTIALLY_PAID
-      const isFullyPaid = newPaidAmount >= calculation.totalAmount - 0.01; // Small delta for float comparison
+      const isFullyPaid = isGreaterOrEqualDecimal(
+        newPaidAmount,
+        calculation.totalAmount,
+        paymentConfig.comparisonDelta,
+      );
       const bookingUpdates: any = {
         paymentStatus: isFullyPaid ? dbEnums.PAYMENT_STATUS[2] : dbEnums.PAYMENT_STATUS[1], // 'PAID' or 'PARTIALLY_PAID'
         paymentMethod,
@@ -318,6 +331,24 @@ export const processDepositPayment = async (
       await booking.update(bookingUpdates, { transaction });
 
       Logger.info('Deposit processed successfully and booking confirmed', { bookingId, amount: finalAmount });
+
+      // Send booking confirmation email if booking was just confirmed (non-blocking)
+      if (oldBookingState.bookingStatus === dbEnums.BOOKING_STATUS[0] && bookingUpdates.bookingStatus === dbEnums.BOOKING_STATUS[1]) {
+        sendBookingConfirmation(bookingId).catch((error) => {
+          Logger.error('Failed to send booking confirmation email', { bookingId, error });
+        });
+      }
+
+      // Send payment confirmation email (non-blocking)
+      sendPaymentConfirmation(
+        bookingId,
+        paymentTypeEnum === dbEnums.PAYMENT_TYPE[4] ? 'Full Payment' : 'Deposit',
+        finalAmount.toString(),
+        finalCurrency,
+        paymentMethod
+      ).catch((error) => {
+        Logger.error('Failed to send payment confirmation email', { bookingId, error });
+      });
     } else {
       Logger.info('Deposit payment initiated (manual)', { bookingId, method: paymentMethod });
     }
@@ -332,8 +363,12 @@ export const processDepositPayment = async (
         oldBookingState.bookingStatus === dbEnums.BOOKING_STATUS[0] &&
         booking.bookingStatus === dbEnums.BOOKING_STATUS[1];
 
-      // Small delta for float comparison (same as in logic above)
-      const isFullyPaid = Number(financial.paidAmount) >= calculation.totalAmount - 0.01;
+      // Use safe decimal comparison
+      const isFullyPaid = isGreaterOrEqualDecimal(
+        Number(financial.paidAmount),
+        calculation.totalAmount,
+        paymentConfig.comparisonDelta,
+      );
 
       if (isFullyPaid || isInitialConfirmation) {
         // Don't wait for assignment to complete - trigger asynchronously
@@ -413,7 +448,10 @@ export const processBalancePayment = async (
       stripeData?.gatewayFee !== undefined
         ? stripeData.gatewayFee
         : paymentMethod === 'ONLINE'
-          ? (finalAmount * GATEWAY_FEE_PERCENT) / 100 + GATEWAY_FEE_FIXED
+          ? addDecimal(
+              calculatePercentage(finalAmount, paymentConfig.gatewayFeePercent),
+              paymentConfig.gatewayFeeFixed,
+            )
           : 0;
 
     // Create balance payment record
@@ -438,10 +476,10 @@ export const processBalancePayment = async (
 
     // Update financial record if payment is completed
     if (paymentMethod === 'ONLINE') {
-      const newPaidAmount = Number(financial.paidAmount) + balanceAmount;
+      const newPaidAmount = addDecimal(Number(financial.paidAmount), balanceAmount);
       await financial.update(
         {
-          paidAmount: newPaidAmount,
+          paidAmount: roundDecimal(newPaidAmount),
           remainingAmount: 0,
         },
         { transaction },
@@ -456,6 +494,17 @@ export const processBalancePayment = async (
       );
 
       Logger.info('Balance payment processed successfully', { bookingId, amount: balanceAmount });
+
+      // Send payment confirmation email (non-blocking)
+      sendPaymentConfirmation(
+        bookingId,
+        'Balance Payment',
+        balanceAmount.toString(),
+        finalCurrency,
+        paymentMethod
+      ).catch((error) => {
+        Logger.error('Failed to send payment confirmation email', { bookingId, error });
+      });
     } else {
       Logger.info('Balance payment initiated (manual)', { bookingId, method: paymentMethod });
     }
@@ -712,13 +761,13 @@ export const markPaymentCompleted = async (paymentId: string, stripePaymentInten
     });
 
     if (financial) {
-      const newPaidAmount = Number(financial.paidAmount) + Number(payment.amount);
-      const newRemainingAmount = Math.max(0, Number(financial.totalAmount) - newPaidAmount);
+      const newPaidAmount = addDecimal(Number(financial.paidAmount), Number(payment.amount));
+      const newRemainingAmount = Math.max(0, subtractDecimal(Number(financial.totalAmount), newPaidAmount));
 
       await financial.update(
         {
-          paidAmount: newPaidAmount,
-          remainingAmount: newRemainingAmount,
+          paidAmount: roundDecimal(newPaidAmount),
+          remainingAmount: roundDecimal(newRemainingAmount),
         },
         { transaction },
       );
@@ -726,7 +775,11 @@ export const markPaymentCompleted = async (paymentId: string, stripePaymentInten
       // Update booking payment status
       const booking = await Booking.findByPk(payment.bookingId, { transaction, lock: true });
       if (booking) {
-        const isFullyPaid = newPaidAmount >= Number(financial.totalAmount) - 0.01;
+        const isFullyPaid = isGreaterOrEqualDecimal(
+          newPaidAmount,
+          Number(financial.totalAmount),
+          paymentConfig.comparisonDelta,
+        );
         await booking.update(
           {
             paymentStatus: isFullyPaid ? dbEnums.PAYMENT_STATUS[2] : dbEnums.PAYMENT_STATUS[1], // 'PAID' or 'PARTIALLY_PAID'
@@ -803,10 +856,10 @@ export const initiatePaymentIntent = async (
       ? calculation.depositAmount
       : paymentType === 'FULL'
         ? calculation.totalAmount
-        : calculation.balanceAmount + calculation.delayChargeAmount;
+        : addDecimal(calculation.balanceAmount, calculation.delayChargeAmount || 0);
 
   return await stripe.createPaymentIntent({
-    amount: Math.round(amount * 100), // Stripe expects cents
+    amount: toCents(amount), // Convert to cents using utility
     currency: calculation.currency.toLowerCase(),
     metadata: {
       bookingId,

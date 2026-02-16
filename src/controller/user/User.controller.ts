@@ -125,47 +125,12 @@ class UserController extends BaseController {
   });
 
   /**
-   * Check booking eligibility
+   * Check booking eligibility (comprehensive check with verification config)
    */
   checkBookingEligibility = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
-    const bookingType = req.query.bookingType as string || 'SELF_DRIVE';
-    
-    const user = await userService.getUserProfile(userId);
-    const identityDoc = await UserIdentityDocument.findOne({ where: { userId } });
-    const drivingInfo = await UserDrivingInfo.findOne({ where: { userId } });
-    
-    const missingRequirements: string[] = [];
-    
-    // Check basic user info
-    if (!user.firstName || !user.lastName || !user.phone) {
-      missingRequirements.push('Basic profile information');
-    }
-    
-    // Check driving info
-    if (!drivingInfo || !drivingInfo.licenseIssuingCountry || !drivingInfo.licenseExpiryDate) {
-      missingRequirements.push('Driving license information');
-    }
-    
-    // Check documents
-    const requiredDocuments = ['driverLicenseFront', 'driverLicenseBack', 'passportPhoto', 'selfieWithLicense'];
-    const missingDocs = requiredDocuments.filter(doc => !identityDoc || !(identityDoc as any)[doc]);
-    if (missingDocs.length > 0) {
-      missingRequirements.push('Identity documents');
-    }
-    
-    // Check verification status
-    if (identityDoc?.verificationStatus !== 'VERIFIED') {
-      missingRequirements.push('Document verification');
-    }
-    
-    const eligible = missingRequirements.length === 0;
-    
-    sendSuccess(res, 'Booking eligibility checked', {
-      eligible,
-      reason: eligible ? 'All requirements met' : 'Missing requirements',
-      missingRequirements,
-    });
+    const eligibility = await userService.checkBookingEligibility(userId);
+    sendSuccess(res, 'Booking eligibility checked', eligibility);
   });
 }
 

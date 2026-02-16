@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { stripe } from '../../services/payment/stripe.service';
 import * as paymentService from '../../services/payment/payment.service';
 import { ExternalStripeData } from '../../services/payment/payment.service';
-import { sequelize } from '../../models';
+import { sequelize, WebhookEvent } from '../../models';
 import Logger from '../../utils/logger';
 import { BaseController } from '../../utils/controller.utils';
 
@@ -29,6 +29,33 @@ class PaymentWebhookController extends BaseController {
     const transaction = await sequelize.transaction();
 
     try {
+      // Check for duplicate webhook event (idempotency)
+      const [webhookRecord, created] = await WebhookEvent.findOrCreate({
+        where: { eventId: event.id },
+        defaults: {
+          eventId: event.id,
+          eventType: event.type,
+          provider: 'stripe',
+          payload: event as any,
+          processed: false,
+          retryCount: 0,
+        },
+        transaction,
+      });
+
+      if (!created && webhookRecord.processed) {
+        Logger.info('Duplicate webhook event - already processed', { eventId: event.id });
+        await transaction.commit();
+        res.json({ received: true, eventId: event.id, duplicate: true });
+        return;
+      }
+
+      // Increment retry count
+      await webhookRecord.update(
+        { retryCount: webhookRecord.retryCount + 1 },
+        { transaction },
+      );
+
       // Handle the event
       switch (event.type) {
         case 'payment_intent.succeeded':
@@ -87,13 +114,39 @@ class PaymentWebhookController extends BaseController {
           Logger.info(`Unhandled event type ${event.type}`);
       }
 
+      // Mark webhook as processed
+      await webhookRecord.update(
+        {
+          processed: true,
+          processedAt: new Date(),
+          error: null,
+        },
+        { transaction },
+      );
+
       await transaction.commit();
       Logger.info('Webhook processed successfully', { eventType: event.type, eventId: event.id });
 
     } catch (error) {
       await transaction.rollback();
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Try to update webhook event with error (outside transaction)
+      try {
+        await WebhookEvent.update(
+          {
+            error: errorMessage,
+            processed: false,
+          },
+          { where: { eventId: event.id } },
+        );
+      } catch (updateError) {
+        Logger.error('Failed to update webhook event error', { eventId: event.id, updateError });
+      }
+      
       Logger.error('Webhook processing failed', { 
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
         eventType: event.type,
         eventId: event.id 
       });
