@@ -106,14 +106,28 @@ export const useDocument = (): UseDocumentReturn => {
         setIsLoading(true);
         setError(null);
 
-        const response = await documentService.checkBookingEligibility(bookingType);
+        // Use the new comprehensive eligibility check from user service
+        const userService = await import('../services/user');
+        const response = await userService.userService.checkBookingEligibility();
 
         if (response.success && response.data) {
-          setEligibilityResult(response.data);
+          // Map the response to EligibilityResult format
+          const eligibilityResult: EligibilityResult = {
+            eligible: response.data.eligible,
+            reason: response.data.reason,
+            missingRequirements: response.data.missingDocuments || [],
+          };
+          setEligibilityResult(eligibilityResult);
+          
+          return {
+            success: true,
+            message: response.message,
+            data: eligibilityResult,
+          };
         } else {
           setError(response.message || 'Failed to check booking eligibility');
+          return response as any;
         }
-        return response;
       } catch (err: any) {
         const errorMessage = err.message || 'An error occurred while checking booking eligibility';
         setError(errorMessage);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, FileText, Camera, ShieldCheck, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, X, FileText, Camera, ShieldCheck, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDocument } from '@/app/axios/hooks';
 import type { UserProfile } from '@/common/interfaces';
@@ -28,6 +28,7 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
   const { uploadDocuments, isLoading: documentLoading } = useDocument();
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   const documentFields = [
     {
@@ -62,22 +63,54 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
     },
   ] as const;
 
-  const handleFileChange = (fieldId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (fieldId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(tCommon('fileSizeTooLarge'));
         return;
       }
-      const updatedFiles = { ...selectedFiles, [fieldId]: file };
-      setSelectedFiles(updatedFiles);
-      onChange(updatedFiles);
 
+      // Show preview immediately
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviews((prev) => ({ ...prev, [fieldId]: reader.result as string }));
       };
       reader.readAsDataURL(file);
+
+      // Upload immediately
+      setIsUploading(true);
+      try {
+        // Pass file as object property, not FormData
+        const uploadData = { [fieldId]: file };
+        
+        const response = await uploadDocuments(uploadData as any);
+        
+        if (response) {
+          toast.success(`Document uploaded successfully`);
+          const updatedFiles = { ...selectedFiles, [fieldId]: file };
+          setSelectedFiles(updatedFiles);
+          onChange(updatedFiles);
+        } else {
+          toast.error('Upload failed');
+          // Remove preview on failure
+          setPreviews((prev) => {
+            const newPreviews = { ...prev };
+            delete newPreviews[fieldId];
+            return newPreviews;
+          });
+        }
+      } catch (error: any) {
+        toast.error(error.message || 'Upload failed');
+        // Remove preview on failure
+        setPreviews((prev) => {
+          const newPreviews = { ...prev };
+          delete newPreviews[fieldId];
+          return newPreviews;
+        });
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -98,6 +131,16 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
 
   return (
     <div className="space-y-6">
+      {isUploading && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Uploading document...
+            </p>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {documentFields.map((field) => {
           const preview = previews[field.id] || (initialData as any)?.[field.id];

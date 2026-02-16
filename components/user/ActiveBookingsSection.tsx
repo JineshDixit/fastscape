@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { BookingCard } from '../booking/BookingCard';
 import { BookingDetails } from '@/components/booking';
 
 export const ActiveBookingsSection: React.FC = () => {
+  const t = useTranslations('activeBookings');
   const { upcomingBookings, activeBookings, fetchUpcomingBookings, fetchActiveBookings, isLoading, error } =
     useBooking();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -30,7 +32,7 @@ export const ActiveBookingsSection: React.FC = () => {
           onClick={() => setSelectedBooking(null)}
           className="rounded-full font-semibold"
         >
-          ← Back to Active Bookings
+          ← {t('backToActiveBookings')}
         </Button>
         <BookingDetails bookingId={selectedBooking.id} onClose={() => setSelectedBooking(null)} />
       </div>
@@ -57,7 +59,7 @@ export const ActiveBookingsSection: React.FC = () => {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Failed to load bookings: {error}</AlertDescription>
+        <AlertDescription>{t('failedToLoad')}: {error}</AlertDescription>
       </Alert>
     );
   }
@@ -71,11 +73,11 @@ export const ActiveBookingsSection: React.FC = () => {
           <div className="bg-muted mb-4 rounded-full p-6">
             <Car className="text-muted-foreground h-12 w-12" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold">No Active Bookings</h3>
+          <h3 className="mb-2 text-lg font-semibold">{t('noActiveBookings')}</h3>
           <p className="text-muted-foreground mb-6 text-center">
-            You don't have any active or upcoming bookings at the moment.
+            {t('noActiveBookingsDesc')}
           </p>
-          <Button className="rounded-full">Browse Vehicles</Button>
+          <Button className="rounded-full">{t('browseVehicles')}</Button>
         </CardContent>
       </Card>
     );
@@ -88,7 +90,7 @@ export const ActiveBookingsSection: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 px-1">
             <div className="bg-primary h-2 w-2 animate-pulse rounded-full" />
-            <h2 className="text-lg font-bold tracking-tight">Currently Active</h2>
+            <h2 className="text-lg font-bold tracking-tight">{t('currentlyActive')}</h2>
           </div>
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {activeBookings.map((booking) => (
@@ -103,7 +105,7 @@ export const ActiveBookingsSection: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 px-1">
             <div className="bg-muted-foreground/30 h-2 w-2 rounded-full" />
-            <h2 className="text-lg font-bold tracking-tight">Upcoming Bookings</h2>
+            <h2 className="text-lg font-bold tracking-tight">{t('upcomingBookings')}</h2>
           </div>
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {upcomingBookings.map((booking) => (

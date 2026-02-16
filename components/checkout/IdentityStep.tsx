@@ -37,11 +37,17 @@ interface DrivingInfoForm {
 const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading }) => {
   const t = useTranslations('identityStep');
   const { user } = useAuth();
-  const { updateProfile } = useUser();
+  const { updateProfile, checkEligibility } = useUser();
   const [authView, setAuthView] = useState<'NONE' | 'LOGIN' | 'REGISTER' | 'FORGOT_PASSWORD'>('NONE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [eligibilityInfo, setEligibilityInfo] = useState<{
+    eligible: boolean;
+    reason?: string;
+    verificationStatus?: string;
+    restrictions?: any;
+  } | null>(null);
 
   // Driving info form state
   const [drivingInfo, setDrivingInfo] = useState<DrivingInfoForm>({
@@ -69,6 +75,20 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       });
     }
   }, [profile, hasDrivingInfo]);
+
+  // Check eligibility when user is authenticated
+  useEffect(() => {
+    const checkUserEligibility = async () => {
+      if (user && profile) {
+        const result = await checkEligibility();
+        if (result) {
+          setEligibilityInfo(result);
+        }
+      }
+    };
+    
+    checkUserEligibility();
+  }, [user, profile, checkEligibility]);
 
   const handleDrivingInfoChange = (field: keyof DrivingInfoForm, value: string) => {
     setDrivingInfo((prev) => ({ ...prev, [field]: value }));
@@ -111,8 +131,36 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       return;
     }
 
-    // If driving info already exists, proceed
+    // If driving info already exists, check eligibility and proceed
     if (hasDrivingInfo) {
+      const eligibility = await checkEligibility();
+      
+      if (eligibility) {
+        setEligibilityInfo(eligibility);
+        
+        if (eligibility.eligible) {
+          // User is fully eligible
+          onNext('');
+          return;
+        } else if (eligibility.verificationStatus === 'PENDING') {
+          // Documents are pending - allow to proceed with warning
+          setSuccess('Your documents are pending verification. You can proceed with booking, but verification is required before vehicle pickup.');
+          setTimeout(() => {
+            onNext('');
+          }, 2000);
+          return;
+        } else if (eligibility.missingDocuments && eligibility.missingDocuments.length > 0) {
+          // Missing documents - show error
+          setError(`Please upload the following documents: ${eligibility.missingDocuments.join(', ')}`);
+          return;
+        } else {
+          // Other reasons
+          setError(eligibility.reason || 'Unable to proceed with booking');
+          return;
+        }
+      }
+      
+      // Fallback: proceed anyway
       onNext('');
       return;
     }
@@ -134,6 +182,12 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
 
       await updateProfile(updateData);
       setSuccess('Driving information saved successfully');
+      
+      // Check eligibility after saving
+      const eligibility = await checkEligibility();
+      if (eligibility) {
+        setEligibilityInfo(eligibility);
+      }
       
       // Proceed to next step after a brief delay
       setTimeout(() => {
@@ -203,6 +257,26 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
         <Alert className="rounded-xl border-green-500/20 bg-green-500/10">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertDescription className="ml-2 text-green-600">{success}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Eligibility Status Info */}
+      {eligibilityInfo && !eligibilityInfo.eligible && eligibilityInfo.verificationStatus === 'PENDING' && (
+        <Alert className="rounded-xl border-yellow-500/20 bg-yellow-500/10">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="ml-2 text-yellow-600">
+            <strong>Documents Pending Verification:</strong> Your documents have been uploaded and are awaiting admin verification. 
+            You can proceed with booking, but verification must be completed before vehicle pickup (usually within 48 hours).
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {eligibilityInfo && eligibilityInfo.restrictions && (
+        <Alert className="rounded-xl border-blue-500/20 bg-blue-500/10">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="ml-2 text-blue-600">
+            <strong>Booking Restrictions:</strong> Until your documents are verified, bookings are limited to ${eligibilityInfo.restrictions.maxBookingValue} and require upfront deposit payment.
+          </AlertDescription>
         </Alert>
       )}
 

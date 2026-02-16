@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useUser } from '@/app/axios/hooks/useUser';
 import { useBooking } from '@/app/axios';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +33,8 @@ import { ProfileEditModal } from './ProfileEditModal';
 import { ActiveBookingsSection } from './ActiveBookingsSection';
 
 export const UserProfilePage: React.FC = () => {
+  const t = useTranslations('profile');
+  const tNav = useTranslations('navigation');
   const { profile, isLoading: profileLoading, error: profileError, fetchProfile } = useUser();
   const { bookingStats, fetchBookingStats, isLoading: statsLoading } = useBooking();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -56,28 +59,28 @@ export const UserProfilePage: React.FC = () => {
         return (
           <Badge className="bg-primary hover:bg-primary/90">
             <CheckCircle2 className="mr-1 h-3 w-3" />
-            Verified
+            {t('verified')}
           </Badge>
         );
       case 'PENDING':
         return (
           <Badge variant="secondary">
             <Clock className="mr-1 h-3 w-3" />
-            Pending
+            {t('pending')}
           </Badge>
         );
       case 'REJECTED':
         return (
           <Badge variant="destructive">
             <XCircle className="mr-1 h-3 w-3" />
-            Rejected
+            {t('rejected')}
           </Badge>
         );
       default:
         return (
           <Badge variant="outline">
             <AlertCircle className="mr-1 h-3 w-3" />
-            Not Submitted
+            {t('notSubmitted')}
           </Badge>
         );
     }
@@ -102,7 +105,7 @@ export const UserProfilePage: React.FC = () => {
     return (
       <div className="container mx-auto max-w-7xl p-4 sm:p-6">
         <Alert variant="destructive">
-          <AlertDescription>Failed to load profile. Please try again.</AlertDescription>
+          <AlertDescription>{t('failedToLoadProfile')}</AlertDescription>
         </Alert>
       </div>
     );
@@ -142,7 +145,7 @@ export const UserProfilePage: React.FC = () => {
             </div>
             <Button onClick={() => setIsEditModalOpen(true)} className="rounded-full">
               <Edit className="mr-2 h-4 w-4" />
-              Edit Profile
+              {t('editProfile')}
             </Button>
           </div>
         </CardContent>
@@ -157,7 +160,7 @@ export const UserProfilePage: React.FC = () => {
                 <Car className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Bookings</p>
+                <p className="text-sm text-muted-foreground">{t('totalBookings')}</p>
                 <p className="text-2xl font-bold">{bookingStats.total}</p>
               </div>
             </CardContent>
@@ -169,7 +172,7 @@ export const UserProfilePage: React.FC = () => {
                 <CheckCircle2 className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-sm text-muted-foreground">{t('active')}</p>
                 <p className="text-2xl font-bold">{bookingStats.active}</p>
               </div>
             </CardContent>
@@ -181,7 +184,7 @@ export const UserProfilePage: React.FC = () => {
                 <TrendingUp className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
+                <p className="text-sm text-muted-foreground">{t('completed')}</p>
                 <p className="text-2xl font-bold">{bookingStats.completed}</p>
               </div>
             </CardContent>
@@ -193,7 +196,7 @@ export const UserProfilePage: React.FC = () => {
                 <Clock className="h-6 w-6 text-secondary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm text-muted-foreground">{t('pending')}</p>
                 <p className="text-2xl font-bold">{bookingStats.pending}</p>
               </div>
             </CardContent>
@@ -205,13 +208,13 @@ export const UserProfilePage: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 rounded-lg">
           <TabsTrigger value="overview" className="rounded-md">
-            Overview
+            {t('overview')}
           </TabsTrigger>
           <TabsTrigger value="active" className="rounded-md">
-            Active Bookings
+            {tNav('activeBookings')}
           </TabsTrigger>
           <TabsTrigger value="history" className="rounded-md">
-            History
+            {tNav('bookingHistory')}
           </TabsTrigger>
         </TabsList>
 
@@ -222,35 +225,35 @@ export const UserProfilePage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Personal Information
+                  {t('personalInformation')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Full Name</p>
+                    <p className="text-sm text-muted-foreground">{t('fullName')}</p>
                     <p className="font-medium">
                       {profile.firstName} {profile.lastName}
                     </p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">Email Address</p>
+                    <p className="text-sm text-muted-foreground">{t('emailAddress')}</p>
                     <p className="font-medium">{profile.email}</p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">Phone Number</p>
+                    <p className="text-sm text-muted-foreground">{t('phoneNumber')}</p>
                     <p className="font-medium">{profile.phone}</p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p className="text-sm text-muted-foreground">{t('location')}</p>
                     <div className="flex items-start gap-2">
                       <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
                       <p className="font-medium">
                         {[profile.city, profile.state, profile.country].filter(Boolean).join(', ') ||
-                          'Not provided'}
+                          t('notProvided')}
                       </p>
                     </div>
                   </div>
@@ -263,34 +266,34 @@ export const UserProfilePage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Driving Information
+                  {t('drivingInformation')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">License Issuing Country</p>
-                    <p className="font-medium">{profile.licenseIssuingCountry || 'Not provided'}</p>
+                    <p className="text-sm text-gray-600">{t('licenseIssuingCountry')}</p>
+                    <p className="font-medium">{profile.licenseIssuingCountry || t('notProvided')}</p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-gray-600">License Expiry Date</p>
+                    <p className="text-sm text-gray-600">{t('licenseExpiryDate')}</p>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-gray-500" />
                       <p className="font-medium">
                         {profile.licenseExpiryDate
                           ? new Date(profile.licenseExpiryDate).toLocaleDateString()
-                          : 'Not provided'}
+                          : t('notProvided')}
                       </p>
                     </div>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-gray-600">Driving Experience</p>
+                    <p className="text-sm text-gray-600">{t('drivingExperience')}</p>
                     <p className="font-medium">
                       {profile.drivingExperienceYears
-                        ? `${profile.drivingExperienceYears} years`
-                        : 'Not provided'}
+                        ? `${profile.drivingExperienceYears} ${t('years')}`
+                        : t('notProvided')}
                     </p>
                   </div>
                 </div>
@@ -302,9 +305,9 @@ export const UserProfilePage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Document Verification
+                  {t('documentVerification')}
                 </CardTitle>
-                <CardDescription>Upload and verify your identity documents</CardDescription>
+                <CardDescription>{t('uploadDocuments')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -312,8 +315,8 @@ export const UserProfilePage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">Driver License</p>
-                        <p className="text-xs text-muted-foreground">Front & Back</p>
+                        <p className="text-sm font-medium">{t('driverLicense')}</p>
+                        <p className="text-xs text-muted-foreground">{t('frontAndBack')}</p>
                       </div>
                     </div>
                     {profile.driverLicenseFront && profile.driverLicenseBack ? (
@@ -327,8 +330,8 @@ export const UserProfilePage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">Passport Photo</p>
-                        <p className="text-xs text-muted-foreground">Required</p>
+                        <p className="text-sm font-medium">{t('passportPhoto')}</p>
+                        <p className="text-xs text-muted-foreground">{t('required')}</p>
                       </div>
                     </div>
                     {profile.passportPhoto ? (
@@ -342,8 +345,8 @@ export const UserProfilePage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">Selfie w/ License</p>
-                        <p className="text-xs text-muted-foreground">Required</p>
+                        <p className="text-sm font-medium">{t('selfieWithLicense')}</p>
+                        <p className="text-xs text-muted-foreground">{t('required')}</p>
                       </div>
                     </div>
                     {profile.selfieWithLicense ? (
@@ -357,8 +360,8 @@ export const UserProfilePage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">Int'l Permit</p>
-                        <p className="text-xs text-muted-foreground">Optional</p>
+                        <p className="text-sm font-medium">{t('internationalPermit')}</p>
+                        <p className="text-xs text-muted-foreground">{t('optional')}</p>
                       </div>
                     </div>
                     {profile.internationalDrivingPermit ? (
@@ -373,7 +376,7 @@ export const UserProfilePage: React.FC = () => {
                   <Alert className="mt-4">
                     <Clock className="h-4 w-4" />
                     <AlertDescription>
-                      Your documents are being reviewed. This usually takes 24-48 hours.
+                      {t('documentsUnderReview')}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -382,7 +385,7 @@ export const UserProfilePage: React.FC = () => {
                   <Alert variant="destructive" className="mt-4">
                     <XCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Your documents were rejected. Please re-upload clear, valid documents.
+                      {t('documentsRejected')}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -391,7 +394,7 @@ export const UserProfilePage: React.FC = () => {
                   <Alert className="mt-4">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Please upload your documents to complete verification and start booking.
+                      {t('uploadDocuments')}
                     </AlertDescription>
                   </Alert>
                 )}

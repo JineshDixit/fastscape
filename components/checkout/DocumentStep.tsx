@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, Loader2, AlertOctagon, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -14,47 +14,68 @@ interface DocumentStepProps {
   onNext: () => Promise<void>;
   onBack: () => void;
   isLoading?: boolean;
+  onProfileRefresh?: () => Promise<void>;
 }
 
-const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, isLoading }) => {
+const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, isLoading, onProfileRefresh }) => {
   const t = useTranslations('documentStep');
-  const tCheckout = useTranslations('checkout');
   const { checkBookingEligibility, isLoading: documentLoading } = useDocument();
   const { bookingData } = useVehicle();
+  const [localProfile, setLocalProfile] = useState(profile);
+
+  // Update local profile when prop changes
+  React.useEffect(() => {
+    setLocalProfile(profile);
+  }, [profile]);
 
   const handleDocumentsChange = async (files: Record<string, File>) => {
-    // Files are automatically uploaded via the user profile update endpoint
-    // The DocumentUploadForm handles this internally
+    // Files are automatically uploaded via the DocumentUploadForm
+    // After upload, refresh the profile to get updated verification status
+    if (onProfileRefresh) {
+      await onProfileRefresh();
+    }
   };
 
   const handleNext = async () => {
-    // Validate that user is eligible for booking before proceeding
+    // Check eligibility using the new comprehensive endpoint
     try {
       const response = await checkBookingEligibility(bookingData.bookingType);
-      if (response?.success && response.data?.eligible) {
-        await onNext();
+      
+      if (response?.success && response.data) {
+        const { eligible, reason, verificationStatus } = response.data;
+        
+        // Allow proceeding if:
+        // 1. Fully verified and eligible
+        // 2. Documents are pending verification (graceful degradation)
+        if (eligible || verificationStatus === 'PENDING') {
+          await onNext();
+        } else {
+          // Show specific error message
+          throw new Error(reason || 'Document requirements not met');
+        }
       } else {
-        // Error will be shown by the parent component
-        throw new Error(response?.data?.reason || response?.message || 'Document requirements not met');
+        throw new Error(response?.message || 'Unable to verify eligibility');
       }
     } catch (error) {
       throw error; // Let parent handle the error
     }
   };
 
-  const isVerified = profile?.verificationStatus === 'VERIFIED';
-  const isPending = profile?.verificationStatus === 'PENDING';
-  const isRejected = profile?.verificationStatus === 'REJECTED';
+  const isVerified = localProfile?.verificationStatus === 'VERIFIED';
+  const isPending = localProfile?.verificationStatus === 'PENDING';
+  const isRejected = localProfile?.verificationStatus === 'REJECTED';
 
   // Check if required documents are uploaded
   const hasRequiredDocuments = !!(
-    profile?.driverLicenseFront &&
-    profile?.driverLicenseBack &&
-    profile?.passportPhoto &&
-    profile?.selfieWithLicense
+    localProfile?.driverLicenseFront &&
+    localProfile?.driverLicenseBack &&
+    localProfile?.passportPhoto &&
+    localProfile?.selfieWithLicense
   );
 
-  const canProceed = isVerified && hasRequiredDocuments;
+  // Simplified logic: Allow proceeding if documents are uploaded (regardless of verification status)
+  // OR if documents are rejected (to allow re-upload)
+  const canProceed = hasRequiredDocuments || isRejected;
 
   return (
     <div className="space-y-10">
@@ -69,12 +90,60 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
       {/* Document Upload Area */}
       <div className="rounded-3xl border border-gray-100 bg-gray-50/50 p-8 dark:border-gray-800 dark:bg-gray-800/50">
         {isPending && hasRequiredDocuments ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="bg-primary/10 text-primary ring-primary/5 relative mb-6 flex h-24 w-24 items-center justify-center rounded-full ring-8">
-              <Loader2 className="h-10 w-10 animate-spin" />
+          <div className="space-y-6">
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="bg-yellow-500/10 text-yellow-600 ring-yellow-500/5 relative mb-6 flex h-24 w-24 items-center justify-center rounded-full ring-8">
+                <Loader2 className="h-10 w-10 animate-spin" />
+              </div>
+              <h3 className="mb-2 text-xl font-black tracking-tight uppercase italic">{t('verificationPendingMsg')}</h3>
+              <p className="max-w-md text-sm font-medium text-gray-600 dark:text-gray-400">
+                Your documents have been uploaded successfully and are awaiting admin verification. 
+                This usually takes 24-48 hours.
+              </p>
             </div>
-            <h3 className="mb-2 text-xl font-black tracking-tight uppercase italic">{t('verificationPendingMsg')}</h3>
-            <p className="max-w-xs text-sm font-medium text-gray-400">{t('pendingDisclaimer')}</p>
+            
+            {/* Show uploaded documents */}
+            <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-6 dark:border-gray-700">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500">Driver License (Front)</p>
+                <p className="text-sm text-green-600">✓ Uploaded</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500">Driver License (Back)</p>
+                <p className="text-sm text-green-600">✓ Uploaded</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500">Passport Photo</p>
+                <p className="text-sm text-green-600">✓ Uploaded</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500">Selfie with License</p>
+                <p className="text-sm text-green-600">✓ Uploaded</p>
+              </div>
+            </div>
+
+            {/* Info about proceeding */}
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                <strong>Good news!</strong> You can proceed with your booking. Verification must be completed before vehicle pickup.
+              </p>
+            </div>
+          </div>
+        ) : isRejected ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="bg-red-100 text-red-600 ring-red-500/5 relative mb-6 flex h-24 w-24 items-center justify-center rounded-full ring-8">
+              <AlertOctagon className="h-10 w-10" />
+            </div>
+            <h3 className="mb-2 text-xl font-black tracking-tight uppercase italic text-red-600">Documents Rejected</h3>
+            <p className="max-w-xs text-sm font-medium text-gray-600 dark:text-gray-400 mb-6">
+              Your documents were rejected. Please upload valid documents to continue.
+            </p>
+            <DocumentUploadForm
+              initialData={profile}
+              onChange={handleDocumentsChange}
+              onBack={onBack}
+              isLoading={documentLoading}
+            />
           </div>
         ) : (
           <DocumentUploadForm
@@ -91,25 +160,45 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
         <div
           className={cn(
             'flex h-10 w-10 items-center justify-center rounded-full transition-colors',
-            isVerified ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400',
+            isVerified ? 'bg-green-100 text-green-600' : 
+            isPending ? 'bg-yellow-100 text-yellow-600' :
+            isRejected ? 'bg-red-100 text-red-600' :
+            'bg-gray-100 text-gray-400',
           )}
         >
-          {isVerified ? <ShieldCheck className="h-5 w-5" /> : <AlertOctagon className="h-5 w-5" />}
+          {isVerified ? (
+            <ShieldCheck className="h-5 w-5" />
+          ) : isRejected ? (
+            <AlertOctagon className="h-5 w-5" />
+          ) : (
+            <Loader2 className={cn("h-5 w-5", isPending && "animate-spin")} />
+          )}
         </div>
         <div className="flex-1">
           <p className="text-xs font-black tracking-widest text-gray-400 uppercase">{t('status')}</p>
           <p
             className={cn(
               'text-sm font-bold uppercase',
-              isVerified ? 'text-green-600' : 'text-gray-950 dark:text-white',
+              isVerified ? 'text-green-600' : 
+              isPending ? 'text-yellow-600' :
+              isRejected ? 'text-red-600' :
+              'text-gray-950 dark:text-white',
             )}
           >
-            {isVerified ? 'Verified' : isPending ? 'Pending Verification' : 'Awaiting Documents'}
+            {isVerified ? 'Verified' : 
+             isPending ? 'Pending Verification' : 
+             isRejected ? 'Rejected - Reupload Required' :
+             'Awaiting Documents'}
           </p>
         </div>
         {isVerified && (
           <div className="rounded-full bg-green-500/10 px-3 py-1 text-[10px] font-black tracking-widest text-green-600 uppercase">
             Verified
+          </div>
+        )}
+        {isPending && (
+          <div className="rounded-full bg-yellow-500/10 px-3 py-1 text-[10px] font-black tracking-widest text-yellow-600 uppercase">
+            Pending
           </div>
         )}
       </div>
@@ -124,6 +213,7 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
           onClick={handleNext}
           disabled={isLoading || documentLoading || !canProceed}
           className="flex flex-1 items-center justify-center gap-2"
+          title={!canProceed ? (isRejected ? 'Please upload valid documents' : 'Please upload all required documents') : ''}
         >
           {isLoading || documentLoading ? (
             <>
@@ -132,12 +222,19 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
             </>
           ) : (
             <>
-              Continue to Payment
+              {isPending && hasRequiredDocuments ? 'Continue with Pending Verification' : 'Continue to Payment'}
               <ChevronRight className="h-4 w-4" />
             </>
           )}
         </Button>
       </div>
+
+      {/* Helper text */}
+      {isPending && hasRequiredDocuments && (
+        <p className="text-center text-xs text-gray-500">
+          Your booking will be confirmed, but you must complete verification before vehicle pickup.
+        </p>
+      )}
     </div>
   );
 };

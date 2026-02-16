@@ -35,6 +35,13 @@ export interface EligibilityResult {
     eligible: boolean;
     reason?: string;
     missingRequirements: string[];
+    verificationStatus?: string;
+    restrictions?: {
+        maxBookingValue?: number;
+        requireDepositPayment?: boolean;
+        cannotBookPremiumVehicles?: boolean;
+    };
+    missingDocuments?: string[];
 }
 
 export interface DocumentUploadRequest {

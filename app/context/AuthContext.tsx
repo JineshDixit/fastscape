@@ -172,11 +172,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     checkAuth();
 
+    // Track refresh failures to prevent infinite loops
+    let refreshFailureCount = 0;
+    const MAX_REFRESH_FAILURES = 3;
+
     // Listen for storage events from other tabs (token updates)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'auth_new_access_token' && e.newValue) {
         console.log('Detected token refresh in another tab, updating state...');
         fetchCurrentUser();
+        refreshFailureCount = 0; // Reset failure count on successful refresh from other tab
       }
       if (e.key === 'access_token' && !e.newValue) {
         console.log('Detected logout in another tab, clearing state...');
@@ -194,14 +199,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // If token is valid but nearing expiry, or if token is expired but we have a refresh token
       if ((hasValidToken && needsRefresh) || (!hasValidToken && hasRefreshToken)) {
+        // Check if we've exceeded max failures
+        if (refreshFailureCount >= MAX_REFRESH_FAILURES) {
+          console.log('Max refresh failures reached, clearing auth state');
+          clearAuthState();
+          refreshFailureCount = 0;
+          return;
+        }
+
         console.log('Periodic check: Attempting to refresh/recover session...');
-        refreshAuth().catch((err) => {
-          console.error('Periodic refresh/recovery failed:', err);
-          // Only clear state if it's a definitive auth failure (400 or 401)
-          if (err?.response?.status === 401 || err?.response?.status === 400) {
-            clearAuthState();
-          }
-        });
+        refreshAuth()
+          .then(() => {
+            refreshFailureCount = 0; // Reset on success
+          })
+          .catch((err) => {
+            refreshFailureCount++;
+            console.error('Periodic refresh/recovery failed:', err, `(Attempt ${refreshFailureCount}/${MAX_REFRESH_FAILURES})`);
+            // Only clear state if it's a definitive auth failure (400 or 401)
+            if (err?.response?.status === 401 || err?.response?.status === 400) {
+              clearAuthState();
+              refreshFailureCount = 0;
+            }
+          });
+      } else {
+        // Reset failure count when not attempting refresh
+        refreshFailureCount = 0;
       }
     }, 1 * TIME_CONSTANTS.ONE_MINUTE);
 
@@ -224,7 +246,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (response.success && response.data) {
           console.log('Login successful, fetching user data');
           // After successful login, fetch user data from API
-          await fetchCurrentUser();
+          try {
+            await fetchCurrentUser();
+          } catch (fetchError) {
+            console.error('Failed to fetch user after login:', fetchError);
+            // User has valid tokens but couldn't fetch profile
+            // Set a generic error but don't fail the login
+            setError('Login successful but failed to load profile. Please refresh the page.');
+          }
         } else {
           console.log('Login failed:', response.message);
           setError(response.message || 'Login failed');
@@ -253,7 +282,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (response.success && response.data) {
           console.log('Registration successful, fetching user data');
           // After successful registration, fetch user data from API
-          await fetchCurrentUser();
+          try {
+            await fetchCurrentUser();
+          } catch (fetchError) {
+            console.error('Failed to fetch user after registration:', fetchError);
+            // User has valid tokens but couldn't fetch profile
+            setError('Registration successful but failed to load profile. Please refresh the page.');
+          }
         } else {
           console.log('Registration failed:', response.message);
           setError(response.message || 'Registration failed');

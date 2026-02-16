@@ -13,6 +13,13 @@ interface UserState {
 interface UseUserReturn extends UserState {
   fetchProfile: () => Promise<UserProfile | null>;
   updateProfile: (data: UpdateProfileRequest) => Promise<UserProfile | null>;
+  checkEligibility: () => Promise<{
+    eligible: boolean;
+    reason?: string;
+    restrictions?: any;
+    missingDocuments?: string[];
+    verificationStatus?: string;
+  } | null>;
   clearError: () => void;
 }
 
@@ -91,10 +98,36 @@ export const useUser = (): UseUserReturn => {
     }
   }, []);
 
+  /**
+   * Check booking eligibility
+   */
+  const checkEligibility = useCallback(async () => {
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const response = await userService.checkBookingEligibility();
+      setState(prev => ({ ...prev, isLoading: false }));
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        setState(prev => ({ 
+          ...prev, 
+          error: response.message || 'Failed to check eligibility' 
+        }));
+        return null;
+      }
+    } catch (err: any) {
+      handleError(err, 'Failed to check eligibility');
+      return null;
+    }
+  }, []);
+
   return {
     ...state,
     fetchProfile,
     updateProfile,
+    checkEligibility,
     clearError,
   };
 };

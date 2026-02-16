@@ -60,6 +60,19 @@ export class UserService extends BaseApiService {
       }
     });
   }
+
+  /**
+   * Check booking eligibility (comprehensive check)
+   */
+  async checkBookingEligibility(): Promise<ApiResponse<{
+    eligible: boolean;
+    reason?: string;
+    restrictions?: any;
+    missingDocuments?: string[];
+    verificationStatus?: string;
+  }>> {
+    return this.get('/documents/eligibility');
+  }
 }
 
 export const userService = new UserService();

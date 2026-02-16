@@ -199,6 +199,10 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const handleDocumentsNext = async () => {
     try {
+      // Refresh profile to get latest verification status
+      console.log('[Checkout] Refreshing profile before proceeding...');
+      await initializeFlow(); // This will fetch fresh profile data
+      
       // First, check vehicle availability before proceeding
       if (bookingData.pickupDate && bookingData.dropoffDate) {
         setIsCheckingAvailability(true);
@@ -456,6 +460,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     onNext={handleDocumentsNext}
                     onBack={() => goToStep('IDENTITY')}
                     isLoading={flowLoading || bookingLoading}
+                    onProfileRefresh={initializeFlow}
                   />
                 )}
 

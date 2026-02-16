@@ -57,6 +57,9 @@ apiClient.interceptors.response.use(
         });
       }
 
+      // Add small random delay to reduce race condition likelihood
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 50));
+
       // Check if another tab is currently refreshing
       const anotherTabRefreshingAt = localStorage.getItem(LS_THROTTLE_REFRESH);
       if (anotherTabRefreshingAt) {
@@ -117,12 +120,11 @@ apiClient.interceptors.response.use(
 
           if (response.data?.success && response.data?.data) {
             const tokenData = response.data.data;
-            const { accessToken, refreshToken: newRefreshToken } = tokenData;
-            const now = Date.now();
+            const { accessToken, refreshToken: newRefreshToken, accessTokenExpiresAt, refreshTokenExpiresAt } = tokenData;
 
-            // Update cookies with correct expiration times (15 minutes for access, 7 days for refresh)
-            authCookies.setAccessToken(accessToken, new Date(now + 15 * TIME_CONSTANTS.ONE_MINUTE).toISOString());
-            authCookies.setRefreshToken(newRefreshToken, new Date(now + TIME_CONSTANTS.SEVEN_DAYS).toISOString());
+            // Update cookies with server-provided expiration times
+            authCookies.setAccessToken(accessToken, accessTokenExpiresAt);
+            authCookies.setRefreshToken(newRefreshToken, refreshTokenExpiresAt);
 
             // Notify other tabs
             localStorage.setItem(LS_NEW_ACCESS_TOKEN, accessToken);

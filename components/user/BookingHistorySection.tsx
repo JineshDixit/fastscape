@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,8 @@ import { BookingDetails } from '@/components/booking';
 import type { Booking } from '@/common/interfaces';
 
 export const BookingHistorySection: React.FC = () => {
+  const t = useTranslations('bookingHistory');
+  const tBooking = useTranslations('booking');
   const { bookingHistory, fetchBookingHistory, isLoading, error } = useBooking();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -48,7 +51,7 @@ export const BookingHistorySection: React.FC = () => {
           onClick={() => setSelectedBooking(null)}
           className="hover:bg-primary/5 text-primary rounded-full font-semibold"
         >
-          ← Back to History
+          ← {t('backToHistory')}
         </Button>
         <BookingDetails bookingId={selectedBooking.id} onClose={() => setSelectedBooking(null)} />
       </div>
@@ -65,28 +68,28 @@ export const BookingHistorySection: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Filter className="h-5 w-5" />
-            Filter History
+            {t('filterHistory')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4 sm:flex-row">
             <div className="flex-1">
-              <label className="mb-2 block text-sm font-medium">Status</label>
+              <label className="mb-2 block text-sm font-medium">{t('status')}</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                  <SelectItem value="DROPPED_OFF">Dropped Off</SelectItem>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                  <SelectItem value="COMPLETED">{tBooking('status.completed')}</SelectItem>
+                  <SelectItem value="CANCELLED">{tBooking('status.cancelled')}</SelectItem>
+                  <SelectItem value="DROPPED_OFF">{tBooking('status.droppedOff')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex-1">
-              <label className="mb-2 block text-sm font-medium">Year</label>
+              <label className="mb-2 block text-sm font-medium">{t('year')}</label>
               <Select value={yearFilter} onValueChange={setYearFilter}>
                 <SelectTrigger className="rounded-lg">
                   <SelectValue />
@@ -122,7 +125,7 @@ export const BookingHistorySection: React.FC = () => {
       ) : error ? (
         <Alert variant="destructive" className="border-destructive/20 bg-destructive/5 text-destructive rounded-xl">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="font-medium">Failed to load booking history: {error}</AlertDescription>
+          <AlertDescription className="font-medium">{t('failedToLoad')}: {error}</AlertDescription>
         </Alert>
       ) : bookingHistory.length === 0 ? (
         <Card className="bg-muted/5 border-2 border-dashed">
@@ -130,11 +133,11 @@ export const BookingHistorySection: React.FC = () => {
             <div className="bg-muted mb-4 rounded-full p-6">
               <Calendar className="text-muted-foreground/40 h-10 w-10" />
             </div>
-            <h3 className="mb-2 text-lg font-bold">No History Found</h3>
+            <h3 className="mb-2 text-lg font-bold">{t('noHistoryFound')}</h3>
             <p className="text-muted-foreground max-w-xs text-center text-sm">
               {statusFilter !== 'all' || yearFilter !== new Date().getFullYear().toString()
-                ? 'No bookings found with the selected filters.'
-                : 'Your journey history is empty. Start your first adventure today!'}
+                ? t('noHistoryFiltered')
+                : t('noHistoryDesc')}
             </p>
           </CardContent>
         </Card>
@@ -142,7 +145,7 @@ export const BookingHistorySection: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <p className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
-              {bookingHistory.length} Record{bookingHistory.length !== 1 ? 's' : ''} Found
+              {bookingHistory.length} {bookingHistory.length !== 1 ? t('recordsFoundPlural') : t('recordsFound')} {t('found')}
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">

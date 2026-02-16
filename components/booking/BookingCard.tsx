@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,8 @@ interface BookingCardProps {
 }
 
 export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBooking, onViewDetails, onUpdate }) => {
+  const t = useTranslations('bookingCard');
+  const tBooking = useTranslations('booking');
   const { fetchBookingById } = useBooking();
   const [booking, setBooking] = useState<Booking>(initialBooking);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -85,13 +88,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                 variant="outline"
                 className={`${getStatusColor(booking.bookingStatus)} border-none text-[10px] font-semibold tracking-wider uppercase`}
               >
-                {booking.bookingStatus}
+                {tBooking(`status.${booking.bookingStatus.toLowerCase()}`)}
               </Badge>
               <Badge
                 variant="outline"
                 className={`${getPaymentStatusColor(booking.paymentStatus)} border-none text-[10px] font-semibold tracking-wider uppercase`}
               >
-                {booking.paymentStatus.replace('_', ' ')}
+                {tBooking(`status.${booking.paymentStatus.toLowerCase().replace('_', '')}`)}
               </Badge>
             </div>
             <Button
@@ -128,7 +131,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                   {booking.vehicle?.make} {booking.vehicle?.model}
                 </h3>
                 <p className="text-muted-foreground font-mono text-[10px] tracking-tighter uppercase">
-                  REF: {booking.id.slice(-8)}
+                  {t('reference')}: {booking.id.slice(-8)}
                 </p>
               </div>
 
@@ -138,7 +141,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                     <Calendar className="text-primary h-3 w-3" />
                   </div>
                   <div className="text-[11px]">
-                    <p className="text-muted-foreground text-[9px] font-medium uppercase">Pickup</p>
+                    <p className="text-muted-foreground text-[9px] font-medium uppercase">{t('pickup')}</p>
                     <p className="text-foreground/80 font-semibold">{formatDate(booking.startDatetime)}</p>
                   </div>
                 </div>
@@ -148,7 +151,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                     <Calendar className="text-primary h-3 w-3" />
                   </div>
                   <div className="text-[11px]">
-                    <p className="text-muted-foreground text-[9px] font-medium uppercase">Dropoff</p>
+                    <p className="text-muted-foreground text-[9px] font-medium uppercase">{t('dropoff')}</p>
                     <p className="text-foreground/80 font-semibold">{formatDate(booking.endDatetime)}</p>
                   </div>
                 </div>
@@ -158,7 +161,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                     <MapPin className="text-muted-foreground h-3 w-3" />
                   </div>
                   <div className="min-w-0 text-[11px]">
-                    <p className="text-muted-foreground text-[9px] font-medium uppercase">From</p>
+                    <p className="text-muted-foreground text-[9px] font-medium uppercase">{t('from')}</p>
                     <p className="text-foreground/80 truncate font-semibold" title={booking.pickupLocation}>
                       {booking.pickupLocation}
                     </p>
@@ -170,7 +173,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                     <MapPin className="text-muted-foreground h-3 w-3" />
                   </div>
                   <div className="min-w-0 text-[11px]">
-                    <p className="text-muted-foreground text-[9px] font-medium uppercase">To</p>
+                    <p className="text-muted-foreground text-[9px] font-medium uppercase">{t('to')}</p>
                     <p className="text-foreground/80 truncate font-semibold" title={booking.dropoffLocation}>
                       {booking.dropoffLocation}
                     </p>
@@ -186,7 +189,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                     ) : (
                       <Car className="h-3.5 w-3.5" />
                     )}
-                    <span>{booking.bookingType === 'CHAUFFEUR' ? 'Chauffeur' : 'Self Drive'}</span>
+                    <span>{booking.bookingType === 'CHAUFFEUR' ? t('chauffeur') : t('selfDrive')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <CreditCard className="h-3.5 w-3.5" />
@@ -200,7 +203,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                   onClick={() => onViewDetails(booking)}
                   className="group text-primary hover:text-primary hover:bg-primary/5 h-8 rounded-full px-3 transition-all"
                 >
-                  <span className="text-xs font-semibold">Details</span>
+                  <span className="text-xs font-semibold">{t('details')}</span>
                   <ChevronRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </Button>
               </div>
