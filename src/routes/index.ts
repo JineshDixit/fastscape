@@ -7,6 +7,7 @@ import bookingRoutes from './booking.routes';
 import paymentRoutes from './payment.routes';
 import documentRoutes from './document.routes';
 import chauffeurRoutes from './chauffeur.routes';
+import userRoutes from './user.routes';
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.use('/bookings', bookingRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/documents', documentRoutes);
 router.use('/chauffeurs', chauffeurRoutes);
+router.use('/users', userRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
@@ -35,6 +37,7 @@ router.get('/', (req, res) => {
       payments: '/api/payments',
       documents: '/api/documents',
       chauffeurs: '/api/chauffeurs',
+      users: '/api/users',
       policies: '/api/policies',
       rolePolicy: '/api/role-policy',
       adminUserRole: '/api/admin-user-role',
