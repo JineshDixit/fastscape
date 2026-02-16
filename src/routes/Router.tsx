@@ -9,6 +9,7 @@ import BookingDetails from '@/pages/BookingDetails';
 import Documents from '@/pages/Documents';
 import Units from '@/pages/Units';
 import Clients from '@/pages/Clients';
+import ClientDetails from '@/pages/ClientDetails';
 import ChauffeurList from '@/pages/Chauffeurs/ChauffeurList';
 import ChauffeurDetails from '@/pages/Chauffeurs/ChauffeurDetails';
 
@@ -76,7 +77,16 @@ export const router = createBrowserRouter([
       },
       {
         path: 'clients',
-        element: <Clients />,
+        children: [
+          {
+            index: true,
+            element: <Clients />,
+          },
+          {
+            path: ':id',
+            element: <ClientDetails />,
+          },
+        ],
       },
       {
         path: 'drivers',

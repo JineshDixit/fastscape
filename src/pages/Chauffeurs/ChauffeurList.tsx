@@ -114,7 +114,7 @@ const ChauffeurList = () => {
         addButtonText="Add New Chauffeur"
         addButtonIcon={<Plus className="h-4 w-4" />}
         addButtonOnClick={() => setOpenCreate(true)}
-        tableContainerClassName='!h-[calc(100vh-22.5rem)]'
+        tableContainerClassName='!max-h-[calc(100vh-22.5rem)]'
       />
 
       <ChauffeurForm open={openCreate} onOpenChange={setOpenCreate} onSuccess={fetchChauffeurs} />
