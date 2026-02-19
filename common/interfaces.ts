@@ -243,7 +243,10 @@ export interface VehicleSearchParams {
   pickupLocation: string;
   pickupDate: string; // ISO string format
   dropoffDate: string; // ISO string format
-  bodyType?: BodyType;
+  bookingType?: 'SELF_DRIVE' | 'CHAUFFEUR';
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: BodyType | BodyType[];
   transmission?: TransmissionType;
   page?: number;
   limit?: number;

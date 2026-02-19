@@ -4,16 +4,45 @@ import { useTranslations } from 'next-intl';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Minus, Plus } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { BodyType } from '@/common/interfaces';
+import { BodyType, VehicleFilters } from '@/common/interfaces';
 
 const CarFilter = () => {
   const t = useTranslations('carFilter');
-  const { filterMetadata, fetchFilterMetadata, fetchVehicles, filters, isLoading, error, clearError } = useVehicle();
+  const {
+    filterMetadata,
+    fetchFilterMetadata,
+    fetchVehicles,
+    searchAvailableVehicles,
+    filters,
+    isLoading,
+    error,
+    clearError,
+    bookingData,
+  } = useVehicle();
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Check if we have search criteria (dates and location)
+  const hasSearchCriteria = !!(bookingData.pickupDate && bookingData.dropoffDate && bookingData.pickupLocation);
+
   useEffect(() => {
-    fetchFilterMetadata();
-  }, [fetchFilterMetadata]);
+    const searchParams = hasSearchCriteria
+      ? {
+        pickupLocation: bookingData.pickupLocation!,
+        pickupDate: bookingData.pickupDate!,
+        dropoffDate: bookingData.dropoffDate!,
+        bookingType: bookingData.bookingType,
+      }
+      : undefined;
+
+    fetchFilterMetadata(searchParams);
+  }, [
+    fetchFilterMetadata,
+    hasSearchCriteria,
+    bookingData.pickupLocation,
+    bookingData.pickupDate,
+    bookingData.dropoffDate,
+    bookingData.bookingType,
+  ]);
 
   useEffect(() => {
     if (filterMetadata && !isInitialized) {
@@ -40,57 +69,102 @@ const CarFilter = () => {
     const map: Record<string, string[]> = {};
     if (!filterMetadata) return map;
 
+    const allAvailableModels = new Set<string>();
+    filterMetadata.brands.forEach((brand) => brand.models?.forEach((m) => allAvailableModels.add(m)));
+    filterMetadata.bodyTypes.forEach((bt) => bt.models?.forEach((m) => allAvailableModels.add(m)));
+
+    // If selectedModelsArr is empty, it means "all are selected" for the UI
+    const activeModels = selectedModelsArr.length === 0 ? Array.from(allAvailableModels) : selectedModelsArr;
+
     filterMetadata.brands.forEach((brand) => {
-      map[brand.make] = (brand.models || []).filter((m) => selectedModelsArr.includes(m));
+      map[brand.make] = (brand.models || []).filter((m) => activeModels.includes(m));
     });
 
     filterMetadata.bodyTypes.forEach((bt) => {
-      map[bt.bodyType] = (bt.models || []).filter((m) => selectedModelsArr.includes(m));
+      map[bt.bodyType] = (bt.models || []).filter((m) => activeModels.includes(m));
     });
 
     return map;
   }, [filterMetadata, selectedModelsArr]);
 
   const handleModelToggle = (model: string) => {
-    const currentModels = [...selectedModelsArr];
-    const currentMakes = [...selectedMakes];
-    const currentBodyTypes = [...selectedBodyTypes];
+    if (!filterMetadata) return;
 
-    const isSelected = currentModels.includes(model);
-    const nextModels = isSelected ? currentModels.filter((m) => m !== model) : [...currentModels, model];
+    // Get all available models as the baseline
+    const allAvailableModels: string[] = [];
+    const modelToBrand = new Map<string, string>();
+    const modelToBT = new Map<string, string>();
 
-    const brand = filterMetadata?.brands.find((b) => (b.models || []).includes(model));
-    const bodyType = filterMetadata?.bodyTypes.find((bt) => (bt.models || []).includes(model));
+    filterMetadata.brands.forEach((b) => {
+      b.models?.forEach((m) => {
+        if (!allAvailableModels.includes(m)) allAvailableModels.push(m);
+        modelToBrand.set(m, b.make);
+      });
+    });
+    filterMetadata.bodyTypes.forEach((bt) => {
+      bt.models?.forEach((m) => {
+        if (!allAvailableModels.includes(m)) allAvailableModels.push(m);
+        modelToBT.set(m, bt.bodyType);
+      });
+    });
 
-    let nextMakes = [...currentMakes];
-    let nextBodyTypes = [...currentBodyTypes];
+    let nextModels: string[];
 
-    if (brand) {
-      const brandModels = brand.models || [];
-      const anyModelSelectedForBrand = nextModels.some((m) => brandModels.includes(m));
-      if (anyModelSelectedForBrand && !nextMakes.includes(brand.make)) {
-        nextMakes.push(brand.make);
-      } else if (!anyModelSelectedForBrand && nextMakes.includes(brand.make)) {
-        nextMakes = nextMakes.filter((m) => m !== brand.make);
-      }
+    if (selectedModelsArr.length === 0) {
+      // If none explicitly selected, we were showing all.
+      // Now we uncheck one, so nextModels is "all - this one"
+      nextModels = allAvailableModels.filter((m) => m !== model);
+    } else {
+      const isSelected = selectedModelsArr.includes(model);
+      nextModels = isSelected ? selectedModelsArr.filter((m) => m !== model) : [...selectedModelsArr, model];
     }
 
-    if (bodyType) {
-      const btModels = bodyType.models || [];
-      const anyModelSelectedForBT = nextModels.some((m) => btModels.includes(m));
-      if (anyModelSelectedForBT && !nextBodyTypes.includes(bodyType.bodyType as any)) {
-        nextBodyTypes.push(bodyType.bodyType as any);
-      } else if (!anyModelSelectedForBT && nextBodyTypes.includes(bodyType.bodyType as any)) {
-        nextBodyTypes = nextBodyTypes.filter((bt) => bt !== (bodyType.bodyType as any));
-      }
+    // If nextModels contains everything available, we can reset to empty (optional optimization)
+    if (nextModels.length === allAvailableModels.length) {
+      nextModels = [];
     }
 
-    fetchVehicles({
+    // Recalculate active makes and body types based on nextModels
+    let nextMakes: string[] = [];
+    let nextBodyTypes: BodyType[] = [];
+
+    if (nextModels.length === 0) {
+      // "All selected" - no specific filters applied to API
+      nextMakes = [];
+      nextBodyTypes = [];
+    } else {
+      const activeMakesSet = new Set<string>();
+      const activeBTSet = new Set<BodyType>();
+
+      nextModels.forEach((m) => {
+        const brand = modelToBrand.get(m);
+        const bt = modelToBT.get(m);
+        if (brand) activeMakesSet.add(brand);
+        if (bt) activeBTSet.add(bt as BodyType);
+      });
+
+      nextMakes = Array.from(activeMakesSet);
+      nextBodyTypes = Array.from(activeBTSet);
+    }
+
+    const params: Partial<VehicleFilters> = {
       make: nextMakes,
-      bodyType: nextBodyTypes as BodyType[],
+      bodyType: nextBodyTypes,
       model: nextModels,
       page: 1,
-    });
+    };
+
+    if (hasSearchCriteria) {
+      searchAvailableVehicles({
+        ...params,
+        pickupLocation: bookingData.pickupLocation!,
+        pickupDate: bookingData.pickupDate!,
+        dropoffDate: bookingData.dropoffDate!,
+        bookingType: bookingData.bookingType,
+      });
+    } else {
+      fetchVehicles(params);
+    }
   };
 
   const renderFilterSection = (title: string, items: { label: string; count: number; models: string[] }[]) => {

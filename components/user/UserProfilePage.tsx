@@ -27,6 +27,7 @@ import {
   AlertCircle,
   Edit,
   Shield,
+  Eye,
 } from 'lucide-react';
 import { BookingHistorySection } from './BookingHistorySection';
 import { ProfileEditModal } from './ProfileEditModal';
@@ -84,6 +85,16 @@ export const UserProfilePage: React.FC = () => {
           </Badge>
         );
     }
+  };
+
+  const getImageUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('http')) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3000';
+    // Ensure we don't end up with double slashes if baseUrl ends with one or path starts with one
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBaseUrl}${cleanPath.replace(/\\/g, '/')}`;
   };
 
   if (profileLoading || statsLoading) {
@@ -311,63 +322,139 @@ export const UserProfilePage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{t('driverLicense')}</p>
-                        <p className="text-xs text-muted-foreground">{t('frontAndBack')}</p>
+                  {/* Driver License */}
+                  <div className="flex flex-col gap-2 rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{t('driverLicense')}</p>
+                          <p className="text-xs text-muted-foreground">{t('frontAndBack')}</p>
+                        </div>
                       </div>
+                      {profile.driverLicenseFront && profile.driverLicenseBack ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                      )}
                     </div>
-                    {profile.driverLicenseFront && profile.driverLicenseBack ? (
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                    {(profile.driverLicenseFront || profile.driverLicenseBack) && (
+                      <div className="flex gap-2">
+                        {profile.driverLicenseFront && (
+                          <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                            <img
+                              src={getImageUrl(profile.driverLicenseFront)}
+                              alt="License Front"
+                              className="h-full w-full object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                              <Eye className="h-4 w-4 text-white" />
+                            </div>
+                          </div>
+                        )}
+                        {profile.driverLicenseBack && (
+                          <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                            <img
+                              src={getImageUrl(profile.driverLicenseBack)}
+                              alt="License Back"
+                              className="h-full w-full object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                              <Eye className="h-4 w-4 text-white" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{t('passportPhoto')}</p>
-                        <p className="text-xs text-muted-foreground">{t('required')}</p>
+                  {/* Passport Photo */}
+                  <div className="flex flex-col gap-2 rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{t('passportPhoto')}</p>
+                          <p className="text-xs text-muted-foreground">{t('required')}</p>
+                        </div>
                       </div>
+                      {profile.passportPhoto ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                      )}
                     </div>
-                    {profile.passportPhoto ? (
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                    {profile.passportPhoto && (
+                      <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                        <img
+                          src={getImageUrl(profile.passportPhoto)}
+                          alt="Passport"
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Eye className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{t('selfieWithLicense')}</p>
-                        <p className="text-xs text-muted-foreground">{t('required')}</p>
+                  {/* Selfie with License */}
+                  <div className="flex flex-col gap-2 rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{t('selfieWithLicense')}</p>
+                          <p className="text-xs text-muted-foreground">{t('required')}</p>
+                        </div>
                       </div>
+                      {profile.selfieWithLicense ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                      )}
                     </div>
-                    {profile.selfieWithLicense ? (
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                    {profile.selfieWithLicense && (
+                      <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                        <img
+                          src={getImageUrl(profile.selfieWithLicense)}
+                          alt="Selfie with License"
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Eye className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{t('internationalPermit')}</p>
-                        <p className="text-xs text-muted-foreground">{t('optional')}</p>
+                  {/* International Permit */}
+                  <div className="flex flex-col gap-2 rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm font-medium">{t('internationalPermit')}</p>
+                          <p className="text-xs text-muted-foreground">{t('optional')}</p>
+                        </div>
                       </div>
+                      {profile.internationalDrivingPermit ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                      )}
                     </div>
-                    {profile.internationalDrivingPermit ? (
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                    {profile.internationalDrivingPermit && (
+                      <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                        <img
+                          src={getImageUrl(profile.internationalDrivingPermit)}
+                          alt="International Permit"
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Eye className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

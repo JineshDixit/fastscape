@@ -112,10 +112,6 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
             </Button>
 
             <DialogFooter className="flex-col gap-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? t('loading') : t('login')}
-              </Button>
-
               <Button
                 type="button"
                 variant="outline"
@@ -123,6 +119,9 @@ const LoginModel: FC<LoginModelPropType> = ({ open, onOpenChange, onRegisterClic
                 onClick={handleRegister}
               >
                 {t('dontHaveAccount')} {t('signUp')}
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? t('loading') : t('login')}
               </Button>
             </DialogFooter>
           </form>

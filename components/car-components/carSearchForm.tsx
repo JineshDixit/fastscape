@@ -46,7 +46,7 @@ export function CarSearchForm() {
         { message: tVal('pickupDateFuture') },
       ),
       dropDate: z.date(),
-      needChauffeur: z.boolean().optional(),
+      selfDrive: z.boolean().optional(),
     })
     .refine((data) => data.dropDate >= data.pickupDate, {
       message: tVal('dropDateAfterPickup'),
@@ -62,14 +62,14 @@ export function CarSearchForm() {
       to: '',
       pickupDate: undefined,
       dropDate: undefined,
-      needChauffeur: false,
+      selfDrive: true, // Default to self drive (true)
     },
   });
 
   const { locations } = useLocation();
   const sameAddress = form.watch('sameAddress');
   const fromAddress = form.watch('from');
-  const needChauffeur = form.watch('needChauffeur');
+  const selfDrive = form.watch('selfDrive');
 
   const [fromQuery, setFromQuery] = useState('');
   const [toQuery, setToQuery] = useState('');
@@ -102,7 +102,7 @@ export function CarSearchForm() {
       dropoffLocation: data.to,
       pickupDate: formatDateForAPI(data.pickupDate),
       dropoffDate: formatDateForAPI(data.dropDate),
-      bookingType: (data.needChauffeur ? 'CHAUFFEUR' : 'SELF_DRIVE') as 'SELF_DRIVE' | 'CHAUFFEUR',
+      bookingType: (data.selfDrive ? 'SELF_DRIVE' : 'CHAUFFEUR') as 'SELF_DRIVE' | 'CHAUFFEUR',
     };
 
     setBookingData(bookingData);
@@ -110,6 +110,7 @@ export function CarSearchForm() {
       pickupLocation: bookingData.pickupLocation,
       pickupDate: bookingData.pickupDate,
       dropoffDate: bookingData.dropoffDate,
+      bookingType: bookingData.bookingType,
     });
     router.push('/vehicles');
     form.reset();
@@ -137,7 +138,7 @@ export function CarSearchForm() {
 
         <FormField
           control={form.control}
-          name="needChauffeur"
+          name="selfDrive"
           render={({ field }) => (
             <FormItem className="flex items-center gap-2 sm:gap-3">
               <FormControl>
@@ -154,20 +155,7 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                {!needChauffeur ? (
-                  <GooglePlacesInput
-                    label={t('from')}
-                    value={field.value}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      if (sameAddress) {
-                        form.setValue('to', value);
-                      }
-                    }}
-                    restrictToDubai={true}
-                    disabled={field.disabled}
-                  />
-                ) : (
+                {selfDrive ? (
                   <Combobox
                     modal={false}
                     value={
@@ -206,6 +194,19 @@ export function CarSearchForm() {
                       </ComboboxList>
                     </ComboboxContent>
                   </Combobox>
+                ) : (
+                  <GooglePlacesInput
+                    label={t('from')}
+                    value={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      if (sameAddress) {
+                        form.setValue('to', value);
+                      }
+                    }}
+                    restrictToDubai={true}
+                    disabled={field.disabled}
+                  />
                 )}
               </FormControl>
               <FormMessage />
@@ -232,7 +233,7 @@ export function CarSearchForm() {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                {!needChauffeur && !sameAddress ? (
+                {!selfDrive && !sameAddress ? (
                   <GooglePlacesInput
                     label={t('to')}
                     value={field.value}
@@ -240,7 +241,7 @@ export function CarSearchForm() {
                     restrictToDubai={true}
                     disabled={field.disabled}
                   />
-                ) : needChauffeur && !sameAddress ? (
+                ) : selfDrive && !sameAddress ? (
                   <Combobox
                     modal={false}
                     value={

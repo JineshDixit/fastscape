@@ -34,6 +34,7 @@ const VehiclePage = () => {
           pickupLocation: bookingData.pickupLocation!,
           pickupDate: bookingData.pickupDate!,
           dropoffDate: bookingData.dropoffDate!,
+          bookingType: bookingData.bookingType,
         });
       } else {
         // Use regular fetch for all available vehicles (filter out unavailable ones)
@@ -55,6 +56,7 @@ const VehiclePage = () => {
         pickupLocation: bookingData.pickupLocation!,
         pickupDate: bookingData.pickupDate!,
         dropoffDate: bookingData.dropoffDate!,
+        bookingType: bookingData.bookingType,
         page,
       });
     } else {

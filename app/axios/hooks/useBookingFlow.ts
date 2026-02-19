@@ -22,6 +22,7 @@ interface UseBookingFlowReturn extends BookingFlowState {
   proceedToNextStep: () => Promise<void>;
   goToStep: (step: BookingFlowStep) => void;
   validateCurrentStep: () => Promise<boolean>;
+  goToStepWithCleanup: (step: BookingFlowStep) => void;
   clearError: () => void;
   profile: UserProfile | null;
 }
@@ -243,8 +244,26 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
   }, [state.currentStep, validateCurrentStep, shouldSkipDocumentStep]);
 
   const goToStep = useCallback((step: BookingFlowStep) => {
+    console.log('[useBookingFlow] Manually navigating to step:', step);
     setState((prev) => ({ ...prev, currentStep: step }));
   }, []);
+
+  // Enhanced step navigation that handles booking state
+  const goToStepWithCleanup = useCallback((step: BookingFlowStep) => {
+    console.log('[useBookingFlow] Navigating to step with cleanup:', step);
+    
+    // If going back to earlier steps, we might need to clear some state
+    const stepOrder: BookingFlowStep[] = ['IDENTITY', 'DOCUMENTS', 'PAYMENT', 'SUMMARY'];
+    const currentIndex = stepOrder.indexOf(state.currentStep);
+    const targetIndex = stepOrder.indexOf(step);
+    
+    if (targetIndex < currentIndex) {
+      console.log('[useBookingFlow] Going backwards, clearing error state');
+      setState((prev) => ({ ...prev, currentStep: step, error: null }));
+    } else {
+      setState((prev) => ({ ...prev, currentStep: step }));
+    }
+  }, [state.currentStep]);
 
   // Update canProceedToNextStep based on current step validation
   useEffect(() => {
@@ -274,6 +293,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
     initializeFlow,
     proceedToNextStep,
     goToStep,
+    goToStepWithCleanup,
     validateCurrentStep,
     clearError,
   };

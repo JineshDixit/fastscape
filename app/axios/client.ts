@@ -7,6 +7,9 @@ const API_CONFIG = {
   headers: {
     'Content-Type': 'application/json',
   },
+  paramsSerializer: {
+    indexes: null, // This serializes arrays as ?model=A&model=B instead of ?model[]=A&model[]=B
+  },
 };
 
 const apiClient: AxiosInstance = axios.create(API_CONFIG);

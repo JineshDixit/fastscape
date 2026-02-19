@@ -34,9 +34,12 @@ export const useBooking = () => {
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
 
   // Loading States
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Derive global loading state
+  const isLoading = isFetchingInfo || isCreatingBooking || isProcessingPayment;
 
   // Error State
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +125,7 @@ export const useBooking = () => {
       return handleApiCall(
         () => bookingService.getUserBookings(params),
         (data) => setBookings(data.bookings),
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],
@@ -132,7 +135,7 @@ export const useBooking = () => {
     return handleApiCall(
       () => bookingService.getUpcomingBookings(),
       (bookings) => setUpcomingBookings(bookings),
-      setIsLoading,
+      setIsFetchingInfo,
     );
   }, [handleApiCall]);
 
@@ -140,7 +143,7 @@ export const useBooking = () => {
     return handleApiCall(
       () => bookingService.getActiveBookings(),
       (bookings) => setActiveBookings(bookings),
-      setIsLoading,
+      setIsFetchingInfo,
     );
   }, [handleApiCall]);
 
@@ -148,7 +151,7 @@ export const useBooking = () => {
     return handleApiCall(
       () => bookingService.getBookingStats(),
       (stats) => setBookingStats(stats),
-      setIsLoading,
+      setIsFetchingInfo,
     );
   }, [handleApiCall]);
 
@@ -157,7 +160,7 @@ export const useBooking = () => {
       return handleApiCall(
         () => bookingService.getBookingHistory(params),
         (history) => setBookingHistory(history),
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],
@@ -168,7 +171,7 @@ export const useBooking = () => {
       return handleApiCall(
         () => bookingService.getBookingById(bookingId),
         (booking) => setCurrentBooking(booking),
-        setIsLoading,
+        setIsFetchingInfo,
         silent,
       );
     },
@@ -212,7 +215,7 @@ export const useBooking = () => {
           console.log('[useBooking] Payment breakdown received:', breakdown);
           setPaymentBreakdown(breakdown);
         },
-        setIsLoading,
+        setIsFetchingInfo,
       );
 
       if (!result?.success) {
@@ -251,7 +254,7 @@ export const useBooking = () => {
       return handleApiCall(
         () => paymentService.getPaymentSummary(bookingId),
         (summary) => setPaymentSummary(summary),
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],
@@ -269,7 +272,7 @@ export const useBooking = () => {
             setIntentId(data.id);
           }
         },
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],

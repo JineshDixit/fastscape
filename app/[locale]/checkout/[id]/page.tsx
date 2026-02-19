@@ -54,13 +54,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     error: flowError,
     initializeFlow,
     proceedToNextStep,
-    goToStep,
+    goToStepWithCleanup,
     clearError,
   } = useBookingFlow();
 
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookingCreated, setBookingCreated] = useState(false);
 
   const STEPS: { id: CheckoutStep; label: string }[] = [
     { id: 'IDENTITY', label: t('steps.identity') },
@@ -76,8 +77,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
       currentBooking: currentBooking?.id,
       paymentBreakdown,
       isLoading: flowLoading || bookingLoading,
+      bookingCreated,
     });
-  }, [currentStep, currentBooking, paymentBreakdown, flowLoading, bookingLoading]);
+  }, [currentStep, currentBooking, paymentBreakdown, flowLoading, bookingLoading, bookingCreated]);
 
   useEffect(() => {
     if (id) {
@@ -99,9 +101,15 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     }
   }, [flowError]);
 
-  // Check vehicle availability when checkout page loads
+  // Check vehicle availability when checkout page loads (only if no booking exists)
   useEffect(() => {
     const checkInitialAvailability = async () => {
+      // Skip availability check if booking already exists or is created
+      if (currentBooking || bookingCreated) {
+        console.log('[Checkout] Skipping availability check - booking session active');
+        return;
+      }
+
       if (id && bookingData.pickupDate && bookingData.dropoffDate) {
         setIsCheckingAvailability(true);
         try {
@@ -109,13 +117,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
           if (response.success) {
             setAvailabilityStatus(response.data?.isAvailable ?? false);
-            if (!response.data?.isAvailable) {
+            // Only show availability error if we ARE NOT in the middle of creating/retrieving a booking
+            if (!response.data?.isAvailable && !currentBooking && !bookingCreated) {
               setError(t('errorAvailability'));
             }
           }
         } catch (err) {
           console.error('Availability check failed:', err);
-          setError(t('errorAvailabilityGeneric'));
+          // Don't block the UI with a generic error if we might have a session on backend
         } finally {
           setIsCheckingAvailability(false);
         }
@@ -123,7 +132,105 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     };
 
     checkInitialAvailability();
-  }, [id, bookingData.pickupDate, bookingData.dropoffDate]);
+  }, [id, bookingData.pickupDate, bookingData.dropoffDate, bookingCreated, currentBooking]);
+
+  // Clear session storage when checkout is completed or user leaves
+  useEffect(() => {
+    const clearCheckoutSession = () => {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('documentsUploaded');
+        sessionStorage.removeItem('documentPreviews');
+      }
+    };
+
+    // Clear on successful completion
+    if (currentStep === 'SUMMARY') {
+      clearCheckoutSession();
+    }
+
+    // Clear on page unload (user navigates away)
+    const handleBeforeUnload = () => {
+      if (currentStep !== 'SUMMARY') {
+        clearCheckoutSession();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentStep]);
+
+  // Clear booking ONLY when explicitly resetting (e.g. going back to identity after failure)
+  useEffect(() => {
+    // If we are at IDENTITY step but we HAVE a booking, we might have just started
+    // We should only clear if the user is truly "starting over"
+    if (currentStep === 'IDENTITY' && bookingCreated && !currentBooking) {
+      // This case might happen if we just started. Let's not clear it.
+      return;
+    }
+
+    // Preserve booking state unless explicitly navigating back to Identity from Documents/Payment 
+    // AND wanting to reset (rare). 
+    // Actually, let's just remove this restrictive auto-clear.
+  }, [currentStep, bookingCreated]);
+
+  const createBookingIfNeeded = async () => {
+    // Don't create booking if already exists in state
+    if (currentBooking) {
+      console.log('[Checkout] Booking already exists in state, skipping creation:', currentBooking.id);
+      return currentBooking;
+    }
+
+    if (!bookingData.pickupDate || !bookingData.dropoffDate) {
+      throw new Error('Booking dates are missing');
+    }
+
+    // Check availability first
+    setIsCheckingAvailability(true);
+    try {
+      const availabilityResponse = await vehicleService.checkAvailability(
+        id,
+        bookingData.pickupDate,
+        bookingData.dropoffDate,
+      );
+
+      if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
+        // Double check if the "unavailability" is actually due to user's OWN pending booking
+        // handled by backend idempotency, but we check here too for better UX
+        console.warn('[Checkout] Vehicle reported unavailable, but proceeding to attempt create/lookup (idempotency)');
+      }
+    } catch (err) {
+      console.error('[Checkout] Availability check failed, but proceeding with booking attempt:', err);
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+
+    // Create booking (Backend is now idempotent and will return existing pending if it exists)
+    const finalBookingData = {
+      vehicleId: id,
+      startDatetime: bookingData.pickupDate,
+      endDatetime: bookingData.dropoffDate,
+      pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
+      dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
+      bookingType: bookingData.bookingType,
+      paymentMethod: 'ONLINE',
+    };
+
+    console.log('[Checkout] Attempting to create/retrieve booking with data:', finalBookingData);
+    const response = await createBooking(finalBookingData as any);
+    console.log('[Checkout] Booking creation/retrieval response:', response);
+
+    if (response && response.success && response.data) {
+      console.log('[Checkout] Booking established successfully, ID:', response.data.id);
+      setBookingCreated(true);
+      return response.data;
+    } else {
+      // If we get a 409 conflict, it means someone else booked it (unlikely in this flow due to expiration/locking)
+      // or our backend idempotency logic didn't hit.
+      throw new Error(response?.message || 'Failed to initialize booking session.');
+    }
+  };
 
   const handleIdentityNext = async () => {
     try {
@@ -136,45 +243,12 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         // If documents are skipped, create booking here before proceeding to payment
         console.log('[Checkout] Documents will be skipped, creating booking now');
 
-        if (!bookingData.pickupDate || !bookingData.dropoffDate) {
-          setError('Booking dates are missing');
-          return;
-        }
+        const booking = await createBookingIfNeeded();
 
-        // Check availability first
-        setIsCheckingAvailability(true);
-        const availabilityResponse = await vehicleService.checkAvailability(
-          id,
-          bookingData.pickupDate,
-          bookingData.dropoffDate,
-        );
-        setIsCheckingAvailability(false);
-
-        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
-          setError(t('errorAvailability'));
-          return;
-        }
-
-        // Create booking
-        const finalBookingData = {
-          vehicleId: id,
-          startDatetime: bookingData.pickupDate,
-          endDatetime: bookingData.dropoffDate,
-          pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
-          dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
-          bookingType: bookingData.bookingType,
-          paymentMethod: 'ONLINE',
-        };
-
-        console.log('[Checkout] Creating booking with data:', finalBookingData);
-        const response = await createBooking(finalBookingData as any);
-        console.log('[Checkout] Booking creation response:', response);
-
-        if (response && response.success && response.data) {
-          console.log('[Checkout] Booking created successfully, ID:', response.data.id);
+        if (booking) {
           // Calculate payment breakdown
           console.log('[Checkout] Calculating payment breakdown...');
-          const breakdownResponse = await calculatePaymentBreakdown(response.data.id);
+          const breakdownResponse = await calculatePaymentBreakdown(booking.id);
           console.log('[Checkout] Payment breakdown response:', breakdownResponse);
 
           if (breakdownResponse && breakdownResponse.success) {
@@ -183,8 +257,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           } else {
             setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
           }
-        } else {
-          setError(response?.message || 'Failed to initialize booking session.');
         }
       } else {
         // Documents step is needed, just proceed normally
@@ -199,46 +271,38 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const handleDocumentsNext = async () => {
     try {
+      clearAllErrors();
+
+      // If booking already exists, just proceed to payment with existing breakdown
+      if (currentBooking) {
+        console.log('[Checkout] Booking exists, proceeding to payment with existing booking:', currentBooking.id);
+
+        // Ensure we have payment breakdown
+        if (!paymentBreakdown) {
+          console.log('[Checkout] Fetching payment breakdown for existing booking...');
+          const breakdownResponse = await calculatePaymentBreakdown(currentBooking.id);
+          if (!breakdownResponse?.success) {
+            setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
+            return;
+          }
+        }
+
+        await proceedToNextStep();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
       // Refresh profile to get latest verification status
       console.log('[Checkout] Refreshing profile before proceeding...');
       await initializeFlow(); // This will fetch fresh profile data
-      
-      // First, check vehicle availability before proceeding
-      if (bookingData.pickupDate && bookingData.dropoffDate) {
-        setIsCheckingAvailability(true);
-        const availabilityResponse = await vehicleService.checkAvailability(
-          id,
-          bookingData.pickupDate,
-          bookingData.dropoffDate,
-        );
-        setIsCheckingAvailability(false);
 
-        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
-          setError(t('errorAvailability'));
-          return;
-        }
-      }
+      // Create booking if not already created
+      const booking = await createBookingIfNeeded();
 
-      // Create PENDING booking on backend
-      const finalBookingData = {
-        vehicleId: id,
-        startDatetime: bookingData.pickupDate!,
-        endDatetime: bookingData.dropoffDate!,
-        pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
-        dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
-        bookingType: bookingData.bookingType,
-        paymentMethod: 'ONLINE', // Default to ONLINE, can be changed in payment step
-      };
-
-      console.log('[Checkout] Creating booking with data:', finalBookingData);
-      const response = await createBooking(finalBookingData as any);
-      console.log('[Checkout] Booking creation response:', response);
-
-      if (response && response.success && response.data) {
-        console.log('[Checkout] Booking created successfully, ID:', response.data.id);
-        // Immediately calculate payment breakdown
+      if (booking) {
+        // Calculate payment breakdown
         console.log('[Checkout] Calculating payment breakdown...');
-        const breakdownResponse = await calculatePaymentBreakdown(response.data.id);
+        const breakdownResponse = await calculatePaymentBreakdown(booking.id);
         console.log('[Checkout] Payment breakdown response:', breakdownResponse);
 
         if (breakdownResponse && breakdownResponse.success) {
@@ -247,8 +311,6 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         } else {
           setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
         }
-      } else {
-        setError(response?.message || 'Failed to initialize booking session.');
       }
     } catch (err: any) {
       console.error('[Checkout] Error in handleDocumentsNext:', err);
@@ -295,7 +357,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
-          goToStep('SUMMARY');
+          goToStepWithCleanup('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setError(response?.message || t('errorPaymentSync'));
@@ -307,7 +369,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
-          goToStep('SUMMARY');
+          goToStepWithCleanup('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setError(response?.message || t('errorPaymentManual'));
@@ -458,7 +520,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <DocumentStep
                     profile={profile}
                     onNext={handleDocumentsNext}
-                    onBack={() => goToStep('IDENTITY')}
+                    onBack={() => goToStepWithCleanup('IDENTITY')}
                     isLoading={flowLoading || bookingLoading}
                     onProfileRefresh={initializeFlow}
                   />
@@ -468,7 +530,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <PaymentMethodForm
                     breakdown={paymentBreakdown}
                     onNext={handlePaymentNext}
-                    onBack={() => goToStep('DOCUMENTS')}
+                    onBack={() => goToStepWithCleanup('DOCUMENTS')}
                     isLoading={bookingLoading}
                   />
                 )}

@@ -6,8 +6,7 @@ import { useBooking } from '@/app/axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Car, Calendar, MapPin, User, Clock, CreditCard, ChevronRight, RefreshCw } from 'lucide-react';
+import { Car, Calendar, MapPin, User, CreditCard, ChevronRight, RefreshCw } from 'lucide-react';
 import type { Booking } from '@/common/interfaces';
 
 interface BookingCardProps {
@@ -54,6 +53,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
     }
   };
 
+  const formatStatusKey = (status: string) => {
+    // Convert PICKED_UP to pickedUp, PARTIALLY_PAID to partiallyPaid, etc.
+    return status
+      .toLowerCase()
+      .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  };
+
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
       case 'UNPAID':
@@ -88,13 +94,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                 variant="outline"
                 className={`${getStatusColor(booking.bookingStatus)} border-none text-[10px] font-semibold tracking-wider uppercase`}
               >
-                {tBooking(`status.${booking.bookingStatus.toLowerCase()}`)}
+                {tBooking(`status.${formatStatusKey(booking.bookingStatus)}`)}
               </Badge>
               <Badge
                 variant="outline"
                 className={`${getPaymentStatusColor(booking.paymentStatus)} border-none text-[10px] font-semibold tracking-wider uppercase`}
               >
-                {tBooking(`status.${booking.paymentStatus.toLowerCase().replace('_', '')}`)}
+                {tBooking(`status.${formatStatusKey(booking.paymentStatus)}`)}
               </Badge>
             </div>
             <Button

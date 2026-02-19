@@ -17,9 +17,12 @@ interface DocumentUploadFormProps {
 
 const getImageUrl = (path: string) => {
   if (!path) return '';
-  if (path.startsWith('data:') || path.startsWith('blob:')) return path;
-  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
-  return `${baseUrl}/${path.replace(/\\/g, '/')}`;
+  if (path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('http')) return path;
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3000';
+  // Ensure we don't end up with double slashes if baseUrl ends with one or path starts with one
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${cleanBaseUrl}${cleanPath.replace(/\\/g, '/')}`;
 };
 
 const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, onChange, onBack, isLoading }) => {
@@ -27,8 +30,46 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
   const tDoc = useTranslations('documentStep.fields');
   const { uploadDocuments, isLoading: documentLoading } = useDocument();
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File>>({});
-  const [previews, setPreviews] = useState<Record<string, string>>({});
+  const [previews, setPreviews] = useState<Record<string, string>>(() => {
+    // Load previews from session storage
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('documentPreviews');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.warn('Failed to parse stored document previews');
+        }
+      }
+    }
+    return {};
+  });
   const [isUploading, setIsUploading] = useState(false);
+
+  // Initialize previews from existing data
+  React.useEffect(() => {
+    if (initialData) {
+      const initialPreviews: Record<string, string> = {};
+      documentFields.forEach((field) => {
+        const value = (initialData as any)?.[field.id];
+        // Only set preview if we have a value and we don't already have a preview in state/session
+        if (value && typeof value === 'string' && !previews[field.id]) {
+          initialPreviews[field.id] = value;
+        }
+      });
+
+      if (Object.keys(initialPreviews).length > 0) {
+        setPreviews((prev) => ({ ...prev, ...initialPreviews }));
+      }
+    }
+  }, [initialData]);
+
+  // Persist previews to session storage
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('documentPreviews', JSON.stringify(previews));
+    }
+  }, [previews]);
 
   const documentFields = [
     {
@@ -83,9 +124,9 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
       try {
         // Pass file as object property, not FormData
         const uploadData = { [fieldId]: file };
-        
+
         const response = await uploadDocuments(uploadData as any);
-        
+
         if (response) {
           toast.success(`Document uploaded successfully`);
           const updatedFiles = { ...selectedFiles, [fieldId]: file };
@@ -126,7 +167,7 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
   };
 
   const isComplete = ['driverLicenseFront', 'passportPhoto', 'selfieWithLicense'].every(
-    (f) => selectedFiles[f] || (initialData as any)?.[f],
+    (f) => selectedFiles[f] || (initialData as any)?.[f] || previews[f],
   );
 
   return (
@@ -160,9 +201,18 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
                 {preview ? (
                   <>
                     <img
-                      src={getImageUrl(preview)}
+                      src={preview.startsWith('data:') || preview.startsWith('blob:') || preview.startsWith('http') ? preview : getImageUrl(preview)}
                       alt={field.label}
                       className="absolute inset-0 h-full w-full object-cover"
+                      onError={(e) => {
+                        console.warn(`Failed to load image for ${field.id}:`, preview);
+                        // Remove broken preview
+                        setPreviews(prev => {
+                          const newPreviews = { ...prev };
+                          delete newPreviews[field.id];
+                          return newPreviews;
+                        });
+                      }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                       <button
