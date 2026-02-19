@@ -5,6 +5,8 @@ import {
   getAllAdminUsers,
   updateAdminUser,
   updateAdminUserPassword,
+  changeAdminUserPassword,
+  updateAdminUserLanguage,
   activateAdminUser,
   deactivateAdminUser,
   deleteAdminUser,
@@ -77,6 +79,26 @@ router.put(
   '/:id/password',
   requireOwnershipOrRole('super-admin'),
   updateAdminUserPassword
+);
+
+/**
+ * @route   PUT /api/admin-users/me/language
+ * @desc    Update current admin user's language preference
+ * @access  Private - Own profile only
+ */
+router.put(
+  '/me/language',
+  updateAdminUserLanguage
+);
+
+/**
+ * @route   PUT /api/admin-users/me/password
+ * @desc    Change current admin user's password (with current password verification)
+ * @access  Private - Own profile only
+ */
+router.put(
+  '/me/password',
+  changeAdminUserPassword
 );
 
 /**

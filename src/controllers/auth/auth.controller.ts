@@ -7,6 +7,7 @@ import {
   logoutFromAllDevices,
   getCurrentProfile,
 } from '../../services/auth/auth.service';
+import { update } from '../../services/adminUser/adminUser.service';
 import { sendSuccess, sendCreated } from '../../utils/response.utils';
 import { createError } from '../../services/middleware/errorHandler';
 
@@ -123,6 +124,31 @@ export const getProfile = async (req: Request, res: Response, next: NextFunction
     const result = await getCurrentProfile(adminUserId);
 
     sendSuccess(res, 'Profile retrieved successfully', result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update current admin user's profile
+ */
+export const updateProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const adminUserId = (req as any).user?.userId;
+
+    if (!adminUserId) {
+      throw createError('Admin user ID not found', 401);
+    }
+
+    const { firstName, lastName, email } = req.body;
+
+    const result = await update(adminUserId, {
+      firstName,
+      lastName,
+      email,
+    });
+
+    sendSuccess(res, 'Profile updated successfully', result);
   } catch (error) {
     next(error);
   }

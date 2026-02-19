@@ -1,12 +1,37 @@
 import { AdminUser, Role, Policy } from '../../models';
 import { AdminUserResponse, AdminRegisterRequest } from '../../common/interfaces/authTypes';
-import { hashPassword } from '../../utils/password.utils';
+import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
 import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '../../utils/adminUser.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
 import { Op } from 'sequelize';
 import { ADMIN_USER_ROLES_POLICIES_INCLUDE } from '../../common/constants/constants';
+
+// Supported languages constant
+const SUPPORTED_LANGUAGES = ['en', 'es', 'fr', 'de', 'ar'];
+
+/**
+ * Validate language
+ */
+const validateLanguage = (language: string): void => {
+  if (!SUPPORTED_LANGUAGES.includes(language)) {
+    throw createError(`Unsupported language. Supported languages: ${SUPPORTED_LANGUAGES.join(', ')}`, 400);
+  }
+};
+
+/**
+ * Get admin user by ID or throw error
+ */
+const getAdminUserOrThrow = async (adminUserId: string): Promise<AdminUser> => {
+  const user = await AdminUser.findByPk(adminUserId);
+  
+  if (!user) {
+    throw createError('Admin user not found', 404);
+  }
+  
+  return user;
+};
 
 /**
  * Create new admin user
@@ -114,17 +139,33 @@ export const getAll = async (
 };
 
 /**
+ * Update admin user language preference
+ */
+export const updateLanguage = async (
+  adminUserId: string,
+  language: string
+): Promise<AdminUserResponse> => {
+  const user = await getAdminUserOrThrow(adminUserId);
+  
+  // Validate language
+  validateLanguage(language);
+
+  // Update language
+  await user.update({ preferredLanguage: language });
+
+  // Get updated user with roles
+  const updatedUser = await getAdminUserWithRolesAndPermissions(adminUserId);
+  return formatAdminUserResponse(updatedUser!);
+};
+
+/**
  * Update admin user
  */
 export const update = async (
   adminUserId: string,
-  updateData: Partial<Pick<AdminUser, 'firstName' | 'lastName' | 'email' | 'isActive'>>
+  updateData: Partial<Pick<AdminUser, 'firstName' | 'lastName' | 'email' | 'isActive' | 'preferredLanguage'>>
 ): Promise<AdminUserResponse> => {
-  const user = await AdminUser.findByPk(adminUserId);
-  
-  if (!user) {
-    throw createError('Admin user not found', 404);
-  }
+  const user = await getAdminUserOrThrow(adminUserId);
 
   // If email is being updated, validate and check for duplicates
   if (updateData.email) {
@@ -145,6 +186,11 @@ export const update = async (
     updateData.email = sanitizedEmail;
   }
 
+  // If language is being updated, validate it
+  if (updateData.preferredLanguage) {
+    validateLanguage(updateData.preferredLanguage);
+  }
+
   // Update user
   await user.update(updateData);
 
@@ -154,35 +200,50 @@ export const update = async (
 };
 
 /**
- * Update admin user password
+ * Helper: Update user password (internal use)
+ */
+const updateUserPassword = async (user: AdminUser, newPassword: string): Promise<void> => {
+  const passwordHash = await hashPassword(newPassword);
+  await user.update({ passwordHash });
+};
+
+/**
+ * Update admin user password (admin action - no current password verification)
+ * Used by super-admin to reset any user's password
  */
 export const updatePassword = async (
   adminUserId: string,
   newPassword: string
 ): Promise<void> => {
-  const user = await AdminUser.findByPk(adminUserId);
-  
-  if (!user) {
-    throw createError('Admin user not found', 404);
+  const user = await getAdminUserOrThrow(adminUserId);
+  await updateUserPassword(user, newPassword);
+};
+
+/**
+ * Change admin user password (user action - requires current password verification)
+ * Used by user to change their own password
+ */
+export const changePassword = async (
+  adminUserId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  const user = await getAdminUserOrThrow(adminUserId);
+
+  // Verify current password
+  const isPasswordValid = await comparePassword(currentPassword, user.passwordHash);
+  if (!isPasswordValid) {
+    throw createError('Current password is incorrect', 401);
   }
 
-  // Hash new password
-  const passwordHash = await hashPassword(newPassword);
-
-  // Update password
-  await user.update({ passwordHash });
+  await updateUserPassword(user, newPassword);
 };
 
 /**
  * Activate admin user
  */
 export const activate = async (adminUserId: string): Promise<AdminUserResponse> => {
-  const user = await AdminUser.findByPk(adminUserId);
-  
-  if (!user) {
-    throw createError('Admin user not found', 404);
-  }
-
+  const user = await getAdminUserOrThrow(adminUserId);
   await user.update({ isActive: true });
 
   const updatedUser = await getAdminUserWithRolesAndPermissions(adminUserId);
@@ -193,12 +254,7 @@ export const activate = async (adminUserId: string): Promise<AdminUserResponse> 
  * Deactivate admin user
  */
 export const deactivate = async (adminUserId: string): Promise<AdminUserResponse> => {
-  const user = await AdminUser.findByPk(adminUserId);
-  
-  if (!user) {
-    throw createError('Admin user not found', 404);
-  }
-
+  const user = await getAdminUserOrThrow(adminUserId);
   await user.update({ isActive: false });
 
   const updatedUser = await getAdminUserWithRolesAndPermissions(adminUserId);
@@ -209,12 +265,8 @@ export const deactivate = async (adminUserId: string): Promise<AdminUserResponse
  * Delete admin user (soft delete by deactivating)
  */
 export const remove = async (adminUserId: string): Promise<void> => {
-  const user = await AdminUser.findByPk(adminUserId);
+  const user = await getAdminUserOrThrow(adminUserId);
   
-  if (!user) {
-    throw createError('Admin user not found', 404);
-  }
-
   // Soft delete by deactivating
   await user.update({ isActive: false });
 };

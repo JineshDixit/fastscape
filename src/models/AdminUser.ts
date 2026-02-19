@@ -7,6 +7,7 @@ export class AdminUser extends Model {
   public email!: string;
   public passwordHash!: string;
   public isActive!: boolean;
+  public preferredLanguage!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -47,6 +48,14 @@ export const initAdminUserModel = (sequelize: Sequelize) => {
       isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
+      },
+      preferredLanguage: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: 'en',
+        validate: {
+          isIn: [['en', 'es', 'fr', 'de', 'ar']],
+        },
       },
     },
     {

@@ -6,6 +6,7 @@ import {
   logoutAdmin,
   logoutAll,
   getProfile,
+  updateProfile,
 } from '../controllers/auth/auth.controller';
 import {
   authenticateUser,
@@ -57,5 +58,12 @@ router.post('/logout-all', authenticateUser, requireActiveUser, logoutAll);
  * @access  Private
  */
 router.get('/profile', authenticateUser, requireActiveUser, getProfile);
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update admin user profile
+ * @access  Private
+ */
+router.put('/profile', authenticateUser, requireActiveUser, updateProfile);
 
 export default router;

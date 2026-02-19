@@ -5,6 +5,8 @@ import {
   getAll,
   update,
   updatePassword,
+  changePassword,
+  updateLanguage,
   activate,
   deactivate,
   remove,
@@ -104,6 +106,64 @@ export const updateAdminUserPassword = async (req: Request, res: Response, next:
     await updatePassword(id, newPassword);
 
     sendSuccess(res, 'Password updated successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Change current admin user's password (with current password verification)
+ */
+export const changeAdminUserPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const adminUserId = (req as any).user?.userId;
+
+    if (!adminUserId) {
+      throw createError('Admin user ID not found', 401);
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      throw createError('Current password, new password, and confirm password are required', 400);
+    }
+
+    if (newPassword !== confirmPassword) {
+      throw createError('New password and confirm password do not match', 400);
+    }
+
+    if (newPassword.length < 6) {
+      throw createError('New password must be at least 6 characters long', 400);
+    }
+
+    await changePassword(adminUserId, currentPassword, newPassword);
+
+    sendSuccess(res, 'Password changed successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update admin user language preference
+ */
+export const updateAdminUserLanguage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const adminUserId = (req as any).user?.userId;
+
+    if (!adminUserId) {
+      throw createError('Admin user ID not found', 401);
+    }
+
+    const { language } = req.body;
+
+    if (!language) {
+      throw createError('Language is required', 400);
+    }
+
+    const result = await updateLanguage(adminUserId, language);
+
+    sendSuccess(res, 'Language preference updated successfully', result);
   } catch (error) {
     next(error);
   }
