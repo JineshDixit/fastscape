@@ -11,6 +11,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { FilterSheet } from '@/components/shared/FilterSheet';
+import { useVehicleLocalization } from '@/utils/modelLocalization.utils';
+import { useTranslation } from 'react-i18next';
 
 interface VehicleFiltersProps {
   currentFilters: FilterInterface;
@@ -24,58 +26,61 @@ const FilterContent: React.FC<{
   locations: Location[];
   onChange: (field: keyof FilterInterface, value: any) => void;
 }> = ({ filters, enums, locations, onChange }) => {
+  const { localizeBodyType, localizeFuelType, localizeTransmission } = useVehicleLocalization();
+  const { t } = useTranslation('vehicles');
+  
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <h3 className="text-foreground text-sm font-semibold tracking-wide">Basic Info</h3>
+        <h3 className="text-foreground text-sm font-semibold tracking-wide">{t('filters.basicInfo', 'Basic Info')}</h3>
         <div className="grid gap-4">
           <div className="space-y-2">
             <Label htmlFor="make" className="text-xs">
-              Make
+              {t('fields.make')}
             </Label>
             <Input
               id="make"
-              placeholder="Any Make"
+              placeholder={t('filters.anyMake', 'Any Make')}
               value={filters.make || ''}
               onChange={(e) => onChange('make', e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="model" className="text-xs">
-              Model
+              {t('fields.model')}
             </Label>
             <Input
               id="model"
-              placeholder="Any Model"
+              placeholder={t('filters.anyModel', 'Any Model')}
               value={filters.model || ''}
               onChange={(e) => onChange('model', e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="year" className="text-xs">
-              Year
+              {t('fields.year')}
             </Label>
             <Input
               id="year"
               type="number"
-              placeholder="Any Year"
+              placeholder={t('filters.anyYear', 'Any Year')}
               value={filters.year || ''}
               onChange={(e) => onChange('year', e.target.value ? parseInt(e.target.value) : undefined)}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="locationId" className="text-xs">
-              Location
+              {t('fields.location')}
             </Label>
             <Select
               value={filters.locationId || 'all'}
               onValueChange={(val) => onChange('locationId', val === 'all' ? undefined : val)}
             >
               <SelectTrigger id="locationId">
-                <SelectValue placeholder="Any Location" />
+                <SelectValue placeholder={t('filters.anyLocation', 'Any Location')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="all">{t('filters.allLocations', 'All Locations')}</SelectItem>
                 {locations.map((location) => (
                   <SelectItem key={location.id} value={location.id}>
                     {location.name} - {location.city}
@@ -86,12 +91,12 @@ const FilterContent: React.FC<{
           </div>
           <div className="space-y-2">
             <Label htmlFor="capacity" className="text-xs">
-              Capacity
+              {t('fields.passengerCapacity')}
             </Label>
             <Input
               id="capacity"
               type="number"
-              placeholder="Any Capacity"
+              placeholder={t('filters.anyCapacity', 'Any Capacity')}
               value={filters.passengerCapacity || ''}
               onChange={(e) => onChange('passengerCapacity', e.target.value ? parseInt(e.target.value) : undefined)}
             />
@@ -103,12 +108,12 @@ const FilterContent: React.FC<{
 
       <Accordion type="multiple" className="w-full">
         <AccordionItem value="price">
-          <AccordionTrigger className="text-sm">Price Range</AccordionTrigger>
+          <AccordionTrigger className="text-sm">{t('filters.priceRange', 'Price Range')}</AccordionTrigger>
           <AccordionContent>
             <div className="grid grid-cols-2 gap-2 pt-2">
               <div className="space-y-1">
                 <Label htmlFor="minPrice" className="text-muted-foreground text-xs">
-                  Min
+                  {t('filters.min', 'Min')}
                 </Label>
                 <div className="relative">
                   <span className="text-muted-foreground absolute top-1/2 left-2 -translate-y-1/2 text-xs">$</span>
@@ -124,7 +129,7 @@ const FilterContent: React.FC<{
               </div>
               <div className="space-y-1">
                 <Label htmlFor="maxPrice" className="text-muted-foreground text-xs">
-                  Max
+                  {t('filters.max', 'Max')}
                 </Label>
                 <div className="relative">
                   <span className="text-muted-foreground absolute top-1/2 left-2 -translate-y-1/2 text-xs">$</span>
@@ -132,7 +137,7 @@ const FilterContent: React.FC<{
                     id="maxPrice"
                     type="number"
                     className="h-8 pl-5"
-                    placeholder="Any"
+                    placeholder={t('filters.any', 'Any')}
                     value={filters.maxPrice || ''}
                     onChange={(e) => onChange('maxPrice', e.target.value ? parseFloat(e.target.value) : undefined)}
                   />
@@ -143,7 +148,7 @@ const FilterContent: React.FC<{
         </AccordionItem>
 
         <AccordionItem value="status">
-          <AccordionTrigger className="text-sm">Status</AccordionTrigger>
+          <AccordionTrigger className="text-sm">{t('fields.status')}</AccordionTrigger>
           <AccordionContent>
             <RadioGroup
               value={filters.isAvailable === undefined ? 'all' : String(filters.isAvailable)}
@@ -153,19 +158,19 @@ const FilterContent: React.FC<{
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="all" id="status-all" />
                 <Label htmlFor="status-all" className="cursor-pointer font-normal">
-                  All Statuses
+                  {t('filters.allStatuses', 'All Statuses')}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="true" id="status-available" />
                 <Label htmlFor="status-available" className="cursor-pointer font-normal">
-                  Available
+                  {t('status.available')}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="false" id="status-unavailable" />
                 <Label htmlFor="status-unavailable" className="cursor-pointer font-normal">
-                  Unavailable
+                  {t('status.unavailable')}
                 </Label>
               </div>
             </RadioGroup>
@@ -174,7 +179,7 @@ const FilterContent: React.FC<{
 
         {enums?.bodyTypes && (
           <AccordionItem value="body">
-            <AccordionTrigger className="text-sm">Body Type</AccordionTrigger>
+            <AccordionTrigger className="text-sm">{t('fields.bodyType')}</AccordionTrigger>
             <AccordionContent>
               <RadioGroup
                 value={filters.bodyType || 'all'}
@@ -184,14 +189,14 @@ const FilterContent: React.FC<{
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="all" id="body-all" />
                   <Label htmlFor="body-all" className="cursor-pointer font-normal">
-                    All Body Types
+                    {t('filters.allBodyTypes', 'All Body Types')}
                   </Label>
                 </div>
                 {enums.bodyTypes.map((type: string) => (
                   <div key={type} className="flex items-center space-x-2">
                     <RadioGroupItem value={type} id={`body-${type}`} />
                     <Label htmlFor={`body-${type}`} className="cursor-pointer font-normal">
-                      {type}
+                      {localizeBodyType(type)}
                     </Label>
                   </div>
                 ))}
@@ -202,7 +207,7 @@ const FilterContent: React.FC<{
 
         {enums?.fuelTypes && (
           <AccordionItem value="fuel">
-            <AccordionTrigger className="text-sm">Fuel Type</AccordionTrigger>
+            <AccordionTrigger className="text-sm">{t('fields.fuelType')}</AccordionTrigger>
             <AccordionContent>
               <RadioGroup
                 value={filters.fuelType || 'all'}
@@ -212,14 +217,14 @@ const FilterContent: React.FC<{
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="all" id="fuel-all" />
                   <Label htmlFor="fuel-all" className="cursor-pointer font-normal">
-                    All Fuel Types
+                    {t('filters.allFuelTypes', 'All Fuel Types')}
                   </Label>
                 </div>
                 {enums.fuelTypes.map((type: string) => (
                   <div key={type} className="flex items-center space-x-2">
                     <RadioGroupItem value={type} id={`fuel-${type}`} />
                     <Label htmlFor={`fuel-${type}`} className="cursor-pointer font-normal">
-                      {type}
+                      {localizeFuelType(type)}
                     </Label>
                   </div>
                 ))}
@@ -230,7 +235,7 @@ const FilterContent: React.FC<{
 
         {enums?.transmissionTypes && (
           <AccordionItem value="transmission">
-            <AccordionTrigger className="text-sm">Transmission</AccordionTrigger>
+            <AccordionTrigger className="text-sm">{t('fields.transmission')}</AccordionTrigger>
             <AccordionContent>
               <RadioGroup
                 value={filters.transmission || 'all'}
@@ -240,14 +245,14 @@ const FilterContent: React.FC<{
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="all" id="trans-all" />
                   <Label htmlFor="trans-all" className="cursor-pointer font-normal">
-                    All Transmissions
+                    {t('filters.allTransmissions', 'All Transmissions')}
                   </Label>
                 </div>
                 {enums.transmissionTypes.map((type: string) => (
                   <div key={type} className="flex items-center space-x-2">
                     <RadioGroupItem value={type} id={`trans-${type}`} />
                     <Label htmlFor={`trans-${type}`} className="cursor-pointer font-normal">
-                      {type}
+                      {localizeTransmission(type)}
                     </Label>
                   </div>
                 ))}

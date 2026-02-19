@@ -1,4 +1,4 @@
-import { Bell, Settings, PanelLeft } from 'lucide-react';
+import { Settings, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -62,13 +62,12 @@ const Header: FC<HeaderProps> = ({ breadcrumbs }) => {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" className="m-0! p-2!">
+            <Button 
+              variant="ghost" 
+              className="m-0! p-2!"
+              onClick={() => navigate('/profile')}
+            >
               <Settings className="text-foreground h-5! w-5!" />
-            </Button>
-
-            <Button variant="ghost" className="relative m-0! p-2!">
-              <Bell className="text-foreground h-5! w-5!" />
-              {/* <span className="absolute top-1 right-2 h-3 w-3 bg-destructive rounded-full"/> */}
             </Button>
           </div>
 

@@ -14,6 +14,64 @@ import {
 import { MoreHorizontal, Eye, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useBookingLocalization } from '@/utils/modelLocalization.utils';
+
+const BookingStatusCell = ({ status }: { status: string }) => {
+  const { localizeBookingStatus } = useBookingLocalization();
+  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
+
+  switch (status) {
+    case BookingStatus.CONFIRMED:
+    case BookingStatus.COMPLETED:
+      variant = 'default';
+      break;
+    case BookingStatus.PENDING:
+      variant = 'secondary';
+      break;
+    case BookingStatus.CANCELLED:
+      variant = 'destructive';
+      break;
+    default:
+      variant = 'outline';
+  }
+
+  return (
+    <Badge variant={variant} className="rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase">
+      {localizeBookingStatus(status)}
+    </Badge>
+  );
+};
+
+const PaymentStatusCell = ({ status }: { status: PaymentStatus }) => {
+  const { localizePaymentStatus } = useBookingLocalization();
+  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
+
+  switch (status) {
+    case PaymentStatus.PAID:
+      variant = 'default';
+      break;
+    case PaymentStatus.UNPAID:
+      variant = 'destructive';
+      break;
+    case PaymentStatus.PARTIALLY_PAID:
+      variant = 'secondary';
+      break;
+    case PaymentStatus.REFUNDED:
+      variant = 'outline';
+      break;
+  }
+  
+  return (
+    <Badge variant={variant} className="rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase">
+      {localizePaymentStatus(status)}
+    </Badge>
+  );
+};
+
+const BookingTypeCell = ({ type }: { type: string }) => {
+  const { localizeBookingType } = useBookingLocalization();
+  return <span className="capitalize">{localizeBookingType(type)}</span>;
+};
 
 export const columns: ColumnDef<Booking>[] = [
   {
@@ -56,7 +114,7 @@ export const columns: ColumnDef<Booking>[] = [
     enableSorting: true,
     cell: ({ row }) => {
       const type = row.getValue('bookingType') as string;
-      return <span className="capitalize">{type?.replace(/_/g, ' ').toLowerCase()}</span>;
+      return <BookingTypeCell type={type} />;
     },
   },
   {
@@ -65,28 +123,7 @@ export const columns: ColumnDef<Booking>[] = [
     enableSorting: true,
     cell: ({ row }) => {
       const status = row.original.bookingStatus;
-      let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
-
-      switch (status) {
-        case BookingStatus.CONFIRMED:
-        case BookingStatus.COMPLETED:
-          variant = 'default';
-          break;
-        case BookingStatus.PENDING:
-          variant = 'secondary';
-          break;
-        case BookingStatus.CANCELLED:
-          variant = 'destructive';
-          break;
-        default:
-          variant = 'outline';
-      }
-
-      return (
-        <Badge variant={variant} className="rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase">
-          {status}
-        </Badge>
-      );
+      return <BookingStatusCell status={status} />;
     },
   },
   {
@@ -95,27 +132,7 @@ export const columns: ColumnDef<Booking>[] = [
     enableSorting: true,
     cell: ({ row }) => {
       const status = row.getValue('paymentStatus') as PaymentStatus;
-      let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
-
-      switch (status) {
-        case PaymentStatus.PAID:
-          variant = 'default';
-          break;
-        case PaymentStatus.UNPAID:
-          variant = 'destructive';
-          break;
-        case PaymentStatus.PARTIALLY_PAID:
-          variant = 'secondary';
-          break;
-        case PaymentStatus.REFUNDED:
-          variant = 'outline';
-          break;
-      }
-      return (
-        <Badge variant={variant} className="rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase">
-          {status}
-        </Badge>
-      );
+      return <PaymentStatusCell status={status} />;
     },
   },
   {

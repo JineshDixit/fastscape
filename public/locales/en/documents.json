@@ -1,0 +1,59 @@
+{
+  "title": "Documents",
+  "uploadDocument": "Upload Document",
+  "documentDetails": "Document Details",
+  "fields": {
+    "documentId": "Document ID",
+    "name": "Name",
+    "type": "Type",
+    "category": "Category",
+    "uploadedBy": "Uploaded By",
+    "uploadDate": "Upload Date",
+    "size": "Size",
+    "status": "Status",
+    "expiryDate": "Expiry Date",
+    "description": "Description"
+  },
+  "types": {
+    "license": "License",
+    "drivinglicense": "Driving License",
+    "insurance": "Insurance",
+    "registration": "Registration",
+    "identity": "Identity",
+    "nationalid": "National ID",
+    "passport": "Passport",
+    "visa": "Visa",
+    "contract": "Contract",
+    "invoice": "Invoice",
+    "receipt": "Receipt",
+    "vehicleregistration": "Vehicle Registration",
+    "vehicleinsurance": "Vehicle Insurance",
+    "other": "Other"
+  },
+  "verificationStatus": {
+    "pending": "Pending",
+    "verified": "Verified",
+    "rejected": "Rejected",
+    "expired": "Expired"
+  },
+  "status": {
+    "pending": "Pending Review",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "expired": "Expired"
+  },
+  "actions": {
+    "download": "Download",
+    "view": "View",
+    "approve": "Approve",
+    "reject": "Reject",
+    "delete": "Delete"
+  },
+  "messages": {
+    "uploadSuccess": "Document uploaded successfully",
+    "approveSuccess": "Document approved successfully",
+    "rejectSuccess": "Document rejected successfully",
+    "deleteSuccess": "Document deleted successfully",
+    "confirmDelete": "Are you sure you want to delete this document?"
+  }
+}

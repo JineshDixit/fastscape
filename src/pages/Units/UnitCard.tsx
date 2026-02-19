@@ -16,6 +16,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useVehicleLocalization } from '@/utils/modelLocalization.utils';
+import { useTranslation } from 'react-i18next';
 
 interface UnitCardProps {
   vehicle: Vehicle;
@@ -26,17 +28,20 @@ interface UnitCardProps {
 
 const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { localizeTransmission, localizeFuelType } = useVehicleLocalization();
+  const { t } = useTranslation('vehicles');
+  
   const getStatusBadge = (isAvailable: boolean) => {
     if (isAvailable) {
       return (
         <Badge variant="default" className="bg-green-100 text-green-700">
-          Available
+          {t('status.available')}
         </Badge>
       );
     }
     return (
       <Badge variant="default" className="bg-muted/90 text-muted-foreground/80">
-        Unavailable
+        {t('status.unavailable')}
       </Badge>
     );
   };
@@ -96,21 +101,21 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
               <div className="bg-muted/90 rounded-md p-1.5">
                 <Cog className="text-foreground/80 size-4" />
               </div>
-              <span className="text-foreground w-full truncate text-sm tracking-tight">{vehicle.transmission}</span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">{localizeTransmission(vehicle.transmission)}</span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <div className="bg-muted/90 rounded-md p-1.5">
                 <Users className="text-foreground/80 size-4" />
               </div>
               <span className="text-foreground w-full truncate text-sm tracking-tight">
-                {vehicle.passengerCapacity || 5} People
+                {vehicle.passengerCapacity || 5} {t('fields.people')}
               </span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <div className="bg-muted/90 rounded-md p-1.5">
                 <Fuel className="text-foreground/80 size-4" />
               </div>
-              <span className="text-foreground w-full truncate text-sm tracking-tight">{vehicle.fuelType}</span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">{localizeFuelType(vehicle.fuelType)}</span>
             </div>
           </div>
         </div>
@@ -118,7 +123,7 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
 
       <CardFooter className="flex gap-3 px-5">
         <Button className="flex-1" onClick={() => onDetails?.(vehicle.id)}>
-          View Details
+          {t('actions.viewDetails')}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -128,13 +133,13 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(vehicle)}>
-              Edit
+              {t('actions.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive hover:text-destructive! hover:bg-destructive/10! cursor-pointer"
               onClick={() => setShowDeleteDialog(true)}
             >
-              Delete
+              {t('actions.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -143,13 +148,13 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Vehicle</AlertDialogTitle>
+            <AlertDialogTitle>{t('messages.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {vehicle.make} {vehicle.model}? This action cannot be undone.
+              {t('messages.deleteConfirm', { make: vehicle.make, model: vehicle.model })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 onDelete?.(vehicle.id);
@@ -157,7 +162,7 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
               }}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Delete
+              {t('actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -41,6 +41,7 @@ export interface User {
   fullName: string;
   email: string;
   isActive: boolean;
+  preferredLanguage: string;
   roles: Array<{
     id: string;
     name: string;
@@ -48,6 +49,8 @@ export interface User {
     isActive: boolean;
   }>;
   permissions: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface RefreshTokenRequest {

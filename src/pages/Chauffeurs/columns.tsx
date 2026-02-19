@@ -15,6 +15,45 @@ import { Badge } from '@/components/ui/badge';
 import { type Chauffeur, ChauffeurStatus, chauffeurService } from '@/api/services/chauffeurService';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { useChauffeurLocalization } from '@/utils/modelLocalization.utils';
+
+const ChauffeurStatusCell = ({ status }: { status: ChauffeurStatus }) => {
+  const { localizeStatus } = useChauffeurLocalization();
+  
+  const getStatusVariant = (status?: ChauffeurStatus) => {
+    switch (status) {
+      case ChauffeurStatus.AVAILABLE:
+        return 'default';
+      case ChauffeurStatus.BUSY:
+        return 'secondary';
+      case ChauffeurStatus.OFF_DUTY:
+        return 'destructive';
+      case ChauffeurStatus.ON_BREAK:
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  return (
+    <Badge
+      variant={getStatusVariant(status)}
+      className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
+    >
+      {localizeStatus(status)}
+    </Badge>
+  );
+};
+
+const ExperienceLevelCell = ({ level }: { level: string }) => {
+  const { localizeExperienceLevel } = useChauffeurLocalization();
+  
+  return (
+    <Badge variant="outline" className="text-xs">
+      {localizeExperienceLevel(level || 'BEGINNER')}
+    </Badge>
+  );
+};
 
 export const columns: ColumnDef<Chauffeur>[] = [
   {
@@ -41,29 +80,7 @@ export const columns: ColumnDef<Chauffeur>[] = [
     header: 'Status',
     cell: ({ row }) => {
       const status = row.getValue('status') as ChauffeurStatus;
-      const getStatusVariant = (status?: ChauffeurStatus) => {
-        switch (status) {
-          case ChauffeurStatus.AVAILABLE:
-            return 'default';
-          case ChauffeurStatus.BUSY:
-            return 'secondary';
-          case ChauffeurStatus.OFF_DUTY:
-            return 'destructive';
-          case ChauffeurStatus.ON_BREAK:
-            return 'outline';
-          default:
-            return 'outline';
-        }
-      };
-
-      return (
-        <Badge
-          variant={getStatusVariant(status)}
-          className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
-        >
-          {status.replace('_', ' ')}
-        </Badge>
-      );
+      return <ChauffeurStatusCell status={status} />;
     },
   },
   {
@@ -76,11 +93,7 @@ export const columns: ColumnDef<Chauffeur>[] = [
     header: 'Experience',
     cell: ({ row }) => {
       const level = row.getValue('experienceLevel') as string;
-      return (
-        <Badge variant="outline" className="text-xs">
-          {level || 'Beginner'}
-        </Badge>
-      );
+      return <ExperienceLevelCell level={level} />;
     },
   },
   {

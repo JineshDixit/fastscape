@@ -7,6 +7,7 @@ export const generateBreadcrumbs = (pathname: string): BreadcrumbItem[] => {
   // Route configurations
   const routeMap: Record<string, string> = {
     dashboard: 'Dashboard',
+    profile: 'User Profile',
     bookings: 'Bookings',
     units: 'Units',
     clients: 'Clients',

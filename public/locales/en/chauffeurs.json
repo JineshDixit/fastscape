@@ -1,0 +1,70 @@
+{
+  "title": "Chauffeurs",
+  "addChauffeur": "Add Chauffeur",
+  "editChauffeur": "Edit Chauffeur",
+  "chauffeurDetails": "Chauffeur Details",
+  "fields": {
+    "chauffeurId": "Chauffeur ID",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "dateOfBirth": "Date of Birth",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "country": "Country",
+    "nationality": "Nationality",
+    "zipCode": "Zip Code",
+    "licenseNumber": "License Number",
+    "licenseExpiry": "License Expiry",
+    "experience": "Experience",
+    "yearsOfExperience": "Years of Experience",
+    "experienceLevel": "Experience Level",
+    "languages": "Languages",
+    "rating": "Rating",
+    "totalTrips": "Total Trips",
+    "hourlyRate": "Hourly Rate",
+    "status": "Status",
+    "isVerified": "Verified",
+    "availability": "Availability",
+    "photo": "Photo",
+    "documents": "Documents"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "available": "Available",
+    "busy": "Busy",
+    "offduty": "Off Duty",
+    "onbreak": "On Break",
+    "unavailable": "Unavailable",
+    "ontrip": "On Trip",
+    "suspended": "Suspended",
+    "offline": "Offline"
+  },
+  "experienceLevel": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "experienced": "Experienced",
+    "advanced": "Advanced",
+    "expert": "Expert"
+  },
+  "availability": {
+    "available": "Available",
+    "busy": "Busy",
+    "offline": "Offline"
+  },
+  "messages": {
+    "confirmDelete": "Are you sure you want to delete this chauffeur?",
+    "confirmSuspend": "Are you sure you want to suspend this chauffeur?",
+    "confirmVerify": "Are you sure you want to verify this chauffeur?",
+    "deleteSuccess": "Chauffeur deleted successfully",
+    "updateSuccess": "Chauffeur updated successfully",
+    "createSuccess": "Chauffeur created successfully",
+    "suspendSuccess": "Chauffeur suspended successfully",
+    "activateSuccess": "Chauffeur activated successfully",
+    "verifySuccess": "Chauffeur verified successfully"
+  }
+}

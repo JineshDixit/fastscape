@@ -10,6 +10,7 @@ import { useAuth } from '@/api/hooks/useAuth';
 import { authCookies } from '@/api';
 import type { FormErrors } from '@/common/interface/loginInterface';
 import { Spinner } from '@/components/ui/spinner';
+// import { PublicLanguageSwitcher } from '@/components/shared/PublicLanguageSwitcher';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -94,6 +95,11 @@ const LoginPage = () => {
 
   return (
     <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
+      {/* Language Switcher - Top Right Corner */}
+      {/* <div className="absolute top-6 right-6">
+        <PublicLanguageSwitcher />
+      </div> */}
+
       <div className="w-full max-w-md">
         <Card className="border-0 shadow-lg">
           <CardHeader className="space-y-4 text-center">

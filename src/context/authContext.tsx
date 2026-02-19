@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, typ
 import { authService } from '@/api/services/auth';
 import { authCookies } from '@/utils/cookies';
 import type { User, LoginResponse } from '@/common/interface/authInterface';
+import { useTranslation } from 'react-i18next';
+import { adminUserService } from '@/api/services/adminUserService';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { i18n } = useTranslation();
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -69,11 +72,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
+      // Get current i18n language (user's current selection, possibly from login page)
+      const currentLanguage = i18n.language;
+
       // Now fetch the profile with the valid token
       const response = await authService.getProfile();
       if (response.success && response.data) {
         setUser(response.data);
         setIsAuthenticated(true);
+        
+        const dbLanguage = response.data.preferredLanguage;
+        
+        // Compare current language with database language
+        if (currentLanguage !== dbLanguage) {
+          // User selected a different language (e.g., on login page)
+          // Update database to match user's current choice
+          console.log(`Language mismatch: current=${currentLanguage}, db=${dbLanguage}. Updating database...`);
+          
+          try {
+            await adminUserService.updateLanguage(currentLanguage);
+            console.log('Database language updated successfully');
+          } catch (error) {
+            console.error('Failed to update database language:', error);
+            // Don't fail the login process if language update fails
+            // User can still change it later from settings
+          }
+        } else {
+          // Languages match, no action needed
+          console.log(`Language in sync: ${currentLanguage}`);
+        }
+        
+        // Ensure i18n is set to current language (should already be, but just in case)
+        if (i18n.language !== currentLanguage) {
+          await i18n.changeLanguage(currentLanguage);
+        }
       } else {
         throw new Error(response.message || 'Failed to fetch profile');
       }
@@ -87,7 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [i18n]);
 
   const login = async (credentials: any): Promise<LoginResponse> => {
     setIsLoading(true);

@@ -14,6 +14,7 @@ import ChauffeurList from '@/pages/Chauffeurs/ChauffeurList';
 import ChauffeurDetails from '@/pages/Chauffeurs/ChauffeurDetails';
 import Financials from '@/pages/Financials/Financials';
 import FinanceDetails from '@/pages/Financials/FinanceDetails';
+import ProfilePage from '@/pages/Profile/ProfilePage';
 import NotFound from '@/pages/NotFound';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import UnitsLayout from '@/pages/Units/UnitsLayout';
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <Dashboard />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
       },
       {
         path: 'bookings',
