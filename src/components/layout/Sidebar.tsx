@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Users, Car, BookUser, LogOut, ChartPie } from 'lucide-react';
+import { LayoutDashboard, Calendar, Users, Car, BookUser, LogOut, ChartPie, MapPin, Shield } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import logo from '@/assets/Logo.png';
@@ -15,8 +15,10 @@ const sidebarItems: SidebarItem[] = [
   { icon: Calendar, label: 'Bookings', path: '/bookings' },
   { icon: Car, label: 'Units', path: '/units' },
   { icon: Users, label: 'Clients', path: '/clients' },
-  { icon: BookUser, label: 'Chauffeurs', path: '/drivers' },
+  { icon: BookUser, label: 'Driver', path: '/drivers' },
   { icon: ChartPie, label: 'Financials', path: '/financials' },
+  { icon: MapPin ,label: 'Locations', path: '/locations' },
+  { icon: Shield, label: 'Admin', path: '/admin-management' }
 ];
 
 const Sidebar = () => {

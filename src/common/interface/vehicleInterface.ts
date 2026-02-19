@@ -91,7 +91,7 @@ export interface VehicleFilters {
   maxPrice?: number;
   year?: number;
   passengerCapacity?: number;
-  city?: string;
+  locationId?: string;
 }
 
 export interface VehicleBulkUpdate {

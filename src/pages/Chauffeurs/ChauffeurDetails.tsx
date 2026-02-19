@@ -22,6 +22,7 @@ import {
   Trash2,
   RefreshCw,
   CheckCircle2,
+  Edit,
 } from 'lucide-react';
 import {
   Dialog,
@@ -35,6 +36,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChauffeurForm } from './ChauffeurForm';
 
 const ChauffeurDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,9 +45,9 @@ const ChauffeurDetails = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [statusToUpdate, setStatusToUpdate] = useState<ChauffeurStatus | ''>('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchChauffeur = async () => {
+  const fetchChauffeur = async () => {
       if (!id) return;
       try {
         setLoading(true);
@@ -59,6 +61,8 @@ const ChauffeurDetails = () => {
         setLoading(false);
       }
     };
+
+  useEffect(() => {
     fetchChauffeur();
   }, [id, navigate]);
 
@@ -170,6 +174,14 @@ const ChauffeurDetails = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Button 
+            variant="outline" 
+            className="h-10 gap-2 font-medium"
+            onClick={() => setEditDialogOpen(true)}
+          >
+            <Edit className="h-4 w-4" /> Edit Details
+          </Button>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" className="h-10 gap-2 font-medium">
@@ -481,6 +493,14 @@ const ChauffeurDetails = () => {
           </Card>
         </div>
       </div>
+
+      {/* Edit Chauffeur Dialog */}
+      <ChauffeurForm
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSuccess={fetchChauffeur}
+        chauffeur={chauffeur}
+      />
     </div>
   );
 };

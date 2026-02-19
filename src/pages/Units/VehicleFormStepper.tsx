@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import ImageUpload from '@/components/ui/image-upload';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { cn } from '@/lib/utils';
+import { locationService, type Location } from '@/api/services/locationService';
 
 interface VehicleFormStepperProps {
   vehicle?: Vehicle;
@@ -61,6 +62,7 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
   const [images, setImages] = useState<Record<string, File>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [canSubmit, setCanSubmit] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const isEditMode = !!vehicle;
 
@@ -86,7 +88,21 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
     isAvailable: 'true',
     passengerCapacity: '5',
     city: 'Dubai',
+    locationId: '',
   });
+
+  // Fetch locations on mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await locationService.getAllLocations({ limit: 1000, isActive: true });
+        setLocations(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch locations:', error);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   // Reset canSubmit when step changes
   useEffect(() => {
@@ -117,6 +133,7 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
         isAvailable: vehicle.isAvailable?.toString() || 'true',
         passengerCapacity: vehicle.passengerCapacity?.toString() || '5',
         city: vehicle.city || 'Dubai',
+        locationId: (vehicle as any).locationId || '',
       });
     }
   }, [vehicle]);
@@ -197,6 +214,7 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
       case 4:
         if (!formData.pricePerDay.trim()) newErrors.pricePerDay = 'Price per day is required';
         if (!formData.city.trim()) newErrors.city = 'City is required';
+        if (!formData.locationId.trim()) newErrors.locationId = 'Location is required';
         break;
     }
 
@@ -657,6 +675,29 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="locationId">
+                  Location <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.locationId}
+                  onValueChange={(value) => handleInputChange('locationId', value)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="locationId">
+                    <SelectValue placeholder="Select a location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name} - {location.city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.locationId && <p className="text-destructive text-sm">{errors.locationId}</p>}
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="city">
                   City / Location <span className="text-destructive">*</span>
                 </Label>
@@ -716,13 +757,32 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Input
-                  id="currency"
+                <Select
                   value={formData.currency}
-                  onChange={(e) => handleInputChange('currency', e.target.value)}
-                  placeholder="e.g., USD"
+                  onValueChange={(value) => handleInputChange('currency', value)}
                   disabled={isLoading}
-                />
+                >
+                  <SelectTrigger id="currency">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AED">AED - UAE Dirham</SelectItem>
+                    <SelectItem value="USD">USD - US Dollar</SelectItem>
+                    <SelectItem value="EUR">EUR - Euro</SelectItem>
+                    <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                    <SelectItem value="SAR">SAR - Saudi Riyal</SelectItem>
+                    <SelectItem value="QAR">QAR - Qatari Riyal</SelectItem>
+                    <SelectItem value="KWD">KWD - Kuwaiti Dinar</SelectItem>
+                    <SelectItem value="BHD">BHD - Bahraini Dinar</SelectItem>
+                    <SelectItem value="OMR">OMR - Omani Rial</SelectItem>
+                    <SelectItem value="INR">INR - Indian Rupee</SelectItem>
+                    <SelectItem value="PKR">PKR - Pakistani Rupee</SelectItem>
+                    <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
+                    <SelectItem value="CNY">CNY - Chinese Yuan</SelectItem>
+                    <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
+                    <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>

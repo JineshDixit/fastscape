@@ -141,7 +141,7 @@ export interface BookingListResponse {
 }
 
 export const bookingService = {
-  getAllBookings: async (filters: BookingFilters = {}) => {
+  getAllBookings: async (filters: BookingFilters = {}): Promise<BookingListResponse> => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
@@ -185,4 +185,19 @@ export const bookingService = {
     const response = await apiClient.get<{ success: boolean; data: Booking[] }>(`/bookings/expired`);
     return response.data.data;
   },
+
+  exportBookings: async (filters: BookingFilters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await apiClient.get(`/bookings/export?${params.toString()}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
+

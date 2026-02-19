@@ -1,7 +1,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, ArrowUpDown, Star, ShieldCheck, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, Star, Eye, Copy, ShieldCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -26,25 +26,14 @@ export const columns: ColumnDef<Chauffeur>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           className="-ml-4 hover:bg-transparent"
         >
-          Chauffeur
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          Driver
         </Button>
       );
     },
     cell: ({ row }) => {
       const chauffeur = row.original;
 
-      return (
-        <Link to={`/drivers/${chauffeur.id}`} className="group flex items-center justify-center gap-3">
-          <div className="flex flex-col items-center">
-            <span className="group-hover:text-primary flex items-center gap-1 font-bold text-gray-900 transition-colors">
-              {chauffeur.fullName}
-              {chauffeur.isVerified && <ShieldCheck className="text-primary h-3 w-3" />}
-            </span>
-            <span className="text-muted-foreground text-xs font-medium">{chauffeur.email}</span>
-          </div>
-        </Link>
-      );
+      return <span>{chauffeur.fullName}</span>;
     },
   },
   {
@@ -80,11 +69,7 @@ export const columns: ColumnDef<Chauffeur>[] = [
   {
     accessorKey: 'nationality',
     header: 'Nationality',
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center gap-2">
-        <span className="text-sm font-medium">{row.getValue('nationality') || 'N/A'}</span>
-      </div>
-    ),
+    cell: ({ row }) => <span>{row.getValue('nationality') || 'N/A'}</span>,
   },
   {
     accessorKey: 'experienceLevel',
@@ -104,26 +89,12 @@ export const columns: ColumnDef<Chauffeur>[] = [
     cell: ({ row }) => {
       const rating = parseFloat(row.getValue('rating') || '0');
       return (
-        <div className="flex items-center justify-center gap-2">
-          <div className="flex w-fit items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1 font-bold text-gray-900">
-            <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-            <span className="text-xs">{rating.toFixed(1)}</span>
-          </div>
+        <div className="flex w-fit items-center gap-1.5 rounded-lg bg-amber-50 px-2 py-1 font-bold text-gray-900">
+          <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+          <span className="text-xs">{rating.toFixed(1)}</span>
         </div>
       );
     },
-  },
-  {
-    accessorKey: 'totalTrips',
-    header: 'Total Trips',
-    cell: ({ row }) => (
-      <div className="flex flex-col items-center">
-        <span className="font-medium text-gray-900">{row.getValue('totalTrips')}</span>
-        <span className="text-muted-foreground mt-0.5 text-[10px] leading-none font-bold tracking-widest uppercase">
-          Trips
-        </span>
-      </div>
-    ),
   },
   {
     accessorKey: 'hourlyRate',
@@ -140,7 +111,6 @@ export const columns: ColumnDef<Chauffeur>[] = [
               maximumFractionDigits: 0,
             }).format(rate)}
           </span>
-          <span className="text-muted-foreground text-[10px] font-bold uppercase">per hour</span>
         </div>
       );
     },
@@ -181,28 +151,34 @@ export const columns: ColumnDef<Chauffeur>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-1">
-            <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold tracking-widest uppercase">
-              Actions
+            <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase font-bold px-2 py-1.5">
+              Chauffeur Operations
             </DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link to={`/drivers/${chauffeur.id}`} className="flex cursor-pointer items-center gap-2">
-                <ExternalLink className="h-4 w-4" /> View Details
+            <DropdownMenuItem asChild className="rounded-md">
+              <Link to={`/drivers/${chauffeur.id}`} className="flex cursor-pointer items-center">
+                <Eye className="mr-2 h-4 w-4 text-muted-foreground" /> View Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(chauffeur.id)}
-              className="flex items-center gap-2"
+              onClick={() => {
+                navigator.clipboard.writeText(chauffeur.id);
+                toast.success('Identifier copied to clipboard');
+              }}
+              className="rounded-md"
             >
-              Copy ID
+              <Copy className="mr-2 h-4 w-4 text-muted-foreground" /> Copy Identifier
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {!chauffeur.isVerified && (
-              <DropdownMenuItem onClick={handleVerify} className="font-medium text-blue-600">
-                Verify Chauffeur
+              <DropdownMenuItem onClick={handleVerify} className="rounded-md text-primary font-medium">
+                <ShieldCheck className="mr-2 h-4 w-4" /> Verify Credentials
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={handleDelete} className="font-medium text-red-600">
-              Delete Chauffeur
+            <DropdownMenuItem
+              onClick={handleDelete}
+              className="rounded-md text-destructive focus:bg-destructive/10 focus:text-destructive-foreground font-medium"
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Remove Chauffeur
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

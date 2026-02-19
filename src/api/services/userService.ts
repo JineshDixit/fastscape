@@ -117,4 +117,18 @@ export const userService = {
     });
     return response.data.data;
   },
+
+  exportUsers: async (filters: UserFilters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await apiClient.get(`/users/export?${params.toString()}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };

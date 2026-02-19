@@ -4,25 +4,23 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import PublicRoute from '@/components/auth/PublicRoute';
 import RoleGuard from '@/components/auth/RoleGuard';
 import Dashboard from '@/pages/Dashboard';
-import Bookings from '@/pages/Bookings';
-import BookingDetails from '@/pages/BookingDetails';
+import Bookings from '@/pages/Bookings/Bookings';
+import BookingDetails from '@/pages/Bookings/BookingDetails';
 import Documents from '@/pages/Documents';
-import Units from '@/pages/Units';
-import Clients from '@/pages/Clients';
-import ClientDetails from '@/pages/ClientDetails';
+import Units from '@/pages/Units/Units';
+import Clients from '@/pages/Clients/Clients';
+import ClientDetails from '@/pages/Clients/ClientDetails';
 import ChauffeurList from '@/pages/Chauffeurs/ChauffeurList';
 import ChauffeurDetails from '@/pages/Chauffeurs/ChauffeurDetails';
-
-// ... (existing imports, but I need to be careful not to replace too much context)
-// Actually I'll target the import and the route separately.
-
-// Chunk 1: Import
-
-import Financials from '@/pages/Financials';
+import Financials from '@/pages/Financials/Financials';
+import FinanceDetails from '@/pages/Financials/FinanceDetails';
 import NotFound from '@/pages/NotFound';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import UnitsLayout from '@/components/units/UnitsLayout';
-import VehicleDetails from '@/components/units/VehicleDetails';
+import UnitsLayout from '@/pages/Units/UnitsLayout';
+import VehicleDetails from '@/pages/Units/VehicleDetails';
+import Locations from '@/pages/Locations/Locations';
+import AdminManagement from '@/pages/AdminManagement/AdminManagement';
+import { PERMISSIONS } from '@/config/permissions';
 
 export const router = createBrowserRouter([
   {
@@ -51,19 +49,47 @@ export const router = createBrowserRouter([
       },
       {
         path: 'bookings',
-        element: <Bookings />,
+        element: (
+          <RoleGuard 
+            requiredPermissions={[PERMISSIONS.BOOKINGS.LIST, PERMISSIONS.BOOKINGS.READ, PERMISSIONS.SUPER_ADMIN]} 
+            fallbackPath="/dashboard"
+          >
+            <Bookings />
+          </RoleGuard>
+        ),
       },
       {
         path: 'bookings/:id',
-        element: <BookingDetails />,
+        element: (
+          <RoleGuard 
+            requiredPermissions={[PERMISSIONS.BOOKINGS.VIEW, PERMISSIONS.BOOKINGS.READ, PERMISSIONS.SUPER_ADMIN]} 
+            fallbackPath="/bookings"
+          >
+            <BookingDetails />
+          </RoleGuard>
+        ),
       },
       {
         path: 'documents',
-        element: <Documents />,
+        element: (
+          <RoleGuard 
+            requiredPermissions={[PERMISSIONS.DOCUMENTS.LIST, PERMISSIONS.DOCUMENTS.READ, PERMISSIONS.SUPER_ADMIN]} 
+            fallbackPath="/dashboard"
+          >
+            <Documents />
+          </RoleGuard>
+        ),
       },
       {
         path: 'units',
-        element: <UnitsLayout />,
+        element: (
+          <RoleGuard 
+            requiredPermissions={[PERMISSIONS.VEHICLES.LIST, PERMISSIONS.VEHICLES.READ, PERMISSIONS.SUPER_ADMIN]} 
+            fallbackPath="/dashboard"
+          >
+            <UnitsLayout />
+          </RoleGuard>
+        ),
         children: [
           {
             index: true,
@@ -71,7 +97,14 @@ export const router = createBrowserRouter([
           },
           {
             path: ':id',
-            element: <VehicleDetails />,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[PERMISSIONS.VEHICLES.VIEW, PERMISSIONS.VEHICLES.READ, PERMISSIONS.SUPER_ADMIN]} 
+                fallbackPath="/units"
+              >
+                <VehicleDetails />
+              </RoleGuard>
+            ),
           },
         ],
       },
@@ -80,11 +113,25 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Clients />,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[PERMISSIONS.CLIENTS.LIST, PERMISSIONS.CLIENTS.READ, PERMISSIONS.SUPER_ADMIN]} 
+                fallbackPath="/dashboard"
+              >
+                <Clients />
+              </RoleGuard>
+            ),
           },
           {
             path: ':id',
-            element: <ClientDetails />,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[PERMISSIONS.CLIENTS.VIEW, PERMISSIONS.CLIENTS.READ, PERMISSIONS.SUPER_ADMIN]} 
+                fallbackPath="/clients"
+              >
+                <ClientDetails />
+              </RoleGuard>
+            ),
           },
         ],
       },
@@ -93,22 +140,97 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <ChauffeurList />,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[PERMISSIONS.CHAUFFEURS.LIST, PERMISSIONS.CHAUFFEURS.READ, PERMISSIONS.SUPER_ADMIN]} 
+                fallbackPath="/dashboard"
+              >
+                <ChauffeurList />
+              </RoleGuard>
+            ),
           },
           {
             path: ':id',
-            element: <ChauffeurDetails />,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[PERMISSIONS.CHAUFFEURS.VIEW, PERMISSIONS.CHAUFFEURS.READ, PERMISSIONS.SUPER_ADMIN]} 
+                fallbackPath="/drivers"
+              >
+                <ChauffeurDetails />
+              </RoleGuard>
+            ),
           },
         ],
       },
       {
         path: 'financials',
+        children: [
+          {
+            index: true,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[
+                  PERMISSIONS.FINANCIALS.LIST, 
+                  PERMISSIONS.FINANCIALS.READ, 
+                  PERMISSIONS.ADMIN.CONTENT.READ,
+                  PERMISSIONS.SUPER_ADMIN
+                ]} 
+                fallbackPath="/dashboard"
+              >
+                <Financials />
+              </RoleGuard>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <RoleGuard 
+                requiredPermissions={[
+                  PERMISSIONS.FINANCIALS.VIEW, 
+                  PERMISSIONS.FINANCIALS.READ, 
+                  PERMISSIONS.ADMIN.CONTENT.READ,
+                  PERMISSIONS.SUPER_ADMIN
+                ]} 
+                fallbackPath="/financials"
+              >
+                <FinanceDetails />
+              </RoleGuard>
+            ),
+          },
+        ],
+      },
+      {
+        path: 'locations',
+        children: [
+          {
+            index: true,
+            element: (
+              <RoleGuard 
+                requiredPermissions={[PERMISSIONS.LOCATIONS.LIST, PERMISSIONS.LOCATIONS.READ, PERMISSIONS.SUPER_ADMIN]} 
+                fallbackPath="/dashboard"
+              >
+                <Locations />
+              </RoleGuard>
+            ),
+          }
+        ]
+      },
+      {
+        path: 'admin-management',
         element: (
-          <RoleGuard requiredPermissions={['admin.content.read']} fallbackPath="/dashboard">
-            <Financials />
+          <RoleGuard 
+            requiredPermissions={[
+              PERMISSIONS.ADMIN.USERS.READ,
+              PERMISSIONS.ADMIN.ROLES.READ,
+              PERMISSIONS.ADMIN.POLICIES.READ,
+              PERMISSIONS.SUPER_ADMIN
+            ]} 
+            fallbackPath="/dashboard"
+          >
+            <AdminManagement />
           </RoleGuard>
         ),
-      },
+      }
     ],
   },
   {

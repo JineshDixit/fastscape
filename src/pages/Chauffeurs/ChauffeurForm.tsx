@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -49,6 +49,7 @@ interface ChauffeurFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  chauffeur?: any; // Optional chauffeur data for editing
 }
 
 const STEPS = [
@@ -57,35 +58,64 @@ const STEPS = [
   { id: 'location', title: 'Final Details', icon: MapPin },
 ];
 
-export function ChauffeurForm({ open, onOpenChange, onSuccess }: ChauffeurFormProps) {
+export function ChauffeurForm({ open, onOpenChange, onSuccess, chauffeur }: ChauffeurFormProps) {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const isEditMode = !!chauffeur;
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: '',
-      email: '',
-      phone: '',
-      dateOfBirth: '',
-      nationality: '',
-      licenseNumber: '',
-      licenseExpiryDate: '',
-      licenseIssuingCountry: '',
-      experienceLevel: 'BEGINNER',
-      yearsOfExperience: '0',
-      languages: 'English',
-      specializations: 'Sedan, SUV',
-      hourlyRate: '',
-      currency: 'USD',
-      emergencyContactName: '',
-      emergencyContactPhone: '',
-      address: '',
-      city: '',
-      country: '',
-      notes: '',
+      fullName: chauffeur?.fullName || '',
+      email: chauffeur?.email || '',
+      phone: chauffeur?.phone || '',
+      dateOfBirth: chauffeur?.dateOfBirth ? chauffeur.dateOfBirth.split('T')[0] : '',
+      nationality: chauffeur?.nationality || '',
+      licenseNumber: chauffeur?.licenseNumber || '',
+      licenseExpiryDate: chauffeur?.licenseExpiryDate ? chauffeur.licenseExpiryDate.split('T')[0] : '',
+      licenseIssuingCountry: chauffeur?.licenseIssuingCountry || '',
+      experienceLevel: chauffeur?.experienceLevel || 'BEGINNER',
+      yearsOfExperience: chauffeur?.yearsOfExperience?.toString() || '0',
+      languages: chauffeur?.languages ? chauffeur.languages.join(', ') : 'English',
+      specializations: chauffeur?.specializations ? chauffeur.specializations.join(', ') : 'Sedan, SUV',
+      hourlyRate: chauffeur?.hourlyRate?.toString() || '',
+      currency: chauffeur?.currency || 'USD',
+      emergencyContactName: chauffeur?.emergencyContactName || '',
+      emergencyContactPhone: chauffeur?.emergencyContactPhone || '',
+      address: chauffeur?.address || '',
+      city: chauffeur?.city || '',
+      country: chauffeur?.country || '',
+      notes: chauffeur?.notes || '',
     },
   });
+
+  // Reset form when chauffeur prop changes
+  useEffect(() => {
+    if (chauffeur) {
+      form.reset({
+        fullName: chauffeur.fullName || '',
+        email: chauffeur.email || '',
+        phone: chauffeur.phone || '',
+        dateOfBirth: chauffeur.dateOfBirth ? chauffeur.dateOfBirth.split('T')[0] : '',
+        nationality: chauffeur.nationality || '',
+        licenseNumber: chauffeur.licenseNumber || '',
+        licenseExpiryDate: chauffeur.licenseExpiryDate ? chauffeur.licenseExpiryDate.split('T')[0] : '',
+        licenseIssuingCountry: chauffeur.licenseIssuingCountry || '',
+        experienceLevel: chauffeur.experienceLevel || 'BEGINNER',
+        yearsOfExperience: chauffeur.yearsOfExperience?.toString() || '0',
+        languages: chauffeur.languages ? chauffeur.languages.join(', ') : 'English',
+        specializations: chauffeur.specializations ? chauffeur.specializations.join(', ') : 'Sedan, SUV',
+        hourlyRate: chauffeur.hourlyRate?.toString() || '',
+        currency: chauffeur.currency || 'USD',
+        emergencyContactName: chauffeur.emergencyContactName || '',
+        emergencyContactPhone: chauffeur.emergencyContactPhone || '',
+        address: chauffeur.address || '',
+        city: chauffeur.city || '',
+        country: chauffeur.country || '',
+        notes: chauffeur.notes || '',
+      });
+    }
+  }, [chauffeur, form]);
 
   const onSubmit = async (values: ChauffeurFormValues) => {
     try {
@@ -98,15 +128,21 @@ export function ChauffeurForm({ open, onOpenChange, onSuccess }: ChauffeurFormPr
         yearsOfExperience: Number(values.yearsOfExperience),
       };
 
-      await chauffeurService.createChauffeur(dto);
-      toast.success('Chauffeur created successfully');
+      if (isEditMode) {
+        await chauffeurService.updateChauffeur(chauffeur.id, dto);
+        toast.success('Chauffeur updated successfully');
+      } else {
+        await chauffeurService.createChauffeur(dto);
+        toast.success('Chauffeur created successfully');
+      }
+      
       form.reset();
       setCurrentStep(0);
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Failed to create chauffeur');
+      toast.error(error.message || `Failed to ${isEditMode ? 'update' : 'create'} chauffeur`);
     } finally {
       setLoading(false);
     }
@@ -152,7 +188,7 @@ export function ChauffeurForm({ open, onOpenChange, onSuccess }: ChauffeurFormPr
         {/* Fixed Header */}
         <div className="border-b p-6 pb-4">
           <DialogHeader>
-            <DialogTitle>Registration of Chauffeur</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Chauffeur' : 'Registration of Chauffeur'}</DialogTitle>
             <DialogDescription>
               Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].title}
             </DialogDescription>
@@ -535,7 +571,7 @@ export function ChauffeurForm({ open, onOpenChange, onSuccess }: ChauffeurFormPr
               </Button>
             ) : (
               <Button form="chauffeur-form" type="submit" disabled={loading}>
-                {loading ? 'Onboarding...' : 'Onboard Chauffeur'}
+                {loading ? (isEditMode ? 'Updating...' : 'Onboarding...') : (isEditMode ? 'Update Chauffeur' : 'Onboard Chauffeur')}
               </Button>
             )}
           </DialogFooter>

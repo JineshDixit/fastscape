@@ -14,8 +14,13 @@ export interface ChauffeurFilters {
   isVerified?: boolean;
   minRating?: number;
   city?: string;
+  experienceLevel?: string;
+  nationality?: string;
+  search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 export interface Chauffeur {
@@ -86,6 +91,11 @@ export const chauffeurService = {
     return response.data.data.chauffeur;
   },
 
+  updateChauffeur: async (id: string, data: any) => {
+    const response = await apiClient.put<{ success: boolean; data: Chauffeur }>(`/chauffeurs/${id}`, data);
+    return response.data.data;
+  },
+
   updateChauffeurStatus: async (id: string, status: ChauffeurStatus) => {
     const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(`/chauffeurs/${id}/status`, {
       status,
@@ -100,6 +110,20 @@ export const chauffeurService = {
 
   deleteChauffeur: async (id: string) => {
     const response = await apiClient.delete<{ success: boolean; message: string }>(`/chauffeurs/${id}`);
+    return response.data;
+  },
+
+  exportChauffeurs: async (filters: ChauffeurFilters = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await apiClient.get(`/chauffeurs/export?${params.toString()}`, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

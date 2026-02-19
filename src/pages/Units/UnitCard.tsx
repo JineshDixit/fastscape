@@ -5,7 +5,7 @@ import { Fuel, Cog, Ellipsis, Users } from 'lucide-react';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from '../ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from '../../components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,

@@ -7,28 +7,42 @@ import { toast } from 'sonner';
 import { Plus, Users, UserCheck, UserX, Clock } from 'lucide-react';
 import { ChauffeurForm } from './ChauffeurForm';
 import { Card, CardContent } from '@/components/ui/card';
+import ChauffeurFilters, { type ChauffeurFilterValues } from '@/components/chauffeurs/ChauffeurFilters';
+import { ExportButton } from '@/components/shared/ExportButton';
+import PermissionGuard from '@/components/auth/PermissionGuard';
 
 const ChauffeurList = () => {
   const [data, setData] = useState<Chauffeur[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCreate, setOpenCreate] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<ChauffeurFilterValues>({});
 
   useEffect(() => {
     fetchChauffeurs();
-  }, []);
+  }, [filters, search]);
 
   const fetchChauffeurs = async () => {
     try {
       setLoading(true);
-      const response = await chauffeurService.getAllChauffeurs();
+      const response = await chauffeurService.getAllChauffeurs({
+        search: search || undefined,
+        status: (filters.status || undefined) as ChauffeurStatus | undefined,
+        experienceLevel: filters.experienceLevel || undefined,
+        isVerified: filters.isVerified,
+        minRating: filters.minRating,
+        sortBy: 'rating',
+        sortOrder: 'DESC',
+        limit: 1000,
+      });
       if (response && response.chauffeurs) {
         setData(response.chauffeurs);
       } else {
         setData(Array.isArray(response) ? response : []);
       }
     } catch (error) {
-      console.error('Failed to fetch chauffeurs:', error);
-      toast.error('Failed to load chauffeurs. Please try again.');
+      console.error('Failed to fetch Drivers:', error);
+      toast.error('Failed to load Drivers. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -42,7 +56,7 @@ const ChauffeurList = () => {
 
     return [
       {
-        title: 'Total Chauffeurs',
+        title: 'Total Drivers',
         value: total,
         icon: Users,
         description: 'Registered drivers',
@@ -109,12 +123,34 @@ const ChauffeurList = () => {
         columns={columns}
         data={data}
         searchKey="fullName"
-        searchPlaceholder="Search chauffeurs by name or email..."
+        searchPlaceholder="Search drivers by name, email, phone..."
         showAddButton={true}
-        addButtonText="Add New Chauffeur"
+        addButtonText="Add New Driver"
         addButtonIcon={<Plus className="h-4 w-4" />}
         addButtonOnClick={() => setOpenCreate(true)}
         tableContainerClassName='!max-h-[calc(100vh-22.5rem)]'
+        onSearchChange={(value) => setSearch(value)}
+        customActions={
+          <div className="flex items-center gap-2">
+            <ChauffeurFilters
+              currentFilters={filters}
+              onApplyFilters={(newFilters) => setFilters(newFilters)}
+              onResetFilters={() => setFilters({})}
+            />
+            <PermissionGuard module="chauffeurs" action="export">
+              <ExportButton
+                onExport={() => chauffeurService.exportChauffeurs({ 
+                  search, 
+                  status: filters.status as ChauffeurStatus | undefined,
+                  isVerified: filters.isVerified,
+                  experienceLevel: filters.experienceLevel,
+                  minRating: filters.minRating,
+                })}
+                filename="chauffeurs"
+              />
+            </PermissionGuard>
+          </div>
+        }
       />
 
       <ChauffeurForm open={openCreate} onOpenChange={setOpenCreate} onSuccess={fetchChauffeurs} />

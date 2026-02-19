@@ -2,30 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useVehicle } from '@/api/hooks/useVehicle';
+import { locationService } from '@/api/services/locationService';
 import type { VehicleFilters as FilterInterface } from '@/common/interface/vehicleInterface';
+import type { Location } from '@/api/services/locationService';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { FilterSheet } from '@/components/shared/FilterSheet';
 
 interface VehicleFiltersProps {
   currentFilters: FilterInterface;
   onApplyFilters: (filters: FilterInterface) => void;
   onResetFilters: () => void;
-  mode?: 'sidebar' | 'sheet';
 }
 
 const FilterContent: React.FC<{
   filters: FilterInterface;
   enums: any;
+  locations: Location[];
   onChange: (field: keyof FilterInterface, value: any) => void;
-  onApply: () => void;
-  onReset: () => void;
-}> = ({ filters, enums, onChange, onApply, onReset }) => {
+}> = ({ filters, enums, locations, onChange }) => {
   return (
-    <div className={`space-y-6`}>
+    <div className="space-y-6">
       <div className="space-y-4">
         <h3 className="text-foreground text-sm font-semibold tracking-wide">Basic Info</h3>
         <div className="grid gap-4">
@@ -64,15 +64,25 @@ const FilterContent: React.FC<{
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="city" className="text-xs">
-              City
+            <Label htmlFor="locationId" className="text-xs">
+              Location
             </Label>
-            <Input
-              id="city"
-              placeholder="Any City"
-              value={filters.city || ''}
-              onChange={(e) => onChange('city', e.target.value)}
-            />
+            <Select
+              value={filters.locationId || 'all'}
+              onValueChange={(val) => onChange('locationId', val === 'all' ? undefined : val)}
+            >
+              <SelectTrigger id="locationId">
+                <SelectValue placeholder="Any Location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                {locations.map((location) => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.name} - {location.city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="capacity" className="text-xs">
@@ -246,15 +256,6 @@ const FilterContent: React.FC<{
           </AccordionItem>
         )}
       </Accordion>
-
-      <div className="flex flex-col gap-2 pt-4">
-        <Button onClick={onApply} className="w-full">
-          Apply Filters
-        </Button>
-        <Button variant="outline" onClick={onReset} className="w-full">
-          Reset All
-        </Button>
-      </div>
     </div>
   );
 };
@@ -263,15 +264,25 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({
   currentFilters,
   onApplyFilters,
   onResetFilters,
-  mode = 'sheet',
 }) => {
   const { enums, fetchEnums } = useVehicle();
   const [localFilters, setLocalFilters] = useState<FilterInterface>(currentFilters);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     fetchEnums();
+    fetchLocations();
   }, [fetchEnums]);
+
+  const fetchLocations = async () => {
+    try {
+      const response = await locationService.getAllLocations({ isActive: true, limit: 100 });
+      setLocations(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch locations:', error);
+    }
+  };
 
   useEffect(() => {
     setLocalFilters(currentFilters);
@@ -296,20 +307,6 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({
     setIsOpen(false);
   };
 
-  if (mode === 'sidebar') {
-    return (
-      <div className="w-full">
-        <FilterContent
-          filters={localFilters}
-          enums={enums}
-          onChange={handleInputChange}
-          onApply={handleApply}
-          onReset={handleReset}
-        />
-      </div>
-    );
-  }
-
   const activeFilterCount = Object.keys(currentFilters).filter(
     (k) =>
       k !== 'page' &&
@@ -321,34 +318,30 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({
   ).length;
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Filter className="size-4" />
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="bg-primary text-primary-foreground flex size-5 items-center justify-center rounded-full text-xs">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Filter Vehicles</SheetTitle>
-          <SheetDescription>Narrow down your vehicle list.</SheetDescription>
-        </SheetHeader>
-        <div className="px-4 pb-4">
-          <FilterContent
-            filters={localFilters}
-            enums={enums}
-            onChange={handleInputChange}
-            onApply={handleApply}
-            onReset={handleReset}
-          />
+    <FilterSheet
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      title="Filter Vehicles"
+      description="Narrow down your vehicle list."
+      activeFilterCount={activeFilterCount}
+      sheetFooter={
+        <div className="flex flex-col gap-2 w-full">
+          <Button onClick={handleApply} className="w-full">
+            Apply Filters
+          </Button>
+          <Button variant="outline" onClick={handleReset} className="w-full">
+            Reset All
+          </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      }
+    >
+      <FilterContent
+        filters={localFilters}
+        enums={enums}
+        locations={locations}
+        onChange={handleInputChange}
+      />
+    </FilterSheet>
   );
 };
 

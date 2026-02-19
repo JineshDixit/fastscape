@@ -2,16 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import UnitCard from '@/components/units/UnitCard';
-import VehicleFormStepper from '@/components/units/VehicleFormStepper';
+import UnitCard from '@/pages/Units/UnitCard';
+import VehicleFormStepper from '@/pages/Units/VehicleFormStepper';
 import DataTablePagination from '@/components/shared/DataTablePagination';
 import { useVehicle } from '@/api/hooks/useVehicle';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import debounce from 'lodash.debounce';
-import VehicleFilters from '@/components/units/VehicleFilters';
+import VehicleFilters from '@/pages/Units/VehicleFilters';
 import type { VehicleFilters as FilterInterface } from '@/common/interface/vehicleInterface';
+import PermissionGuard from '@/components/auth/PermissionGuard';
 
 const Units = () => {
   const [pageSize, setPageSize] = React.useState(10);
@@ -21,8 +22,9 @@ const Units = () => {
   const [filters, setFilters] = useState<FilterInterface>({});
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { vehicles, isLoading, fetchVehicles, pagination, createVehicle, updateVehicle, deleteVehicle } = useVehicle();
+  const { vehicles, vehicle, isLoading, fetchVehicles, pagination, createVehicle, updateVehicle, deleteVehicle, fetchVehicleById } = useVehicle();
 
   const debouncedSearch = useMemo(
     () =>
@@ -66,12 +68,14 @@ const Units = () => {
   const handleFormSuccess = () => {
     setShowAddForm(false);
     setSelectedVehicle(null);
+    setSearchParams({}); // Clear query params
     fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
   };
 
   const handleFormCancel = () => {
     setShowAddForm(false);
     setSelectedVehicle(null);
+    setSearchParams({}); // Clear query params
   };
 
   const handleEdit = (vehicle: Vehicle) => {
@@ -107,6 +111,23 @@ const Units = () => {
     fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
   }, [currentPage, pageSize, filters]);
 
+  // Handle edit query parameter
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && !showAddForm) {
+      fetchVehicleById(editId);
+    }
+  }, [searchParams, fetchVehicleById, showAddForm]);
+
+  // When vehicle is loaded from fetchVehicleById, show the form
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId && vehicle && vehicle.id === editId && !showAddForm) {
+      setSelectedVehicle(vehicle);
+      setShowAddForm(true);
+    }
+  }, [vehicle, searchParams, showAddForm]);
+
   const handleApplyFilters = (newFilters: FilterInterface) => {
     setFilters(newFilters);
     // Reset to page 1 when filters change
@@ -135,88 +156,70 @@ const Units = () => {
 
   // Show list view
   return (
-    <div className="flex flex-col items-start gap-8 lg:flex-row">
-      <aside className="sticky top-4 hidden w-72 shrink-0 lg:block">
-        <div className="bg-card rounded-lg border p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Filters</h3>
+    <div className="w-full space-y-6">
+      <div className="flex flex-col items-stretch justify-between gap-6 xl:flex-row xl:items-center">
+        <div className="flex flex-1 items-center gap-4">
+          <div className="relative w-full max-w-md">
+            <Search className="text-foreground/50 absolute top-1/2 left-4 size-4 -translate-y-1/2" />
+            <Input
+              placeholder="Search car name..."
+              className="h-10 pl-10"
+              onChange={(e) => handleSearchVehicle(e.target.value)}
+            />
           </div>
+
+          {/* Filter Button */}
           <VehicleFilters
             currentFilters={filters}
             onApplyFilters={handleApplyFilters}
             onResetFilters={handleResetFilters}
-            mode="sidebar"
           />
         </div>
-      </aside>
 
-      {/* Main Content */}
-      <div className="w-full flex-1 space-y-6">
-        <div className="flex flex-col items-stretch justify-between gap-6 xl:flex-row xl:items-center">
-          <div className="flex flex-1 items-center gap-4">
-            <div className="relative w-full max-w-md">
-              <Search className="text-foreground/50 absolute top-1/2 left-4 size-4 -translate-y-1/2" />
-              <Input
-                placeholder="Search car name..."
-                className="h-10 pl-10"
-                onChange={(e) => handleSearchVehicle(e.target.value)}
-              />
-            </div>
-
-            {/* Mobile Filter Button */}
-            <div className="lg:hidden">
-              <VehicleFilters
-                currentFilters={filters}
-                onApplyFilters={handleApplyFilters}
-                onResetFilters={handleResetFilters}
-                mode="sheet"
-              />
-            </div>
-          </div>
-
+        <PermissionGuard module="vehicles" action="create">
           <Button onClick={() => setShowAddForm(true)} className="w-full xl:w-auto">
             Add Unit
           </Button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3">
-          {isLoading && vehicles.length === 0 ? (
-            <div className="col-span-full flex justify-center py-20">
-              <div className="flex flex-col items-center gap-2">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
-                <p className="text-muted-foreground mt-2">Loading vehicles...</p>
-              </div>
-            </div>
-          ) : vehicles.length > 0 ? (
-            vehicles.map((vehicle) => (
-              <UnitCard
-                key={vehicle.id}
-                vehicle={vehicle}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onDetails={handleVehicleDetails}
-              />
-            ))
-          ) : (
-            <div className="bg-muted/20 col-span-full flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-20">
-              <p className="text-muted-foreground text-lg font-medium">No vehicles found</p>
-              <p className="text-muted-foreground mt-1 text-sm">Try adjusting your filters or search terms</p>
-              <Button variant="link" onClick={handleResetFilters} className="mt-2">
-                Clear all filters
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <DataTablePagination
-          totalItems={pagination?.total || 0}
-          pageSize={pageSize}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 20, 30, 40, 50]}
-        />
+        </PermissionGuard>
       </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3">
+        {isLoading && vehicles.length === 0 ? (
+          <div className="col-span-full flex justify-center py-20">
+            <div className="flex flex-col items-center gap-2">
+              <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2"></div>
+              <p className="text-muted-foreground mt-2">Loading vehicles...</p>
+            </div>
+          </div>
+        ) : vehicles.length > 0 ? (
+          vehicles.map((vehicle) => (
+            <UnitCard
+              key={vehicle.id}
+              vehicle={vehicle}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onDetails={handleVehicleDetails}
+            />
+          ))
+        ) : (
+          <div className="bg-muted/20 col-span-full flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-20">
+            <p className="text-muted-foreground text-lg font-medium">No vehicles found</p>
+            <p className="text-muted-foreground mt-1 text-sm">Try adjusting your filters or search terms</p>
+            <Button variant="link" onClick={handleResetFilters} className="mt-2">
+              Clear all filters
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <DataTablePagination
+        totalItems={pagination?.total || 0}
+        pageSize={pageSize}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        pageSizeOptions={[10, 20, 30, 40, 50]}
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import {
   type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
+  type RowSelectionState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -18,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -28,6 +30,7 @@ interface DataTableProps<TData, TValue> {
   addButtonText?: string;
   addButtonIcon?: React.ReactNode;
   addButtonOnClick?: () => void;
+  customActions?: React.ReactNode;
   // Server-side props
   pageCount?: number;
   pageIndex?: number;
@@ -39,6 +42,9 @@ interface DataTableProps<TData, TValue> {
   onSearchChange?: (value: string) => void;
   totalRows?: number;
   tableContainerClassName?: string;
+  loading?: boolean;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: (rowSelection: RowSelectionState) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -50,6 +56,7 @@ export function DataTable<TData, TValue>({
   addButtonText,
   addButtonIcon,
   addButtonOnClick,
+  customActions,
   pageCount,
   pageIndex,
   pageSize,
@@ -60,11 +67,14 @@ export function DataTable<TData, TValue>({
   onSearchChange,
   totalRows,
   tableContainerClassName,
+  loading,
+  rowSelection: externalRowSelection,
+  onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [internalRowSelection, setInternalRowSelection] = React.useState<RowSelectionState>({});
 
   const isServerSide = pageCount !== undefined;
 
@@ -87,7 +97,17 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: isServerSide ? undefined : getSortedRowModel(),
     getFilteredRowModel: isServerSide ? undefined : getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updaterOrValue) => {
+      const newRowSelectionValue =
+        typeof updaterOrValue === 'function'
+          ? updaterOrValue(externalRowSelection ?? internalRowSelection)
+          : updaterOrValue;
+      if (onRowSelectionChange) {
+        onRowSelectionChange(newRowSelectionValue);
+      } else {
+        setInternalRowSelection(newRowSelectionValue);
+      }
+    },
     manualPagination: isServerSide,
     manualSorting: isServerSide,
     manualFiltering: onSearchChange !== undefined,
@@ -95,14 +115,14 @@ export function DataTable<TData, TValue>({
       sorting: externalSorting ?? internalSorting,
       columnFilters,
       columnVisibility,
-      rowSelection,
+      rowSelection: externalRowSelection ?? internalRowSelection,
       ...(isServerSide
         ? {
-            pagination: {
-              pageIndex: pageIndex ?? 0,
-              pageSize: pageSize ?? 10,
-            },
-          }
+          pagination: {
+            pageIndex: pageIndex ?? 0,
+            pageSize: pageSize ?? 10,
+          },
+        }
         : {}),
     },
   });
@@ -139,63 +159,74 @@ export function DataTable<TData, TValue>({
               className="h-9 w-50 bg-white lg:w-75"
             />
           ) : null}
-          {showAddButton && (
-            <Button onClick={addButtonOnClick} className="gap-2">
-              {addButtonIcon}
-              {addButtonText}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {customActions}
+            {showAddButton && (
+              <Button onClick={addButtonOnClick} className="gap-2">
+                {addButtonIcon}
+                {addButtonText}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      <Table tableContainerClassName={tableContainerClassName}>
-        <TableHeader className="sticky top-0 bg-gray-50">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="border-gray-200 hover:bg-transparent">
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead
-                    key={header.id}
-                    className="cursor-pointer text-center font-medium select-none"
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                      {{
-                        asc: ' ↑',
-                        desc: ' ↓',
-                      }[header.column.getIsSorted() as string] ?? null}
-                    </div>
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && 'selected'}
-                className="border-gray-100 hover:bg-gray-50/50 data-[state=selected]:bg-gray-50"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+      <div className="relative">
+        <Table tableContainerClassName={tableContainerClassName}>
+          <TableHeader className="sticky top-0 bg-gray-50">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="border-gray-200 hover:bg-transparent">
+                {headerGroup.headers.map((header, index) => {
+                  const canSort = header.column.getCanSort();
+                  const sortDirection = header.column.getIsSorted();
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={`font-medium select-none ${canSort ? 'cursor-pointer' : ''} ${index === 0 ? 'pl-6' : ''
+                        }`}
+                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                    >
+                      <div className="flex items-center gap-2">
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {canSort && sortDirection === 'asc' && ' ↑'}
+                        {canSort && sortDirection === 'desc' && ' ↓'}
+                      </div>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  className="text-start border-gray-100 hover:bg-gray-50/50 data-[state=selected]:bg-gray-50"
+                >
+                  {row.getVisibleCells().map((cell, index) => (
+                    <TableCell key={cell.id} className={`py-3 ${index === 0 ? 'pl-6' : ''}`}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        {loading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px] transition-all duration-300">
+            <Spinner className="h-8 w-8 text-primary" />
+          </div>
+        )}
+      </div>
 
       {/* Pagination & Footer */}
       <div className="flex flex-col items-center justify-between gap-4 px-2 md:flex-row">

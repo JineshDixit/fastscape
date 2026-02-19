@@ -92,10 +92,6 @@ const LoginPage = () => {
     }
   };
 
-  const handleForgotPassword = () => {
-    navigate('/forgot-password');
-  };
-
   return (
     <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -154,14 +150,6 @@ const LoginPage = () => {
                   <Label htmlFor="password" className="text-foreground text-sm font-medium">
                     Password
                   </Label>
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-primary hover:text-primary/80 text-sm transition-colors"
-                    disabled={isLoading}
-                  >
-                    Forgot password?
-                  </button>
                 </div>
                 <div className="relative">
                   <Input

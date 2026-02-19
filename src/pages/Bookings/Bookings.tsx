@@ -1,13 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
-import { type User, userService } from '@/api/services/userService';
-import { columns } from './clients/columns';
+import { type Booking, bookingService } from '@/api/services/bookingService';
+import { columns } from './columns';
 import { DataTable } from '@/components/ui/data-table';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import type { SortingState } from '@tanstack/react-table';
+import BookingFilters, { type BookingFilterValues } from '@/components/bookings/BookingFilters';
+import { ExportButton } from '@/components/shared/ExportButton';
+import PermissionGuard from '@/components/auth/PermissionGuard';
 
-const Clients = () => {
-  const [data, setData] = useState<User[]>([]);
+const Bookings = () => {
+  const [data, setData] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Server-side state
@@ -17,6 +20,7 @@ const Clients = () => {
   const [totalRows, setTotalRows] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<BookingFilterValues>({});
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -33,25 +37,26 @@ const Clients = () => {
     setPageIndex(0);
   }, []);
 
-  const fetchUsers = useCallback(async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
 
       const sortBy = sorting.length > 0 ? sorting[0].id : undefined;
       const sortOrder = sorting.length > 0 ? (sorting[0].desc ? 'DESC' : 'ASC') : undefined;
 
-      const { users, pagination } = await userService.getAllUsers({
+      const { bookings, pagination } = await bookingService.getAllBookings({
         page: pageIndex + 1,
         limit: pageSize,
         search,
         sortBy,
         sortOrder,
+        ...filters,
       });
 
-      if (users && Array.isArray(users)) {
-        setData(users);
+      if (bookings && Array.isArray(bookings)) {
+        setData(bookings);
         if (pagination) {
-          setPageCount(pagination.totalPages || 0);
+          setPageCount(pagination.pages || pagination.totalPages || 0);
           setTotalRows(pagination.total || 0);
         }
       } else {
@@ -60,16 +65,16 @@ const Clients = () => {
         setTotalRows(0);
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
-      toast.error('Failed to load clients. Please try again.');
+      console.error('Failed to fetch bookings:', error);
+      toast.error('Failed to load bookings. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [pageIndex, pageSize, search, sorting]);
+  }, [pageIndex, pageSize, search, sorting, filters]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchBookings();
+  }, [fetchBookings]);
 
   if (loading && data.length === 0) {
     return (
@@ -85,7 +90,7 @@ const Clients = () => {
         <DataTable
           columns={columns}
           data={data}
-          searchPlaceholder="Search clients..."
+          searchPlaceholder="Search bookings..."
           pageCount={pageCount}
           pageIndex={pageIndex}
           pageSize={pageSize}
@@ -96,10 +101,31 @@ const Clients = () => {
           onSortingChange={handleSortingChange}
           onSearchChange={handleSearchChange}
           tableContainerClassName="!max-h-[calc(100vh-15rem)]"
+          customActions={
+            <div className="flex items-center gap-2">
+              <BookingFilters
+                currentFilters={filters}
+                onApplyFilters={(newFilters) => {
+                  setFilters(newFilters);
+                  setPageIndex(0);
+                }}
+                onResetFilters={() => {
+                  setFilters({});
+                  setPageIndex(0);
+                }}
+              />
+              <PermissionGuard module="bookings" action="export">
+                <ExportButton
+                  onExport={() => bookingService.exportBookings({ search, ...filters })}
+                  filename="bookings"
+                />
+              </PermissionGuard>
+            </div>
+          }
         />
       </div>
     </div>
   );
 };
 
-export default Clients;
+export default Bookings;

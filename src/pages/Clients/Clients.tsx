@@ -1,13 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
-import { type Booking, bookingService } from '@/api/services/bookingService';
-import { columns } from './bookings/columns';
+import { type User, userService } from '@/api/services/userService';
+import { columns } from './columns';
 import { DataTable } from '@/components/ui/data-table';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import type { SortingState } from '@tanstack/react-table';
+import ClientFilters, { type ClientFilterValues } from '@/components/clients/ClientFilters';
+import { ExportButton } from '@/components/shared/ExportButton';
 
-const Bookings = () => {
-  const [data, setData] = useState<Booking[]>([]);
+const Clients = () => {
+  const [data, setData] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Server-side state
@@ -17,6 +19,7 @@ const Bookings = () => {
   const [totalRows, setTotalRows] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<ClientFilterValues>({});
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -33,25 +36,27 @@ const Bookings = () => {
     setPageIndex(0);
   }, []);
 
-  const fetchBookings = useCallback(async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
 
       const sortBy = sorting.length > 0 ? sorting[0].id : undefined;
       const sortOrder = sorting.length > 0 ? (sorting[0].desc ? 'DESC' : 'ASC') : undefined;
 
-      const { bookings, pagination } = await bookingService.getAllBookings({
+      const { users, pagination } = await userService.getAllUsers({
         page: pageIndex + 1,
         limit: pageSize,
         search,
         sortBy,
         sortOrder,
+        verificationStatus: filters.verificationStatus,
+        isBlocked: filters.isBlocked,
       });
 
-      if (bookings && Array.isArray(bookings)) {
-        setData(bookings);
+      if (users && Array.isArray(users)) {
+        setData(users);
         if (pagination) {
-          setPageCount(pagination.pages || pagination.totalPages || 0);
+          setPageCount(pagination.totalPages || 0);
           setTotalRows(pagination.total || 0);
         }
       } else {
@@ -60,16 +65,16 @@ const Bookings = () => {
         setTotalRows(0);
       }
     } catch (error) {
-      console.error('Failed to fetch bookings:', error);
-      toast.error('Failed to load bookings. Please try again.');
+      console.error('Failed to fetch users:', error);
+      toast.error('Failed to load clients. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [pageIndex, pageSize, search, sorting]);
+  }, [pageIndex, pageSize, search, sorting, filters]);
 
   useEffect(() => {
-    fetchBookings();
-  }, [fetchBookings]);
+    fetchUsers();
+  }, [fetchUsers]);
 
   if (loading && data.length === 0) {
     return (
@@ -85,7 +90,7 @@ const Bookings = () => {
         <DataTable
           columns={columns}
           data={data}
-          searchPlaceholder="Search bookings..."
+          searchPlaceholder="Search clients..."
           pageCount={pageCount}
           pageIndex={pageIndex}
           pageSize={pageSize}
@@ -96,10 +101,29 @@ const Bookings = () => {
           onSortingChange={handleSortingChange}
           onSearchChange={handleSearchChange}
           tableContainerClassName="!max-h-[calc(100vh-15rem)]"
+          customActions={
+            <div className="flex items-center gap-2">
+              <ClientFilters
+                currentFilters={filters}
+                onApplyFilters={(newFilters) => {
+                  setFilters(newFilters);
+                  setPageIndex(0);
+                }}
+                onResetFilters={() => {
+                  setFilters({});
+                  setPageIndex(0);
+                }}
+              />
+              <ExportButton
+                onExport={() => userService.exportUsers({ search, ...filters })}
+                filename="clients"
+              />
+            </div>
+          }
         />
       </div>
     </div>
   );
 };
 
-export default Bookings;
+export default Clients;
