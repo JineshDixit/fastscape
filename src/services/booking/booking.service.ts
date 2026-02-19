@@ -108,6 +108,21 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     });
 
     if (conflictingBooking) {
+      // If the conflicting booking is PENDING and belongs to the same user, 
+      // return it instead of throwing error (idempotency for session recovery)
+      if (
+        conflictingBooking.userId === userId &&
+        conflictingBooking.bookingStatus === dbEnums.BOOKING_STATUS[0]
+      ) {
+        Logger.info('Found existing pending booking for user, returning it', {
+          bookingId: conflictingBooking.id,
+          userId,
+          vehicleId
+        });
+        await transaction.commit(); // Commit transaction as we're returning existing
+        return conflictingBooking;
+      }
+
       Logger.warn('Booking conflict detected', { vehicleId, start, end, conflictingBookingId: conflictingBooking.id });
       throw createError('Vehicle is already booked for the selected dates', 409);
     }
@@ -138,7 +153,7 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     Logger.info('Booking created successfully', { bookingId: booking.id, userId, vehicleId });
     return booking;
   } catch (error) {
-    await transaction.rollback();
+    if (transaction) await transaction.rollback();
     Logger.error('Booking transaction failed', { error });
     throw error;
   }

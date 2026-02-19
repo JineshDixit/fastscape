@@ -14,7 +14,6 @@ class LocationController extends BaseController {
     const { type, city } = req.query;
 
     const locations = await locationService.getLocations({
-      type: type as string,
       city: city as string,
     });
 

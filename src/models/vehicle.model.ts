@@ -28,7 +28,7 @@ export class Vehicle extends Model {
   public currency!: string;
   public isAvailable!: boolean;
   public passengerCapacity!: number;
-  public city!: string;
+  public locationId!: string;
 }
 
 export const initVehicleModel = (sequelize: Sequelize) => {
@@ -82,10 +82,16 @@ export const initVehicleModel = (sequelize: Sequelize) => {
         defaultValue: 5,
         allowNull: false,
       },
-      city: {
-        type: DataTypes.STRING(100),
+      locationId: {
+        type: DataTypes.UUID,
         allowNull: true,
-        defaultValue: 'Dubai',
+        references: {
+          model: 'locations',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+        comment: 'Reference to location table',
       },
     },
     {

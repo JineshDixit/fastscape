@@ -36,15 +36,15 @@ export const initUserModel = (sequelize: Sequelize) => {
       },
       firstName: {
         type: DataTypes.STRING(50),
-        allowNull: true,
+        allowNull: false,
       },
       lastName: {
         type: DataTypes.STRING(50),
-        allowNull: true,
+        allowNull: false,
       },
       dateOfBirth: {
         type: DataTypes.DATEONLY,
-        allowNull: true,
+        allowNull: false,
       },
       nationality: {
         type: DataTypes.STRING(100),

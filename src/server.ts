@@ -8,6 +8,7 @@ import cors from 'cors';
 import passport from 'passport';
 import helmet from 'helmet';
 import compression from 'compression';
+import path from 'path';
 import { initPostgres_DB } from './models';
 import { configPassport } from './config/passport';
 import routes from './routes';
@@ -19,14 +20,21 @@ import Logger from './utils/logger';
 import httpLogger from './services/middleware/httpLogger';
 
 const server = express();
-const {PORT} = process.env;
+const { PORT } = process.env;
 
 // HTTP Logging
 server.use(httpLogger);
 
 // Security middleware
-server.use(helmet());
+server.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  }),
+);
 server.use(preventParameterPollution);
+
+// Static files
+server.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Performance middleware
 server.use(compression());

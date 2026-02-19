@@ -61,9 +61,12 @@ const sanitizeString = (str: string): string => {
  */
 export const preventParameterPollution = (req: Request, res: Response, next: NextFunction): void => {
   // Convert array parameters to single values (take the last one)
+  // EXCEPT for specific filters that support multiple values
+  const allowArrays = ['make', 'model', 'bodyType'];
+
   if (req.query) {
     for (const key in req.query) {
-      if (Array.isArray(req.query[key])) {
+      if (Array.isArray(req.query[key]) && !allowArrays.includes(key)) {
         req.query[key] = (req.query[key] as string[]).pop();
       }
     }

@@ -76,6 +76,16 @@ const initPostgres_DB = async (): Promise<void> => {
     as: 'vehicle',
   });
 
+  Vehicle.belongsTo(Location, {
+    foreignKey: 'locationId',
+    as: 'location',
+  });
+
+  Location.hasMany(Vehicle, {
+    foreignKey: 'locationId',
+    as: 'vehicles',
+  });
+
   Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId', as: 'bookings' });
   Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId', as: 'reviews' });
 

@@ -20,6 +20,7 @@ export interface VehicleSearchQuery extends VehicleFilterOptions {
   pickupLocation: string;
   pickupDate: string | Date;
   dropoffDate: string | Date;
+  bookingType?: 'SELF_DRIVE' | 'CHAUFFEUR';
 }
 
 export interface PaginationOptions {
