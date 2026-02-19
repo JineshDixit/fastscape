@@ -6,8 +6,13 @@ interface ChauffeurFilters {
   isVerified?: boolean;
   minRating?: number;
   city?: string;
+  experienceLevel?: string;
+  nationality?: string;
+  search?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
 interface CreateChauffeurDto {
@@ -71,15 +76,39 @@ export const getAllChauffeurs = async (filters: ChauffeurFilters): Promise<Chauf
   }
 
   if (filters.city) {
-    where.city = filters.city;
+    where.city = { [Op.iLike]: `%${filters.city}%` };
+  }
+
+  if (filters.experienceLevel) {
+    where.experienceLevel = filters.experienceLevel;
+  }
+
+  if (filters.nationality) {
+    where.nationality = { [Op.iLike]: `%${filters.nationality}%` };
+  }
+
+  // Search across multiple fields
+  if (filters.search) {
+    where[Op.or] = [
+      { fullName: { [Op.iLike]: `%${filters.search}%` } },
+      { email: { [Op.iLike]: `%${filters.search}%` } },
+      { phone: { [Op.iLike]: `%${filters.search}%` } },
+      { licenseNumber: { [Op.iLike]: `%${filters.search}%` } },
+      { city: { [Op.iLike]: `%${filters.search}%` } },
+      { nationality: { [Op.iLike]: `%${filters.search}%` } },
+    ];
+  }
+
+  // Sorting logic
+  let order: any = [['rating', 'DESC'], ['totalTrips', 'DESC']];
+  if (filters.sortBy) {
+    const sortOrder = filters.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    order = [[filters.sortBy, sortOrder]];
   }
 
   const { rows: chauffeurs, count: total } = await Chauffeur.findAndCountAll({
     where,
-    order: [
-      ['rating', 'DESC'],
-      ['totalTrips', 'DESC'],
-    ],
+    order,
     limit,
     offset,
   });
@@ -237,6 +266,50 @@ export const createChauffeur = async (data: CreateChauffeurDto): Promise<Chauffe
 };
 
 /**
+ * Update chauffeur details
+ */
+export const updateChauffeur = async (chauffeurId: string, data: Partial<CreateChauffeurDto>): Promise<Chauffeur> => {
+  const chauffeur = await Chauffeur.findByPk(chauffeurId);
+
+  if (!chauffeur) {
+    throw new Error('Chauffeur not found');
+  }
+
+  // Check for duplicate email, phone, or license if they're being updated
+  if (data.email || data.phone || data.licenseNumber) {
+    const duplicateConditions = [];
+    
+    if (data.email && data.email !== chauffeur.email) {
+      duplicateConditions.push({ email: data.email });
+    }
+    if (data.phone && data.phone !== chauffeur.phone) {
+      duplicateConditions.push({ phone: data.phone });
+    }
+    if (data.licenseNumber && data.licenseNumber !== chauffeur.licenseNumber) {
+      duplicateConditions.push({ licenseNumber: data.licenseNumber });
+    }
+
+    if (duplicateConditions.length > 0) {
+      const existingChauffeur = await Chauffeur.findOne({
+        where: {
+          [Op.or]: duplicateConditions,
+          id: { [Op.ne]: chauffeurId },
+        },
+      });
+
+      if (existingChauffeur) {
+        if (data.email && existingChauffeur.email === data.email) throw new Error('Email already exists');
+        if (data.phone && existingChauffeur.phone === data.phone) throw new Error('Phone number already exists');
+        if (data.licenseNumber && existingChauffeur.licenseNumber === data.licenseNumber) throw new Error('License number already exists');
+      }
+    }
+  }
+
+  await chauffeur.update(data);
+  return chauffeur;
+};
+
+/**
  * Delete (Soft Delete) a chauffeur
  * Sets status to OFF_DUTY and isVerified to false
  */
@@ -256,4 +329,56 @@ export const deleteChauffeur = async (chauffeurId: string): Promise<void> => {
     isVerified: false,
     notes: `${chauffeur.notes || ''}\n[DELETED] Account deactivated by admin on ${new Date().toISOString()}`.trim(),
   });
+};
+
+/**
+ * Export chauffeurs to CSV with filters
+ */
+export const exportChauffeursToCSV = async (filters: ChauffeurFilters): Promise<Chauffeur[]> => {
+  const where: any = {};
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (filters.isVerified !== undefined) {
+    where.isVerified = filters.isVerified;
+  }
+
+  if (filters.minRating) {
+    where.rating = {
+      [Op.gte]: filters.minRating,
+    };
+  }
+
+  if (filters.city) {
+    where.city = { [Op.iLike]: `%${filters.city}%` };
+  }
+
+  if (filters.experienceLevel) {
+    where.experienceLevel = filters.experienceLevel;
+  }
+
+  if (filters.nationality) {
+    where.nationality = { [Op.iLike]: `%${filters.nationality}%` };
+  }
+
+  if (filters.search) {
+    where[Op.or] = [
+      { fullName: { [Op.iLike]: `%${filters.search}%` } },
+      { email: { [Op.iLike]: `%${filters.search}%` } },
+      { phone: { [Op.iLike]: `%${filters.search}%` } },
+      { licenseNumber: { [Op.iLike]: `%${filters.search}%` } },
+      { city: { [Op.iLike]: `%${filters.search}%` } },
+      { nationality: { [Op.iLike]: `%${filters.search}%` } },
+    ];
+  }
+
+  const chauffeurs = await Chauffeur.findAll({
+    where,
+    order: [['createdAt', 'DESC']],
+    limit: 5000,
+  });
+
+  return chauffeurs;
 };

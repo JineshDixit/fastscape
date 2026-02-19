@@ -1,6 +1,5 @@
 import { Op } from 'sequelize';
 import { Booking, BookingFinancial, Payment, User, Vehicle, Chauffeur, sequelize } from '../../models';
-import { dbEnums } from '../../common/enum/dbEnums';
 import logger from '../../config/logger';
 
 interface BookingFilters {
@@ -93,13 +92,19 @@ export const getAllBookings = async (filters: BookingFilters): Promise<BookingLi
   let order: any = [['createdAt', 'DESC']];
   if (filters.sortBy) {
     const sortOrder = filters.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-    // Handle nested sorting mapping if necessary, otherwise assume direct field
     const field = filters.sortBy;
+    
+    // Map frontend column names to backend sorting
     if (field === 'user') {
       order = [[{ model: User, as: 'User' }, 'firstName', sortOrder]];
     } else if (field === 'vehicle') {
       order = [[{ model: Vehicle, as: 'Vehicle' }, 'make', sortOrder]];
+    } else if (field === 'chauffeur') {
+      order = [[{ model: Chauffeur, as: 'Chauffeur' }, 'fullName', sortOrder]];
+    } else if (field === 'amount') {
+      order = [[{ model: BookingFinancial, as: 'BookingFinancial' }, 'totalAmount', sortOrder]];
     } else {
+      // Direct fields: bookingType, bookingStatus, paymentStatus, startDatetime, endDatetime, createdAt
       order = [[field, sortOrder]];
     }
   }
@@ -489,4 +494,92 @@ export const cleanupExpiredBooking = async (bookingId: string): Promise<void> =>
     });
     throw error;
   }
+};
+
+/**
+ * Export bookings to CSV with filters
+ */
+export const exportBookingsToCSV = async (filters: BookingFilters): Promise<Booking[]> => {
+  const where: any = {};
+
+  if (filters.status) {
+    where.bookingStatus = filters.status;
+  }
+
+  if (filters.paymentStatus) {
+    where.paymentStatus = filters.paymentStatus;
+  }
+
+  if (filters.bookingType) {
+    where.bookingType = filters.bookingType;
+  }
+
+  if (filters.userId) {
+    where.userId = filters.userId;
+  }
+
+  if (filters.vehicleId) {
+    where.vehicleId = filters.vehicleId;
+  }
+
+  if (filters.chauffeurId) {
+    where.chauffeurId = filters.chauffeurId;
+  }
+
+  if (filters.startDate) {
+    where.startDatetime = {
+      [Op.gte]: new Date(filters.startDate),
+    };
+  }
+
+  if (filters.endDate) {
+    where.endDatetime = {
+      [Op.lte]: new Date(filters.endDate),
+    };
+  }
+
+  // Server-side search logic
+  if (filters.search) {
+    const searchCondition = {
+      [Op.or]: [
+        { id: { [Op.iLike]: `%${filters.search}%` } },
+        { '$User.firstName$': { [Op.iLike]: `%${filters.search}%` } },
+        { '$User.lastName$': { [Op.iLike]: `%${filters.search}%` } },
+        { '$Vehicle.make$': { [Op.iLike]: `%${filters.search}%` } },
+        { '$Vehicle.model$': { [Op.iLike]: `%${filters.search}%` } },
+      ],
+    };
+    Object.assign(where, searchCondition);
+  }
+
+  const bookings = await Booking.findAll({
+    where,
+    include: [
+      {
+        model: User,
+        attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+      },
+      {
+        model: Vehicle,
+        attributes: ['id', 'make', 'model', 'year', 'bodyType'],
+      },
+      {
+        model: Chauffeur,
+        attributes: ['id', 'fullName', 'phone'],
+        required: false,
+      },
+      {
+        model: BookingFinancial,
+        required: false,
+      },
+      {
+        model: Payment,
+        required: false,
+      },
+    ],
+    order: [['createdAt', 'DESC']],
+    limit: 5000, // Limit to prevent memory issues
+  });
+
+  return bookings;
 };

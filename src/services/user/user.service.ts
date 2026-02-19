@@ -257,3 +257,48 @@ export const toggleBlockUser = async (userId: string, isBlocked: boolean, reason
     throw error;
   }
 };
+
+/**
+ * Export users to CSV with filters
+ */
+export const exportUsersToCSV = async (filters: UserFilters): Promise<User[]> => {
+  const where: any = {};
+
+  if (filters.verificationStatus) {
+    where.verificationStatus = filters.verificationStatus;
+  }
+
+  if (filters.isBlocked !== undefined) {
+    where.isBlocked = filters.isBlocked;
+  }
+
+  if (filters.country) {
+    where.country = filters.country;
+  }
+
+  if (filters.city) {
+    where.city = filters.city;
+  }
+
+  if (filters.search) {
+    const searchCondition = {
+      [Op.or]: [
+        { id: { [Op.iLike]: `%${filters.search}%` } },
+        { firstName: { [Op.iLike]: `%${filters.search}%` } },
+        { lastName: { [Op.iLike]: `%${filters.search}%` } },
+        { email: { [Op.iLike]: `%${filters.search}%` } },
+        { phone: { [Op.iLike]: `%${filters.search}%` } },
+      ],
+    };
+    Object.assign(where, searchCondition);
+  }
+
+  const users = await User.findAll({
+    where,
+    attributes: { exclude: ['passwordHash', 'resetPasswordOtp', 'resetPasswordOtpExpires'] },
+    order: [['createdAt', 'DESC']],
+    limit: 5000,
+  });
+
+  return users;
+};

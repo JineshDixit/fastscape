@@ -199,3 +199,77 @@ export const cleanupExpiredBooking = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * GET /api/bookings/export
+ * Export bookings to CSV with filters
+ */
+export const exportBookings = async (req: Request, res: Response) => {
+  try {
+    const { CSVExportService } = await import('../../services/csv/csvExport.service');
+    
+    const filters = {
+      status: req.query.status as string,
+      paymentStatus: req.query.paymentStatus as string,
+      bookingType: req.query.bookingType as string,
+      userId: req.query.userId as string,
+      vehicleId: req.query.vehicleId as string,
+      chauffeurId: req.query.chauffeurId as string,
+      startDate: req.query.startDate as string,
+      endDate: req.query.endDate as string,
+      search: req.query.search as string,
+    };
+
+    const bookings = await bookingService.exportBookingsToCSV(filters);
+
+    const columns = [
+      { key: 'id', label: 'Booking ID' },
+      { key: 'User.firstName', label: 'Client First Name' },
+      { key: 'User.lastName', label: 'Client Last Name' },
+      { key: 'User.email', label: 'Client Email' },
+      { key: 'User.phone', label: 'Client Phone' },
+      { key: 'Vehicle.make', label: 'Vehicle Make' },
+      { key: 'Vehicle.model', label: 'Vehicle Model' },
+      { key: 'Vehicle.year', label: 'Vehicle Year' },
+      { key: 'bookingType', label: 'Booking Type' },
+      { key: 'bookingStatus', label: 'Status' },
+      { key: 'paymentStatus', label: 'Payment Status' },
+      { 
+        key: 'startDatetime', 
+        label: 'Start Date',
+        format: CSVExportService.formatDateTime
+      },
+      { 
+        key: 'endDatetime', 
+        label: 'End Date',
+        format: CSVExportService.formatDateTime
+      },
+      { key: 'Chauffeur.fullName', label: 'Chauffeur Name' },
+      { key: 'Chauffeur.phone', label: 'Chauffeur Phone' },
+      { 
+        key: 'BookingFinancial.totalAmount', 
+        label: 'Total Amount',
+        format: (val: number) => CSVExportService.formatCurrency(val)
+      },
+      { 
+        key: 'createdAt', 
+        label: 'Created At',
+        format: CSVExportService.formatDateTime
+      },
+    ];
+
+    const csv = CSVExportService.generateCSV(bookings, columns);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=bookings-${Date.now()}.csv`);
+    res.status(200).send(csv);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error.message || 'Failed to export bookings',
+        code: 'EXPORT_ERROR',
+      },
+    });
+  }
+};

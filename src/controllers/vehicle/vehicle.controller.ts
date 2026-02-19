@@ -45,7 +45,7 @@ export const createVehicleController = async (req: Request, res: Response, next:
       currency: req.body.currency || 'USD',
       isAvailable: req.body.isAvailable !== undefined ? req.body.isAvailable === 'true' : true,
       passengerCapacity: req.body.passengerCapacity ? parseInt(req.body.passengerCapacity) : 5,
-      city: req.body.city || 'Dubai',
+      locationId: req.body.locationId || undefined,
     };
 
     // Handle image files
@@ -74,7 +74,6 @@ export const getVehiclesController = async (req: Request, res: Response, next: N
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
-      city: req.query.city as string,
       passengerCapacity: req.query.passengerCapacity ? parseInt(req.query.passengerCapacity as string) : undefined,
       search: req.query.search as string,
     };
@@ -143,7 +142,7 @@ export const updateVehicleController = async (req: Request, res: Response, next:
     if (req.body.currency !== undefined) updateData.currency = req.body.currency;
     if (req.body.isAvailable !== undefined) updateData.isAvailable = req.body.isAvailable === 'true';
     if (req.body.passengerCapacity !== undefined) updateData.passengerCapacity = parseInt(req.body.passengerCapacity);
-    if (req.body.city !== undefined) updateData.city = req.body.city;
+    if (req.body.locationId !== undefined) updateData.locationId = req.body.locationId || null;
 
     // Handle image files
     const imageFiles = req.files as any;

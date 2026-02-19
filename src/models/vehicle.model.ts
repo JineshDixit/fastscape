@@ -23,7 +23,7 @@ export interface VehicleAttributes {
   currency: string;
   isAvailable: boolean;
   passengerCapacity: number;
-  city: string;
+  locationId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -38,7 +38,7 @@ export interface VehicleCreationAttributes extends Optional<
   | 'currency'
   | 'isAvailable'
   | 'passengerCapacity'
-  | 'city'
+  | 'locationId'
   | 'createdAt'
   | 'updatedAt'
 > {}
@@ -64,7 +64,7 @@ export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes>
   public currency!: string;
   public isAvailable!: boolean;
   public passengerCapacity!: number;
-  public city!: string;
+  public locationId!: string;
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -123,11 +123,16 @@ export const initVehicleModel = (sequelize: Sequelize) => {
         defaultValue: 5,
         comment: 'Number of passengers',
       },
-      city: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: 'Dubai',
-        comment: 'City where the vehicle is located',
+      locationId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: 'locations',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+        comment: 'Reference to location table',
       },
     },
     {

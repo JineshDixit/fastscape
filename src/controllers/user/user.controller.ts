@@ -156,3 +156,65 @@ export const toggleBlockUser = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * GET /api/users/export
+ * Export users (clients) to CSV with filters
+ */
+export const exportUsers = async (req: Request, res: Response) => {
+  try {
+    const { CSVExportService } = await import('../../services/csv/csvExport.service');
+    
+    const filters = {
+      verificationStatus: req.query.verificationStatus as string,
+      isBlocked: req.query.isBlocked === 'true' ? true : req.query.isBlocked === 'false' ? false : undefined,
+      country: req.query.country as string,
+      city: req.query.city as string,
+      search: req.query.search as string,
+    };
+
+    const users = await userService.exportUsersToCSV(filters);
+
+    const columns = [
+      { key: 'id', label: 'ID' },
+      { key: 'firstName', label: 'First Name' },
+      { key: 'lastName', label: 'Last Name' },
+      { key: 'email', label: 'Email' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'verificationStatus', label: 'Verification Status' },
+      { 
+        key: 'isBlocked', 
+        label: 'Blocked',
+        format: CSVExportService.formatBoolean
+      },
+      { 
+        key: 'dateOfBirth', 
+        label: 'Date of Birth',
+        format: CSVExportService.formatDate
+      },
+      { key: 'nationality', label: 'Nationality' },
+      { key: 'city', label: 'City' },
+      { key: 'country', label: 'Country' },
+      { key: 'address', label: 'Address' },
+      { 
+        key: 'createdAt', 
+        label: 'Created At',
+        format: CSVExportService.formatDateTime
+      },
+    ];
+
+    const csv = CSVExportService.generateCSV(users, columns);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=clients-${Date.now()}.csv`);
+    res.status(200).send(csv);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error.message || 'Failed to export clients',
+        code: 'EXPORT_ERROR',
+      },
+    });
+  }
+};

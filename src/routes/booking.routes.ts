@@ -8,6 +8,14 @@ const router = Router();
 router.use(authenticateUser);
 
 /**
+ * GET /api/bookings/export
+ * Export bookings to CSV with filters
+ * Query params: status, paymentStatus, bookingType, userId, vehicleId, chauffeurId, startDate, endDate, search
+ * Must be before /:id route to avoid route conflict
+ */
+router.get('/export', bookingController.exportBookings);
+
+/**
  * GET /api/bookings/expired
  * Get all expired PENDING bookings
  * Must be before /:id route to avoid route conflict

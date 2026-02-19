@@ -6,8 +6,11 @@ export class UserDrivingInfo extends Model {
   public userId!: string;
   public licenseIssuingCountry!: string;
   public licenseExpiryDate!: Date;
-  public drivingExperienceYears!: string;
+  public drivingExperienceYears!: number; // Fixed: should be number, not string
   public visaStatus!: (typeof dbEnums.VISA_STATUS)[number];
+  public isVerified!: boolean;
+  public verificationDate!: Date | null;
+  public version!: number;
 }
 
 export const initUserDrivingInfoModel = (sequelize: Sequelize) => {
@@ -21,15 +24,55 @@ export const initUserDrivingInfoModel = (sequelize: Sequelize) => {
       userId: {
         type: DataTypes.UUID,
         allowNull: false,
+        unique: true, // One driving info per user
         references: {
           model: 'users',
           key: 'id',
         },
       },
-      licenseIssuingCountry: DataTypes.STRING(100),
-      licenseExpiryDate: DataTypes.DATEONLY,
-      drivingExperienceYears: DataTypes.INTEGER,
-      visaStatus: DataTypes.ENUM(...dbEnums.VISA_STATUS),
+      licenseIssuingCountry: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+        validate: {
+          notEmpty: true,
+          len: [2, 100],
+        },
+      },
+      licenseExpiryDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        validate: {
+          isDate: true,
+          isAfter: new Date().toISOString().split('T')[0], // Must be in the future
+        },
+      },
+      drivingExperienceYears: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          min: 0,
+          max: 80, // Reasonable maximum
+        },
+      },
+      visaStatus: {
+        type: DataTypes.ENUM(...dbEnums.VISA_STATUS),
+        allowNull: false,
+      },
+      isVerified: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      verificationDate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Version field for optimistic locking',
+      },
     },
     {
       sequelize,
@@ -40,6 +83,14 @@ export const initUserDrivingInfoModel = (sequelize: Sequelize) => {
       underscored: true,
       tableName: 'user_driving_info',
       modelName: 'UserDrivingInfo',
+      validate: {
+        // Custom validation to ensure license is not expired
+        licenseNotExpired() {
+          if (this.licenseExpiryDate && new Date(this.licenseExpiryDate) <= new Date()) {
+            throw new Error('License expiry date must be in the future');
+          }
+        },
+      },
     },
   );
 };

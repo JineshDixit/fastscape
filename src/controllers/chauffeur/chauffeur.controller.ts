@@ -12,8 +12,13 @@ export const getAllChauffeurs = async (req: Request, res: Response) => {
       isVerified: req.query.isVerified !== undefined ? req.query.isVerified === 'true' : undefined,
       minRating: req.query.minRating ? parseFloat(req.query.minRating as string) : undefined,
       city: req.query.city as string,
+      experienceLevel: req.query.experienceLevel as string,
+      nationality: req.query.nationality as string,
+      search: req.query.search as string,
       page: req.query.page ? parseInt(req.query.page as string) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+      sortBy: req.query.sortBy as string,
+      sortOrder: req.query.sortOrder as string,
     };
 
     const result = await chauffeurService.getAllChauffeurs(filters);
@@ -147,6 +152,32 @@ export const createChauffeur = async (req: Request, res: Response) => {
 };
 
 /**
+ * PUT /api/chauffeurs/:id
+ * Update chauffeur details
+ */
+export const updateChauffeur = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const chauffeur = await chauffeurService.updateChauffeur(id, req.body);
+
+    res.status(200).json({
+      success: true,
+      data: chauffeur,
+      message: 'Chauffeur updated successfully',
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      error: {
+        message: error.message || 'Failed to update chauffeur',
+        code: 'UPDATE_ERROR',
+      },
+    });
+  }
+};
+
+/**
  * DELETE /api/chauffeurs/:id
  * Delete (Soft Delete) a chauffeur
  */
@@ -166,6 +197,78 @@ export const deleteChauffeur = async (req: Request, res: Response) => {
       error: {
         message: error.message || 'Failed to delete chauffeur',
         code: 'DELETE_ERROR',
+      },
+    });
+  }
+};
+
+/**
+ * GET /api/chauffeurs/export
+ * Export chauffeurs to CSV with filters
+ */
+export const exportChauffeurs = async (req: Request, res: Response) => {
+  try {
+    const { CSVExportService } = await import('../../services/csv/csvExport.service');
+    
+    const filters = {
+      status: req.query.status as string,
+      isVerified: req.query.isVerified !== undefined ? req.query.isVerified === 'true' : undefined,
+      minRating: req.query.minRating ? parseFloat(req.query.minRating as string) : undefined,
+      city: req.query.city as string,
+      experienceLevel: req.query.experienceLevel as string,
+      nationality: req.query.nationality as string,
+      search: req.query.search as string,
+    };
+
+    const chauffeurs = await chauffeurService.exportChauffeursToCSV(filters);
+
+    const columns = [
+      { key: 'id', label: 'ID' },
+      { key: 'fullName', label: 'Full Name' },
+      { key: 'email', label: 'Email' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'status', label: 'Status' },
+      { 
+        key: 'isVerified', 
+        label: 'Verified',
+        format: CSVExportService.formatBoolean
+      },
+      { key: 'rating', label: 'Rating' },
+      { key: 'totalTrips', label: 'Total Trips' },
+      { key: 'nationality', label: 'Nationality' },
+      { key: 'licenseNumber', label: 'License Number' },
+      { 
+        key: 'licenseExpiryDate', 
+        label: 'License Expiry',
+        format: CSVExportService.formatDate
+      },
+      { key: 'experienceLevel', label: 'Experience Level' },
+      { key: 'yearsOfExperience', label: 'Years of Experience' },
+      { 
+        key: 'hourlyRate', 
+        label: 'Hourly Rate',
+        format: (val: number) => CSVExportService.formatCurrency(val)
+      },
+      { key: 'city', label: 'City' },
+      { key: 'country', label: 'Country' },
+      { 
+        key: 'createdAt', 
+        label: 'Created At',
+        format: CSVExportService.formatDateTime
+      },
+    ];
+
+    const csv = CSVExportService.generateCSV(chauffeurs, columns);
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=chauffeurs-${Date.now()}.csv`);
+    res.status(200).send(csv);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error.message || 'Failed to export chauffeurs',
+        code: 'EXPORT_ERROR',
       },
     });
   }

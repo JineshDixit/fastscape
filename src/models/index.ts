@@ -17,6 +17,7 @@ import { initPaymentModel, Payment } from './payment.model';
 import { ChauffeurReview, initChauffeurReviewModel } from './chauffeurReview.model';
 import { Chauffeur, initChauffeurModel } from './chauffeur.model';
 import { BookingFinancial, initBookingFinancialModel } from './bookingFinancial.model';
+import { initLocationModel, Location } from './location.model';
 
 let sequelize: Sequelize;
 
@@ -41,7 +42,7 @@ const initPostgres_DB = (): void => {
     host: config.POSTGRES_DB.host,
     port: +config.POSTGRES_DB.port,
     dialect: 'postgres',
-    logging: (sql: string) => logger.debug('SQL Query', { sql }),
+    logging: false ,
     pool: {
       max: 5,
       min: 0,
@@ -70,6 +71,7 @@ const initPostgres_DB = (): void => {
   initChauffeurReviewModel(sequelize);
   initChauffeurModel(sequelize);
   initBookingFinancialModel(sequelize);
+  initLocationModel(sequelize)
 
   logger.debug('Setting up model associations');
 
@@ -125,6 +127,17 @@ const initPostgres_DB = (): void => {
     as: 'vehicle'
   });
 
+  // Vehicle-Location association
+  Vehicle.belongsTo(Location, {
+    foreignKey: 'locationId',
+    as: 'location',
+  });
+
+  Location.hasMany(Vehicle, {
+    foreignKey: 'locationId',
+    as: 'vehicles',
+  });
+
   User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
   User.hasOne(UserDrivingInfo, { foreignKey: 'userId' });
   User.hasMany(Booking, { foreignKey: 'userId' });
@@ -157,6 +170,13 @@ const initPostgres_DB = (): void => {
     duration: `${duration}ms`,
     modelsCount: 16,
   });
+
+  // try {
+  //   sequelize.sync({ alter: true });
+  //   console.log('Database connection has been established successfully.');
+  // } catch (error) {
+  //   console.error('Unable to connect to the database:', error);
+  // }
 };
 
 export {
@@ -177,5 +197,6 @@ export {
   Payment,
   ChauffeurReview,
   Chauffeur,
-  BookingFinancial
+  BookingFinancial,
+  Location
 };

@@ -1,5 +1,6 @@
 import { Vehicle, VehicleCreationAttributes } from '../../models/vehicle.model';
 import { VehicleMedia, VehicleMediaCreationAttributes } from '../../models/vehicleMedia.model';
+import { Location } from '../../models/location.model';
 import { Op, Transaction } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
@@ -192,7 +193,7 @@ export const createVehicle = async (
 };
 
 /**
- * Get vehicle by ID with media
+ * Get vehicle by ID with media and location
  */
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
@@ -200,6 +201,11 @@ export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
       {
         model: VehicleMedia,
         as: 'media',
+      },
+      {
+        model: Location,
+        as: 'location',
+        attributes: ['id', 'name', 'city', 'code'],
       },
     ],
   });
@@ -292,6 +298,11 @@ export const getVehicles = async (
       {
         model: VehicleMedia,
         as: 'media',
+      },
+      {
+        model: Location,
+        as: 'location',
+        attributes: ['id', 'name', 'city', 'code'],
       },
     ],
     limit,

@@ -8,6 +8,14 @@ const router = Router();
 router.use(authenticateUser);
 
 /**
+ * GET /api/users/export
+ * Export users (clients) to CSV with filters
+ * Query params: verificationStatus, isBlocked, country, city, search
+ * Must be before /:id route to avoid route conflict
+ */
+router.get('/export', userController.exportUsers);
+
+/**
  * GET /api/users
  * Get all users with filters and pagination
  * Query params: verificationStatus, isBlocked, country, city, page, limit, search, sortBy, sortOrder

@@ -3,8 +3,6 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 export class Location extends Model {
   public id!: string;
   public name!: string;
-  public type!: 'AIRPORT' | 'CITY' | 'HOTEL' | 'BRANCH' | 'OTHER';
-  public address!: string;
   public city!: string;
   public code!: string;
   public isActive!: boolean;
@@ -22,15 +20,6 @@ export const initLocationModel = (sequelize: Sequelize) => {
       },
       name: {
         type: DataTypes.STRING,
-        allowNull: false,
-      },
-      type: {
-        type: DataTypes.ENUM('AIRPORT', 'CITY', 'HOTEL', 'BRANCH', 'OTHER'),
-        defaultValue: 'OTHER',
-        allowNull: false,
-      },
-      address: {
-        type: DataTypes.TEXT,
         allowNull: false,
       },
       city: {

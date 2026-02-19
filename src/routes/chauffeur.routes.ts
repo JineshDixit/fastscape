@@ -8,6 +8,14 @@ const router = Router();
 router.use(authenticateUser);
 
 /**
+ * GET /api/chauffeurs/export
+ * Export chauffeurs to CSV with filters
+ * Query params: status, isVerified, minRating, city, experienceLevel, nationality, search
+ * Must be before /:id route to avoid route conflict
+ */
+router.get('/export', chauffeurController.exportChauffeurs);
+
+/**
  * GET /api/chauffeurs
  * Get all chauffeurs with filters
  * Query params: status, isVerified, minRating, city, page, limit
@@ -38,6 +46,12 @@ router.put('/:id/status', chauffeurController.updateChauffeurStatus);
  * Create a new chauffeur
  */
 router.post('/', chauffeurController.createChauffeur);
+
+/**
+ * PUT /api/chauffeurs/:id
+ * Update chauffeur details
+ */
+router.put('/:id', chauffeurController.updateChauffeur);
 
 /**
  * DELETE /api/chauffeurs/:id
