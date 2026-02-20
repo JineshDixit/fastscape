@@ -43,7 +43,11 @@ export const formatTime = (date: Date | string, formatStr: string = 'p', languag
 /**
  * Format relative time (e.g., "2 hours ago")
  */
-export const formatRelativeTime = (date: Date | string, baseDate: Date = new Date(), language: string = 'en'): string => {
+export const formatRelativeTime = (
+  date: Date | string,
+  baseDate: Date = new Date(),
+  language: string = 'en',
+): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return formatDistance(dateObj, baseDate, { addSuffix: true, locale: getDateLocale(language) });
 };
@@ -51,7 +55,11 @@ export const formatRelativeTime = (date: Date | string, baseDate: Date = new Dat
 /**
  * Format relative date (e.g., "yesterday at 3:00 PM")
  */
-export const formatRelativeDate = (date: Date | string, baseDate: Date = new Date(), language: string = 'en'): string => {
+export const formatRelativeDate = (
+  date: Date | string,
+  baseDate: Date = new Date(),
+  language: string = 'en',
+): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return formatRelative(dateObj, baseDate, { locale: getDateLocale(language) });
 };

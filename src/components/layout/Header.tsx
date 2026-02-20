@@ -2,7 +2,14 @@ import { Settings, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { useSidebar } from '@/context/sidebarContext';
 import { useAuthContext } from '@/context/authContext';
 import { useNavigate } from 'react-router-dom';
@@ -34,10 +41,12 @@ const Header: FC<HeaderProps> = ({ breadcrumbs }) => {
                     <div key={index} className="flex items-center">
                       <BreadcrumbItem>
                         {index === breadcrumbs.length - 1 ? (
-                          <BreadcrumbPage className="text-foreground pb-0.5 text-xl font-semibold">{item.label}</BreadcrumbPage>
+                          <BreadcrumbPage className="text-foreground pb-0.5 text-xl font-semibold">
+                            {item.label}
+                          </BreadcrumbPage>
                         ) : (
-                          <BreadcrumbLink 
-                            href="#" 
+                          <BreadcrumbLink
+                            href="#"
                             onClick={(e) => {
                               e.preventDefault();
                               if (item.href) {
@@ -49,9 +58,7 @@ const Header: FC<HeaderProps> = ({ breadcrumbs }) => {
                           </BreadcrumbLink>
                         )}
                       </BreadcrumbItem>
-                      {index < breadcrumbs.length - 1 && (
-                        <BreadcrumbSeparator />
-                      )}
+                      {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
                     </div>
                   ))}
                 </BreadcrumbList>
@@ -62,11 +69,7 @@ const Header: FC<HeaderProps> = ({ breadcrumbs }) => {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              className="m-0! p-2!"
-              onClick={() => navigate('/profile')}
-            >
+            <Button variant="ghost" className="m-0! p-2!" onClick={() => navigate('/profile')}>
               <Settings className="text-foreground h-5! w-5!" />
             </Button>
           </div>

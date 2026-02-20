@@ -80,15 +80,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.success && response.data) {
         setUser(response.data);
         setIsAuthenticated(true);
-        
+
         const dbLanguage = response.data.preferredLanguage;
-        
+
         // Compare current language with database language
         if (currentLanguage !== dbLanguage) {
           // User selected a different language (e.g., on login page)
           // Update database to match user's current choice
           console.log(`Language mismatch: current=${currentLanguage}, db=${dbLanguage}. Updating database...`);
-          
+
           try {
             await adminUserService.updateLanguage(currentLanguage);
             console.log('Database language updated successfully');
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Languages match, no action needed
           console.log(`Language in sync: ${currentLanguage}`);
         }
-        
+
         // Ensure i18n is set to current language (should already be, but just in case)
         if (i18n.language !== currentLanguage) {
           await i18n.changeLanguage(currentLanguage);

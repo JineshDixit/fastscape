@@ -128,7 +128,7 @@ const ChauffeurList = () => {
         addButtonText="Add New Driver"
         addButtonIcon={<Plus className="h-4 w-4" />}
         addButtonOnClick={() => setOpenCreate(true)}
-        tableContainerClassName='!max-h-[calc(100vh-22.5rem)]'
+        tableContainerClassName="!max-h-[calc(100vh-22.5rem)]"
         onSearchChange={(value) => setSearch(value)}
         customActions={
           <div className="flex items-center gap-2">
@@ -139,13 +139,15 @@ const ChauffeurList = () => {
             />
             <PermissionGuard module="chauffeurs" action="export">
               <ExportButton
-                onExport={() => chauffeurService.exportChauffeurs({ 
-                  search, 
-                  status: filters.status as ChauffeurStatus | undefined,
-                  isVerified: filters.isVerified,
-                  experienceLevel: filters.experienceLevel,
-                  minRating: filters.minRating,
-                })}
+                onExport={() =>
+                  chauffeurService.exportChauffeurs({
+                    search,
+                    status: filters.status as ChauffeurStatus | undefined,
+                    isVerified: filters.isVerified,
+                    experienceLevel: filters.experienceLevel,
+                    minRating: filters.minRating,
+                  })
+                }
                 filename="chauffeurs"
               />
             </PermissionGuard>

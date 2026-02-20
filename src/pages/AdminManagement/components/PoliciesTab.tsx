@@ -89,27 +89,27 @@ const PoliciesTab = () => {
 
   return (
     <div className="space-y-6">
-        <DataTable
-          columns={columns}
-          data={policies}
-          searchPlaceholder="Search policies by name..."
-          pageCount={pageCount}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          totalRows={totalRows}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-          onSearchChange={(val) => {
-            setSearch(val);
-            setPageIndex(0);
-          }}
-          sorting={sorting}
-          onSortingChange={setSorting}
-          addButtonText="Create Security Policy"
-          addButtonOnClick={handleCreatePolicy}
-          showAddButton={true}
-          addButtonIcon={<Plus className="h-4 w-4" />}
-        />
+      <DataTable
+        columns={columns}
+        data={policies}
+        searchPlaceholder="Search policies by name..."
+        pageCount={pageCount}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalRows={totalRows}
+        onPageChange={setPageIndex}
+        onPageSizeChange={setPageSize}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setPageIndex(0);
+        }}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        addButtonText="Create Security Policy"
+        addButtonOnClick={handleCreatePolicy}
+        showAddButton={true}
+        addButtonIcon={<Plus className="h-4 w-4" />}
+      />
 
       <PolicySheet
         open={sheetOpen}

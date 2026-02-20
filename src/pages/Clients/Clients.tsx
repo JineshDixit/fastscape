@@ -114,10 +114,7 @@ const Clients = () => {
                   setPageIndex(0);
                 }}
               />
-              <ExportButton
-                onExport={() => userService.exportUsers({ search, ...filters })}
-                filename="clients"
-              />
+              <ExportButton onExport={() => userService.exportUsers({ search, ...filters })} filename="clients" />
             </div>
           }
         />

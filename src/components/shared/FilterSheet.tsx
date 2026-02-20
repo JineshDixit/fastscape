@@ -1,6 +1,14 @@
 import React, { type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Filter } from 'lucide-react';
 
 interface FilterSheetProps {
@@ -20,7 +28,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
   description,
   activeFilterCount,
   children,
-  sheetFooter
+  sheetFooter,
 }) => {
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -41,11 +49,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
-        {sheetFooter && (
-          <SheetFooter className="px-6 pb-6">
-            {sheetFooter}
-          </SheetFooter>
-        )}
+        {sheetFooter && <SheetFooter className="px-6 pb-6">{sheetFooter}</SheetFooter>}
       </SheetContent>
     </Sheet>
   );

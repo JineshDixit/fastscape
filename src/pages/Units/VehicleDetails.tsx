@@ -135,20 +135,21 @@ const VehicleDetails = () => {
               <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </h1>
-              <Badge variant={vehicle.isAvailable ? 'default' : 'destructive'} className="px-2.5 py-0.5 text-xs font-medium">
+              <Badge
+                variant={vehicle.isAvailable ? 'default' : 'destructive'}
+                className="px-2.5 py-0.5 text-xs font-medium"
+              >
                 {vehicle.isAvailable ? 'Available' : 'Unavailable'}
               </Badge>
             </div>
-            {vehicle.trim && (
-              <p className="text-muted-foreground mt-1 text-sm font-medium">{vehicle.trim}</p>
-            )}
+            {vehicle.trim && <p className="text-muted-foreground mt-1 text-sm font-medium">{vehicle.trim}</p>}
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <PermissionGuard module="vehicles" action="update">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-10 gap-2 font-medium"
               onClick={() => navigate(`/units?edit=${vehicle.id}`)}
             >
@@ -170,7 +171,11 @@ const VehicleDetails = () => {
           <PermissionGuard module="vehicles" action="delete">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-red-600 hover:bg-red-50 hover:text-red-700">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
@@ -226,11 +231,7 @@ const VehicleDetails = () => {
                 {/* Main Image */}
                 <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg bg-gray-100">
                   {selectedImage ? (
-                    <img
-                      src={selectedImage}
-                      alt="Vehicle main view"
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={selectedImage} alt="Vehicle main view" className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center">
                       <Car className="h-12 w-12 text-gray-400" />
@@ -247,7 +248,7 @@ const VehicleDetails = () => {
                         onClick={() => setSelectedImage(fetchImage(image))}
                         className={`overflow-hidden rounded-md border-2 transition-all ${
                           selectedImage === fetchImage(image)
-                            ? 'border-primary ring-2 ring-primary/20'
+                            ? 'border-primary ring-primary/20 ring-2'
                             : 'border-transparent hover:border-gray-300'
                         }`}
                       >
@@ -364,7 +365,11 @@ const VehicleDetails = () => {
                 </CardHeader>
                 <CardContent className="p-6 pt-0">
                   <div className="divide-y divide-gray-100/50">
-                    <DataRow label="Passenger Capacity" value={`${vehicle.passengerCapacity || 5} Passengers`} icon={Users} />
+                    <DataRow
+                      label="Passenger Capacity"
+                      value={`${vehicle.passengerCapacity || 5} Passengers`}
+                      icon={Users}
+                    />
                     <DataRow label="Body Type" value={vehicle.bodyType} icon={Car} />
                   </div>
                 </CardContent>
@@ -409,7 +414,8 @@ const VehicleDetails = () => {
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
                       currency: vehicle.currency || 'AED',
-                    }).format(parseFloat(vehicle.delayChargePerHour || '0'))}/hr
+                    }).format(parseFloat(vehicle.delayChargePerHour || '0'))}
+                    /hr
                   </span>
                 </div>
               </div>

@@ -8,7 +8,13 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { User, Lock, Globe, Shield, Calendar } from 'lucide-react';
+import {
+  User,
+  Lock,
+  // Globe,
+  Shield,
+  Calendar,
+} from 'lucide-react';
 import { adminUserService } from '@/api/services/adminUserService';
 import { toast } from 'sonner';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
@@ -31,13 +37,11 @@ const ProfilePage = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const initials = user?.firstName && user?.lastName 
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() 
-    : 'GU';
+  const initials = user?.firstName && user?.lastName ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : 'GU';
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
       toast.error('All fields are required');
       return;
@@ -82,12 +86,12 @@ const ProfilePage = () => {
     setIsChangingPassword(true);
     try {
       await adminUserService.changePassword(currentPassword, newPassword, confirmPassword);
-      
+
       // Clear form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      
+
       toast.success('Password changed successfully');
     } catch (error: any) {
       console.error('Failed to change password:', error);
@@ -99,7 +103,6 @@ const ProfilePage = () => {
 
   return (
     <div>
-
       {/* Profile Overview Card */}
       <Card className="mb-6">
         <CardContent className="pt-6">
@@ -110,12 +113,12 @@ const ProfilePage = () => {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h2 className="text-2xl font-semibold text-foreground">{user?.fullName}</h2>
+              <h2 className="text-foreground text-2xl font-semibold">{user?.fullName}</h2>
               <p className="text-muted-foreground">{user?.email}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="mt-2 flex items-center gap-2">
                 {user?.roles?.map((role) => (
                   <Badge key={role.id} variant="secondary">
-                    <Shield className="h-3 w-3 mr-1" />
+                    <Shield className="mr-1 h-3 w-3" />
                     {role.name}
                   </Badge>
                 ))}
@@ -124,7 +127,7 @@ const ProfilePage = () => {
                 </Badge>
               </div>
             </div>
-            <div className="text-right text-sm text-muted-foreground">
+            <div className="text-muted-foreground text-right text-sm">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span>Member since {formatDate(user?.createdAt || new Date(), 'PP', i18n.language)}</span>
@@ -136,7 +139,7 @@ const ProfilePage = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Profile
@@ -212,9 +215,7 @@ const ProfilePage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Change Password</CardTitle>
-              <CardDescription>
-                Update your password to keep your account secure
-              </CardDescription>
+              <CardDescription>Update your password to keep your account secure</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleChangePassword} className="space-y-4">
@@ -228,9 +229,7 @@ const ProfilePage = () => {
                     placeholder="Enter current password"
                     disabled={isChangingPassword}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Enter your current password to verify your identity
-                  </p>
+                  <p className="text-muted-foreground text-xs">Enter your current password to verify your identity</p>
                 </div>
 
                 <Separator />
@@ -245,9 +244,7 @@ const ProfilePage = () => {
                     placeholder="Enter new password"
                     disabled={isChangingPassword}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Must be at least 6 characters long
-                  </p>
+                  <p className="text-muted-foreground text-xs">Must be at least 6 characters long</p>
                 </div>
 
                 <div className="space-y-2">
@@ -279,16 +276,14 @@ const ProfilePage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Language Preference</CardTitle>
-              <CardDescription>
-                Choose your preferred language for the interface
-              </CardDescription>
+              <CardDescription>Choose your preferred language for the interface</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Interface Language</Label>
                   <LanguageSwitcher />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Select your preferred language. This will update all text in the application.
                   </p>
                 </div>

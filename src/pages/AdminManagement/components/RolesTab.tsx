@@ -97,27 +97,27 @@ const RolesTab = () => {
 
   return (
     <div className="space-y-6">
-        <DataTable
-          columns={columns}
-          data={roles}
-          searchPlaceholder="Search roles by name..."
-          pageCount={pageCount}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          totalRows={totalRows}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-          onSearchChange={(val) => {
-            setSearch(val);
-            setPageIndex(0);
-          }}
-          sorting={sorting}
-          onSortingChange={setSorting}
-          addButtonText="Create Access Role"
-          addButtonOnClick={handleCreateRole}
-          showAddButton={true}
-          addButtonIcon={<Plus className="h-4 w-4" />}
-        />
+      <DataTable
+        columns={columns}
+        data={roles}
+        searchPlaceholder="Search roles by name..."
+        pageCount={pageCount}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalRows={totalRows}
+        onPageChange={setPageIndex}
+        onPageSizeChange={setPageSize}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setPageIndex(0);
+        }}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        addButtonText="Create Access Role"
+        addButtonOnClick={handleCreateRole}
+        showAddButton={true}
+        addButtonIcon={<Plus className="h-4 w-4" />}
+      />
 
       <RoleSheet
         open={sheetOpen}
@@ -141,8 +141,8 @@ const RolesTab = () => {
         onDelete={() => roleService.deleteRole(selectedRole!.id)}
         description={
           <>
-            This action cannot be undone. This will permanently delete the role{' '}
-            <strong>{selectedRole?.name}</strong> and remove it from all admin users.
+            This action cannot be undone. This will permanently delete the role <strong>{selectedRole?.name}</strong>{' '}
+            and remove it from all admin users.
           </>
         }
       />

@@ -10,10 +10,10 @@ i18n
   .init({
     fallbackLng: 'en',
     debug: import.meta.env.DEV,
-    
+
     // Supported languages
     supportedLngs: ['en', 'es', 'fr', 'de', 'ar'],
-    
+
     // Namespaces
     ns: [
       'common',
@@ -31,22 +31,22 @@ i18n
       'errors',
     ],
     defaultNS: 'common',
-    
+
     interpolation: {
       escapeValue: false, // React already escapes values
     },
-    
+
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
-    
+
     detection: {
       // Order of language detection
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
       lookupLocalStorage: 'i18nextLng',
     },
-    
+
     react: {
       useSuspense: true,
     },

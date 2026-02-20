@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuthContext } from '@/context/authContext';
 import { adminUserService } from '@/api/services/adminUserService';
 import { toast } from 'sonner';
@@ -58,14 +52,10 @@ export const LanguageSwitcher = () => {
   };
 
   return (
-    <Select
-      value={currentLanguage.code}
-      onValueChange={handleLanguageChange}
-      disabled={isUpdating}
-    >
-      <SelectTrigger className="w-[160px] h-10 border-border bg-background">
+    <Select value={currentLanguage.code} onValueChange={handleLanguageChange} disabled={isUpdating}>
+      <SelectTrigger className="border-border bg-background h-10 w-[160px]">
         <div className="flex items-center gap-2">
-          <Globe className="h-4 w-4 text-muted-foreground" />
+          <Globe className="text-muted-foreground h-4 w-4" />
           <SelectValue>
             <div className="flex items-center gap-2">
               <span className="text-sm">{currentLanguage.name}</span>
@@ -75,13 +65,9 @@ export const LanguageSwitcher = () => {
       </SelectTrigger>
       <SelectContent>
         {languages.map((language) => (
-          <SelectItem
-            key={language.code}
-            value={language.code}
-            className="cursor-pointer"
-          >
-            <div className="flex items-center justify-between w-full gap-3">
-                <span>{language.name}</span>
+          <SelectItem key={language.code} value={language.code} className="cursor-pointer">
+            <div className="flex w-full items-center justify-between gap-3">
+              <span>{language.name}</span>
             </div>
           </SelectItem>
         ))}

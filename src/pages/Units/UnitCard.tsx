@@ -5,7 +5,12 @@ import { Fuel, Cog, Ellipsis, Users } from 'lucide-react';
 import type { Vehicle } from '@/common/interface/vehicleInterface';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from '../../components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from '../../components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +35,7 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { localizeTransmission, localizeFuelType } = useVehicleLocalization();
   const { t } = useTranslation('vehicles');
-  
+
   const getStatusBadge = (isAvailable: boolean) => {
     if (isAvailable) {
       return (
@@ -65,9 +70,12 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
     <Card className="min-w-0 overflow-hidden py-4">
       <CardHeader className="flex items-start justify-between space-y-0 px-5">
         <div className="space-y-1">
-          <h3 className="flex flex-col text-foreground text-xl leading-tight font-semibold tracking-normal">
+          <h3 className="text-foreground flex flex-col text-xl leading-tight font-semibold tracking-normal">
             <span>{vehicle.model}</span>
-            <span className="text-sm">{vehicle.make}{vehicle.trim ? ` (${vehicle.trim})` : ''}</span>
+            <span className="text-sm">
+              {vehicle.make}
+              {vehicle.trim ? ` (${vehicle.trim})` : ''}
+            </span>
           </h3>
         </div>
         <div className="space-y-1">
@@ -101,7 +109,9 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
               <div className="bg-muted/90 rounded-md p-1.5">
                 <Cog className="text-foreground/80 size-4" />
               </div>
-              <span className="text-foreground w-full truncate text-sm tracking-tight">{localizeTransmission(vehicle.transmission)}</span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">
+                {localizeTransmission(vehicle.transmission)}
+              </span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <div className="bg-muted/90 rounded-md p-1.5">
@@ -115,7 +125,9 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
               <div className="bg-muted/90 rounded-md p-1.5">
                 <Fuel className="text-foreground/80 size-4" />
               </div>
-              <span className="text-foreground w-full truncate text-sm tracking-tight">{localizeFuelType(vehicle.fuelType)}</span>
+              <span className="text-foreground w-full truncate text-sm tracking-tight">
+                {localizeFuelType(vehicle.fuelType)}
+              </span>
             </div>
           </div>
         </div>

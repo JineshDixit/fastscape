@@ -1,12 +1,30 @@
 import { useEffect, useState } from 'react';
-import { dashboardService, type DashboardStats, type RentStatus, type EarningSummaryItem, type BookingsOverviewItem } from '@/api/services/dashboardService';
+import {
+  dashboardService,
+  type DashboardStats,
+  type RentStatus,
+  type EarningSummaryItem,
+  type BookingsOverviewItem,
+} from '@/api/services/dashboardService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { TrendingUp, TrendingDown, Users, Car, DollarSign, Calendar } from 'lucide-react';
 import { ChartTooltip } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+} from 'recharts';
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -50,7 +68,7 @@ const Dashboard = () => {
       setRentStatus(rentData);
       setEarningSummary(earningData);
       setBookingsOverview(bookingsData);
-      
+
       // Debug: Log the bookings data
       console.log('Bookings Overview Data:', bookingsData);
     } catch (error) {
@@ -99,7 +117,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] w-full items-center justify-center">
-        <Spinner className="h-8 w-8 text-primary" />
+        <Spinner className="text-primary h-8 w-8" />
       </div>
     );
   }
@@ -121,7 +139,7 @@ const Dashboard = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Bookings</p>
+                <p className="text-muted-foreground text-sm font-medium">Total Bookings</p>
                 <h3 className="mt-2 text-2xl font-bold">{stats?.totalBookings.value || 0}</h3>
                 <div className="mt-1 flex items-center text-sm">
                   {stats && stats.totalBookings.change >= 0 ? (
@@ -135,7 +153,7 @@ const Dashboard = () => {
                       <span className="text-red-600">{stats?.totalBookings.change}%</span>
                     </>
                   )}
-                  <span className="ml-1 text-muted-foreground">from last month</span>
+                  <span className="text-muted-foreground ml-1">from last month</span>
                 </div>
               </div>
               <div className="rounded-full bg-blue-100 p-3">
@@ -149,7 +167,7 @@ const Dashboard = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Units</p>
+                <p className="text-muted-foreground text-sm font-medium">Active Units</p>
                 <h3 className="mt-2 text-2xl font-bold">{stats?.activeVehicles.value || 0}</h3>
                 <div className="mt-1 flex items-center text-sm">
                   {stats && stats.activeVehicles.change >= 0 ? (
@@ -163,7 +181,7 @@ const Dashboard = () => {
                       <span className="text-red-600">{stats?.activeVehicles.change}%</span>
                     </>
                   )}
-                  <span className="ml-1 text-muted-foreground">from last month</span>
+                  <span className="text-muted-foreground ml-1">from last month</span>
                 </div>
               </div>
               <div className="rounded-full bg-purple-100 p-3">
@@ -177,7 +195,7 @@ const Dashboard = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Clients</p>
+                <p className="text-muted-foreground text-sm font-medium">Total Clients</p>
                 <h3 className="mt-2 text-2xl font-bold">{stats?.totalClients.value || 0}</h3>
                 <div className="mt-1 flex items-center text-sm">
                   {stats && stats.totalClients.change >= 0 ? (
@@ -191,7 +209,7 @@ const Dashboard = () => {
                       <span className="text-red-600">{stats?.totalClients.change}%</span>
                     </>
                   )}
-                  <span className="ml-1 text-muted-foreground">from last month</span>
+                  <span className="text-muted-foreground ml-1">from last month</span>
                 </div>
               </div>
               <div className="rounded-full bg-green-100 p-3">
@@ -205,7 +223,7 @@ const Dashboard = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Revenue</p>
+                <p className="text-muted-foreground text-sm font-medium">Revenue</p>
                 <h3 className="mt-2 text-2xl font-bold">{formatCurrency(stats?.revenue.value || 0)}</h3>
                 <div className="mt-1 flex items-center text-sm">
                   {stats && stats.revenue.change >= 0 ? (
@@ -219,7 +237,7 @@ const Dashboard = () => {
                       <span className="text-red-600">{stats?.revenue.change}%</span>
                     </>
                   )}
-                  <span className="ml-1 text-muted-foreground">from last month</span>
+                  <span className="text-muted-foreground ml-1">from last month</span>
                 </div>
               </div>
               <div className="rounded-full bg-yellow-100 p-3">
@@ -273,15 +291,15 @@ const Dashboard = () => {
             <div className="mt-4 flex items-center justify-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-sm bg-[#64748b]" />
-                <span className="text-sm text-muted-foreground">Complete</span>
+                <span className="text-muted-foreground text-sm">Complete</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-sm bg-[#0ea5e9]" />
-                <span className="text-sm text-muted-foreground">Pending</span>
+                <span className="text-muted-foreground text-sm">Pending</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-sm bg-[#e2e8f0]" />
-                <span className="text-sm text-muted-foreground">Cancelled</span>
+                <span className="text-muted-foreground text-sm">Cancelled</span>
               </div>
             </div>
           </CardContent>
@@ -315,27 +333,23 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fill: '#94a3b8', fontSize: 12 }}
-                    axisLine={{ stroke: '#e2e8f0' }}
-                  />
-                  <YAxis 
+                  <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#e2e8f0' }} />
+                  <YAxis
                     tick={{ fill: '#94a3b8', fontSize: 12 }}
                     axisLine={{ stroke: '#e2e8f0' }}
                     tickFormatter={formatCurrency}
                   />
-                  <ChartTooltip 
+                  <ChartTooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                          <div className="bg-background rounded-lg border p-2 shadow-sm">
                             <div className="grid gap-2">
                               <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                <span className="text-muted-foreground text-[0.70rem] uppercase">
                                   {payload[0].payload.month}
                                 </span>
-                                <span className="font-bold text-muted-foreground">
+                                <span className="text-muted-foreground font-bold">
                                   {formatCurrency(payload[0].value as number)}
                                 </span>
                               </div>
@@ -346,13 +360,7 @@ const Dashboard = () => {
                       return null;
                     }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#0ea5e9" 
-                    strokeWidth={2}
-                    fill="url(#colorAmount)" 
-                  />
+                  <Area type="monotone" dataKey="amount" stroke="#0ea5e9" strokeWidth={2} fill="url(#colorAmount)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -373,9 +381,7 @@ const Dashboard = () => {
                 <SelectItem value={(new Date().getFullYear() - 1).toString()}>
                   {new Date().getFullYear() - 1}
                 </SelectItem>
-                <SelectItem value={new Date().getFullYear().toString()}>
-                  This Year
-                </SelectItem>
+                <SelectItem value={new Date().getFullYear().toString()}>This Year</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -385,28 +391,19 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={bookingsOverview}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
-                  axisLine={{ stroke: '#e2e8f0' }}
-                />
-                <YAxis 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
-                  axisLine={{ stroke: '#e2e8f0' }}
-                />
-                <ChartTooltip 
+                <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#e2e8f0' }} />
+                <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={{ stroke: '#e2e8f0' }} />
+                <ChartTooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                        <div className="bg-background rounded-lg border p-2 shadow-sm">
                           <div className="grid gap-2">
                             <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                              <span className="text-muted-foreground text-[0.70rem] uppercase">
                                 {payload[0].payload.month} {bookingsYear}
                               </span>
-                              <span className="font-bold text-muted-foreground">
-                                {payload[0].value}
-                              </span>
+                              <span className="text-muted-foreground font-bold">{payload[0].value}</span>
                             </div>
                           </div>
                         </div>
@@ -415,12 +412,7 @@ const Dashboard = () => {
                     return null;
                   }}
                 />
-                <Bar 
-                  dataKey="count" 
-                  radius={[8, 8, 0, 0]}
-                  fill="#64748b"
-                  activeBar={{ fill: '#0ea5e9' }}
-                />
+                <Bar dataKey="count" radius={[8, 8, 0, 0]} fill="#64748b" activeBar={{ fill: '#0ea5e9' }} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -118,11 +118,11 @@ export function DataTable<TData, TValue>({
       rowSelection: externalRowSelection ?? internalRowSelection,
       ...(isServerSide
         ? {
-          pagination: {
-            pageIndex: pageIndex ?? 0,
-            pageSize: pageSize ?? 10,
-          },
-        }
+            pagination: {
+              pageIndex: pageIndex ?? 0,
+              pageSize: pageSize ?? 10,
+            },
+          }
         : {}),
     },
   });
@@ -173,7 +173,7 @@ export function DataTable<TData, TValue>({
 
       <div className="relative">
         <Table tableContainerClassName={tableContainerClassName}>
-          <TableHeader className="sticky top-0 bg-gray-50">
+          <TableHeader className="sticky top-0 z-10 bg-gray-50">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="border-gray-200 hover:bg-transparent">
                 {headerGroup.headers.map((header, index) => {
@@ -182,8 +182,9 @@ export function DataTable<TData, TValue>({
                   return (
                     <TableHead
                       key={header.id}
-                      className={`font-medium select-none ${canSort ? 'cursor-pointer' : ''} ${index === 0 ? 'pl-6' : ''
-                        }`}
+                      className={`font-medium select-none ${canSort ? 'cursor-pointer' : ''} ${
+                        index === 0 ? 'pl-6' : ''
+                      }`}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                     >
                       <div className="flex items-center gap-2">
@@ -203,7 +204,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className="text-start border-gray-100 hover:bg-gray-50/50 data-[state=selected]:bg-gray-50"
+                  className="border-gray-100 text-start hover:bg-gray-50/50 data-[state=selected]:bg-gray-50"
                 >
                   {row.getVisibleCells().map((cell, index) => (
                     <TableCell key={cell.id} className={`py-3 ${index === 0 ? 'pl-6' : ''}`}>
@@ -223,7 +224,7 @@ export function DataTable<TData, TValue>({
         </Table>
         {loading && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px] transition-all duration-300">
-            <Spinner className="h-8 w-8 text-primary" />
+            <Spinner className="text-primary h-8 w-8" />
           </div>
         )}
       </div>

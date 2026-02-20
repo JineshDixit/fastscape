@@ -191,7 +191,7 @@ export const useCommonLocalization = () => {
  */
 export const getLocalizedOptions = (
   options: string[],
-  translationFunction: (value: string) => string
+  translationFunction: (value: string) => string,
 ): Array<{ value: string; label: string }> => {
   return options.map((option) => ({
     value: option,
@@ -205,7 +205,7 @@ export const getLocalizedOptions = (
 export const localizeEnumInObject = <T extends Record<string, any>>(
   obj: T,
   field: keyof T,
-  localizationFunction: (value: string) => string
+  localizationFunction: (value: string) => string,
 ): T => {
   if (obj[field]) {
     return {
@@ -221,10 +221,10 @@ export const localizeEnumInObject = <T extends Record<string, any>>(
  */
 export const localizeMultipleEnums = <T extends Record<string, any>>(
   obj: T,
-  fieldMappings: Record<keyof T, (value: string) => string>
+  fieldMappings: Record<keyof T, (value: string) => string>,
 ): T => {
   let result = { ...obj };
-  
+
   Object.entries(fieldMappings).forEach(([field, localizationFn]) => {
     if (obj[field]) {
       result = {
@@ -233,6 +233,6 @@ export const localizeMultipleEnums = <T extends Record<string, any>>(
       };
     }
   });
-  
+
   return result;
 };

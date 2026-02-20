@@ -48,19 +48,19 @@ const ChauffeurDetails = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const fetchChauffeur = async () => {
-      if (!id) return;
-      try {
-        setLoading(true);
-        const data = await chauffeurService.getChauffeurById(id);
-        setChauffeur(data);
-      } catch (error) {
-        console.error('Failed to fetch chauffeur details:', error);
-        toast.error('Failed to load chauffeur details.');
-        navigate('/drivers');
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!id) return;
+    try {
+      setLoading(true);
+      const data = await chauffeurService.getChauffeurById(id);
+      setChauffeur(data);
+    } catch (error) {
+      console.error('Failed to fetch chauffeur details:', error);
+      toast.error('Failed to load chauffeur details.');
+      navigate('/drivers');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchChauffeur();
@@ -148,7 +148,6 @@ const ChauffeurDetails = () => {
 
   return (
     <div className="space-y-8">
-
       {/* Header Section */}
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-5">
@@ -174,11 +173,7 @@ const ChauffeurDetails = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button 
-            variant="outline" 
-            className="h-10 gap-2 font-medium"
-            onClick={() => setEditDialogOpen(true)}
-          >
+          <Button variant="outline" className="h-10 gap-2 font-medium" onClick={() => setEditDialogOpen(true)}>
             <Edit className="h-4 w-4" /> Edit Details
           </Button>
 

@@ -29,7 +29,7 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="hover:bg-transparent pl-0"
+          className="pl-0 hover:bg-transparent"
         >
           Location Name
         </Button>
@@ -60,7 +60,7 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
     },
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <Building2 className="h-4 w-4 text-muted-foreground" />
+        <Building2 className="text-muted-foreground h-4 w-4" />
         <span className="">{row.getValue('city')}</span>
       </div>
     ),
@@ -104,7 +104,7 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
     cell: ({ row }) => {
       const date = new Date(row.getValue('createdAt'));
       return (
-        <div className="flex text-start flex-col">
+        <div className="flex flex-col text-start">
           <span className="text-sm">{date.toLocaleDateString()}</span>
           <span className="text-muted-foreground text-xs">{date.toLocaleTimeString()}</span>
         </div>
@@ -143,11 +143,11 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-1">
-            <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase font-bold px-2 py-1.5">
+            <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Location Operations
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleEdit} className="rounded-md flex items-center">
-              <Edit className="mr-2 h-4 w-4 text-muted-foreground" /> Edit Location
+            <DropdownMenuItem onClick={handleEdit} className="flex items-center rounded-md">
+              <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Edit Location
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
@@ -156,10 +156,13 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
               }}
               className="rounded-md"
             >
-              <Copy className="mr-2 h-4 w-4 text-muted-foreground" /> Copy Identifier
+              <Copy className="text-muted-foreground mr-2 h-4 w-4" /> Copy Identifier
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleToggleStatus} className="rounded-md flex items-center font-medium text-primary">
+            <DropdownMenuItem
+              onClick={handleToggleStatus}
+              className="text-primary flex items-center rounded-md font-medium"
+            >
               {location.isActive ? (
                 <>
                   <ToggleLeft className="mr-2 h-4 w-4" /> Deactivate
@@ -172,7 +175,7 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDelete}
-              className="rounded-md text-destructive focus:bg-destructive/10 focus:text-destructive-foreground font-medium"
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive-foreground rounded-md font-medium"
             >
               <Trash2 className="mr-2 h-4 w-4" /> Remove Location
             </DropdownMenuItem>

@@ -108,27 +108,27 @@ const AdminUsersTab = () => {
 
   return (
     <div className="space-y-6">
-        <DataTable
-          columns={columns}
-          data={users}
-          searchPlaceholder="Search by name or email..."
-          pageCount={pageCount}
-          pageIndex={pageIndex}
-          pageSize={pageSize}
-          totalRows={totalRows}
-          onPageChange={setPageIndex}
-          onPageSizeChange={setPageSize}
-          onSearchChange={(val) => {
-            setSearch(val);
-            setPageIndex(0);
-          }}
-          sorting={sorting}
-          onSortingChange={setSorting}
-          addButtonText="Add Administrator"
-          addButtonOnClick={handleCreateUser}
-          showAddButton={true}
-          addButtonIcon={<Plus className="h-4 w-4" />}
-        />
+      <DataTable
+        columns={columns}
+        data={users}
+        searchPlaceholder="Search by name or email..."
+        pageCount={pageCount}
+        pageIndex={pageIndex}
+        pageSize={pageSize}
+        totalRows={totalRows}
+        onPageChange={setPageIndex}
+        onPageSizeChange={setPageSize}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setPageIndex(0);
+        }}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        addButtonText="Add Administrator"
+        addButtonOnClick={handleCreateUser}
+        showAddButton={true}
+        addButtonIcon={<Plus className="h-4 w-4" />}
+      />
 
       <AdminUserSheet
         open={sheetOpen}

@@ -24,7 +24,17 @@ const Units = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { vehicles, vehicle, isLoading, fetchVehicles, pagination, createVehicle, updateVehicle, deleteVehicle, fetchVehicleById } = useVehicle();
+  const {
+    vehicles,
+    vehicle,
+    isLoading,
+    fetchVehicles,
+    pagination,
+    createVehicle,
+    updateVehicle,
+    deleteVehicle,
+    fetchVehicleById,
+  } = useVehicle();
 
   const debouncedSearch = useMemo(
     () =>

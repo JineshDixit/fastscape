@@ -64,12 +64,8 @@ const FilterContent: React.FC<{
           <AccordionTrigger className="text-sm">Account Status</AccordionTrigger>
           <AccordionContent>
             <RadioGroup
-              value={
-                filters.isBlocked === undefined ? 'all' : filters.isBlocked ? 'blocked' : 'active'
-              }
-              onValueChange={(val) =>
-                onChange('isBlocked', val === 'all' ? undefined : val === 'blocked')
-              }
+              value={filters.isBlocked === undefined ? 'all' : filters.isBlocked ? 'blocked' : 'active'}
+              onValueChange={(val) => onChange('isBlocked', val === 'all' ? undefined : val === 'blocked')}
               className="space-y-2 pt-2"
             >
               <div className="flex items-center space-x-2">
@@ -137,7 +133,7 @@ const ClientFilters: React.FC<ClientFiltersProps> = ({ currentFilters, onApplyFi
       description="Narrow down your client list."
       activeFilterCount={activeFilterCount}
       sheetFooter={
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Button onClick={handleApply} className="w-full">
             Apply Filters
           </Button>
@@ -147,10 +143,7 @@ const ClientFilters: React.FC<ClientFiltersProps> = ({ currentFilters, onApplyFi
         </div>
       }
     >
-      <FilterContent
-        filters={localFilters}
-        onChange={handleInputChange}
-      />
+      <FilterContent filters={localFilters} onChange={handleInputChange} />
     </FilterSheet>
   );
 };

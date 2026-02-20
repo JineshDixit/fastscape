@@ -227,7 +227,7 @@ const BookingFilters: React.FC<BookingFiltersProps> = ({ currentFilters, onApply
       description="Narrow down your booking list."
       activeFilterCount={activeFilterCount}
       sheetFooter={
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Button onClick={handleApply} className="w-full">
             Apply Filters
           </Button>
@@ -237,10 +237,7 @@ const BookingFilters: React.FC<BookingFiltersProps> = ({ currentFilters, onApply
         </div>
       }
     >
-      <FilterContent
-        filters={localFilters}
-        onChange={handleInputChange}
-      />
+      <FilterContent filters={localFilters} onChange={handleInputChange} />
     </FilterSheet>
   );
 };

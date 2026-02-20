@@ -97,14 +97,20 @@ export const chauffeurService = {
   },
 
   updateChauffeurStatus: async (id: string, status: ChauffeurStatus) => {
-    const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(`/chauffeurs/${id}/status`, {
-      status,
-    });
+    const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(
+      `/chauffeurs/${id}/status`,
+      {
+        status,
+      },
+    );
     return response.data.data.chauffeur;
   },
 
   verifyChauffeur: async (id: string) => {
-    const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(`/chauffeurs/${id}/verify`, {});
+    const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(
+      `/chauffeurs/${id}/verify`,
+      {},
+    );
     return response.data.data.chauffeur;
   },
 

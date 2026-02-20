@@ -150,9 +150,7 @@ export function LocationForm({ open, onOpenChange, onSuccess, location }: Locati
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Active Status</FormLabel>
-                    <div className="text-sm text-muted-foreground">
-                      Enable or disable this location for bookings
-                    </div>
+                    <div className="text-muted-foreground text-sm">Enable or disable this location for bookings</div>
                   </div>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -166,7 +164,13 @@ export function LocationForm({ open, onOpenChange, onSuccess, location }: Locati
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? (isEditMode ? 'Updating...' : 'Creating...') : isEditMode ? 'Update Location' : 'Create Location'}
+                {loading
+                  ? isEditMode
+                    ? 'Updating...'
+                    : 'Creating...'
+                  : isEditMode
+                    ? 'Update Location'
+                    : 'Create Location'}
               </Button>
             </DialogFooter>
           </form>

@@ -72,12 +72,8 @@ const FilterContent: React.FC<{
           <AccordionTrigger className="text-sm">Verification Status</AccordionTrigger>
           <AccordionContent>
             <RadioGroup
-              value={
-                filters.isVerified === undefined ? 'all' : filters.isVerified ? 'verified' : 'unverified'
-              }
-              onValueChange={(val) =>
-                onChange('isVerified', val === 'all' ? undefined : val === 'verified')
-              }
+              value={filters.isVerified === undefined ? 'all' : filters.isVerified ? 'verified' : 'unverified'}
+              onValueChange={(val) => onChange('isVerified', val === 'all' ? undefined : val === 'verified')}
               className="space-y-2 pt-2"
             >
               <div className="flex items-center space-x-2">
@@ -160,9 +156,7 @@ const FilterContent: React.FC<{
                   step="0.1"
                   placeholder="Any rating"
                   value={filters.minRating || ''}
-                  onChange={(e) =>
-                    onChange('minRating', e.target.value ? parseFloat(e.target.value) : undefined)
-                  }
+                  onChange={(e) => onChange('minRating', e.target.value ? parseFloat(e.target.value) : undefined)}
                 />
               </div>
             </div>
@@ -173,11 +167,7 @@ const FilterContent: React.FC<{
   );
 };
 
-const ChauffeurFilters: React.FC<ChauffeurFiltersProps> = ({
-  currentFilters,
-  onApplyFilters,
-  onResetFilters,
-}) => {
+const ChauffeurFilters: React.FC<ChauffeurFiltersProps> = ({ currentFilters, onApplyFilters, onResetFilters }) => {
   const [localFilters, setLocalFilters] = useState<ChauffeurFilterValues>(currentFilters);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -216,7 +206,7 @@ const ChauffeurFilters: React.FC<ChauffeurFiltersProps> = ({
       description="Narrow down your chauffeur list."
       activeFilterCount={activeFilterCount}
       sheetFooter={
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Button onClick={handleApply} className="w-full">
             Apply Filters
           </Button>
@@ -226,10 +216,7 @@ const ChauffeurFilters: React.FC<ChauffeurFiltersProps> = ({
         </div>
       }
     >
-      <FilterContent
-        filters={localFilters}
-        onChange={handleInputChange}
-      />
+      <FilterContent filters={localFilters} onChange={handleInputChange} />
     </FilterSheet>
   );
 };

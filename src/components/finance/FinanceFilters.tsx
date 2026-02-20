@@ -147,7 +147,7 @@ const FinanceFilters: React.FC<FinanceFiltersProps> = ({ currentFilters, onApply
       description="Narrow down your financial records."
       activeFilterCount={activeFilterCount}
       sheetFooter={
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Button onClick={handleApply} className="w-full">
             Apply Filters
           </Button>

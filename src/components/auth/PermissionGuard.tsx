@@ -13,23 +13,23 @@ interface PermissionGuardProps {
 /**
  * PermissionGuard component for conditional rendering based on permissions
  * Use this to show/hide UI elements based on user permissions
- * 
+ *
  * @example
  * // Using specific permissions
  * <PermissionGuard permissions={['booking:create']}>
  *   <Button>Create Booking</Button>
  * </PermissionGuard>
- * 
+ *
  * @example
  * // Using module and action
  * <PermissionGuard module="bookings" action="create">
  *   <Button>Create Booking</Button>
  * </PermissionGuard>
- * 
+ *
  * @example
  * // With fallback
- * <PermissionGuard 
- *   permissions={['booking:delete']} 
+ * <PermissionGuard
+ *   permissions={['booking:delete']}
  *   fallback={<span>No permission</span>}
  * >
  *   <Button>Delete</Button>

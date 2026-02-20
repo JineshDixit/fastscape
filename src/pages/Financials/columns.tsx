@@ -21,13 +21,10 @@ export const columns: ColumnDef<FinancialRecord>[] = [
     id: 'select',
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
-        className="translate-y-[2px]"
+        className="translate-y-0.5"
       />
     ),
     cell: ({ row }) => (
@@ -35,7 +32,7 @@ export const columns: ColumnDef<FinancialRecord>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
-        className="translate-y-[2px]"
+        className="translate-y-0.5"
       />
     ),
     enableSorting: false,
@@ -122,7 +119,11 @@ export const columns: ColumnDef<FinancialRecord>[] = [
       const start = new Date(row.original.Booking?.startDatetime || '');
       const end = new Date(row.original.Booking?.endDatetime || '');
       const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-      return <span>{days} {days === 1 ? 'Day' : 'Days'}</span>;
+      return (
+        <span>
+          {days} {days === 1 ? 'Day' : 'Days'}
+        </span>
+      );
     },
   },
   {
@@ -185,7 +186,13 @@ export const columns: ColumnDef<FinancialRecord>[] = [
 
       return (
         <Badge variant={variant} className="rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase">
-          {status === PaymentStatus.PAID ? 'Completed' : status === PaymentStatus.UNPAID ? 'Awaiting' : status === PaymentStatus.OVERDUE ? 'Overdue' : status}
+          {status === PaymentStatus.PAID
+            ? 'Completed'
+            : status === PaymentStatus.UNPAID
+              ? 'Awaiting'
+              : status === PaymentStatus.OVERDUE
+                ? 'Overdue'
+                : status}
         </Badge>
       );
     },
@@ -205,12 +212,12 @@ export const columns: ColumnDef<FinancialRecord>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-1">
-            <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase font-bold px-2 py-1.5">
+            <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Finance Operations
             </DropdownMenuLabel>
             <DropdownMenuItem asChild className="rounded-md">
               <Link to={`/financials/${financial.bookingId}`} className="flex cursor-pointer items-center">
-                <Eye className="mr-2 h-4 w-4 text-muted-foreground" /> View Details
+                <Eye className="text-muted-foreground mr-2 h-4 w-4" /> View Details
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -7,16 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
-import {
-  Car,
-  Calendar,
-  User,
-  Mail,
-  Phone,
-  DollarSign,
-  Receipt,
-  Download,
-} from 'lucide-react';
+import { Car, Calendar, User, Mail, Phone, DollarSign, Receipt, Download } from 'lucide-react';
 import { PaymentStatus } from '@/api/services/bookingService';
 import { FileText } from 'lucide-react';
 
@@ -93,9 +84,9 @@ const FinanceDetails = () => {
     if (!financial) return;
     try {
       toast.loading('Generating invoice PDF...');
-      
+
       const blob = await financeService.downloadInvoice(financial.bookingId);
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -105,7 +96,7 @@ const FinanceDetails = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.dismiss();
       toast.success('Invoice downloaded successfully');
     } catch (error: any) {
@@ -161,7 +152,7 @@ const FinanceDetails = () => {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column - Main Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {/* Customer Information */}
           <Card className="border-gray-200 bg-white shadow-sm">
             <CardHeader className="pb-3">
@@ -173,22 +164,22 @@ const FinanceDetails = () => {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Full Name</p>
+                  <p className="mb-1 text-xs text-gray-500">Full Name</p>
                   <p className="font-medium">
                     {user?.firstName} {user?.lastName}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Email</p>
-                  <p className="font-medium flex items-center gap-2">
+                  <p className="mb-1 text-xs text-gray-500">Email</p>
+                  <p className="flex items-center gap-2 font-medium">
                     <Mail className="h-4 w-4 text-gray-400" />
                     {user?.email}
                   </p>
                 </div>
                 {user?.phone && (
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Phone</p>
-                    <p className="font-medium flex items-center gap-2">
+                    <p className="mb-1 text-xs text-gray-500">Phone</p>
+                    <p className="flex items-center gap-2 font-medium">
                       <Phone className="h-4 w-4 text-gray-400" />
                       {user.phone}
                     </p>
@@ -209,17 +200,17 @@ const FinanceDetails = () => {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Make & Model</p>
+                  <p className="mb-1 text-xs text-gray-500">Make & Model</p>
                   <p className="font-medium">
                     {vehicle?.make} {vehicle?.model}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Year</p>
+                  <p className="mb-1 text-xs text-gray-500">Year</p>
                   <p className="font-medium">{vehicle?.year}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Body Type</p>
+                  <p className="mb-1 text-xs text-gray-500">Body Type</p>
                   <p className="font-medium capitalize">{vehicle?.bodyType}</p>
                 </div>
               </div>
@@ -237,11 +228,11 @@ const FinanceDetails = () => {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Start Date</p>
+                  <p className="mb-1 text-xs text-gray-500">Start Date</p>
                   <p className="font-medium">{booking?.startDatetime && formatDate(booking.startDatetime)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">End Date</p>
+                  <p className="mb-1 text-xs text-gray-500">End Date</p>
                   <p className="font-medium">{booking?.endDatetime && formatDate(booking.endDatetime)}</p>
                 </div>
               </div>
@@ -262,16 +253,16 @@ const FinanceDetails = () => {
               ) : (
                 <div className="space-y-3">
                   {payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={payment.id} className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{payment.paymentType}</p>
+                        <p className="text-sm font-medium">{payment.paymentType}</p>
                         <p className="text-xs text-gray-500">{formatDate(payment.createdAt)}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{formatCurrency(payment.amount, financial.currency)}</p>
                         <Badge
                           variant={payment.paymentStatus === 'PAID' ? 'default' : 'secondary'}
-                          className="text-[10px] mt-1"
+                          className="mt-1 text-[10px]"
                         >
                           {payment.paymentStatus}
                         </Badge>
@@ -295,32 +286,28 @@ const FinanceDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Base Amount</span>
                   <span className="font-medium">{formatCurrency(financial.baseAmount, financial.currency)}</span>
                 </div>
 
                 {parseFloat(financial.chauffeurAmount) > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">
-                      Chauffeur ({financial.chauffeurHours}h)
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Chauffeur ({financial.chauffeurHours}h)</span>
                     <span className="font-medium">{formatCurrency(financial.chauffeurAmount, financial.currency)}</span>
                   </div>
                 )}
 
                 {parseFloat(financial.taxAmount) > 0 && (
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Tax</span>
                     <span className="font-medium">{formatCurrency(financial.taxAmount, financial.currency)}</span>
                   </div>
                 )}
 
                 {parseFloat(financial.platformChargeAmount) > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">
-                      Platform Charge ({financial.platformChargeRate}%)
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Platform Charge ({financial.platformChargeRate}%)</span>
                     <span className="font-medium">
                       {formatCurrency(financial.platformChargeAmount, financial.currency)}
                     </span>
@@ -328,7 +315,7 @@ const FinanceDetails = () => {
                 )}
 
                 {parseFloat(financial.delayChargeAmount) > 0 && (
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Delay Charge</span>
                     <span className="font-medium text-red-600">
                       {formatCurrency(financial.delayChargeAmount, financial.currency)}
@@ -338,33 +325,33 @@ const FinanceDetails = () => {
 
                 <Separator />
 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="font-semibold text-gray-900">Total Amount</span>
-                  <span className="font-bold text-lg">{formatCurrency(financial.totalAmount, financial.currency)}</span>
+                  <span className="text-lg font-bold">{formatCurrency(financial.totalAmount, financial.currency)}</span>
                 </div>
 
                 <Separator />
 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Deposit ({financial.depositPercentage}%)</span>
                   <span className="font-medium">{formatCurrency(financial.depositAmount, financial.currency)}</span>
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Balance</span>
                   <span className="font-medium">{formatCurrency(financial.balanceAmount, financial.currency)}</span>
                 </div>
 
                 <Separator />
 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="font-medium text-green-600">Paid Amount</span>
                   <span className="font-semibold text-green-600">
                     {formatCurrency(financial.paidAmount, financial.currency)}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="font-medium text-red-600">Remaining Amount</span>
                   <span className="font-semibold text-red-600">
                     {formatCurrency(financial.remainingAmount, financial.currency)}
@@ -386,7 +373,7 @@ const FinanceDetails = () => {
               <CardContent>
                 <p className="text-sm text-gray-600">{financial.refundPolicy}</p>
                 {financial.refundableUntil && (
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="mt-2 text-xs text-gray-500">
                     Refundable until: {formatDate(financial.refundableUntil)}
                   </p>
                 )}

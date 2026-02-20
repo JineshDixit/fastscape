@@ -17,9 +17,9 @@ export const ExportButton = ({ onExport, filename, disabled, className }: Export
     try {
       setIsExporting(true);
       toast.loading('Generating CSV file...');
-      
+
       const blob = await onExport();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -29,7 +29,7 @@ export const ExportButton = ({ onExport, filename, disabled, className }: Export
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.dismiss();
       toast.success('CSV file downloaded successfully');
     } catch (error: any) {
@@ -41,14 +41,8 @@ export const ExportButton = ({ onExport, filename, disabled, className }: Export
   };
 
   return (
-    <Button
-      onClick={handleExport}
-      variant="outline"
-      size="sm"
-      className={className}
-      disabled={disabled || isExporting}
-    >
-      <FileDown className="h-4 w-4 mr-2" />
+    <Button onClick={handleExport} variant="outline" size="sm" className={className} disabled={disabled || isExporting}>
+      <FileDown className="mr-2 h-4 w-4" />
       Export CSV
     </Button>
   );

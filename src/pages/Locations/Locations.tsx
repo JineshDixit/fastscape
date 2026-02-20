@@ -35,7 +35,7 @@ const Locations = () => {
   const fetchLocations = async () => {
     try {
       setLoading(true);
-      const response = await locationService.getAllLocations({ 
+      const response = await locationService.getAllLocations({
         limit: 1000,
         search: search || undefined,
         ...filters,
@@ -105,7 +105,7 @@ const Locations = () => {
         addButtonText="Add New Location"
         addButtonIcon={<Plus className="h-4 w-4" />}
         addButtonOnClick={() => setFormOpen(true)}
-        tableContainerClassName="!max-h-[calc(100vh-22.5rem)]"
+        tableContainerClassName="!max-h-[calc(100vh-15rem)]"
         onSearchChange={(value) => setSearch(value)}
         customActions={
           <div className="flex items-center gap-2">

@@ -19,7 +19,7 @@ import { useChauffeurLocalization } from '@/utils/modelLocalization.utils';
 
 const ChauffeurStatusCell = ({ status }: { status: ChauffeurStatus }) => {
   const { localizeStatus } = useChauffeurLocalization();
-  
+
   const getStatusVariant = (status?: ChauffeurStatus) => {
     switch (status) {
       case ChauffeurStatus.AVAILABLE:
@@ -36,10 +36,7 @@ const ChauffeurStatusCell = ({ status }: { status: ChauffeurStatus }) => {
   };
 
   return (
-    <Badge
-      variant={getStatusVariant(status)}
-      className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
-    >
+    <Badge variant={getStatusVariant(status)} className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
       {localizeStatus(status)}
     </Badge>
   );
@@ -47,7 +44,7 @@ const ChauffeurStatusCell = ({ status }: { status: ChauffeurStatus }) => {
 
 const ExperienceLevelCell = ({ level }: { level: string }) => {
   const { localizeExperienceLevel } = useChauffeurLocalization();
-  
+
   return (
     <Badge variant="outline" className="text-xs">
       {localizeExperienceLevel(level || 'BEGINNER')}
@@ -164,12 +161,12 @@ export const columns: ColumnDef<Chauffeur>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-1">
-            <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase font-bold px-2 py-1.5">
+            <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Chauffeur Operations
             </DropdownMenuLabel>
             <DropdownMenuItem asChild className="rounded-md">
               <Link to={`/drivers/${chauffeur.id}`} className="flex cursor-pointer items-center">
-                <Eye className="mr-2 h-4 w-4 text-muted-foreground" /> View Profile
+                <Eye className="text-muted-foreground mr-2 h-4 w-4" /> View Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -179,17 +176,17 @@ export const columns: ColumnDef<Chauffeur>[] = [
               }}
               className="rounded-md"
             >
-              <Copy className="mr-2 h-4 w-4 text-muted-foreground" /> Copy Identifier
+              <Copy className="text-muted-foreground mr-2 h-4 w-4" /> Copy Identifier
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {!chauffeur.isVerified && (
-              <DropdownMenuItem onClick={handleVerify} className="rounded-md text-primary font-medium">
+              <DropdownMenuItem onClick={handleVerify} className="text-primary rounded-md font-medium">
                 <ShieldCheck className="mr-2 h-4 w-4" /> Verify Credentials
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
               onClick={handleDelete}
-              className="rounded-md text-destructive focus:bg-destructive/10 focus:text-destructive-foreground font-medium"
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive-foreground rounded-md font-medium"
             >
               <Trash2 className="mr-2 h-4 w-4" /> Remove Chauffeur
             </DropdownMenuItem>

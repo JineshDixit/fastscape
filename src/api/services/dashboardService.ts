@@ -45,14 +45,14 @@ export const dashboardService = {
 
   getRentStatus: async (period: 'week' | 'month' | 'year' = 'week'): Promise<RentStatus> => {
     const response = await apiClient.get<{ success: boolean; data: RentStatus }>(
-      `/dashboard/rent-status?period=${period}`
+      `/dashboard/rent-status?period=${period}`,
     );
     return response.data.data;
   },
 
   getEarningSummary: async (months: number = 8): Promise<EarningSummaryItem[]> => {
     const response = await apiClient.get<{ success: boolean; data: EarningSummaryItem[] }>(
-      `/dashboard/earning-summary?months=${months}`
+      `/dashboard/earning-summary?months=${months}`,
     );
     return response.data.data;
   },

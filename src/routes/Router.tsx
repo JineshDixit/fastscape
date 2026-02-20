@@ -55,8 +55,8 @@ export const router = createBrowserRouter([
       {
         path: 'bookings',
         element: (
-          <RoleGuard 
-            requiredPermissions={[PERMISSIONS.BOOKINGS.LIST, PERMISSIONS.BOOKINGS.READ, PERMISSIONS.SUPER_ADMIN]} 
+          <RoleGuard
+            requiredPermissions={[PERMISSIONS.BOOKINGS.LIST, PERMISSIONS.BOOKINGS.READ, PERMISSIONS.SUPER_ADMIN]}
             fallbackPath="/dashboard"
           >
             <Bookings />
@@ -66,8 +66,8 @@ export const router = createBrowserRouter([
       {
         path: 'bookings/:id',
         element: (
-          <RoleGuard 
-            requiredPermissions={[PERMISSIONS.BOOKINGS.VIEW, PERMISSIONS.BOOKINGS.READ, PERMISSIONS.SUPER_ADMIN]} 
+          <RoleGuard
+            requiredPermissions={[PERMISSIONS.BOOKINGS.VIEW, PERMISSIONS.BOOKINGS.READ, PERMISSIONS.SUPER_ADMIN]}
             fallbackPath="/bookings"
           >
             <BookingDetails />
@@ -77,8 +77,8 @@ export const router = createBrowserRouter([
       {
         path: 'documents',
         element: (
-          <RoleGuard 
-            requiredPermissions={[PERMISSIONS.DOCUMENTS.LIST, PERMISSIONS.DOCUMENTS.READ, PERMISSIONS.SUPER_ADMIN]} 
+          <RoleGuard
+            requiredPermissions={[PERMISSIONS.DOCUMENTS.LIST, PERMISSIONS.DOCUMENTS.READ, PERMISSIONS.SUPER_ADMIN]}
             fallbackPath="/dashboard"
           >
             <Documents />
@@ -88,8 +88,8 @@ export const router = createBrowserRouter([
       {
         path: 'units',
         element: (
-          <RoleGuard 
-            requiredPermissions={[PERMISSIONS.VEHICLES.LIST, PERMISSIONS.VEHICLES.READ, PERMISSIONS.SUPER_ADMIN]} 
+          <RoleGuard
+            requiredPermissions={[PERMISSIONS.VEHICLES.LIST, PERMISSIONS.VEHICLES.READ, PERMISSIONS.SUPER_ADMIN]}
             fallbackPath="/dashboard"
           >
             <UnitsLayout />
@@ -103,8 +103,8 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <RoleGuard 
-                requiredPermissions={[PERMISSIONS.VEHICLES.VIEW, PERMISSIONS.VEHICLES.READ, PERMISSIONS.SUPER_ADMIN]} 
+              <RoleGuard
+                requiredPermissions={[PERMISSIONS.VEHICLES.VIEW, PERMISSIONS.VEHICLES.READ, PERMISSIONS.SUPER_ADMIN]}
                 fallbackPath="/units"
               >
                 <VehicleDetails />
@@ -119,8 +119,8 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <RoleGuard 
-                requiredPermissions={[PERMISSIONS.CLIENTS.LIST, PERMISSIONS.CLIENTS.READ, PERMISSIONS.SUPER_ADMIN]} 
+              <RoleGuard
+                requiredPermissions={[PERMISSIONS.CLIENTS.LIST, PERMISSIONS.CLIENTS.READ, PERMISSIONS.SUPER_ADMIN]}
                 fallbackPath="/dashboard"
               >
                 <Clients />
@@ -130,8 +130,8 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <RoleGuard 
-                requiredPermissions={[PERMISSIONS.CLIENTS.VIEW, PERMISSIONS.CLIENTS.READ, PERMISSIONS.SUPER_ADMIN]} 
+              <RoleGuard
+                requiredPermissions={[PERMISSIONS.CLIENTS.VIEW, PERMISSIONS.CLIENTS.READ, PERMISSIONS.SUPER_ADMIN]}
                 fallbackPath="/clients"
               >
                 <ClientDetails />
@@ -146,8 +146,12 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <RoleGuard 
-                requiredPermissions={[PERMISSIONS.CHAUFFEURS.LIST, PERMISSIONS.CHAUFFEURS.READ, PERMISSIONS.SUPER_ADMIN]} 
+              <RoleGuard
+                requiredPermissions={[
+                  PERMISSIONS.CHAUFFEURS.LIST,
+                  PERMISSIONS.CHAUFFEURS.READ,
+                  PERMISSIONS.SUPER_ADMIN,
+                ]}
                 fallbackPath="/dashboard"
               >
                 <ChauffeurList />
@@ -157,8 +161,12 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <RoleGuard 
-                requiredPermissions={[PERMISSIONS.CHAUFFEURS.VIEW, PERMISSIONS.CHAUFFEURS.READ, PERMISSIONS.SUPER_ADMIN]} 
+              <RoleGuard
+                requiredPermissions={[
+                  PERMISSIONS.CHAUFFEURS.VIEW,
+                  PERMISSIONS.CHAUFFEURS.READ,
+                  PERMISSIONS.SUPER_ADMIN,
+                ]}
                 fallbackPath="/drivers"
               >
                 <ChauffeurDetails />
@@ -173,13 +181,13 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <RoleGuard 
+              <RoleGuard
                 requiredPermissions={[
-                  PERMISSIONS.FINANCIALS.LIST, 
-                  PERMISSIONS.FINANCIALS.READ, 
+                  PERMISSIONS.FINANCIALS.LIST,
+                  PERMISSIONS.FINANCIALS.READ,
                   PERMISSIONS.ADMIN.CONTENT.READ,
-                  PERMISSIONS.SUPER_ADMIN
-                ]} 
+                  PERMISSIONS.SUPER_ADMIN,
+                ]}
                 fallbackPath="/dashboard"
               >
                 <Financials />
@@ -189,13 +197,13 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <RoleGuard 
+              <RoleGuard
                 requiredPermissions={[
-                  PERMISSIONS.FINANCIALS.VIEW, 
-                  PERMISSIONS.FINANCIALS.READ, 
+                  PERMISSIONS.FINANCIALS.VIEW,
+                  PERMISSIONS.FINANCIALS.READ,
                   PERMISSIONS.ADMIN.CONTENT.READ,
-                  PERMISSIONS.SUPER_ADMIN
-                ]} 
+                  PERMISSIONS.SUPER_ADMIN,
+                ]}
                 fallbackPath="/financials"
               >
                 <FinanceDetails />
@@ -210,32 +218,32 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <RoleGuard 
-                requiredPermissions={[PERMISSIONS.LOCATIONS.LIST, PERMISSIONS.LOCATIONS.READ, PERMISSIONS.SUPER_ADMIN]} 
+              <RoleGuard
+                requiredPermissions={[PERMISSIONS.LOCATIONS.LIST, PERMISSIONS.LOCATIONS.READ, PERMISSIONS.SUPER_ADMIN]}
                 fallbackPath="/dashboard"
               >
                 <Locations />
               </RoleGuard>
             ),
-          }
-        ]
+          },
+        ],
       },
       {
         path: 'admin-management',
         element: (
-          <RoleGuard 
+          <RoleGuard
             requiredPermissions={[
               PERMISSIONS.ADMIN.USERS.READ,
               PERMISSIONS.ADMIN.ROLES.READ,
               PERMISSIONS.ADMIN.POLICIES.READ,
-              PERMISSIONS.SUPER_ADMIN
-            ]} 
+              PERMISSIONS.SUPER_ADMIN,
+            ]}
             fallbackPath="/dashboard"
           >
             <AdminManagement />
           </RoleGuard>
         ),
-      }
+      },
     ],
   },
   {

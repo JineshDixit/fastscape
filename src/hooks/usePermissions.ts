@@ -82,11 +82,7 @@ export const usePermissions = () => {
   const canManageAdmins = (): boolean => {
     return (
       isSuperAdmin() ||
-      hasAnyPermission([
-        PERMISSIONS.ADMIN.USERS.READ,
-        PERMISSIONS.ADMIN.ROLES.READ,
-        PERMISSIONS.ADMIN.POLICIES.READ,
-      ])
+      hasAnyPermission([PERMISSIONS.ADMIN.USERS.READ, PERMISSIONS.ADMIN.ROLES.READ, PERMISSIONS.ADMIN.POLICIES.READ])
     );
   };
 

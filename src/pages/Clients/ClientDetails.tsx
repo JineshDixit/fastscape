@@ -289,20 +289,14 @@ const ClientDetails = () => {
               </CardHeader>
               <CardContent className="grid gap-8 md:grid-cols-2">
                 <div className="space-y-4">
-                  <DataRow
-                    label="License Issuing Country"
-                    value={user.UserDrivingInfo.licenseIssuingCountry}
-                  />
+                  <DataRow label="License Issuing Country" value={user.UserDrivingInfo.licenseIssuingCountry} />
                   <DataRow
                     label="License Expiry"
                     value={new Date(user.UserDrivingInfo.licenseExpiryDate).toLocaleDateString()}
                   />
                 </div>
                 <div className="space-y-4">
-                  <DataRow
-                    label="Driving Experience"
-                    value={`${user.UserDrivingInfo.drivingExperienceYears} years`}
-                  />
+                  <DataRow label="Driving Experience" value={`${user.UserDrivingInfo.drivingExperienceYears} years`} />
                   <DataRow label="Visa Status" value={user.UserDrivingInfo.visaStatus} />
                 </div>
               </CardContent>
@@ -339,9 +333,7 @@ const ClientDetails = () => {
                         <div className="text-sm font-medium">
                           {new Date(booking.startDatetime).toLocaleDateString()}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(booking.createdAt).toLocaleDateString()}
-                        </div>
+                        <div className="text-xs text-gray-500">{new Date(booking.createdAt).toLocaleDateString()}</div>
                       </div>
                     </div>
                   ))}
@@ -361,11 +353,12 @@ const ClientDetails = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <DataRow label="Status" value={
-                <Badge variant={getVerificationVariant(user.verificationStatus)}>
-                  {user.verificationStatus}
-                </Badge>
-              } />
+              <DataRow
+                label="Status"
+                value={
+                  <Badge variant={getVerificationVariant(user.verificationStatus)}>{user.verificationStatus}</Badge>
+                }
+              />
               {user.verificationDate && (
                 <DataRow
                   label="Verified On"
@@ -405,16 +398,8 @@ const ClientDetails = () => {
                   </Badge>
                 }
               />
-              <DataRow
-                label="Joined Date"
-                value={new Date(user.createdAt).toLocaleDateString()}
-                icon={Calendar}
-              />
-              <DataRow
-                label="Last Updated"
-                value={new Date(user.updatedAt).toLocaleDateString()}
-                icon={Calendar}
-              />
+              <DataRow label="Joined Date" value={new Date(user.createdAt).toLocaleDateString()} icon={Calendar} />
+              <DataRow label="Last Updated" value={new Date(user.updatedAt).toLocaleDateString()} icon={Calendar} />
             </CardContent>
           </Card>
         </div>

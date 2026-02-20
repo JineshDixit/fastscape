@@ -28,7 +28,7 @@ const FilterContent: React.FC<{
 }> = ({ filters, enums, locations, onChange }) => {
   const { localizeBodyType, localizeFuelType, localizeTransmission } = useVehicleLocalization();
   const { t } = useTranslation('vehicles');
-  
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -265,11 +265,7 @@ const FilterContent: React.FC<{
   );
 };
 
-const VehicleFilters: React.FC<VehicleFiltersProps> = ({
-  currentFilters,
-  onApplyFilters,
-  onResetFilters,
-}) => {
+const VehicleFilters: React.FC<VehicleFiltersProps> = ({ currentFilters, onApplyFilters, onResetFilters }) => {
   const { enums, fetchEnums } = useVehicle();
   const [localFilters, setLocalFilters] = useState<FilterInterface>(currentFilters);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -330,7 +326,7 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({
       description="Narrow down your vehicle list."
       activeFilterCount={activeFilterCount}
       sheetFooter={
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Button onClick={handleApply} className="w-full">
             Apply Filters
           </Button>
@@ -340,12 +336,7 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({
         </div>
       }
     >
-      <FilterContent
-        filters={localFilters}
-        enums={enums}
-        locations={locations}
-        onChange={handleInputChange}
-      />
+      <FilterContent filters={localFilters} enums={enums} locations={locations} onChange={handleInputChange} />
     </FilterSheet>
   );
 };

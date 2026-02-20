@@ -135,7 +135,7 @@ export function ChauffeurForm({ open, onOpenChange, onSuccess, chauffeur }: Chau
         await chauffeurService.createChauffeur(dto);
         toast.success('Chauffeur created successfully');
       }
-      
+
       form.reset();
       setCurrentStep(0);
       onSuccess();
@@ -571,7 +571,13 @@ export function ChauffeurForm({ open, onOpenChange, onSuccess, chauffeur }: Chau
               </Button>
             ) : (
               <Button form="chauffeur-form" type="submit" disabled={loading}>
-                {loading ? (isEditMode ? 'Updating...' : 'Onboarding...') : (isEditMode ? 'Update Chauffeur' : 'Onboard Chauffeur')}
+                {loading
+                  ? isEditMode
+                    ? 'Updating...'
+                    : 'Onboarding...'
+                  : isEditMode
+                    ? 'Update Chauffeur'
+                    : 'Onboard Chauffeur'}
               </Button>
             )}
           </DialogFooter>

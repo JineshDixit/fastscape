@@ -8,41 +8,41 @@ const AssignmentsTab = () => {
   const [activeTab, setActiveTab] = useState('user-roles');
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="animate-in fade-in space-y-8 duration-700">
       <div className="flex items-center gap-2 px-1">
-        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+        <div className="bg-primary/10 text-primary rounded-xl p-2">
           <Settings2 className="h-5 w-5" />
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight">Access Control Matrix</h2>
-          <p className="text-sm text-muted-foreground">Orchestrate permissions across subjects and objects</p>
+          <p className="text-muted-foreground text-sm">Orchestrate permissions across subjects and objects</p>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        <TabsList className="h-12 w-full sm:w-[400px] p-1 bg-gray-100 rounded-lg grid grid-cols-2">
+        <TabsList className="grid h-12 w-full grid-cols-2 rounded-lg bg-gray-100 p-1 sm:w-[400px]">
           <TabsTrigger
             value="user-roles"
-            className="rounded-md flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4"
+            className="flex items-center gap-2 rounded-md px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
             <Users className="h-4 w-4" />
-            <span className="font-semibold text-sm">User Role Links</span>
+            <span className="text-sm font-semibold">User Role Links</span>
           </TabsTrigger>
           <TabsTrigger
             value="role-policies"
-            className="rounded-md flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4"
+            className="flex items-center gap-2 rounded-md px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
             <Shield className="h-4 w-4" />
-            <span className="font-semibold text-sm">Role Policy Links</span>
+            <span className="text-sm font-semibold">Role Policy Links</span>
           </TabsTrigger>
         </TabsList>
 
         <div className="min-h-[600px]">
-          <TabsContent value="user-roles" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="user-roles" className="m-0 focus-visible:ring-0 focus-visible:outline-none">
             <UserRoleAssignments />
           </TabsContent>
 
-          <TabsContent value="role-policies" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="role-policies" className="m-0 focus-visible:ring-0 focus-visible:outline-none">
             <RolePolicyAssignments />
           </TabsContent>
         </div>

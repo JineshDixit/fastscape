@@ -26,12 +26,8 @@ const FilterContent: React.FC<{
           <AccordionTrigger className="text-sm">Status</AccordionTrigger>
           <AccordionContent>
             <RadioGroup
-              value={
-                filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'
-              }
-              onValueChange={(val) =>
-                onChange('isActive', val === 'all' ? undefined : val === 'active')
-              }
+              value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'inactive'}
+              onValueChange={(val) => onChange('isActive', val === 'all' ? undefined : val === 'active')}
               className="space-y-2 pt-2"
             >
               <div className="flex items-center space-x-2">
@@ -60,11 +56,7 @@ const FilterContent: React.FC<{
   );
 };
 
-const LocationFilters: React.FC<LocationFiltersProps> = ({
-  currentFilters,
-  onApplyFilters,
-  onResetFilters,
-}) => {
+const LocationFilters: React.FC<LocationFiltersProps> = ({ currentFilters, onApplyFilters, onResetFilters }) => {
   const [localFilters, setLocalFilters] = useState<LocationFilterValues>(currentFilters);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -103,7 +95,7 @@ const LocationFilters: React.FC<LocationFiltersProps> = ({
       description="Narrow down your location list."
       activeFilterCount={activeFilterCount}
       sheetFooter={
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex w-full flex-col gap-2">
           <Button onClick={handleApply} className="w-full">
             Apply Filters
           </Button>
@@ -113,10 +105,7 @@ const LocationFilters: React.FC<LocationFiltersProps> = ({
         </div>
       }
     >
-      <FilterContent
-        filters={localFilters}
-        onChange={handleInputChange}
-      />
+      <FilterContent filters={localFilters} onChange={handleInputChange} />
     </FilterSheet>
   );
 };

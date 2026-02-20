@@ -17,8 +17,8 @@ const sidebarItems: SidebarItem[] = [
   { icon: Users, label: 'Clients', path: '/clients' },
   { icon: BookUser, label: 'Driver', path: '/drivers' },
   { icon: ChartPie, label: 'Financials', path: '/financials' },
-  { icon: MapPin ,label: 'Locations', path: '/locations' },
-  { icon: Shield, label: 'Admin', path: '/admin-management' }
+  { icon: MapPin, label: 'Locations', path: '/locations' },
+  { icon: Shield, label: 'Admin', path: '/admin-management' },
 ];
 
 const Sidebar = () => {

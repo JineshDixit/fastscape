@@ -60,7 +60,7 @@ const PaymentStatusCell = ({ status }: { status: PaymentStatus }) => {
       variant = 'outline';
       break;
   }
-  
+
   return (
     <Badge variant={variant} className="rounded-md px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase">
       {localizePaymentStatus(status)}
@@ -95,7 +95,11 @@ export const columns: ColumnDef<Booking>[] = [
     enableSorting: true,
     cell: ({ row }) => {
       const vehicle = row.original.Vehicle;
-      return <span>{vehicle?.make} {vehicle?.model}</span>;
+      return (
+        <span>
+          {vehicle?.make} {vehicle?.model}
+        </span>
+      );
     },
   },
   {
@@ -186,12 +190,12 @@ export const columns: ColumnDef<Booking>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 p-1">
-            <DropdownMenuLabel className="text-[10px] text-muted-foreground uppercase font-bold px-2 py-1.5">
+            <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Booking Operations
             </DropdownMenuLabel>
             <DropdownMenuItem asChild className="rounded-md">
               <Link to={`/bookings/${booking.id}`} className="flex cursor-pointer items-center">
-                <Eye className="mr-2 h-4 w-4 text-muted-foreground" /> View Details
+                <Eye className="text-muted-foreground mr-2 h-4 w-4" /> View Details
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -201,7 +205,7 @@ export const columns: ColumnDef<Booking>[] = [
               }}
               className="rounded-md"
             >
-              <Copy className="mr-2 h-4 w-4 text-muted-foreground" /> Copy Identifier
+              <Copy className="text-muted-foreground mr-2 h-4 w-4" /> Copy Identifier
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

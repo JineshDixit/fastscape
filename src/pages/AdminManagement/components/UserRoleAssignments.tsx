@@ -1,13 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Plus, ArrowRightLeft, ShieldPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
@@ -46,7 +40,7 @@ const UserRoleAssignments = () => {
         adminUserService.getAllAdminUsers({
           search: search || undefined,
           page: pageIndex + 1,
-          limit: pageSize
+          limit: pageSize,
         }),
         roleService.getAllRoles({ limit: 100 }),
       ]);
@@ -104,23 +98,23 @@ const UserRoleAssignments = () => {
 
   if (loading && users.length === 0) {
     return (
-      <div className="flex flex-col h-64 items-center justify-center gap-2">
+      <div className="flex h-64 flex-col items-center justify-center gap-2">
         <Spinner className="h-8 w-8" />
-        <span className="text-sm text-muted-foreground">Synchronizing user-role matrix...</span>
+        <span className="text-muted-foreground text-sm">Synchronizing user-role matrix...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="animate-in fade-in slide-in-from-bottom-2 space-y-8 duration-500">
       {/* Interactive Linker */}
-      <Card className="border border-gray-100 bg-white shadow-sm rounded-xl overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-primary">
+      <Card className="relative overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+        <div className="text-primary pointer-events-none absolute top-0 right-0 p-4 opacity-[0.03]">
           <ArrowRightLeft className="h-24 w-24" />
         </div>
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/5 text-primary border border-primary/10">
+            <div className="bg-primary/5 text-primary border-primary/10 rounded-xl border p-2.5">
               <ShieldPlus className="h-5 w-5" />
             </div>
             <div>
@@ -130,19 +124,23 @@ const UserRoleAssignments = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col lg:flex-row items-end gap-6">
-            <div className="flex-1 w-full space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Target Subject</label>
+          <div className="flex flex-col items-end gap-6 lg:flex-row">
+            <div className="w-full flex-1 space-y-2">
+              <label className="text-muted-foreground ml-1 text-[10px] font-bold tracking-widest uppercase">
+                Target Subject
+              </label>
               <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger className="h-11 rounded-xl bg-white border-gray-200">
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
                   <SelectValue placeholder="Identify an admin user..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id} className="rounded-lg my-0.5">
+                    <SelectItem key={user.id} value={user.id} className="my-0.5 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-5 w-5">
-                          <AvatarFallback className="text-[9px] bg-primary/5 text-primary">{user.fullName[0]}</AvatarFallback>
+                          <AvatarFallback className="bg-primary/5 text-primary text-[9px]">
+                            {user.fullName[0]}
+                          </AvatarFallback>
                         </Avatar>
                         <span className="text-sm">{user.fullName}</span>
                       </div>
@@ -152,21 +150,23 @@ const UserRoleAssignments = () => {
               </Select>
             </div>
 
-            <div className="hidden lg:flex items-center justify-center h-11 text-gray-200">
+            <div className="hidden h-11 items-center justify-center text-gray-200 lg:flex">
               <ArrowRightLeft className="h-5 w-5" />
             </div>
 
-            <div className="flex-1 w-full space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Permission Cluster</label>
+            <div className="w-full flex-1 space-y-2">
+              <label className="text-muted-foreground ml-1 text-[10px] font-bold tracking-widest uppercase">
+                Permission Cluster
+              </label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="h-11 rounded-xl bg-white border-gray-200">
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
                   <SelectValue placeholder="Select an access role..." />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id} className="rounded-lg my-0.5">
+                    <SelectItem key={role.id} value={role.id} className="my-0.5 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <ShieldPlus className="h-4 w-4 text-primary/60" />
+                        <ShieldPlus className="text-primary/60 h-4 w-4" />
                         <span className="text-sm">{role.name}</span>
                       </div>
                     </SelectItem>
@@ -178,7 +178,7 @@ const UserRoleAssignments = () => {
             <Button
               onClick={handleAssignRole}
               disabled={assigning || !selectedUser || !selectedRole}
-              className="h-11 px-8 rounded-xl shadow-md bg-primary hover:bg-primary/90 transition-all w-full lg:w-auto font-semibold"
+              className="bg-primary hover:bg-primary/90 h-11 w-full rounded-xl px-8 font-semibold shadow-md transition-all lg:w-auto"
             >
               {assigning ? <Spinner className="h-4 w-4 text-white" /> : <Plus className="mr-2 h-4 w-4" />}
               {assigning ? 'Linking...' : 'Establish Link'}

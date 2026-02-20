@@ -1,4 +1,4 @@
-import apiClient  from '../client';
+import apiClient from '../client';
 
 export const adminUserService = {
   /**
@@ -56,7 +56,10 @@ export const adminUserService = {
   /**
    * Update admin user
    */
-  update: async (id: string, data: Partial<{ firstName: string; lastName: string; email: string; isActive: boolean }>) => {
+  update: async (
+    id: string,
+    data: Partial<{ firstName: string; lastName: string; email: string; isActive: boolean }>,
+  ) => {
     const response = await apiClient.put(`/admin-users/${id}`, data);
     return response.data;
   },

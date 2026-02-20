@@ -101,7 +101,7 @@ const Financials = () => {
 
   const handlePrintInvoice = async () => {
     const selectedIndices = Object.keys(rowSelection).filter((key) => rowSelection[key]);
-    
+
     if (selectedIndices.length === 0) {
       toast.error('Please select at least one invoice to print');
       return;
@@ -109,12 +109,12 @@ const Financials = () => {
 
     const selectedFinancials = selectedIndices.map((index) => data[parseInt(index)]);
     const bookingIds = selectedFinancials.map((f) => f.bookingId);
-    
+
     try {
       toast.loading('Generating invoice(s)...');
-      
+
       const blob = await financeService.downloadBulkInvoices(bookingIds);
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -124,10 +124,10 @@ const Financials = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.dismiss();
       toast.success(`Downloaded ${selectedFinancials.length} invoice(s)`);
-      
+
       // Clear selection after downloading
       setRowSelection({});
     } catch (error: any) {
@@ -202,7 +202,7 @@ const Financials = () => {
             ) : (
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <div className="rounded-full bg-blue-100 p-2">
                       <Clock className="h-5 w-5 text-blue-600" />
                     </div>
@@ -237,7 +237,7 @@ const Financials = () => {
             ) : (
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <div className="rounded-full bg-red-100 p-2">
                       <AlertCircle className="h-5 w-5 text-red-600" />
                     </div>
@@ -276,7 +276,7 @@ const Financials = () => {
         sorting={sorting}
         onSortingChange={handleSortingChange}
         onSearchChange={handleSearchChange}
-        tableContainerClassName="!max-h-[calc(100vh-28rem)]"
+        tableContainerClassName="!max-h-[calc(100vh-26rem)]"
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         customActions={
@@ -296,10 +296,10 @@ const Financials = () => {
               onExport={() => financeService.exportFinancials({ search, ...filters })}
               filename="financials"
             />
-            <Button 
-              onClick={handlePrintInvoice} 
-              variant="default" 
-              size="sm" 
+            <Button
+              onClick={handlePrintInvoice}
+              variant="default"
+              size="sm"
               className="gap-2"
               disabled={Object.keys(rowSelection).length === 0}
             >
