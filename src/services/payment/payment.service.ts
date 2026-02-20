@@ -73,39 +73,41 @@ export const calculatePaymentBreakdown = async (bookingId: string, delayHours: n
   const endDate = new Date(booking.endDatetime);
   const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-  // Base calculations
-  const baseAmount = existingFinancial?.baseAmount || vehicle.pricePerDay * rentalDays;
-  const depositPercentage = existingFinancial?.depositPercentage || vehicle.depositPercentage;
+  // Base calculations - ensure all values are numbers
+  const baseAmount = Number(existingFinancial?.baseAmount || vehicle.pricePerDay * rentalDays);
+  const depositPercentage = Number(existingFinancial?.depositPercentage || vehicle.depositPercentage);
   const depositAmount = (baseAmount * depositPercentage) / 100;
   const balanceAmount = baseAmount - depositAmount;
 
   // Delay charge calculation
-  const delayChargeRate = vehicle.delayChargePerHour || 0;
+  const delayChargeRate = Number(vehicle.delayChargePerHour || 0);
   const delayChargeAmount = delayHours > 0 ? multiplyDecimal(delayHours, delayChargeRate) : 0;
 
   // Tax calculation using config
   const taxRate = paymentConfig.taxRate;
   // Platform charge calculation
-  const platformChargeRate = existingFinancial?.platformChargeRate || paymentConfig.platformChargeRate;
-  const platformChargeAmount = existingFinancial?.platformChargeAmount || calculatePercentage(baseAmount, platformChargeRate);
+  const platformChargeRate = Number(existingFinancial?.platformChargeRate || paymentConfig.platformChargeRate);
+  const platformChargeAmount = Number(existingFinancial?.platformChargeAmount) || calculatePercentage(baseAmount, platformChargeRate);
 
   const subtotal = addDecimal(addDecimal(baseAmount, delayChargeAmount), platformChargeAmount);
-  const taxAmount = existingFinancial?.taxAmount || multiplyDecimal(subtotal, taxRate);
+  const taxAmount = Number(existingFinancial?.taxAmount) || multiplyDecimal(subtotal, taxRate);
 
   const totalAmount = addDecimal(subtotal, taxAmount);
 
   // Return in frontend-compatible format (strings)
   const result = {
-    baseAmount: baseAmount.toFixed(2),
-    depositAmount: depositAmount.toFixed(2),
-    balanceAmount: balanceAmount.toFixed(2),
-    taxAmount: taxAmount.toFixed(2),
-    delayCharges: delayChargeAmount > 0 ? delayChargeAmount.toFixed(2) : undefined,
-    totalAmount: totalAmount.toFixed(2),
+    baseAmount: Number(baseAmount).toFixed(2),
+    depositAmount: Number(depositAmount).toFixed(2),
+    balanceAmount: Number(balanceAmount).toFixed(2),
+    taxAmount: Number(taxAmount).toFixed(2),
+    delayCharges: delayChargeAmount > 0 ? Number(delayChargeAmount).toFixed(2) : undefined,
+    totalAmount: Number(totalAmount).toFixed(2),
     currency: vehicle.currency || 'USD',
     daysCount: rentalDays,
     delayHours: delayHours > 0 ? delayHours : undefined,
-    depositPercentage: depositPercentage,
+    depositPercentage: Number(depositPercentage),
+    platformChargeAmount: Number(platformChargeAmount).toFixed(2),
+    platformChargeRate: Number(platformChargeRate),
   };
 
   Logger.info('Payment breakdown calculated successfully', { bookingId, result });
@@ -851,12 +853,18 @@ export const initiatePaymentIntent = async (
 ): Promise<any> => {
   const calculation = await calculatePaymentBreakdown(bookingId);
 
+  // Convert string amounts back to numbers for calculation
+  const depositAmount = parseFloat(calculation.depositAmount);
+  const totalAmount = parseFloat(calculation.totalAmount);
+  const balanceAmount = parseFloat(calculation.balanceAmount);
+  const delayChargeAmount = calculation.delayCharges ? parseFloat(calculation.delayCharges) : 0;
+
   const amount =
     paymentType === 'DEPOSIT'
-      ? calculation.depositAmount
+      ? depositAmount
       : paymentType === 'FULL'
-        ? calculation.totalAmount
-        : addDecimal(calculation.balanceAmount, calculation.delayChargeAmount || 0);
+        ? totalAmount
+        : addDecimal(balanceAmount, delayChargeAmount);
 
   return await stripe.createPaymentIntent({
     amount: toCents(amount), // Convert to cents using utility
