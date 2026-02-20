@@ -45,11 +45,11 @@ export const UserProfile: React.FC = () => {
   }, [profile]);
 
   const handleInputChange = (field: keyof UpdateProfileRequest, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFileChange = (field: string, file: File | null) => {
-    setFiles(prev => ({ ...prev, [field]: file }));
+    setFiles((prev) => ({ ...prev, [field]: file }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +57,7 @@ export const UserProfile: React.FC = () => {
     clearError();
 
     const updateData: UpdateProfileRequest = { ...formData };
-    
+
     // Add files to update data
     Object.entries(files).forEach(([key, file]) => {
       if (file) {
@@ -81,7 +81,11 @@ export const UserProfile: React.FC = () => {
   const getVerificationStatusBadge = (status?: string) => {
     switch (status) {
       case 'VERIFIED':
-        return <Badge variant="default" className="bg-green-500">Verified</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Verified
+          </Badge>
+        );
       case 'PENDING':
         return <Badge variant="secondary">Pending</Badge>;
       case 'REJECTED':
@@ -108,12 +112,10 @@ export const UserProfile: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="container mx-auto max-w-4xl p-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">User Profile</h1>
-        {!isEditing && (
-          <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
-        )}
+        {!isEditing && <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>}
       </div>
 
       {error && (
@@ -158,7 +160,7 @@ export const UserProfile: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <Input
                       id="phone"
@@ -211,38 +213,38 @@ export const UserProfile: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>First Name</Label>
-                      <p className="text-sm text-muted-foreground">{profile.firstName}</p>
+                      <p className="text-muted-foreground text-sm">{profile.firstName}</p>
                     </div>
                     <div>
                       <Label>Last Name</Label>
-                      <p className="text-sm text-muted-foreground">{profile.lastName}</p>
+                      <p className="text-muted-foreground text-sm">{profile.lastName}</p>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label>Email</Label>
-                    <p className="text-sm text-muted-foreground">{profile.email}</p>
+                    <p className="text-muted-foreground text-sm">{profile.email}</p>
                   </div>
 
                   <div>
                     <Label>Phone</Label>
-                    <p className="text-sm text-muted-foreground">{profile.phone}</p>
+                    <p className="text-muted-foreground text-sm">{profile.phone}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>City</Label>
-                      <p className="text-sm text-muted-foreground">{profile.city || 'Not provided'}</p>
+                      <p className="text-muted-foreground text-sm">{profile.city || 'Not provided'}</p>
                     </div>
                     <div>
                       <Label>State</Label>
-                      <p className="text-sm text-muted-foreground">{profile.state || 'Not provided'}</p>
+                      <p className="text-muted-foreground text-sm">{profile.state || 'Not provided'}</p>
                     </div>
                   </div>
 
                   <div>
                     <Label>Country</Label>
-                    <p className="text-sm text-muted-foreground">{profile.country || 'Not provided'}</p>
+                    <p className="text-muted-foreground text-sm">{profile.country || 'Not provided'}</p>
                   </div>
                 </div>
               )}
@@ -294,17 +296,17 @@ export const UserProfile: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <Label>License Issuing Country</Label>
-                    <p className="text-sm text-muted-foreground">{profile.licenseIssuingCountry || 'Not provided'}</p>
+                    <p className="text-muted-foreground text-sm">{profile.licenseIssuingCountry || 'Not provided'}</p>
                   </div>
 
                   <div>
                     <Label>License Expiry Date</Label>
-                    <p className="text-sm text-muted-foreground">{profile.licenseExpiryDate || 'Not provided'}</p>
+                    <p className="text-muted-foreground text-sm">{profile.licenseExpiryDate || 'Not provided'}</p>
                   </div>
 
                   <div>
                     <Label>Driving Experience</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {profile.drivingExperienceYears ? `${profile.drivingExperienceYears} years` : 'Not provided'}
                     </p>
                   </div>
@@ -388,13 +390,13 @@ export const UserProfile: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Driver License (Front)</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {profile.driverLicenseFront ? 'Uploaded' : 'Not uploaded'}
                       </p>
                     </div>
                     <div>
                       <Label>Driver License (Back)</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {profile.driverLicenseBack ? 'Uploaded' : 'Not uploaded'}
                       </p>
                     </div>
@@ -403,13 +405,13 @@ export const UserProfile: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Passport Photo</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {profile.passportPhoto ? 'Uploaded' : 'Not uploaded'}
                       </p>
                     </div>
                     <div>
                       <Label>Selfie with License</Label>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {profile.selfieWithLicense ? 'Uploaded' : 'Not uploaded'}
                       </p>
                     </div>
@@ -417,7 +419,7 @@ export const UserProfile: React.FC = () => {
 
                   <div>
                     <Label>International Driving Permit</Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {profile.internationalDrivingPermit ? 'Uploaded' : 'Not uploaded (Optional)'}
                     </p>
                   </div>

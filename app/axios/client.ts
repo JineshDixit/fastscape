@@ -123,7 +123,12 @@ apiClient.interceptors.response.use(
 
           if (response.data?.success && response.data?.data) {
             const tokenData = response.data.data;
-            const { accessToken, refreshToken: newRefreshToken, accessTokenExpiresAt, refreshTokenExpiresAt } = tokenData;
+            const {
+              accessToken,
+              refreshToken: newRefreshToken,
+              accessTokenExpiresAt,
+              refreshTokenExpiresAt,
+            } = tokenData;
 
             // Update cookies with server-provided expiration times
             authCookies.setAccessToken(accessToken, accessTokenExpiresAt);

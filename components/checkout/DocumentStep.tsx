@@ -77,7 +77,7 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
         if (eligible || verificationStatus === 'PENDING' || documentsUploaded || currentBooking) {
           await onNext();
         } else {
-          // If we have a booking, we should be able to proceed regardless of eligibility check failure 
+          // If we have a booking, we should be able to proceed regardless of eligibility check failure
           // (which might be due to the booking itself)
           if (currentBooking) {
             await onNext();
@@ -148,13 +148,13 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
         {isPending && hasRequiredDocuments ? (
           <div className="space-y-6">
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="bg-yellow-500/10 text-yellow-600 ring-yellow-500/5 relative mb-6 flex h-24 w-24 items-center justify-center rounded-full ring-8">
+              <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-yellow-500/10 text-yellow-600 ring-8 ring-yellow-500/5">
                 <Loader2 className="h-10 w-10 animate-spin" />
               </div>
               <h3 className="mb-2 text-xl font-black tracking-tight uppercase italic">{t('verificationPendingMsg')}</h3>
               <p className="max-w-md text-sm font-medium text-gray-600 dark:text-gray-400">
-                Your documents have been uploaded successfully and are awaiting admin verification.
-                This usually takes 24-48 hours.
+                Your documents have been uploaded successfully and are awaiting admin verification. This usually takes
+                24-48 hours.
               </p>
             </div>
 
@@ -181,18 +181,21 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
             {/* Info about proceeding */}
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
               <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                <strong>Good news!</strong> You can proceed with your booking. Verification must be completed before vehicle pickup.
+                <strong>Good news!</strong> You can proceed with your booking. Verification must be completed before
+                vehicle pickup.
               </p>
             </div>
           </div>
         ) : isRejected ? (
           <div className="space-y-6">
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="bg-red-100 text-red-600 ring-red-500/5 relative mb-6 flex h-24 w-24 items-center justify-center rounded-full ring-8">
+              <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-red-100 text-red-600 ring-8 ring-red-500/5">
                 <AlertOctagon className="h-10 w-10" />
               </div>
-              <h3 className="mb-2 text-xl font-black tracking-tight uppercase italic text-red-600">Documents Rejected</h3>
-              <p className="max-w-xs text-sm font-medium text-gray-600 dark:text-gray-400 mb-6">
+              <h3 className="mb-2 text-xl font-black tracking-tight text-red-600 uppercase italic">
+                Documents Rejected
+              </h3>
+              <p className="mb-6 max-w-xs text-sm font-medium text-gray-600 dark:text-gray-400">
                 Your documents were rejected. Please upload valid documents to continue.
               </p>
             </div>
@@ -218,11 +221,15 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
         <div
           className={cn(
             'flex h-10 w-10 items-center justify-center rounded-full transition-colors',
-            isVerified ? 'bg-green-100 text-green-600' :
-              isPending ? 'bg-yellow-100 text-yellow-600' :
-                isRejected ? 'bg-red-100 text-red-600' :
-                  documentsUploaded ? 'bg-blue-100 text-blue-600' :
-                    'bg-gray-100 text-gray-400',
+            isVerified
+              ? 'bg-green-100 text-green-600'
+              : isPending
+                ? 'bg-yellow-100 text-yellow-600'
+                : isRejected
+                  ? 'bg-red-100 text-red-600'
+                  : documentsUploaded
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'bg-gray-100 text-gray-400',
           )}
         >
           {isVerified ? (
@@ -230,7 +237,7 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
           ) : isRejected ? (
             <AlertOctagon className="h-5 w-5" />
           ) : (
-            <Loader2 className={cn("h-5 w-5", (isPending || documentsUploaded) && "animate-spin")} />
+            <Loader2 className={cn('h-5 w-5', (isPending || documentsUploaded) && 'animate-spin')} />
           )}
         </div>
         <div className="flex-1">
@@ -238,18 +245,26 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
           <p
             className={cn(
               'text-sm font-bold uppercase',
-              isVerified ? 'text-green-600' :
-                isPending ? 'text-yellow-600' :
-                  isRejected ? 'text-red-600' :
-                    documentsUploaded ? 'text-blue-600' :
-                      'text-gray-950 dark:text-white',
+              isVerified
+                ? 'text-green-600'
+                : isPending
+                  ? 'text-yellow-600'
+                  : isRejected
+                    ? 'text-red-600'
+                    : documentsUploaded
+                      ? 'text-blue-600'
+                      : 'text-gray-950 dark:text-white',
             )}
           >
-            {isVerified ? 'Verified' :
-              isPending ? 'Pending Verification' :
-                isRejected ? 'Rejected - Reupload Required' :
-                  documentsUploaded ? 'Documents Uploaded' :
-                    'Awaiting Documents'}
+            {isVerified
+              ? 'Verified'
+              : isPending
+                ? 'Pending Verification'
+                : isRejected
+                  ? 'Rejected - Reupload Required'
+                  : documentsUploaded
+                    ? 'Documents Uploaded'
+                    : 'Awaiting Documents'}
           </p>
         </div>
         {isVerified && (
@@ -279,7 +294,9 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
           onClick={handleNext}
           disabled={isLoading || documentLoading || !canProceed}
           className="flex flex-1 items-center justify-center gap-2"
-          title={!canProceed ? (isRejected ? 'Please upload valid documents' : 'Please upload all required documents') : ''}
+          title={
+            !canProceed ? (isRejected ? 'Please upload valid documents' : 'Please upload all required documents') : ''
+          }
         >
           {isLoading || documentLoading ? (
             <>
@@ -288,9 +305,11 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
             </>
           ) : (
             <>
-              {isPending && hasRequiredDocuments ? 'Continue with Pending Verification' :
-                documentsUploaded ? 'Continue to Payment' :
-                  'Continue to Payment'}
+              {isPending && hasRequiredDocuments
+                ? 'Continue with Pending Verification'
+                : documentsUploaded
+                  ? 'Continue to Payment'
+                  : 'Continue to Payment'}
               <ChevronRight className="h-4 w-4" />
             </>
           )}

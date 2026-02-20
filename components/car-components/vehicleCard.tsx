@@ -33,13 +33,13 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle, onClick }) => {
         </AspectRatio>
       </div>
 
-      <div className="border-gray-100 bg-gray-50 flex w-full flex-col gap-2 rounded-2xl px-6 pt-10 pb-5">
+      <div className="flex w-full flex-col gap-2 rounded-2xl border-gray-100 bg-gray-50 px-6 pt-10 pb-5">
         <h3 className="text-sm font-semibold">{vehicle.make}</h3>
 
         <div className="border-foreground/70 flex w-full shrink-0 items-center justify-between gap-2 border-b-2 pb-2 text-xs">
           <span>{tEnum(vehicle.fuelType.toLowerCase() as any)}</span>
           <span className="flex items-center gap-1">
-            <Users2 className="h-3.5 w-3.5 text-primary" /> {vehicle.passengerCapacity}
+            <Users2 className="text-primary h-3.5 w-3.5" /> {vehicle.passengerCapacity}
           </span>
           <span>{tEnum(vehicle.transmission.toLowerCase() as any)}</span>
           <span>{tEnum(vehicle.drivetrain.toLowerCase() as any)}</span>

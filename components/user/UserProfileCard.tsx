@@ -13,15 +13,15 @@ interface UserProfileCardProps {
   showEditButton?: boolean;
 }
 
-export const UserProfileCard: React.FC<UserProfileCardProps> = ({
-  profile,
-  onEditClick,
-  showEditButton = true,
-}) => {
+export const UserProfileCard: React.FC<UserProfileCardProps> = ({ profile, onEditClick, showEditButton = true }) => {
   const getVerificationStatusBadge = (status?: string) => {
     switch (status) {
       case 'VERIFIED':
-        return <Badge variant="default" className="bg-green-500">Verified</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Verified
+          </Badge>
+        );
       case 'PENDING':
         return <Badge variant="secondary">Pending</Badge>;
       case 'REJECTED':
@@ -54,27 +54,27 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="flex items-center space-x-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <Mail className="text-muted-foreground h-4 w-4" />
             <span className="text-sm">{profile.email}</span>
           </div>
-          
+
           <div className="flex items-center space-x-2">
-            <Phone className="h-4 w-4 text-muted-foreground" />
+            <Phone className="text-muted-foreground h-4 w-4" />
             <span className="text-sm">{profile.phone}</span>
           </div>
-          
+
           <div className="flex items-center space-x-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <MapPin className="text-muted-foreground h-4 w-4" />
             <span className="text-sm">{formatLocation()}</span>
           </div>
-          
+
           {profile.dateOfBirth && (
             <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="text-muted-foreground h-4 w-4" />
               <span className="text-sm">{new Date(profile.dateOfBirth).toLocaleDateString()}</span>
             </div>
           )}
@@ -82,17 +82,13 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
 
         {(profile.licenseIssuingCountry || profile.drivingExperienceYears) && (
           <div className="border-t pt-4">
-            <h4 className="text-sm font-medium mb-2 flex items-center">
-              <FileText className="h-4 w-4 mr-1" />
+            <h4 className="mb-2 flex items-center text-sm font-medium">
+              <FileText className="mr-1 h-4 w-4" />
               Driving Information
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
-              {profile.licenseIssuingCountry && (
-                <div>License Country: {profile.licenseIssuingCountry}</div>
-              )}
-              {profile.drivingExperienceYears && (
-                <div>Experience: {profile.drivingExperienceYears} years</div>
-              )}
+            <div className="text-muted-foreground grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+              {profile.licenseIssuingCountry && <div>License Country: {profile.licenseIssuingCountry}</div>}
+              {profile.drivingExperienceYears && <div>Experience: {profile.drivingExperienceYears} years</div>}
               {profile.licenseExpiryDate && (
                 <div>License Expires: {new Date(profile.licenseExpiryDate).toLocaleDateString()}</div>
               )}
@@ -101,11 +97,13 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
         )}
 
         <div className="border-t pt-4">
-          <h4 className="text-sm font-medium mb-2">Document Status</h4>
+          <h4 className="mb-2 text-sm font-medium">Document Status</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex justify-between">
               <span>Driver License:</span>
-              <span className={profile.driverLicenseFront && profile.driverLicenseBack ? 'text-green-600' : 'text-gray-500'}>
+              <span
+                className={profile.driverLicenseFront && profile.driverLicenseBack ? 'text-green-600' : 'text-gray-500'}
+              >
                 {profile.driverLicenseFront && profile.driverLicenseBack ? 'Complete' : 'Missing'}
               </span>
             </div>

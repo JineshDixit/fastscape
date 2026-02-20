@@ -13,17 +13,17 @@ interface ProtectedRouteProps {
 
 /**
  * ProtectedRoute component that handles authentication-based routing
- * 
+ *
  * @param children - Content to render when user meets auth requirements
  * @param redirectTo - Path to redirect to when auth requirement not met (default: '/')
  * @param requireAuth - Whether authentication is required (default: true)
  * @param fallback - Component to show while checking authentication
  */
-export const ProtectedRoute = ({ 
-  children, 
-  redirectTo = '/', 
+export const ProtectedRoute = ({
+  children,
+  redirectTo = '/',
   requireAuth = true,
-  fallback = <div className="flex items-center justify-center min-h-screen">Loading...</div>
+  fallback = <div className="flex min-h-screen items-center justify-center">Loading...</div>,
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();

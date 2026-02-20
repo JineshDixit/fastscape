@@ -170,8 +170,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
       return;
     }
 
-    // Preserve booking state unless explicitly navigating back to Identity from Documents/Payment 
-    // AND wanting to reset (rare). 
+    // Preserve booking state unless explicitly navigating back to Identity from Documents/Payment
+    // AND wanting to reset (rare).
     // Actually, let's just remove this restrictive auto-clear.
   }, [currentStep, bookingCreated]);
 

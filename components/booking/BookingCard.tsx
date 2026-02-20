@@ -55,9 +55,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
 
   const formatStatusKey = (status: string) => {
     // Convert PICKED_UP to pickedUp, PARTIALLY_PAID to partiallyPaid, etc.
-    return status
-      .toLowerCase()
-      .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    return status.toLowerCase().replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
   };
 
   const getPaymentStatusColor = (status: string) => {

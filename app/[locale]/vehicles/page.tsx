@@ -123,10 +123,10 @@ const VehiclePage = () => {
     <main className="global-container mb-8">
       {/* Mobile Filter FAB */}
       <MobileFilterSheet />
-      
+
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-        <aside className="sticky top-24 hidden h-fit flex-col gap-3 rounded-2xl border-2 border-border bg-card px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
-          <span className="text-base font-bold leading-6 md:text-lg">{t('title')}</span>
+        <aside className="border-border bg-card sticky top-24 hidden h-fit flex-col gap-3 rounded-2xl border-2 px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+          <span className="text-base leading-6 font-bold md:text-lg">{t('title')}</span>
           <CarFilter />
         </aside>
         <div className="flex flex-col gap-10">
@@ -141,26 +141,30 @@ const VehiclePage = () => {
                 ))
               ) : !isLoading ? (
                 <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-4 text-muted-foreground">
+                  <div className="text-muted-foreground mb-4">
                     <svg className="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   </div>
                   <h3 className="mb-2 text-lg font-semibold">
                     {hasSearchCriteria ? 'No vehicles available' : 'No vehicles found'}
                   </h3>
-                  <p className="mb-4 text-muted-foreground">
+                  <p className="text-muted-foreground mb-4">
                     {hasSearchCriteria
                       ? 'No vehicles are available for your selected dates and location. Try different dates or location.'
-                      : 'No vehicles are currently available. Please check back later.'
-                    }
+                      : 'No vehicles are currently available. Please check back later.'}
                   </p>
                   {hasSearchCriteria && (
                     <button
                       onClick={() => {
                         window.location.href = '/vehicles';
                       }}
-                      className="rounded-lg bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 transition-colors"
                     >
                       View All Vehicles
                     </button>

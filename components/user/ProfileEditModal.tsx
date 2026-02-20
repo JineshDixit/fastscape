@@ -2,13 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@/app/axios/hooks/useUser';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FloatingInput as Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -262,9 +256,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
                   <Label className="flex items-center gap-2">
                     {field.label}
                     {field.required && <span className="text-red-500">*</span>}
-                    {field.uploaded && !files[field.key] && (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    )}
+                    {field.uploaded && !files[field.key] && <CheckCircle className="h-4 w-4 text-green-500" />}
                   </Label>
 
                   <div className="flex items-center gap-3">
@@ -302,11 +294,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
                   {filePreviews[field.key] && (
                     <div className="relative h-32 w-full overflow-hidden rounded-lg border">
-                      <img
-                        src={filePreviews[field.key]}
-                        alt={field.label}
-                        className="h-full w-full object-contain"
-                      />
+                      <img src={filePreviews[field.key]} alt={field.label} className="h-full w-full object-contain" />
                     </div>
                   )}
                 </div>

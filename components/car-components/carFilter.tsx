@@ -27,11 +27,11 @@ const CarFilter = () => {
   useEffect(() => {
     const searchParams = hasSearchCriteria
       ? {
-        pickupLocation: bookingData.pickupLocation!,
-        pickupDate: bookingData.pickupDate!,
-        dropoffDate: bookingData.dropoffDate!,
-        bookingType: bookingData.bookingType,
-      }
+          pickupLocation: bookingData.pickupLocation!,
+          pickupDate: bookingData.pickupDate!,
+          dropoffDate: bookingData.dropoffDate!,
+          bookingType: bookingData.bookingType,
+        }
       : undefined;
 
     fetchFilterMetadata(searchParams);
@@ -181,33 +181,30 @@ const CarFilter = () => {
                 <AccordionTrigger className="cursor-pointer p-0 hover:no-underline [&[data-state=open]_.minus]:scale-100 [&[data-state=open]_.plus]:scale-0">
                   <div className="group flex w-full items-center justify-between">
                     <div className="flex flex-1 items-center gap-3">
-                      <div className="relative flex h-5 w-5 cursor-pointer items-center justify-center rounded bg-primary text-primary-foreground">
+                      <div className="bg-primary text-primary-foreground relative flex h-5 w-5 cursor-pointer items-center justify-center rounded">
                         <Plus className="plus absolute h-3.5 w-3.5 transition-transform duration-200" />
                         <Minus className="minus absolute h-3.5 w-3.5 scale-0 transition-transform duration-200" />
                       </div>
 
-                      <span className="select-none text-sm">{item.label}</span>
+                      <span className="text-sm select-none">{item.label}</span>
                     </div>
 
-                    <span className="text-sm text-muted-foreground">[{item.count}]</span>
+                    <span className="text-muted-foreground text-sm">[{item.count}]</span>
                   </div>
                 </AccordionTrigger>
 
                 {models.length > 0 && (
                   <AccordionContent>
-                    <div className="flex flex-col gap-3 pl-8 pt-3">
+                    <div className="flex flex-col gap-3 pt-3 pl-8">
                       {models.map((model) => (
                         <div key={model} className="flex items-center gap-3">
                           <Checkbox
                             id={`${item.label}-${model}`}
                             checked={activeModelsForCategory.includes(model)}
                             onCheckedChange={() => handleModelToggle(model)}
-                            className="h-4 w-4 rounded border-input data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                            className="border-input data-[state=checked]:border-primary data-[state=checked]:bg-primary h-4 w-4 rounded"
                           />
-                          <label
-                            htmlFor={`${item.label}-${model}`}
-                            className="select-none cursor-pointer text-sm"
-                          >
+                          <label htmlFor={`${item.label}-${model}`} className="cursor-pointer text-sm select-none">
                             {model}
                           </label>
                         </div>
@@ -234,9 +231,9 @@ const CarFilter = () => {
     return (
       <div className="p-3 md:p-4">
         <div className="animate-pulse">
-          <div className="mb-2 h-3 w-3/4 rounded bg-muted md:h-4"></div>
-          <div className="mb-2 h-3 w-1/2 rounded bg-muted md:h-4"></div>
-          <div className="h-3 w-2/3 rounded bg-muted md:h-4"></div>
+          <div className="bg-muted mb-2 h-3 w-3/4 rounded md:h-4"></div>
+          <div className="bg-muted mb-2 h-3 w-1/2 rounded md:h-4"></div>
+          <div className="bg-muted h-3 w-2/3 rounded md:h-4"></div>
         </div>
       </div>
     );
@@ -244,8 +241,8 @@ const CarFilter = () => {
 
   if (error) {
     return (
-      <div className="rounded border border-destructive/20 bg-destructive/10 p-3 md:p-4">
-        <p className="text-xs text-destructive md:text-sm">
+      <div className="border-destructive/20 bg-destructive/10 rounded border p-3 md:p-4">
+        <p className="text-destructive text-xs md:text-sm">
           {t('error')}: {error}
         </p>
         <button
@@ -253,7 +250,7 @@ const CarFilter = () => {
             clearError();
             fetchFilterMetadata();
           }}
-          className="mt-2 rounded bg-destructive px-3 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 md:text-sm"
+          className="bg-destructive text-destructive-foreground hover:bg-destructive/90 mt-2 rounded px-3 py-1 text-xs md:text-sm"
         >
           {t('retry')}
         </button>
@@ -262,11 +259,11 @@ const CarFilter = () => {
   }
 
   if (!filterMetadata) {
-    return <div className="p-4 text-muted-foreground">{t('noData')}</div>;
+    return <div className="text-muted-foreground p-4">{t('noData')}</div>;
   }
 
   return (
-    <div className="w-full bg-card">
+    <div className="bg-card w-full">
       {filterMetadata.bodyTypes &&
         filterMetadata.bodyTypes.length > 0 &&
         renderFilterSection(

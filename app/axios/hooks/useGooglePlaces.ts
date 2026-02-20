@@ -83,11 +83,11 @@ export const useGooglePlaces = (options: UseGooglePlacesOptions = {}): UseGoogle
     setPredictions([]);
     setError(null);
     setIsLoading(false);
-    
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-    
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }

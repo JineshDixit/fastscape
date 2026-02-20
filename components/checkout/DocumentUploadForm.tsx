@@ -176,9 +176,7 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
           <div className="flex items-center gap-3">
             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              Uploading document...
-            </p>
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Uploading document...</p>
           </div>
         </div>
       )}
@@ -201,13 +199,17 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
                 {preview ? (
                   <>
                     <img
-                      src={preview.startsWith('data:') || preview.startsWith('blob:') || preview.startsWith('http') ? preview : getImageUrl(preview)}
+                      src={
+                        preview.startsWith('data:') || preview.startsWith('blob:') || preview.startsWith('http')
+                          ? preview
+                          : getImageUrl(preview)
+                      }
                       alt={field.label}
                       className="absolute inset-0 h-full w-full object-cover"
                       onError={(e) => {
                         console.warn(`Failed to load image for ${field.id}:`, preview);
                         // Remove broken preview
-                        setPreviews(prev => {
+                        setPreviews((prev) => {
                           const newPreviews = { ...prev };
                           delete newPreviews[field.id];
                           return newPreviews;

@@ -14,7 +14,7 @@ import { GooglePlacesInput } from '@/components/ui/google-places-input';
 import z from 'zod';
 import { useVehicle } from '@/app/axios';
 import { useRouter } from '@/localization/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation } from '@/app/axios/hooks/useLocation';
 import {
   Combobox,
@@ -73,6 +73,7 @@ export function CarSearchForm() {
 
   const [fromQuery, setFromQuery] = useState('');
   const [toQuery, setToQuery] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync 'to' address when 'sameAddress' is checked
   useEffect(() => {
@@ -119,207 +120,209 @@ export function CarSearchForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 md:space-y-5">
-        <FormField
-          control={form.control}
-          name="tripType"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <ChipToggle
-                  value={field.value}
-                  onChange={field.onChange}
-                  options={[{ label: t('tripType'), value: 'domestic' }]}
-                  className="bg-foreground rounded-md"
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+        <div ref={containerRef} className="relative space-y-3 sm:space-y-4 md:space-y-5">
+          <FormField
+            control={form.control}
+            name="tripType"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <ChipToggle
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={[{ label: t('tripType'), value: 'domestic' }]}
+                    className="bg-foreground rounded-md"
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="selfDrive"
-          render={({ field }) => (
-            <FormItem className="flex items-center gap-2 sm:gap-3">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={(value) => field.onChange(value)} />
-              </FormControl>
-              <FormLabel className="text-xs font-normal sm:text-sm">{t('selfDrive')}</FormLabel>
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="selfDrive"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-2 sm:gap-3">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={(value) => field.onChange(value)} />
+                </FormControl>
+                <FormLabel className="text-xs font-normal sm:text-sm">{t('selfDrive')}</FormLabel>
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="from"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                {selfDrive ? (
-                  <Combobox
-                    modal={false}
-                    value={
-                      locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
-                    }
-                    onValueChange={(val) => {
-                      if (val) {
-                        field.onChange(val.label);
-                        setFromQuery(val.label);
-                        if (sameAddress) {
-                          form.setValue('to', val.label);
+          <FormField
+            control={form.control}
+            name="from"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  {selfDrive ? (
+                    <Combobox
+                      modal={false}
+                      value={
+                        locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
+                      }
+                      onValueChange={(val) => {
+                        if (val) {
+                          field.onChange(val.label);
+                          setFromQuery(val.label);
+                          if (sameAddress) {
+                            form.setValue('to', val.label);
+                          }
+                        } else {
+                          field.onChange('');
+                          setFromQuery('');
                         }
-                      } else {
-                        field.onChange('');
-                        setFromQuery('');
-                      }
-                    }}
-                  >
-                    <ComboboxInput
-                      placeholder={t('from')}
-                      className="bg-background h-14 w-full"
-                      value={fromQuery}
-                      onChange={(e) => setFromQuery(e.target.value)}
+                      }}
+                    >
+                      <ComboboxInput
+                        placeholder={t('from')}
+                        className="bg-background h-14 w-full"
+                        value={fromQuery}
+                        onChange={(e) => setFromQuery(e.target.value)}
+                      />
+                      <ComboboxContent container={containerRef}>
+                        <ComboboxList>
+                          {filteredFromLocations.length > 0 ? (
+                            filteredFromLocations.map((location) => (
+                              <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
+                                {location.name}
+                              </ComboboxItem>
+                            ))
+                          ) : (
+                            <ComboboxEmpty>No locations found</ComboboxEmpty>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  ) : (
+                    <GooglePlacesInput
+                      label={t('from')}
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        if (sameAddress) {
+                          form.setValue('to', value);
+                        }
+                      }}
+                      restrictToDubai={true}
+                      disabled={field.disabled}
                     />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        {filteredFromLocations.length > 0 ? (
-                          filteredFromLocations.map((location) => (
-                            <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
-                              {location.name}
-                            </ComboboxItem>
-                          ))
-                        ) : (
-                          <ComboboxEmpty>No locations found</ComboboxEmpty>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                ) : (
-                  <GooglePlacesInput
-                    label={t('from')}
-                    value={field.value}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      if (sameAddress) {
-                        form.setValue('to', value);
-                      }
-                    }}
-                    restrictToDubai={true}
-                    disabled={field.disabled}
-                  />
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="sameAddress"
-          render={({ field }) => (
-            <FormItem className="flex items-center gap-3">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={(value) => field.onChange(value)} />
-              </FormControl>
-              <FormLabel className="text-xs font-normal sm:text-sm">{t('sameAsPickup')}</FormLabel>
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="sameAddress"
+            render={({ field }) => (
+              <FormItem className="flex items-center gap-3">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={(value) => field.onChange(value)} />
+                </FormControl>
+                <FormLabel className="text-xs font-normal sm:text-sm">{t('sameAsPickup')}</FormLabel>
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="to"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                {!selfDrive && !sameAddress ? (
-                  <GooglePlacesInput
-                    label={t('to')}
-                    value={field.value}
-                    onChange={(value) => field.onChange(value)}
-                    restrictToDubai={true}
-                    disabled={field.disabled}
-                  />
-                ) : selfDrive && !sameAddress ? (
-                  <Combobox
-                    modal={false}
-                    value={
-                      locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
-                    }
-                    onValueChange={(val) => {
-                      if (val) {
-                        field.onChange(val.label);
-                        setToQuery(val.label);
-                      } else {
-                        field.onChange('');
-                        setToQuery('');
-                      }
-                    }}
-                  >
-                    <ComboboxInput
-                      placeholder={t('to')}
-                      className="bg-background h-14 w-full"
-                      value={toQuery}
-                      onChange={(e) => setToQuery(e.target.value)}
+          <FormField
+            control={form.control}
+            name="to"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  {!selfDrive && !sameAddress ? (
+                    <GooglePlacesInput
+                      label={t('to')}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
+                      restrictToDubai={true}
+                      disabled={field.disabled}
                     />
-                    <ComboboxContent>
-                      <ComboboxList>
-                        {filteredToLocations.length > 0 ? (
-                          filteredToLocations.map((location) => (
-                            <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
-                              {location.name}
-                            </ComboboxItem>
-                          ))
-                        ) : (
-                          <ComboboxEmpty>No locations found</ComboboxEmpty>
-                        )}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                ) : (
-                  <FloatingInput
-                    label={t('to')}
-                    {...field}
-                    disabled={sameAddress}
-                    className={sameAddress ? 'cursor-not-allowed opacity-50' : ''}
-                  />
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  ) : selfDrive && !sameAddress ? (
+                    <Combobox
+                      modal={false}
+                      value={
+                        locations.find((l) => l.name === field.value) ? { id: field.value, label: field.value } : null
+                      }
+                      onValueChange={(val) => {
+                        if (val) {
+                          field.onChange(val.label);
+                          setToQuery(val.label);
+                        } else {
+                          field.onChange('');
+                          setToQuery('');
+                        }
+                      }}
+                    >
+                      <ComboboxInput
+                        placeholder={t('to')}
+                        className="bg-background h-14 w-full"
+                        value={toQuery}
+                        onChange={(e) => setToQuery(e.target.value)}
+                      />
+                      <ComboboxContent container={containerRef}>
+                        <ComboboxList>
+                          {filteredToLocations.length > 0 ? (
+                            filteredToLocations.map((location) => (
+                              <ComboboxItem key={location.id} value={{ id: location.name, label: location.name }}>
+                                {location.name}
+                              </ComboboxItem>
+                            ))
+                          ) : (
+                            <ComboboxEmpty>No locations found</ComboboxEmpty>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  ) : (
+                    <FloatingInput
+                      label={t('to')}
+                      {...field}
+                      disabled={sameAddress}
+                      className={sameAddress ? 'cursor-not-allowed opacity-50' : ''}
+                    />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="pickupDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <DatePicker placeholder={t('pickupDate')} value={field.value} onChange={field.onChange} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="pickupDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <DatePicker placeholder={t('pickupDate')} value={field.value} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="dropDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <DatePicker placeholder={t('dropDate')} value={field.value} onChange={field.onChange} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="dropDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <DatePicker placeholder={t('dropDate')} value={field.value} onChange={field.onChange} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Button type="submit" className="w-full rounded-full text-sm sm:text-base">
-          {t('searchCars')}
-        </Button>
+          <Button type="submit" className="w-full rounded-full text-sm sm:text-base">
+            {t('searchCars')}
+          </Button>
+        </div>
       </form>
     </Form>
   );

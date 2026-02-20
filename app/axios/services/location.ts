@@ -34,10 +34,7 @@ export class LocationService extends BaseApiService {
    * @param input - Search query
    * @param restrictToDubai - Restrict results to Dubai area (default: true)
    */
-  async getPlacesAutocomplete(
-    input: string,
-    restrictToDubai: boolean = true,
-  ): Promise<ApiResponse<PlacePrediction[]>> {
+  async getPlacesAutocomplete(input: string, restrictToDubai: boolean = true): Promise<ApiResponse<PlacePrediction[]>> {
     return this.get<PlacePrediction[]>('/places/autocomplete', {
       params: { input, restrictToDubai },
     });

@@ -209,13 +209,13 @@ export const useVehicle = () => {
         setState((prev) => ({
           ...prev,
           mostPopularCar: response.data!,
-          isLoading: false
+          isLoading: false,
         }));
       } else {
         setState((prev) => ({
           ...prev,
           error: response.message || 'Failed to fetch most popular car',
-          isLoading: false
+          isLoading: false,
         }));
       }
     } catch (err: any) {

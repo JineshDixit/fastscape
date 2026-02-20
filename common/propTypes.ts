@@ -1,4 +1,4 @@
-import { Vehicle } from "./interfaces";
+import { Vehicle } from './interfaces';
 
 export type HeaderPropType = {
   onLoginClick: () => void;

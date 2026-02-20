@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from 'react';
+import { FC, useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { format, addDays, isWithinInterval, parseISO, startOfDay } from 'date-fns';
@@ -48,6 +48,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
   const [sameAddress, setSameAddress] = useState(
     bookingData.pickupLocation === bookingData.dropoffLocation && bookingData.pickupLocation !== null,
   );
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync internal state with bookingData (props)
   useEffect(() => {
@@ -116,10 +117,10 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
   const isSelfDrive = bookingData.bookingType === 'SELF_DRIVE';
 
   return (
-    <div className="flex flex-col gap-6">
+    <div ref={containerRef} className="relative flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         <span className="text-sm font-semibold text-gray-700">{t('checkAvailability')}</span>
-        <div className="flex flex-col gap-4 mb-2">
+        <div className="mb-2 flex flex-col gap-4">
           <div className="relative">
             {isSelfDrive ? (
               <Combobox
@@ -141,7 +142,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
                     if (bookingData.pickupLocation) setFromQuery(bookingData.pickupLocation);
                   }}
                 />
-                <ComboboxContent>
+                <ComboboxContent container={containerRef}>
                   <ComboboxList>
                     {filteredFromLocations.length > 0 ? (
                       filteredFromLocations.map((location) => (
@@ -192,7 +193,7 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
                     if (bookingData.dropoffLocation) setToQuery(bookingData.dropoffLocation);
                   }}
                 />
-                <ComboboxContent>
+                <ComboboxContent container={containerRef}>
                   <ComboboxList>
                     {filteredToLocations.length > 0 ? (
                       filteredToLocations.map((location) => (

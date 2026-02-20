@@ -172,7 +172,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 w-full space-y-6 duration-500">
       {/* Hero Section */}
-      <Card className="border-muted/40 overflow-hidden shadow-sm p-0">
+      <Card className="border-muted/40 overflow-hidden p-0 shadow-sm">
         <div className="relative h-64 w-full overflow-hidden sm:h-80">
           {booking.vehicle?.media?.[0]?.leftSideImage ? (
             <img
@@ -324,7 +324,9 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div>
                       <h4 className="text-lg font-black tracking-tight">{booking.chauffeur.fullName}</h4>
-                      <p className="text-primary text-xs font-bold tracking-widest uppercase">{t('professionalChauffeur')}</p>
+                      <p className="text-primary text-xs font-bold tracking-widest uppercase">
+                        {t('professionalChauffeur')}
+                      </p>
                     </div>
                     <div className="border-primary/10 flex items-center justify-center gap-1 rounded-full border bg-white p-1 px-3 shadow-sm sm:justify-start">
                       <StarIcon className="h-3 w-3 fill-current text-yellow-500" />
@@ -445,7 +447,9 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
               <div className="bg-muted/10 border-muted/20 border-t px-6 py-4">
                 <div className="text-muted-foreground flex items-center gap-3 font-mono text-[10px]">
                   <Shield className="h-3 w-3" />
-                  <span>{t('secureTransaction')} {booking.paymentMethod.toUpperCase()}</span>
+                  <span>
+                    {t('secureTransaction')} {booking.paymentMethod.toUpperCase()}
+                  </span>
                 </div>
               </div>
             </Card>
@@ -467,9 +471,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                       <p className="text-foreground mb-1 text-xs font-black tracking-tight uppercase">
                         {t('vettingInProgress')}
                       </p>
-                      <p className="text-muted-foreground text-[11px] leading-relaxed">
-                        {t('vettingDescription')}
-                      </p>
+                      <p className="text-muted-foreground text-[11px] leading-relaxed">{t('vettingDescription')}</p>
                     </div>
                   </div>
                 )}
@@ -483,9 +485,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                       <p className="text-foreground mb-1 text-xs font-black tracking-tight uppercase">
                         {t('operationActive')}
                       </p>
-                      <p className="text-muted-foreground text-[11px] leading-relaxed">
-                        {t('operationDescription')}
-                      </p>
+                      <p className="text-muted-foreground text-[11px] leading-relaxed">{t('operationDescription')}</p>
                     </div>
                   </div>
                 )}

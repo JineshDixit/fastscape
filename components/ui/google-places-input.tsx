@@ -33,7 +33,7 @@ export const GooglePlacesInput = React.forwardRef<HTMLInputElement, GooglePlaces
     const [inputValue, setInputValue] = React.useState(value);
     const [showSuggestions, setShowSuggestions] = React.useState(false);
     const [selectedIndex, setSelectedIndex] = React.useState(-1);
-    
+
     const containerRef = React.useRef<HTMLDivElement>(null);
     const suggestionsRef = React.useRef<HTMLDivElement>(null);
 
@@ -52,7 +52,7 @@ export const GooglePlacesInput = React.forwardRef<HTMLInputElement, GooglePlaces
       const newValue = e.target.value;
       setInputValue(newValue);
       setSelectedIndex(-1);
-      
+
       if (onChange) {
         onChange(newValue);
       }
@@ -168,11 +168,7 @@ export const GooglePlacesInput = React.forwardRef<HTMLInputElement, GooglePlaces
               'animate-in fade-in-0 zoom-in-95 slide-in-from-top-2',
             )}
           >
-            <div
-              ref={suggestionsRef}
-              className="max-h-[300px] overflow-y-auto overscroll-contain p-1"
-              role="listbox"
-            >
+            <div ref={suggestionsRef} className="max-h-[300px] overflow-y-auto overscroll-contain p-1" role="listbox">
               {isLoading && predictions.length === 0 && (
                 <div className="text-muted-foreground flex items-center justify-center gap-2 py-6 text-sm">
                   <Loader2 className="size-4 animate-spin" />
@@ -180,14 +176,10 @@ export const GooglePlacesInput = React.forwardRef<HTMLInputElement, GooglePlaces
                 </div>
               )}
 
-              {error && !isLoading && (
-                <div className="text-destructive px-3 py-2 text-sm">{error}</div>
-              )}
+              {error && !isLoading && <div className="text-destructive px-3 py-2 text-sm">{error}</div>}
 
               {!isLoading && !error && predictions.length === 0 && inputValue.trim().length >= 3 && (
-                <div className="text-muted-foreground px-3 py-6 text-center text-sm">
-                  No places found in Dubai
-                </div>
+                <div className="text-muted-foreground px-3 py-6 text-center text-sm">No places found in Dubai</div>
               )}
 
               {predictions.map((prediction, index) => (
@@ -199,7 +191,7 @@ export const GooglePlacesInput = React.forwardRef<HTMLInputElement, GooglePlaces
                   onClick={() => handlePlaceSelect(prediction)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={cn(
-                    'flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-sm px-3 py-2 text-left text-sm outline-none transition-colors',
+                    'flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-sm px-3 py-2 text-left text-sm transition-colors outline-none',
                     'hover:bg-accent hover:text-accent-foreground',
                     index === selectedIndex && 'bg-accent text-accent-foreground',
                   )}

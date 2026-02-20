@@ -1,7 +1,7 @@
 import { BaseApiService } from '../base';
-import type { 
-  ApiResponse, 
-  Booking, 
+import type {
+  ApiResponse,
+  Booking,
   BookingListResponse,
   BookingStats,
   BookingFilters,
@@ -13,7 +13,7 @@ import type {
   AvailabilityResponse,
   PaymentBreakdown,
   ExtendBookingResponse,
-  CancelBookingResponse
+  CancelBookingResponse,
 } from '../../../common/interfaces';
 
 export class BookingService extends BaseApiService {
@@ -31,8 +31,10 @@ export class BookingService extends BaseApiService {
   /**
    * Get booking quote (availability + price)
    */
-  async getBookingQuote(data: CreateBookingRequest): Promise<ApiResponse<{ availability: AvailabilityResponse, calculation: PaymentBreakdown }>> {
-    return this.post<{ availability: AvailabilityResponse, calculation: PaymentBreakdown }>('/quote', data);
+  async getBookingQuote(
+    data: CreateBookingRequest,
+  ): Promise<ApiResponse<{ availability: AvailabilityResponse; calculation: PaymentBreakdown }>> {
+    return this.post<{ availability: AvailabilityResponse; calculation: PaymentBreakdown }>('/quote', data);
   }
 
   /**
@@ -73,11 +75,11 @@ export class BookingService extends BaseApiService {
   /**
    * Get booking history with optional filters
    */
-  async getBookingHistory(params?: { 
-    year?: number; 
-    month?: number; 
-    status?: string; 
-    vehicleType?: string; 
+  async getBookingHistory(params?: {
+    year?: number;
+    month?: number;
+    status?: string;
+    vehicleType?: string;
   }): Promise<ApiResponse<Booking[]>> {
     return this.get<Booking[]>('/history', { params });
   }
@@ -92,7 +94,10 @@ export class BookingService extends BaseApiService {
   /**
    * Confirm a booking (after payment)
    */
-  async confirmBooking(bookingId: string, data?: { paymentIntentId?: string; actualPickupDatetime?: string }): Promise<ApiResponse<Booking>> {
+  async confirmBooking(
+    bookingId: string,
+    data?: { paymentIntentId?: string; actualPickupDatetime?: string },
+  ): Promise<ApiResponse<Booking>> {
     return this.post<Booking>(`/${bookingId}/confirm`, data);
   }
 

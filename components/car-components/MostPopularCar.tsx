@@ -44,7 +44,6 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
 
   return (
     <div className={`w-current relative flex h-full flex-col items-center ${className || ''} w-full`}>
-
       <div className="absolute top-0 left-10 z-20">
         <Badge className="rounded-full border-none bg-[#EFBF5F] px-6 py-2 text-sm font-medium text-gray-800 hover:bg-[#dfaf4f]">
           Hot Choice
@@ -52,7 +51,7 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
       </div>
 
       <div className="relative z-10 -mb-8 w-full max-w-[280px] transition-transform duration-300 hover:scale-105">
-        <AspectRatio ratio={16 / 9} className='overflow-hidden rounded-lg'>
+        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg">
           <img
             src={getDisplayImage()}
             alt={`${vehicle.make} ${vehicle.model}`}
@@ -103,7 +102,7 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
               View Car Details
             </Button>
             <Button
-              className="rounded-xl border-none bg-primary py-5 font-semibold text-primary-foreground hover:bg-primary/80"
+              className="bg-primary text-primary-foreground hover:bg-primary/80 rounded-xl border-none py-5 font-semibold"
               onClick={() => router.push(`/vehicles/${vehicle.id}?action=book`)}
             >
               Book the Car

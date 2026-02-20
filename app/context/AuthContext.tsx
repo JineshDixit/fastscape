@@ -214,7 +214,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           })
           .catch((err) => {
             refreshFailureCount++;
-            console.error('Periodic refresh/recovery failed:', err, `(Attempt ${refreshFailureCount}/${MAX_REFRESH_FAILURES})`);
+            console.error(
+              'Periodic refresh/recovery failed:',
+              err,
+              `(Attempt ${refreshFailureCount}/${MAX_REFRESH_FAILURES})`,
+            );
             // Only clear state if it's a definitive auth failure (400 or 401)
             if (err?.response?.status === 401 || err?.response?.status === 400) {
               clearAuthState();

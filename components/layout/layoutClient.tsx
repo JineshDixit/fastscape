@@ -15,7 +15,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   return (
     <Fragment>
       <Header onLoginClick={() => setOpenLogin(true)} />
-      <div className='py-6'>{children}</div>
+      <div className="py-6">{children}</div>
       <Footer />
       <LoginModel
         open={openLogin}

@@ -109,7 +109,7 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
                   <DropdownMenuSeparator className="bg-border my-1 h-px" />
                   <div
                     onClick={logout}
-                    className="hover:bg-destructive hover:text-white cursor-pointer rounded-md px-2 py-2 text-sm transition-colors"
+                    className="hover:bg-destructive cursor-pointer rounded-md px-2 py-2 text-sm transition-colors hover:text-white"
                   >
                     {t('logout')}
                   </div>

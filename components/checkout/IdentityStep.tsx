@@ -8,7 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, ShieldCheck, LogIn, Mail, Phone, ChevronRight, Car, Calendar, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+  User,
+  ShieldCheck,
+  LogIn,
+  Mail,
+  Phone,
+  ChevronRight,
+  Car,
+  Calendar,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react';
 import type { UserProfile, UpdateProfileRequest } from '@/common/interfaces';
 import { useAuth } from '@/app/axios';
 import { useUser } from '@/app/axios/hooks';
@@ -86,7 +97,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
         }
       }
     };
-    
+
     checkUserEligibility();
   }, [user, profile, checkEligibility]);
 
@@ -134,17 +145,19 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
     // If driving info already exists, check eligibility and proceed
     if (hasDrivingInfo) {
       const eligibility = await checkEligibility();
-      
+
       if (eligibility) {
         setEligibilityInfo(eligibility);
-        
+
         if (eligibility.eligible) {
           // User is fully eligible
           onNext('');
           return;
         } else if (eligibility.verificationStatus === 'PENDING') {
           // Documents are pending - allow to proceed with warning
-          setSuccess('Your documents are pending verification. You can proceed with booking, but verification is required before vehicle pickup.');
+          setSuccess(
+            'Your documents are pending verification. You can proceed with booking, but verification is required before vehicle pickup.',
+          );
           setTimeout(() => {
             onNext('');
           }, 2000);
@@ -159,7 +172,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
           return;
         }
       }
-      
+
       // Fallback: proceed anyway
       onNext('');
       return;
@@ -182,13 +195,13 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
 
       await updateProfile(updateData);
       setSuccess('Driving information saved successfully');
-      
+
       // Check eligibility after saving
       const eligibility = await checkEligibility();
       if (eligibility) {
         setEligibilityInfo(eligibility);
       }
-      
+
       // Proceed to next step after a brief delay
       setTimeout(() => {
         onNext('');
@@ -265,8 +278,9 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
         <Alert className="rounded-xl border-yellow-500/20 bg-yellow-500/10">
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="ml-2 text-yellow-600">
-            <strong>Documents Pending Verification:</strong> Your documents have been uploaded and are awaiting admin verification. 
-            You can proceed with booking, but verification must be completed before vehicle pickup (usually within 48 hours).
+            <strong>Documents Pending Verification:</strong> Your documents have been uploaded and are awaiting admin
+            verification. You can proceed with booking, but verification must be completed before vehicle pickup
+            (usually within 48 hours).
           </AlertDescription>
         </Alert>
       )}
@@ -275,7 +289,8 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
         <Alert className="rounded-xl border-blue-500/20 bg-blue-500/10">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="ml-2 text-blue-600">
-            <strong>Booking Restrictions:</strong> Until your documents are verified, bookings are limited to ${eligibilityInfo.restrictions.maxBookingValue} and require upfront deposit payment.
+            <strong>Booking Restrictions:</strong> Until your documents are verified, bookings are limited to $
+            {eligibilityInfo.restrictions.maxBookingValue} and require upfront deposit payment.
           </AlertDescription>
         </Alert>
       )}
@@ -289,7 +304,9 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
               <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">{t('callsign')}</span>
             </div>
             <p className="truncate text-lg font-black text-gray-950 uppercase dark:text-white">
-              {profile?.firstName && profile?.lastName ? `${profile.firstName} ${profile.lastName}` : t('awaitingIntel')}
+              {profile?.firstName && profile?.lastName
+                ? `${profile.firstName} ${profile.lastName}`
+                : t('awaitingIntel')}
             </p>
           </CardContent>
         </Card>

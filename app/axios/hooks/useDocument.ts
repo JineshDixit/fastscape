@@ -118,7 +118,7 @@ export const useDocument = (): UseDocumentReturn => {
             missingRequirements: response.data.missingDocuments || [],
           };
           setEligibilityResult(eligibilityResult);
-          
+
           return {
             success: true,
             message: response.message,

@@ -101,10 +101,10 @@ export const UserProfilePage: React.FC = () => {
     return (
       <div className="container mx-auto max-w-7xl space-y-6 sm:p-6">
         <div className="animate-pulse space-y-6">
-          <div className="h-48 rounded-xl bg-muted" />
+          <div className="bg-muted h-48 rounded-xl" />
           <div className="grid gap-6 md:grid-cols-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 rounded-xl bg-muted" />
+              <div key={i} className="bg-muted h-32 rounded-xl" />
             ))}
           </div>
         </div>
@@ -130,9 +130,9 @@ export const UserProfilePage: React.FC = () => {
         <CardContent className="relative px-6 pb-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-              <Avatar className="-mt-12 h-24 w-24 border-4 border-background bg-muted sm:-mt-16 sm:h-32 sm:w-32">
+              <Avatar className="border-background bg-muted -mt-12 h-24 w-24 border-4 sm:-mt-16 sm:h-32 sm:w-32">
                 <div className="flex h-full w-full items-center justify-center">
-                  <User className="h-12 w-12 text-muted-foreground sm:h-16 sm:w-16" />
+                  <User className="text-muted-foreground h-12 w-12 sm:h-16 sm:w-16" />
                 </div>
               </Avatar>
               <div className="space-y-1">
@@ -142,7 +142,7 @@ export const UserProfilePage: React.FC = () => {
                   </h1>
                   {getVerificationBadge(profile.verificationStatus)}
                 </div>
-                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-1">
                     <Mail className="h-4 w-4" />
                     {profile.email}
@@ -167,11 +167,11 @@ export const UserProfilePage: React.FC = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-lg bg-primary/10 p-3">
-                <Car className="h-6 w-6 text-primary" />
+              <div className="bg-primary/10 rounded-lg p-3">
+                <Car className="text-primary h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t('totalBookings')}</p>
+                <p className="text-muted-foreground text-sm">{t('totalBookings')}</p>
                 <p className="text-2xl font-bold">{bookingStats.total}</p>
               </div>
             </CardContent>
@@ -179,11 +179,11 @@ export const UserProfilePage: React.FC = () => {
 
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-lg bg-primary/10 p-3">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
+              <div className="bg-primary/10 rounded-lg p-3">
+                <CheckCircle2 className="text-primary h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t('active')}</p>
+                <p className="text-muted-foreground text-sm">{t('active')}</p>
                 <p className="text-2xl font-bold">{bookingStats.active}</p>
               </div>
             </CardContent>
@@ -191,11 +191,11 @@ export const UserProfilePage: React.FC = () => {
 
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-lg bg-primary/10 p-3">
-                <TrendingUp className="h-6 w-6 text-primary" />
+              <div className="bg-primary/10 rounded-lg p-3">
+                <TrendingUp className="text-primary h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t('completed')}</p>
+                <p className="text-muted-foreground text-sm">{t('completed')}</p>
                 <p className="text-2xl font-bold">{bookingStats.completed}</p>
               </div>
             </CardContent>
@@ -203,11 +203,11 @@ export const UserProfilePage: React.FC = () => {
 
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-lg bg-secondary/10 p-3">
-                <Clock className="h-6 w-6 text-secondary" />
+              <div className="bg-secondary/10 rounded-lg p-3">
+                <Clock className="text-secondary h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">{t('pending')}</p>
+                <p className="text-muted-foreground text-sm">{t('pending')}</p>
                 <p className="text-2xl font-bold">{bookingStats.pending}</p>
               </div>
             </CardContent>
@@ -242,29 +242,28 @@ export const UserProfilePage: React.FC = () => {
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('fullName')}</p>
+                    <p className="text-muted-foreground text-sm">{t('fullName')}</p>
                     <p className="font-medium">
                       {profile.firstName} {profile.lastName}
                     </p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('emailAddress')}</p>
+                    <p className="text-muted-foreground text-sm">{t('emailAddress')}</p>
                     <p className="font-medium">{profile.email}</p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('phoneNumber')}</p>
+                    <p className="text-muted-foreground text-sm">{t('phoneNumber')}</p>
                     <p className="font-medium">{profile.phone}</p>
                   </div>
                   <Separator />
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('location')}</p>
+                    <p className="text-muted-foreground text-sm">{t('location')}</p>
                     <div className="flex items-start gap-2">
-                      <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                      <MapPin className="text-muted-foreground mt-0.5 h-4 w-4" />
                       <p className="font-medium">
-                        {[profile.city, profile.state, profile.country].filter(Boolean).join(', ') ||
-                          t('notProvided')}
+                        {[profile.city, profile.state, profile.country].filter(Boolean).join(', ') || t('notProvided')}
                       </p>
                     </div>
                   </div>
@@ -326,22 +325,22 @@ export const UserProfilePage: React.FC = () => {
                   <div className="flex flex-col gap-2 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <FileText className="text-muted-foreground h-5 w-5" />
                         <div>
                           <p className="text-sm font-medium">{t('driverLicense')}</p>
-                          <p className="text-xs text-muted-foreground">{t('frontAndBack')}</p>
+                          <p className="text-muted-foreground text-xs">{t('frontAndBack')}</p>
                         </div>
                       </div>
                       {profile.driverLicenseFront && profile.driverLicenseBack ? (
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <CheckCircle2 className="text-primary h-5 w-5" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                        <XCircle className="text-muted-foreground/50 h-5 w-5" />
                       )}
                     </div>
                     {(profile.driverLicenseFront || profile.driverLicenseBack) && (
                       <div className="flex gap-2">
                         {profile.driverLicenseFront && (
-                          <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                          <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
                             <img
                               src={getImageUrl(profile.driverLicenseFront)}
                               alt="License Front"
@@ -353,7 +352,7 @@ export const UserProfilePage: React.FC = () => {
                           </div>
                         )}
                         {profile.driverLicenseBack && (
-                          <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                          <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
                             <img
                               src={getImageUrl(profile.driverLicenseBack)}
                               alt="License Back"
@@ -372,20 +371,20 @@ export const UserProfilePage: React.FC = () => {
                   <div className="flex flex-col gap-2 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <FileText className="text-muted-foreground h-5 w-5" />
                         <div>
                           <p className="text-sm font-medium">{t('passportPhoto')}</p>
-                          <p className="text-xs text-muted-foreground">{t('required')}</p>
+                          <p className="text-muted-foreground text-xs">{t('required')}</p>
                         </div>
                       </div>
                       {profile.passportPhoto ? (
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <CheckCircle2 className="text-primary h-5 w-5" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                        <XCircle className="text-muted-foreground/50 h-5 w-5" />
                       )}
                     </div>
                     {profile.passportPhoto && (
-                      <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                      <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
                         <img
                           src={getImageUrl(profile.passportPhoto)}
                           alt="Passport"
@@ -402,20 +401,20 @@ export const UserProfilePage: React.FC = () => {
                   <div className="flex flex-col gap-2 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <FileText className="text-muted-foreground h-5 w-5" />
                         <div>
                           <p className="text-sm font-medium">{t('selfieWithLicense')}</p>
-                          <p className="text-xs text-muted-foreground">{t('required')}</p>
+                          <p className="text-muted-foreground text-xs">{t('required')}</p>
                         </div>
                       </div>
                       {profile.selfieWithLicense ? (
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <CheckCircle2 className="text-primary h-5 w-5" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                        <XCircle className="text-muted-foreground/50 h-5 w-5" />
                       )}
                     </div>
                     {profile.selfieWithLicense && (
-                      <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                      <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
                         <img
                           src={getImageUrl(profile.selfieWithLicense)}
                           alt="Selfie with License"
@@ -432,20 +431,20 @@ export const UserProfilePage: React.FC = () => {
                   <div className="flex flex-col gap-2 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <FileText className="text-muted-foreground h-5 w-5" />
                         <div>
                           <p className="text-sm font-medium">{t('internationalPermit')}</p>
-                          <p className="text-xs text-muted-foreground">{t('optional')}</p>
+                          <p className="text-muted-foreground text-xs">{t('optional')}</p>
                         </div>
                       </div>
                       {profile.internationalDrivingPermit ? (
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <CheckCircle2 className="text-primary h-5 w-5" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-muted-foreground/50" />
+                        <XCircle className="text-muted-foreground/50 h-5 w-5" />
                       )}
                     </div>
                     {profile.internationalDrivingPermit && (
-                      <div className="group relative h-16 w-24 overflow-hidden rounded border bg-muted">
+                      <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
                         <img
                           src={getImageUrl(profile.internationalDrivingPermit)}
                           alt="International Permit"
@@ -462,27 +461,21 @@ export const UserProfilePage: React.FC = () => {
                 {profile.verificationStatus === 'PENDING' && (
                   <Alert className="mt-4">
                     <Clock className="h-4 w-4" />
-                    <AlertDescription>
-                      {t('documentsUnderReview')}
-                    </AlertDescription>
+                    <AlertDescription>{t('documentsUnderReview')}</AlertDescription>
                   </Alert>
                 )}
 
                 {profile.verificationStatus === 'REJECTED' && (
                   <Alert variant="destructive" className="mt-4">
                     <XCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      {t('documentsRejected')}
-                    </AlertDescription>
+                    <AlertDescription>{t('documentsRejected')}</AlertDescription>
                   </Alert>
                 )}
 
                 {!profile.verificationStatus && (
                   <Alert className="mt-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      {t('uploadDocuments')}
-                    </AlertDescription>
+                    <AlertDescription>{t('uploadDocuments')}</AlertDescription>
                   </Alert>
                 )}
               </CardContent>

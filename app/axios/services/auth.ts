@@ -79,15 +79,15 @@ class AuthService extends BaseApiService {
    */
   async logout(): Promise<ApiResponse<void>> {
     const refreshToken = authCookies.getRefreshToken();
-    
+
     if (refreshToken) {
       try {
         // Call logout API first to revoke token on server
         const response = await this.post<void>('/logout', { refreshToken });
-        
+
         // Clear cookies after successful server-side revocation
         authCookies.clearAll();
-        
+
         return response;
       } catch (error) {
         // Even if API call fails, clear cookies locally for security
@@ -95,7 +95,7 @@ class AuthService extends BaseApiService {
         throw error;
       }
     }
-    
+
     // No refresh token, just clear cookies
     authCookies.clearAll();
     return { success: true, data: undefined };

@@ -19,7 +19,6 @@ function formatDate(date?: Date) {
   return `${year}-${month}-${day}`;
 }
 
-
 const DatePicker: FC<DatePickerPropType> = ({
   label,
   value,
