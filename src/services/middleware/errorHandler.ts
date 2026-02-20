@@ -11,24 +11,28 @@ const handleSequelizeError = (error: any): AppError => {
     const messages = error.errors.map((err: any) => err.message);
     return createError(`Validation error: ${messages.join(', ')}`, 400, 'VALIDATION_ERROR');
   }
-  
+
   if (error.name === 'SequelizeUniqueConstraintError') {
     const field = error.errors[0]?.path || 'field';
     return createError(`${field} already exists`, 409, 'DUPLICATE_ERROR');
   }
-  
+
   if (error.name === 'SequelizeForeignKeyConstraintError') {
     return createError('Referenced record does not exist', 400, 'FOREIGN_KEY_ERROR');
   }
-  
+
   if (error.name === 'SequelizeOptimisticLockError') {
-    return createError('Record was modified by another user. Please refresh and try again.', 409, 'OPTIMISTIC_LOCK_ERROR');
+    return createError(
+      'Record was modified by another user. Please refresh and try again.',
+      409,
+      'OPTIMISTIC_LOCK_ERROR',
+    );
   }
-  
+
   if (error.name === 'SequelizeTimeoutError') {
     return createError('Database operation timed out', 408, 'TIMEOUT_ERROR');
   }
-  
+
   return createError('Database error occurred', 500, 'DATABASE_ERROR', error.message);
 };
 
@@ -39,23 +43,18 @@ const handleJWTError = (error: any): AppError => {
   if (error.name === 'JsonWebTokenError') {
     return createError('Invalid token', 401, 'INVALID_TOKEN');
   }
-  
+
   if (error.name === 'TokenExpiredError') {
     return createError('Token expired', 401, 'TOKEN_EXPIRED');
   }
-  
+
   return createError('Authentication error', 401, 'AUTH_ERROR');
 };
 
 /**
  * Global error handling middleware
  */
-export const errorHandler = (
-  error: AppError,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void => {
+export const errorHandler = (error: AppError, req: Request, res: Response, next: NextFunction): void => {
   let processedError: AppError;
 
   // Handle different types of errors
@@ -73,11 +72,7 @@ export const errorHandler = (
   let { statusCode = 500, message } = processedError;
 
   // If status code is 500, change message to generic error for production users
-  if (
-    statusCode === 500 &&
-    process.env.NODE_ENV === 'production' &&
-    !processedError.isOperational
-  ) {
+  if (statusCode === 500 && process.env.NODE_ENV === 'production' && !processedError.isOperational) {
     message = 'Something went wrong on the server';
   }
 

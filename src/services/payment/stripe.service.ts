@@ -102,32 +102,32 @@ class MockStripeService {
       // Real Stripe signature verification would go here
       // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
       // return stripe.webhooks.constructEvent(payload, signature, secret);
-      
+
       // For now, validate that signature exists and secret matches expected format
       if (!signature || !signature.startsWith('t=')) {
         throw new Error('Invalid signature format');
       }
-      
+
       if (!secret || !secret.startsWith('whsec_')) {
         throw new Error('Invalid webhook secret format');
       }
-      
+
       // Extract timestamp and signature from header
       const elements = signature.split(',');
-      const timestamp = elements.find(el => el.startsWith('t='))?.split('=')[1];
-      const sig = elements.find(el => el.startsWith('v1='))?.split('=')[1];
-      
+      const timestamp = elements.find((el) => el.startsWith('t='))?.split('=')[1];
+      const sig = elements.find((el) => el.startsWith('v1='))?.split('=')[1];
+
       if (!timestamp || !sig) {
         throw new Error('Missing timestamp or signature');
       }
-      
+
       // Check timestamp is recent (within 5 minutes)
       const webhookTimestamp = parseInt(timestamp, 10);
       const currentTimestamp = Math.floor(Date.now() / 1000);
       if (Math.abs(currentTimestamp - webhookTimestamp) > 300) {
         throw new Error('Webhook timestamp too old');
       }
-      
+
       // In production, verify HMAC signature here
       // For mock, we'll accept if format is correct
       Logger.info('Mock Stripe: Webhook signature verified (production mode)');
@@ -135,7 +135,7 @@ class MockStripeService {
       // Development mode - just log and return payload
       Logger.info('Mock Stripe: Webhook event constructed (development mode)');
     }
-    
+
     return payload;
   }
 }

@@ -13,13 +13,8 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // Basic file type check (will be validated more thoroughly later)
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png', 
-      'image/webp',
-      'application/pdf'
-    ];
-    
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -42,11 +37,11 @@ export const handleMulterError = (error: any, req: Request, res: Response, next:
         return next(createError(`Upload error: ${error.message}`, 400));
     }
   }
-  
+
   if (error.message.includes('Invalid file type')) {
     return next(createError(error.message, 400));
   }
-  
+
   next(error);
 };
 
@@ -63,7 +58,7 @@ export const uploadDocuments = upload.fields([
 export const validateDocuments = (req: Request, res: Response, next: NextFunction) => {
   try {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    
+
     if (!files || Object.keys(files).length === 0) {
       return next(createError('No files uploaded', 400));
     }
@@ -72,7 +67,7 @@ export const validateDocuments = (req: Request, res: Response, next: NextFunctio
     for (const [fieldName, fileArray] of Object.entries(files)) {
       if (fileArray && fileArray.length > 0) {
         const file = fileArray[0];
-        
+
         if (performBasicMalwareCheck(file)) {
           Logger.warn('Malicious file detected and blocked', {
             fieldName,
@@ -87,14 +82,14 @@ export const validateDocuments = (req: Request, res: Response, next: NextFunctio
 
     // Validate documents
     const validation = validateDocumentUpload(files);
-    
+
     if (!validation.isValid) {
       return next(createError(`Document validation failed: ${validation.errors.join(', ')}`, 400));
     }
 
     // Attach validation results to request for use in controller
     req.documentValidation = validation;
-    
+
     next();
   } catch (error) {
     Logger.error('Document validation middleware error', { error });

@@ -11,7 +11,7 @@ export const cleanupExpiredBookings = async (): Promise<number> => {
 
   try {
     const now = new Date();
-    
+
     // Find expired pending bookings
     const expiredBookings = await Booking.findAll({
       where: {
@@ -29,29 +29,29 @@ export const cleanupExpiredBookings = async (): Promise<number> => {
       return 0;
     }
 
-    const expiredBookingIds = expiredBookings.map(booking => booking.id);
-    
+    const expiredBookingIds = expiredBookings.map((booking) => booking.id);
+
     // Update expired bookings to CANCELLED
     const [affectedCount] = await Booking.update(
-      { 
+      {
         bookingStatus: dbEnums.BOOKING_STATUS[4], // 'CANCELLED'
-        notes: 'Automatically cancelled due to payment timeout'
+        notes: 'Automatically cancelled due to payment timeout',
       },
       {
         where: {
           id: { [Op.in]: expiredBookingIds },
         },
         transaction,
-      }
+      },
     );
 
     await transaction.commit();
-    
-    Logger.info('Expired bookings cleaned up', { 
+
+    Logger.info('Expired bookings cleaned up', {
       count: affectedCount,
-      bookingIds: expiredBookingIds 
+      bookingIds: expiredBookingIds,
     });
-    
+
     return affectedCount;
   } catch (error) {
     await transaction.rollback();
@@ -82,7 +82,7 @@ export const scheduleBookingCleanup = () => {
 
   // Schedule recurring cleanup
   setInterval(runCleanup, CLEANUP_INTERVAL);
-  
+
   Logger.info('Booking cleanup scheduler started', { intervalMinutes: 5 });
 };
 
@@ -91,7 +91,7 @@ export const scheduleBookingCleanup = () => {
  */
 export const getExpiredBookingStats = async () => {
   const now = new Date();
-  
+
   const expiredCount = await Booking.count({
     where: {
       bookingStatus: dbEnums.BOOKING_STATUS[0], // 'PENDING'

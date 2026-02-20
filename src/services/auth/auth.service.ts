@@ -193,7 +193,7 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
     // Implement grace period: if revoked within the last 30 seconds, allow it
     // This handles race conditions when multiple tabs refresh simultaneously
     const GRACE_PERIOD_MS = 30 * 1000; // 30 seconds
-    
+
     // Check if rotatedAt exists and is within grace period
     if (!storedToken.rotatedAt) {
       // Token was revoked but never rotated (shouldn't happen in normal flow)
@@ -202,7 +202,7 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
       });
       throw createError('Refresh token revoked', 401);
     }
-    
+
     const timeSinceRotation = new Date().getTime() - new Date(storedToken.rotatedAt).getTime();
     const isWithinGracePeriod = timeSinceRotation < GRACE_PERIOD_MS;
 
@@ -215,9 +215,9 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
       throw createError('Refresh token revoked', 401);
     }
 
-    Logger.info('Allowing refresh using recently rotated token (grace period)', { 
+    Logger.info('Allowing refresh using recently rotated token (grace period)', {
       userId: decoded.userId,
-      timeSinceRotation 
+      timeSinceRotation,
     });
   }
 

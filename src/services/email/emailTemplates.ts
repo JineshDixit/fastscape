@@ -347,9 +347,7 @@ const verificationRejectedTemplate = (context: VerificationEmailContext): string
  * Chauffeur assignment email template
  */
 const chauffeurAssignedTemplate = (context: ChauffeurAssignmentEmailContext): string => {
-  const ratingStars = context.chauffeurRating 
-    ? '⭐'.repeat(Math.round(context.chauffeurRating)) 
-    : '';
+  const ratingStars = context.chauffeurRating ? '⭐'.repeat(Math.round(context.chauffeurRating)) : '';
 
   return `
     ${getEmailHeader()}

@@ -108,16 +108,13 @@ export const createBooking = async (bookingData: CreateBookingData): Promise<Boo
     });
 
     if (conflictingBooking) {
-      // If the conflicting booking is PENDING and belongs to the same user, 
+      // If the conflicting booking is PENDING and belongs to the same user,
       // return it instead of throwing error (idempotency for session recovery)
-      if (
-        conflictingBooking.userId === userId &&
-        conflictingBooking.bookingStatus === dbEnums.BOOKING_STATUS[0]
-      ) {
+      if (conflictingBooking.userId === userId && conflictingBooking.bookingStatus === dbEnums.BOOKING_STATUS[0]) {
         Logger.info('Found existing pending booking for user, returning it', {
           bookingId: conflictingBooking.id,
           userId,
-          vehicleId
+          vehicleId,
         });
         await transaction.commit(); // Commit transaction as we're returning existing
         return conflictingBooking;

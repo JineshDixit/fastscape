@@ -19,7 +19,7 @@ router.get('/most-popular', vehicleController.getMostPopularCar);
 
 router.get(
   '/:id/availability',
-  authenticateUser,
+  // authenticateUser,
   vehicleIdValidation,
   handleValidationErrors,
   vehicleController.checkVehicleAvailability,

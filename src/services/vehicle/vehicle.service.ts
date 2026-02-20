@@ -19,12 +19,12 @@ export const getMostPopularCar = async (): Promise<MostPopularCar> => {
   const bookingStats = await Booking.findAll({
     attributes: [
       ['vehicle_id', 'vehicleId'],
-      [Sequelize.fn('COUNT', Sequelize.col('vehicle_id')), 'bookingCount']
+      [Sequelize.fn('COUNT', Sequelize.col('vehicle_id')), 'bookingCount'],
     ],
     group: ['vehicle_id'],
     order: [[Sequelize.literal('"bookingCount"'), 'DESC']],
     limit: 1,
-    raw: true
+    raw: true,
   });
 
   if (!bookingStats || bookingStats.length === 0) {
@@ -118,10 +118,7 @@ export const getVehicles = async (
 
     if (whereClause[Op.or]) {
       // If Op.or already exists, combine conditions
-      whereClause[Op.and] = [
-        { [Op.or]: whereClause[Op.or] },
-        { [Op.or]: modelConditions }
-      ];
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: modelConditions }];
       delete whereClause[Op.or];
     } else {
       whereClause[Op.or] = modelConditions;
@@ -168,10 +165,7 @@ export const getVehicles = async (
 
     if (whereClause[Op.or]) {
       // If Op.or already exists, combine conditions
-      whereClause[Op.and] = [
-        { [Op.or]: whereClause[Op.or] },
-        { [Op.or]: searchConditions }
-      ];
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: searchConditions }];
       delete whereClause[Op.or];
     } else {
       whereClause[Op.or] = searchConditions;
@@ -300,10 +294,7 @@ export const getAvailableVehicles = async (
 
     if (whereClause[Op.or]) {
       // If Op.or already exists, combine conditions
-      whereClause[Op.and] = [
-        { [Op.or]: whereClause[Op.or] },
-        { [Op.or]: modelConditions }
-      ];
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: modelConditions }];
       delete whereClause[Op.or];
     } else {
       whereClause[Op.or] = modelConditions;
@@ -333,10 +324,7 @@ export const getAvailableVehicles = async (
 
     if (whereClause[Op.or]) {
       // If Op.or already exists, combine conditions
-      whereClause[Op.and] = [
-        { [Op.or]: whereClause[Op.or] },
-        { [Op.or]: searchConditions }
-      ];
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: searchConditions }];
       delete whereClause[Op.or];
     } else {
       whereClause[Op.or] = searchConditions;

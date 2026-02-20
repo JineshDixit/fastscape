@@ -87,7 +87,8 @@ export const calculatePaymentBreakdown = async (bookingId: string, delayHours: n
   const taxRate = paymentConfig.taxRate;
   // Platform charge calculation
   const platformChargeRate = Number(existingFinancial?.platformChargeRate || paymentConfig.platformChargeRate);
-  const platformChargeAmount = Number(existingFinancial?.platformChargeAmount) || calculatePercentage(baseAmount, platformChargeRate);
+  const platformChargeAmount =
+    Number(existingFinancial?.platformChargeAmount) || calculatePercentage(baseAmount, platformChargeRate);
 
   const subtotal = addDecimal(addDecimal(baseAmount, delayChargeAmount), platformChargeAmount);
   const taxAmount = Number(existingFinancial?.taxAmount) || multiplyDecimal(subtotal, taxRate);
@@ -269,10 +270,7 @@ export const processDepositPayment = async (
       effectiveStripeData?.gatewayFee !== undefined
         ? effectiveStripeData.gatewayFee
         : paymentMethod === 'ONLINE'
-          ? addDecimal(
-              calculatePercentage(finalAmount, paymentConfig.gatewayFeePercent),
-              paymentConfig.gatewayFeeFixed,
-            )
+          ? addDecimal(calculatePercentage(finalAmount, paymentConfig.gatewayFeePercent), paymentConfig.gatewayFeeFixed)
           : 0;
 
     // Determine payment type from metadata or override
@@ -335,7 +333,10 @@ export const processDepositPayment = async (
       Logger.info('Deposit processed successfully and booking confirmed', { bookingId, amount: finalAmount });
 
       // Send booking confirmation email if booking was just confirmed (non-blocking)
-      if (oldBookingState.bookingStatus === dbEnums.BOOKING_STATUS[0] && bookingUpdates.bookingStatus === dbEnums.BOOKING_STATUS[1]) {
+      if (
+        oldBookingState.bookingStatus === dbEnums.BOOKING_STATUS[0] &&
+        bookingUpdates.bookingStatus === dbEnums.BOOKING_STATUS[1]
+      ) {
         sendBookingConfirmation(bookingId).catch((error) => {
           Logger.error('Failed to send booking confirmation email', { bookingId, error });
         });
@@ -347,7 +348,7 @@ export const processDepositPayment = async (
         paymentTypeEnum === dbEnums.PAYMENT_TYPE[4] ? 'Full Payment' : 'Deposit',
         finalAmount.toString(),
         finalCurrency,
-        paymentMethod
+        paymentMethod,
       ).catch((error) => {
         Logger.error('Failed to send payment confirmation email', { bookingId, error });
       });
@@ -450,10 +451,7 @@ export const processBalancePayment = async (
       stripeData?.gatewayFee !== undefined
         ? stripeData.gatewayFee
         : paymentMethod === 'ONLINE'
-          ? addDecimal(
-              calculatePercentage(finalAmount, paymentConfig.gatewayFeePercent),
-              paymentConfig.gatewayFeeFixed,
-            )
+          ? addDecimal(calculatePercentage(finalAmount, paymentConfig.gatewayFeePercent), paymentConfig.gatewayFeeFixed)
           : 0;
 
     // Create balance payment record
@@ -503,7 +501,7 @@ export const processBalancePayment = async (
         'Balance Payment',
         balanceAmount.toString(),
         finalCurrency,
-        paymentMethod
+        paymentMethod,
       ).catch((error) => {
         Logger.error('Failed to send payment confirmation email', { bookingId, error });
       });

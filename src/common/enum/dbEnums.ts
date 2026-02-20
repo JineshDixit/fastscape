@@ -13,13 +13,19 @@ export const dbEnums = {
   CHAUFFEUR_EXPERIENCE: ['BEGINNER', 'INTERMEDIATE', 'EXPERIENCED', 'EXPERT'],
   STRIPE_PAYMENT_STATUS: ['PENDING', 'SUCCEEDED', 'FAILED', 'REFUNDED'],
   VERIFICATION_STATUS: ['PENDING', 'VERIFIED', 'REJECTED'],
-  DOCUMENT_TYPE: ['DRIVER_LICENSE_FRONT', 'DRIVER_LICENSE_BACK', 'PASSPORT_PHOTO', 'INTERNATIONAL_DRIVING_PERMIT', 'SELFIE_WITH_LICENSE'],
+  DOCUMENT_TYPE: [
+    'DRIVER_LICENSE_FRONT',
+    'DRIVER_LICENSE_BACK',
+    'PASSPORT_PHOTO',
+    'INTERNATIONAL_DRIVING_PERMIT',
+    'SELFIE_WITH_LICENSE',
+  ],
 } as const;
 
 // Type helpers for better TypeScript support
-export type BookingStatus = typeof dbEnums.BOOKING_STATUS[number];
-export type PaymentStatus = typeof dbEnums.PAYMENT_STATUS[number];
-export type PaymentType = typeof dbEnums.PAYMENT_TYPE[number];
-export type PaymentMethod = typeof dbEnums.PAYMENT_METHOD[number];
-export type BookingType = typeof dbEnums.BOOKING_TYPE[number];
-export type VerificationStatus = typeof dbEnums.VERIFICATION_STATUS[number];
+export type BookingStatus = (typeof dbEnums.BOOKING_STATUS)[number];
+export type PaymentStatus = (typeof dbEnums.PAYMENT_STATUS)[number];
+export type PaymentType = (typeof dbEnums.PAYMENT_TYPE)[number];
+export type PaymentMethod = (typeof dbEnums.PAYMENT_METHOD)[number];
+export type BookingType = (typeof dbEnums.BOOKING_TYPE)[number];
+export type VerificationStatus = (typeof dbEnums.VERIFICATION_STATUS)[number];

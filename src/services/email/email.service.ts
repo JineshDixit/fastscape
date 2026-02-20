@@ -63,7 +63,7 @@ class EmailService {
    */
   private sanitizeRecipients(recipients: string | string[]): string[] {
     const emails = Array.isArray(recipients) ? recipients : [recipients];
-    
+
     return emails
       .map((email) => sanitizeEmail(email.trim()))
       .filter((email) => {
@@ -86,7 +86,7 @@ class EmailService {
       cc?: string | string[];
       bcc?: string | string[];
       attachments?: any[];
-    }
+    },
   ): Promise<EmailSendResult> {
     await this.ensureInitialized();
 
@@ -249,7 +249,7 @@ class EmailService {
       template: EmailTemplate;
       context: Record<string, any>;
     }>,
-    delayMs: number = 100
+    delayMs: number = 100,
   ): Promise<EmailSendResult[]> {
     await this.ensureInitialized();
 
@@ -315,7 +315,12 @@ export const sendWelcomeEmail = async (to: string, firstName: string, lastName: 
   });
 };
 
-export const sendPasswordResetEmail = async (to: string, firstName: string, otp: string, expiryMinutes: number = 10) => {
+export const sendPasswordResetEmail = async (
+  to: string,
+  firstName: string,
+  otp: string,
+  expiryMinutes: number = 10,
+) => {
   return emailService.sendTemplateEmail(EmailTemplate.PASSWORD_RESET, to, {
     firstName,
     otp,
@@ -336,7 +341,7 @@ export const sendBookingConfirmationEmail = async (
     totalAmount: string;
     currency: string;
     bookingType: string;
-  }
+  },
 ) => {
   return emailService.sendTemplateEmail(EmailTemplate.BOOKING_CONFIRMATION, to, context);
 };
@@ -350,7 +355,7 @@ export const sendBookingCancelledEmail = async (
     cancellationDate: string;
     refundAmount?: string;
     currency?: string;
-  }
+  },
 ) => {
   return emailService.sendTemplateEmail(EmailTemplate.BOOKING_CANCELLED, to, context);
 };
@@ -364,7 +369,7 @@ export const sendBookingReminderEmail = async (
     startDate: string;
     pickupLocation: string;
     hoursUntilPickup: number;
-  }
+  },
 ) => {
   return emailService.sendTemplateEmail(EmailTemplate.BOOKING_REMINDER, to, context);
 };
@@ -379,16 +384,12 @@ export const sendPaymentConfirmationEmail = async (
     currency: string;
     paymentDate: string;
     paymentMethod: string;
-  }
+  },
 ) => {
   return emailService.sendTemplateEmail(EmailTemplate.PAYMENT_CONFIRMATION, to, context);
 };
 
-export const sendVerificationApprovedEmail = async (
-  to: string,
-  firstName: string,
-  nextSteps?: string
-) => {
+export const sendVerificationApprovedEmail = async (to: string, firstName: string, nextSteps?: string) => {
   return emailService.sendTemplateEmail(EmailTemplate.VERIFICATION_APPROVED, to, {
     firstName,
     status: 'APPROVED',
@@ -396,11 +397,7 @@ export const sendVerificationApprovedEmail = async (
   });
 };
 
-export const sendVerificationRejectedEmail = async (
-  to: string,
-  firstName: string,
-  reason?: string
-) => {
+export const sendVerificationRejectedEmail = async (to: string, firstName: string, reason?: string) => {
   return emailService.sendTemplateEmail(EmailTemplate.VERIFICATION_REJECTED, to, {
     firstName,
     status: 'REJECTED',
@@ -421,7 +418,7 @@ export const sendChauffeurAssignedEmail = async (
     chauffeurLanguages?: string;
     startDate: string;
     pickupLocation: string;
-  }
+  },
 ) => {
   return emailService.sendTemplateEmail(EmailTemplate.CHAUFFEUR_ASSIGNED, to, context);
 };

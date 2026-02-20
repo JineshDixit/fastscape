@@ -4,7 +4,7 @@ import passport from 'passport';
 import { User } from '../../models';
 import { JwtPayload } from '../../common/types/jwtTypes';
 
-const {JWT_ACCESS_SECRET} = process.env;
+const { JWT_ACCESS_SECRET } = process.env;
 
 const options: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

@@ -42,13 +42,13 @@ export const findAvailableChauffeurs = async (
     where: { status: 'AVAILABLE' },
     attributes: ['id', 'isVerified', 'specializations'],
   });
-  
+
   if (process.env.NODE_ENV === 'development') {
     Logger.debug('Available chauffeurs details', {
-      chauffeurs: availableChauffeursList.map((c) => ({ 
-        id: c.id, 
-        verified: c.isVerified, 
-        specs: c.specializations 
+      chauffeurs: availableChauffeursList.map((c) => ({
+        id: c.id,
+        verified: c.isVerified,
+        specs: c.specializations,
       })),
       counts: {
         total: totalChauffeurs,
@@ -189,7 +189,7 @@ export const autoAssignChauffeur = async (
     if (process.env.NODE_ENV === 'development') {
       Logger.debug('No specialized chauffeur found, trying fallback without vehicle type filter');
     }
-    
+
     availableChauffeurs = await findAvailableChauffeurs(
       {
         startDatetime: booking.startDatetime,
@@ -329,7 +329,7 @@ export const releaseChauffeurFromBooking = async (bookingId: string): Promise<vo
     return;
   }
 
-  const {chauffeur} = booking as any;
+  const { chauffeur } = booking as any;
   if (chauffeur) {
     await chauffeur.update({
       status: 'AVAILABLE',

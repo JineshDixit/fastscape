@@ -41,7 +41,7 @@ export const sendBookingConfirmation = async (bookingId: string): Promise<void> 
     }
 
     const vehicleName = `${vehicle.make} ${vehicle.model} ${vehicle.year}`;
-    
+
     await sendBookingConfirmationEmail(user.email, {
       firstName: user.firstName,
       bookingId: booking.id,
@@ -126,7 +126,7 @@ export const sendPaymentConfirmation = async (
   paymentType: string,
   amount: string,
   currency: string,
-  paymentMethod: string
+  paymentMethod: string,
 ): Promise<void> => {
   try {
     const booking = await Booking.findByPk(bookingId, {

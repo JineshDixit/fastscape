@@ -62,7 +62,7 @@ export interface FileValidationResult {
  */
 export const validateUploadedFile = (
   file: Express.Multer.File,
-  documentType: keyof typeof DOCUMENT_REQUIREMENTS
+  documentType: keyof typeof DOCUMENT_REQUIREMENTS,
 ): FileValidationResult => {
   const errors: string[] = [];
   const requirements = DOCUMENT_REQUIREMENTS[documentType];
@@ -90,11 +90,11 @@ export const validateUploadedFile = (
   const fileExtension = path.extname(file.originalname).toLowerCase();
   const mimeType = file.mimetype as keyof typeof ALLOWED_FILE_TYPES;
   const allowedExtensions = ALLOWED_FILE_TYPES[mimeType];
-  
+
   if (!allowedExtensions) {
     errors.push(`Unsupported MIME type: ${file.mimetype}`);
   } else {
-    const extensionMatches = allowedExtensions.some(ext => ext === fileExtension);
+    const extensionMatches = allowedExtensions.some((ext) => ext === fileExtension);
     if (!extensionMatches) {
       errors.push(`File extension ${fileExtension} does not match MIME type ${file.mimetype}`);
     }
@@ -117,7 +117,7 @@ export const validateUploadedFile = (
   if (errors.length === 0) {
     // Generate SHA-256 hash of file content
     fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
-    
+
     // Generate sanitized filename
     const timestamp = Date.now();
     const randomSuffix = crypto.randomBytes(4).toString('hex');
@@ -137,7 +137,7 @@ export const validateUploadedFile = (
  */
 export const validateDocumentUpload = (
   files: { [fieldname: string]: Express.Multer.File[] },
-  requiredDocuments?: (keyof typeof DOCUMENT_REQUIREMENTS)[]
+  requiredDocuments?: (keyof typeof DOCUMENT_REQUIREMENTS)[],
 ): { isValid: boolean; errors: string[]; validatedFiles: Record<string, FileValidationResult> } => {
   const errors: string[] = [];
   const validatedFiles: Record<string, FileValidationResult> = {};
@@ -157,10 +157,10 @@ export const validateDocumentUpload = (
     if (fileArray && fileArray.length > 0) {
       const file = fileArray[0]; // Take first file only
       const docType = fieldName as keyof typeof DOCUMENT_REQUIREMENTS;
-      
+
       const validation = validateUploadedFile(file, docType);
       validatedFiles[fieldName] = validation;
-      
+
       if (!validation.isValid) {
         errors.push(`${DOCUMENT_REQUIREMENTS[docType]?.description || fieldName}: ${validation.errors.join(', ')}`);
       }
@@ -180,12 +180,12 @@ export const validateDocumentUpload = (
 export const generateSecureFilePath = (
   userId: string,
   documentType: keyof typeof DOCUMENT_REQUIREMENTS,
-  sanitizedFilename: string
+  sanitizedFilename: string,
 ): string => {
   // Create user-scoped directory structure
   const userDir = userId.replace(/-/g, ''); // Remove hyphens for cleaner path
   const docTypeDir = documentType;
-  
+
   return path.join('uploads', 'documents', userDir, docTypeDir, sanitizedFilename);
 };
 
@@ -194,12 +194,12 @@ export const generateSecureFilePath = (
  */
 export const performBasicMalwareCheck = (file: Express.Multer.File): boolean => {
   const buffer = file.buffer;
-  
+
   // Check for common malware signatures (basic check)
   const maliciousPatterns = [
     // Executable signatures
-    Buffer.from([0x4D, 0x5A]), // MZ (PE executable)
-    Buffer.from([0x7F, 0x45, 0x4C, 0x46]), // ELF executable
+    Buffer.from([0x4d, 0x5a]), // MZ (PE executable)
+    Buffer.from([0x7f, 0x45, 0x4c, 0x46]), // ELF executable
     // Script patterns
     Buffer.from('<?php', 'utf8'),
     Buffer.from('<script', 'utf8'),

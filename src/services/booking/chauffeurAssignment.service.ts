@@ -295,7 +295,7 @@ export const releaseChauffeurOnBookingEnd = async (bookingId: string): Promise<v
       return; // No chauffeur to release
     }
 
-    const {chauffeur} = booking as any;
+    const { chauffeur } = booking as any;
     if (chauffeur) {
       // Update chauffeur status back to AVAILABLE
       await chauffeur.update({

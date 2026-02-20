@@ -235,7 +235,7 @@ export const updateUser = async (
 
         // Check if auto-verification is enabled
         const shouldAutoVerify = verificationConfig.autoVerifyDocuments;
-        
+
         if (shouldAutoVerify) {
           Logger.info('Auto-verifying documents (enabled in config)', { userId });
           documentUpdates.verificationStatus = 'VERIFIED';
@@ -252,10 +252,9 @@ export const updateUser = async (
           await UserIdentityDocument.create({ userId, ...documentUpdates }, { transaction });
         }
 
-        Logger.info(
-          `User documents updated ${shouldAutoVerify ? 'and AUTO-VERIFIED' : '- PENDING verification'}`,
-          { userId },
-        );
+        Logger.info(`User documents updated ${shouldAutoVerify ? 'and AUTO-VERIFIED' : '- PENDING verification'}`, {
+          userId,
+        });
       }
     }
 
@@ -435,11 +434,12 @@ export const getLocationStatistics = async () => {
   };
 };
 
-
 /**
  * Check if user can proceed with booking
  */
-export const checkBookingEligibility = async (userId: string): Promise<{
+export const checkBookingEligibility = async (
+  userId: string,
+): Promise<{
   eligible: boolean;
   reason?: string;
   restrictions?: any;

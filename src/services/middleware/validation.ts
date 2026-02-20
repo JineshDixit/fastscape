@@ -195,10 +195,7 @@ export const validateUserUpdate = [
     .isInt({ min: 0, max: 80 })
     .withMessage('Driving experience must be between 0 and 80 years'),
 
-  body('visaStatus')
-    .optional()
-    .isIn(['Resident', 'Tourist', 'Visit'])
-    .withMessage('Invalid visa status'),
+  body('visaStatus').optional().isIn(['Resident', 'Tourist', 'Visit']).withMessage('Invalid visa status'),
 
   handleValidationErrors,
 ];

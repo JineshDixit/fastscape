@@ -17,7 +17,7 @@ class GooglePlacesService {
 
   constructor() {
     this.apiKey = process.env.GOOGLE_MAPS_API_KEY || '';
-    
+
     if (!this.apiKey) {
       console.warn('GOOGLE_MAPS_API_KEY not configured. Google Places features will be disabled.');
     }
@@ -71,16 +71,12 @@ class GooglePlacesService {
         restrictToDubai,
       });
 
-      const response = await axios.post(
-        'https://places.googleapis.com/v1/places:autocomplete',
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': this.apiKey,
-          },
-        }
-      );
+      const response = await axios.post('https://places.googleapis.com/v1/places:autocomplete', requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': this.apiKey,
+        },
+      });
 
       console.log('Google Places API (New) Response:', {
         suggestionsCount: response.data.suggestions?.length || 0,
@@ -127,16 +123,13 @@ class GooglePlacesService {
     try {
       console.log('Getting place details for:', placeId);
 
-      const response = await axios.get(
-        `https://places.googleapis.com/v1/${placeId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Goog-Api-Key': this.apiKey,
-            'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,addressComponents',
-          },
-        }
-      );
+      const response = await axios.get(`https://places.googleapis.com/v1/${placeId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': this.apiKey,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,addressComponents',
+        },
+      });
 
       console.log('Place details retrieved');
 

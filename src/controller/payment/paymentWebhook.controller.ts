@@ -51,10 +51,7 @@ class PaymentWebhookController extends BaseController {
       }
 
       // Increment retry count
-      await webhookRecord.update(
-        { retryCount: webhookRecord.retryCount + 1 },
-        { transaction },
-      );
+      await webhookRecord.update({ retryCount: webhookRecord.retryCount + 1 }, { transaction });
 
       // Handle the event
       switch (event.type) {
@@ -90,23 +87,23 @@ class PaymentWebhookController extends BaseController {
 
         case 'payment_intent.payment_failed':
           const failedIntent = event.data.object;
-          Logger.warn('PaymentIntent failed!', { 
-            id: failedIntent.id, 
+          Logger.warn('PaymentIntent failed!', {
+            id: failedIntent.id,
             error: failedIntent.last_payment_error?.message,
-            bookingId: failedIntent.metadata?.bookingId 
+            bookingId: failedIntent.metadata?.bookingId,
           });
-          
+
           // TODO: Handle failure (e.g., notify user, mark payment as failed, release booking)
           // For now, just log the failure
           break;
 
         case 'payment_intent.canceled':
           const canceledIntent = event.data.object;
-          Logger.info('PaymentIntent was canceled', { 
+          Logger.info('PaymentIntent was canceled', {
             id: canceledIntent.id,
-            bookingId: canceledIntent.metadata?.bookingId 
+            bookingId: canceledIntent.metadata?.bookingId,
           });
-          
+
           // TODO: Handle cancellation (e.g., release booking, notify user)
           break;
 
@@ -126,12 +123,11 @@ class PaymentWebhookController extends BaseController {
 
       await transaction.commit();
       Logger.info('Webhook processed successfully', { eventType: event.type, eventId: event.id });
-
     } catch (error) {
       await transaction.rollback();
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       // Try to update webhook event with error (outside transaction)
       try {
         await WebhookEvent.update(
@@ -144,17 +140,17 @@ class PaymentWebhookController extends BaseController {
       } catch (updateError) {
         Logger.error('Failed to update webhook event error', { eventId: event.id, updateError });
       }
-      
-      Logger.error('Webhook processing failed', { 
+
+      Logger.error('Webhook processing failed', {
         error: errorMessage,
         eventType: event.type,
-        eventId: event.id 
+        eventId: event.id,
       });
-      
+
       // Return 500 to trigger Stripe retry
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Webhook processing failed',
-        eventId: event.id 
+        eventId: event.id,
       });
       return;
     }

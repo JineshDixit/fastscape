@@ -31,16 +31,16 @@ class UserController extends BaseController {
    */
   checkDocumentCompleteness = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
-    
+
     const identityDoc = await UserIdentityDocument.findOne({ where: { userId } });
     const drivingInfo = await UserDrivingInfo.findOne({ where: { userId } });
-    
+
     const requiredDocuments = ['driverLicenseFront', 'driverLicenseBack', 'passportPhoto', 'selfieWithLicense'];
     const verifiedDocuments: string[] = [];
     const missingDocuments: string[] = [];
     const unverifiedDocuments: string[] = [];
 
-    requiredDocuments.forEach(doc => {
+    requiredDocuments.forEach((doc) => {
       const hasDocument = identityDoc && (identityDoc as any)[doc];
       if (hasDocument) {
         if (identityDoc.verificationStatus === 'VERIFIED') {
@@ -68,19 +68,19 @@ class UserController extends BaseController {
    */
   shouldSkipDocumentStep = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
-    const bookingType = req.query.bookingType as string || 'SELF_DRIVE';
-    
+    const bookingType = (req.query.bookingType as string) || 'SELF_DRIVE';
+
     const identityDoc = await UserIdentityDocument.findOne({ where: { userId } });
     const drivingInfo = await UserDrivingInfo.findOne({ where: { userId } });
-    
+
     // Check if all required documents are uploaded and verified
     const requiredDocuments = ['driverLicenseFront', 'driverLicenseBack', 'passportPhoto', 'selfieWithLicense'];
-    const allDocumentsPresent = requiredDocuments.every(doc => identityDoc && (identityDoc as any)[doc]);
+    const allDocumentsPresent = requiredDocuments.every((doc) => identityDoc && (identityDoc as any)[doc]);
     const documentsVerified = identityDoc?.verificationStatus === 'VERIFIED';
     const hasDrivingInfo = drivingInfo && drivingInfo.licenseIssuingCountry && drivingInfo.licenseExpiryDate;
-    
+
     const shouldSkip = allDocumentsPresent && documentsVerified && hasDrivingInfo;
-    
+
     sendSuccess(res, 'Document step check completed', shouldSkip);
   });
 
@@ -89,16 +89,16 @@ class UserController extends BaseController {
    */
   validateDocumentForBooking = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = this.ensureAuthenticated(req);
-    const bookingType = req.query.bookingType as string || 'SELF_DRIVE';
-    
+    const bookingType = (req.query.bookingType as string) || 'SELF_DRIVE';
+
     const identityDoc = await UserIdentityDocument.findOne({ where: { userId } });
     const drivingInfo = await UserDrivingInfo.findOne({ where: { userId } });
-    
+
     const requiredDocuments = ['driverLicenseFront', 'driverLicenseBack', 'passportPhoto', 'selfieWithLicense'];
     const missingDocuments: string[] = [];
     const unverifiedDocuments: string[] = [];
 
-    requiredDocuments.forEach(doc => {
+    requiredDocuments.forEach((doc) => {
       const hasDocument = identityDoc && (identityDoc as any)[doc];
       if (!hasDocument) {
         missingDocuments.push(doc);
@@ -136,11 +136,11 @@ class UserController extends BaseController {
 
 const userController = new UserController();
 
-export const { 
-  getCurrentUser, 
-  updateUserProfile, 
-  checkDocumentCompleteness, 
-  shouldSkipDocumentStep, 
-  validateDocumentForBooking, 
-  checkBookingEligibility 
+export const {
+  getCurrentUser,
+  updateUserProfile,
+  checkDocumentCompleteness,
+  shouldSkipDocumentStep,
+  validateDocumentForBooking,
+  checkBookingEligibility,
 } = userController;

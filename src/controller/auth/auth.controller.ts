@@ -82,13 +82,5 @@ class AuthController extends BaseController {
 
 const authController = new AuthController();
 
-export const {
-  register,
-  login,
-  refreshToken,
-  logout,
-  logoutAllDevices,
-  forgotPassword,
-  verifyOtp,
-  resetPassword,
-} = authController;
+export const { register, login, refreshToken, logout, logoutAllDevices, forgotPassword, verifyOtp, resetPassword } =
+  authController;
