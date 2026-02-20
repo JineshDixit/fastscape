@@ -1,12 +1,11 @@
-import { DataTypes, Model, Sequelize, Optional } from 'sequelize';
+import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
 import { dbEnums } from '../common/enum/dbEnums';
 
-// Vehicle attributes interface
 export interface VehicleAttributes {
   id: string;
   make: string;
   model: string;
-  trim?: string;
+  trim: string;
   year: number;
   exteriorColor: string;
   interiorColor: string;
@@ -23,12 +22,9 @@ export interface VehicleAttributes {
   currency: string;
   isAvailable: boolean;
   passengerCapacity: number;
-  locationId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  locationId: string;
 }
 
-// Vehicle creation attributes (optional fields for creation)
 export interface VehicleCreationAttributes extends Optional<
   VehicleAttributes,
   | 'id'
@@ -39,9 +35,7 @@ export interface VehicleCreationAttributes extends Optional<
   | 'isAvailable'
   | 'passengerCapacity'
   | 'locationId'
-  | 'createdAt'
-  | 'updatedAt'
-> {}
+>{}
 
 export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes> implements VehicleAttributes {
   public id!: string;
@@ -65,10 +59,6 @@ export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes>
   public isAvailable!: boolean;
   public passengerCapacity!: number;
   public locationId!: string;
-
-  // Timestamps
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
 }
 
 export const initVehicleModel = (sequelize: Sequelize) => {
@@ -119,9 +109,8 @@ export const initVehicleModel = (sequelize: Sequelize) => {
       },
       passengerCapacity: {
         type: DataTypes.INTEGER,
-        allowNull: false,
         defaultValue: 5,
-        comment: 'Number of passengers',
+        allowNull: false,
       },
       locationId: {
         type: DataTypes.UUID,

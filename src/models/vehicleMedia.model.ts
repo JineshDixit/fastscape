@@ -1,6 +1,5 @@
-import { DataTypes, Model, Sequelize, Optional } from 'sequelize';
+import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
 
-// VehicleMedia attributes interface
 export interface VehicleMediaAttributes {
   id: string;
   vehicleId: string;
@@ -15,12 +14,23 @@ export interface VehicleMediaAttributes {
   dashboardImage?: string;
   engineImage?: string;
   isPrimary: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
-// VehicleMedia creation attributes
-export interface VehicleMediaCreationAttributes extends Optional<VehicleMediaAttributes, 'id' | 'frontImage' | 'backImage' | 'leftSideImage' | 'rightSideImage' | 'frontLeftImage' | 'frontRightImage' | 'interiorFrontImage' | 'interiorBackImage' | 'dashboardImage' | 'engineImage' | 'isPrimary' | 'createdAt' | 'updatedAt'> {}
+export interface VehicleMediaCreationAttributes extends Optional<
+  VehicleMediaAttributes,
+  | 'id'
+  | 'frontImage'
+  | 'backImage'
+  | 'leftSideImage'
+  | 'rightSideImage'
+  | 'frontLeftImage'
+  | 'frontRightImage'
+  | 'interiorFrontImage'
+  | 'interiorBackImage'
+  | 'dashboardImage'
+  | 'engineImage'
+  | 'isPrimary'
+> {}
 
 export class VehicleMedia extends Model<VehicleMediaAttributes, VehicleMediaCreationAttributes> implements VehicleMediaAttributes {
   public id!: string;

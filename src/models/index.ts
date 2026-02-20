@@ -1,6 +1,5 @@
 import { Sequelize } from 'sequelize';
 import dbConfig from '../config/database/dbConfig';
-import logger from '../config/logger';
 import { initAdminUserModel, AdminUser } from './AdminUser';
 import { initRoleModel, Role } from './Role';
 import { initPolicyModel, Policy } from './Policy';
@@ -32,16 +31,14 @@ const initPostgres_DB = (): void => {
   const startTime = Date.now();
   const config = dbConfig;
 
-  logger.info('Initializing PostgreSQL database connection', {
-    host: config.POSTGRES_DB.host,
-    database: config.POSTGRES_DB.database,
-    port: config.POSTGRES_DB.port,
-  });
-
   sequelize = new Sequelize(config.POSTGRES_DB.database, config.POSTGRES_DB.userName, config.POSTGRES_DB.password, {
     host: config.POSTGRES_DB.host,
     port: +config.POSTGRES_DB.port,
     dialect: 'postgres',
+    timezone: '+00:00', // Force UTC timezone for all operations
+    dialectOptions: {
+      timezone: 'UTC', // PostgreSQL session timezone
+    },
     logging: false ,
     pool: {
       max: 5,
@@ -52,8 +49,6 @@ const initPostgres_DB = (): void => {
     },
     ssl: true,
   });
-  
-  logger.debug('Initializing database models');
   
   initAdminUserModel(sequelize);
   initRoleModel(sequelize);
@@ -72,8 +67,6 @@ const initPostgres_DB = (): void => {
   initChauffeurModel(sequelize);
   initBookingFinancialModel(sequelize);
   initLocationModel(sequelize)
-
-  logger.debug('Setting up model associations');
 
   // Associations
   AdminUser.belongsToMany(Role, { 
@@ -164,12 +157,6 @@ const initPostgres_DB = (): void => {
   ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
   ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
-
-  const duration = Date.now() - startTime;
-  logger.info('Database initialization completed', {
-    duration: `${duration}ms`,
-    modelsCount: 16,
-  });
 
   // try {
   //   sequelize.sync({ alter: true });
