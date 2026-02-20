@@ -18,11 +18,7 @@ import {
   bulkUpdateAvailabilityValidation,
   vehicleQueryValidation,
 } from '../services/middleware/vehicleValidation';
-import { 
-  authenticateUser, 
-  requireActiveUser, 
-  requireAnyPermission 
-} from '../services/middleware';
+import { authenticateUser, requireActiveUser, requireAnyPermission } from '../services/middleware';
 
 const router = Router();
 
@@ -33,26 +29,18 @@ router.get(
   '/',
   requireAnyPermission(['vehicle:read', 'vehicle:list', 'admin:all']),
   vehicleQueryValidation,
-  getVehiclesController
+  getVehiclesController,
 );
 
-router.get(
-  '/stats',
-  requireAnyPermission(['vehicle:read', 'vehicle:stats', 'admin:all']),
-  getVehicleStatsController
-);
+router.get('/stats', requireAnyPermission(['vehicle:read', 'vehicle:stats', 'admin:all']), getVehicleStatsController);
 
-router.get(
-  '/enums',
-  requireAnyPermission(['vehicle:read', 'vehicle:list', 'admin:all']),
-  getVehicleEnumsController
-);
+router.get('/enums', requireAnyPermission(['vehicle:read', 'vehicle:list', 'admin:all']), getVehicleEnumsController);
 
 router.get(
   '/:id',
   requireAnyPermission(['vehicle:read', 'vehicle:view', 'admin:all']),
   vehicleIdValidation,
-  getVehicleByIdController
+  getVehicleByIdController,
 );
 
 router.post(
@@ -61,7 +49,7 @@ router.post(
   vehicleImageUpload,
   handleMulterError,
   createVehicleValidation,
-  createVehicleController
+  createVehicleController,
 );
 
 router.put(
@@ -70,28 +58,28 @@ router.put(
   vehicleImageUpload,
   handleMulterError,
   updateVehicleValidation,
-  updateVehicleController
+  updateVehicleController,
 );
 
 router.delete(
   '/:id',
   requireAnyPermission(['vehicle:delete', 'admin:all']),
   vehicleIdValidation,
-  deleteVehicleController
+  deleteVehicleController,
 );
 
 router.patch(
   '/:id/toggle-availability',
   requireAnyPermission(['vehicle:update', 'vehicle:write', 'admin:all']),
   vehicleIdValidation,
-  toggleAvailabilityController
+  toggleAvailabilityController,
 );
 
 router.patch(
   '/bulk/update-availability',
   requireAnyPermission(['vehicle:update', 'vehicle:write', 'admin:all']),
   bulkUpdateAvailabilityValidation,
-  bulkUpdateAvailabilityController
+  bulkUpdateAvailabilityController,
 );
 
 export default router;

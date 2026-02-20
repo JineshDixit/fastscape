@@ -1,4 +1,4 @@
-import { AdminUserResponse } from "./authTypes";
+import { AdminUserResponse } from './authTypes';
 
 export interface AuthenticatedRequest extends Request {
   user?: AdminUserResponse;

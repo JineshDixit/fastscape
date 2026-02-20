@@ -120,7 +120,7 @@ export const generateInvoicePDF = async (bookingId: string): Promise<Buffer> => 
 
     // Line items
     doc.fontSize(9).fillColor('#333333');
-    
+
     // Base Amount
     doc.text('Base Rental Amount', leftColumn, yPos);
     doc.text(formatCurrency(financial.baseAmount, financial.currency), 480, yPos, { align: 'right', width: 75 });
@@ -143,14 +143,20 @@ export const generateInvoicePDF = async (bookingId: string): Promise<Buffer> => 
     // Platform Charge
     if (financial.platformChargeAmount > 0) {
       doc.text(`Platform Charge (${financial.platformChargeRate}%)`, leftColumn, yPos);
-      doc.text(formatCurrency(financial.platformChargeAmount, financial.currency), 480, yPos, { align: 'right', width: 75 });
+      doc.text(formatCurrency(financial.platformChargeAmount, financial.currency), 480, yPos, {
+        align: 'right',
+        width: 75,
+      });
       yPos += 15;
     }
 
     // Delay Charge
     if (financial.delayChargeAmount > 0) {
       doc.fillColor('#dc2626').text('Delay Charge', leftColumn, yPos);
-      doc.text(formatCurrency(financial.delayChargeAmount, financial.currency), 480, yPos, { align: 'right', width: 75 });
+      doc.text(formatCurrency(financial.delayChargeAmount, financial.currency), 480, yPos, {
+        align: 'right',
+        width: 75,
+      });
       doc.fillColor('#333333');
       yPos += 15;
     }
@@ -279,7 +285,10 @@ export const generateMultipleInvoicesPDF = async (bookingIds: string[]): Promise
 
       // Header
       doc.fontSize(24).fillColor('#2563eb').text('FASTSCAPE', 40, yPos);
-      doc.fontSize(10).fillColor('#666666').text('Premium Car Rental Services', 40, yPos + 28);
+      doc
+        .fontSize(10)
+        .fillColor('#666666')
+        .text('Premium Car Rental Services', 40, yPos + 28);
 
       // Invoice info
       doc.fontSize(18).fillColor('#333333').text('INVOICE', 450, yPos, { align: 'right' });
@@ -327,7 +336,10 @@ export const generateMultipleInvoicesPDF = async (bookingIds: string[]): Promise
 
       if (financial.chauffeurAmount > 0) {
         doc.text(`Chauffeur Service (${financial.chauffeurHours}h)`, 40, yPos);
-        doc.text(formatCurrency(financial.chauffeurAmount, financial.currency), 480, yPos, { align: 'right', width: 75 });
+        doc.text(formatCurrency(financial.chauffeurAmount, financial.currency), 480, yPos, {
+          align: 'right',
+          width: 75,
+        });
         yPos += 15;
       }
 
@@ -339,13 +351,19 @@ export const generateMultipleInvoicesPDF = async (bookingIds: string[]): Promise
 
       if (financial.platformChargeAmount > 0) {
         doc.text(`Platform Charge (${financial.platformChargeRate}%)`, 40, yPos);
-        doc.text(formatCurrency(financial.platformChargeAmount, financial.currency), 480, yPos, { align: 'right', width: 75 });
+        doc.text(formatCurrency(financial.platformChargeAmount, financial.currency), 480, yPos, {
+          align: 'right',
+          width: 75,
+        });
         yPos += 15;
       }
 
       if (financial.delayChargeAmount > 0) {
         doc.fillColor('#dc2626').text('Delay Charge', 40, yPos);
-        doc.text(formatCurrency(financial.delayChargeAmount, financial.currency), 480, yPos, { align: 'right', width: 75 });
+        doc.text(formatCurrency(financial.delayChargeAmount, financial.currency), 480, yPos, {
+          align: 'right',
+          width: 75,
+        });
         doc.fillColor('#333333');
         yPos += 15;
       }

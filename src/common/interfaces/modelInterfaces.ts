@@ -1,4 +1,4 @@
-import { Optional } from "sequelize";
+import { Optional } from 'sequelize';
 
 export interface AdminRefreshTokenAttributes {
   id: string;
@@ -12,4 +12,7 @@ export interface AdminRefreshTokenAttributes {
   updatedAt?: Date;
 }
 
-export interface AdminRefreshTokenCreationAttributes extends Optional<AdminRefreshTokenAttributes, 'id' | 'isRevoked' | 'deviceInfo' | 'ipAddress' | 'createdAt' | 'updatedAt'> {}
+export interface AdminRefreshTokenCreationAttributes extends Optional<
+  AdminRefreshTokenAttributes,
+  'id' | 'isRevoked' | 'deviceInfo' | 'ipAddress' | 'createdAt' | 'updatedAt'
+> {}

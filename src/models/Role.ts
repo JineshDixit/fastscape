@@ -50,6 +50,6 @@ export const initRoleModel = (sequelize: Sequelize) => {
           fields: ['is_active'],
         },
       ],
-    }
+    },
   );
 };

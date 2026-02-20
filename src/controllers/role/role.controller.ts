@@ -9,7 +9,13 @@ import {
   deactivate,
   getByName,
 } from '../../services/role/role.service';
-import { sendSuccess, sendCreated, sendSuccessWithPagination, calculatePagination, parsePaginationParams } from '../../utils/response.utils';
+import {
+  sendSuccess,
+  sendCreated,
+  sendSuccessWithPagination,
+  calculatePagination,
+  parsePaginationParams,
+} from '../../utils/response.utils';
 import { createError } from '../../services/middleware/errorHandler';
 
 /**
@@ -57,12 +63,7 @@ export const getAllRoles = async (req: Request, res: Response, next: NextFunctio
 
     const pagination = calculatePagination(result.total, page, limit);
 
-    sendSuccessWithPagination(
-      res,
-      'Roles retrieved successfully',
-      result.roles,
-      pagination
-    );
+    sendSuccessWithPagination(res, 'Roles retrieved successfully', result.roles, pagination);
   } catch (error) {
     next(error);
   }

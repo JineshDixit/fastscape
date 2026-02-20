@@ -38,16 +38,11 @@ const timestampFormat = winston.format.timestamp({
 const consoleFormat = winston.format.combine(
   winston.format.colorize({ all: true }),
   timestampFormat,
-  winston.format.printf(
-    (info) => `${info.timestamp} [${info.level}]: ${info.message}`
-  )
+  winston.format.printf((info) => `${info.timestamp} [${info.level}]: ${info.message}`),
 );
 
 // JSON format for file logging
-const fileFormat = winston.format.combine(
-  timestampFormat,
-  winston.format.json()
-);
+const fileFormat = winston.format.combine(timestampFormat, winston.format.json());
 
 // Define transports
 const transports = [

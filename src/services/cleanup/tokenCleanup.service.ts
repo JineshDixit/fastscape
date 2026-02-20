@@ -32,8 +32,8 @@ export const cleanupTokens = async (): Promise<void> => {
     [Op.or]: [
       { expiresAt: { [Op.lt]: new Date() } },
       { isRevoked: true, updatedAt: { [Op.lt]: thirtyDaysAgo } },
-      { createdAt: { [Op.lt]: ninetyDaysAgo } }
-    ]
+      { createdAt: { [Op.lt]: ninetyDaysAgo } },
+    ],
   });
 };
 
@@ -83,6 +83,6 @@ export const startTokenCleanupJob = (): void => {
  * Stop all cleanup jobs
  */
 export const stopTokenCleanupJob = (): void => {
-  cron.getTasks().forEach(task => task.stop());
+  cron.getTasks().forEach((task) => task.stop());
   logger.info('Token cleanup jobs stopped');
 };

@@ -209,7 +209,7 @@ export const deleteChauffeur = async (req: Request, res: Response) => {
 export const exportChauffeurs = async (req: Request, res: Response) => {
   try {
     const { CSVExportService } = await import('../../services/csv/csvExport.service');
-    
+
     const filters = {
       status: req.query.status as string,
       isVerified: req.query.isVerified !== undefined ? req.query.isVerified === 'true' : undefined,
@@ -228,33 +228,33 @@ export const exportChauffeurs = async (req: Request, res: Response) => {
       { key: 'email', label: 'Email' },
       { key: 'phone', label: 'Phone' },
       { key: 'status', label: 'Status' },
-      { 
-        key: 'isVerified', 
+      {
+        key: 'isVerified',
         label: 'Verified',
-        format: CSVExportService.formatBoolean
+        format: CSVExportService.formatBoolean,
       },
       { key: 'rating', label: 'Rating' },
       { key: 'totalTrips', label: 'Total Trips' },
       { key: 'nationality', label: 'Nationality' },
       { key: 'licenseNumber', label: 'License Number' },
-      { 
-        key: 'licenseExpiryDate', 
+      {
+        key: 'licenseExpiryDate',
         label: 'License Expiry',
-        format: CSVExportService.formatDate
+        format: CSVExportService.formatDate,
       },
       { key: 'experienceLevel', label: 'Experience Level' },
       { key: 'yearsOfExperience', label: 'Years of Experience' },
-      { 
-        key: 'hourlyRate', 
+      {
+        key: 'hourlyRate',
         label: 'Hourly Rate',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
       { key: 'city', label: 'City' },
       { key: 'country', label: 'Country' },
-      { 
-        key: 'createdAt', 
+      {
+        key: 'createdAt',
         label: 'Created At',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
     ];
 

@@ -1,7 +1,10 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { AdminRefreshTokenCreationAttributes, AdminRefreshTokenAttributes } from '../common/interfaces/modelInterfaces';
 
-class AdminRefreshToken extends Model<AdminRefreshTokenAttributes, AdminRefreshTokenCreationAttributes> implements AdminRefreshTokenAttributes {
+class AdminRefreshToken
+  extends Model<AdminRefreshTokenAttributes, AdminRefreshTokenCreationAttributes>
+  implements AdminRefreshTokenAttributes
+{
   public id!: string;
   public adminUserId!: string;
   public token!: string;
@@ -36,7 +39,7 @@ const initAdminRefreshTokenModel = (sequelize: Sequelize): void => {
       },
       expiresAt: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
       },
       isRevoked: {
         type: DataTypes.BOOLEAN,
@@ -75,7 +78,7 @@ const initAdminRefreshTokenModel = (sequelize: Sequelize): void => {
           fields: ['is_revoked'],
         },
       ],
-    }
+    },
   );
 };
 

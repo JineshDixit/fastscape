@@ -7,7 +7,7 @@ import fs from 'fs';
  */
 export const serveStaticFiles = () => {
   const uploadsPath = path.join(process.cwd(), 'uploads');
-  
+
   // Ensure uploads directory exists
   if (!fs.existsSync(uploadsPath)) {
     fs.mkdirSync(uploadsPath, { recursive: true });
@@ -34,7 +34,7 @@ export const serveStaticFiles = () => {
         default:
           res.setHeader('Content-Type', 'application/octet-stream');
       }
-      
+
       // Set cache control headers
       res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
     },

@@ -16,11 +16,7 @@ export {
 export { errorHandler, notFoundHandler, createError } from './errorHandler';
 
 // Security middleware
-export {
-  securityHeaders,
-  preventParameterPollution,
-  sanitizeInput,
-} from './security';
+export { securityHeaders, preventParameterPollution, sanitizeInput } from './security';
 
 // Validation middleware
 export { handleValidationErrors } from './validation';

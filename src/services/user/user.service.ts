@@ -82,7 +82,15 @@ export const getAllUsers = async (filters: UserFilters): Promise<UserListResult>
       {
         model: UserIdentityDocument,
         required: false,
-        attributes: { exclude: ['driverLicenseFront', 'driverLicenseBack', 'passportPhoto', 'internationalDrivingPermit', 'selfieWithLicense'] },
+        attributes: {
+          exclude: [
+            'driverLicenseFront',
+            'driverLicenseBack',
+            'passportPhoto',
+            'internationalDrivingPermit',
+            'selfieWithLicense',
+          ],
+        },
       },
     ],
     order,
@@ -153,7 +161,7 @@ export const updateVerificationStatus = async (userId: string, verificationStatu
         verificationStatus,
         verificationDate: verificationStatus === 'VERIFIED' ? new Date() : null,
       },
-      { transaction }
+      { transaction },
     );
 
     // Also update identity document verification status if exists
@@ -169,7 +177,7 @@ export const updateVerificationStatus = async (userId: string, verificationStatu
           verificationDate: verificationStatus === 'VERIFIED' ? new Date() : null,
           verified: verificationStatus === 'VERIFIED',
         },
-        { transaction }
+        { transaction },
       );
     }
 
@@ -224,7 +232,9 @@ export const toggleBlockUser = async (userId: string, isBlocked: boolean, reason
       await Booking.update(
         {
           bookingStatus: 'CANCELLED',
-          notes: sequelize.literal(`CONCAT(COALESCE(notes, ''), '\nCancelled: User blocked${reason ? ` - ${reason}` : ''}')`),
+          notes: sequelize.literal(
+            `CONCAT(COALESCE(notes, ''), '\nCancelled: User blocked${reason ? ` - ${reason}` : ''}')`,
+          ),
         },
         {
           where: {
@@ -232,7 +242,7 @@ export const toggleBlockUser = async (userId: string, isBlocked: boolean, reason
             bookingStatus: { [Op.in]: ['PENDING', 'CONFIRMED'] },
           },
           transaction,
-        }
+        },
       );
     }
 

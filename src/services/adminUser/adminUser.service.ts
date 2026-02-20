@@ -25,11 +25,11 @@ const validateLanguage = (language: string): void => {
  */
 const getAdminUserOrThrow = async (adminUserId: string): Promise<AdminUser> => {
   const user = await AdminUser.findByPk(adminUserId);
-  
+
   if (!user) {
     throw createError('Admin user not found', 404);
   }
-  
+
   return user;
 };
 
@@ -71,7 +71,7 @@ export const create = async (userData: AdminRegisterRequest): Promise<AdminUserR
  */
 export const getById = async (adminUserId: string): Promise<AdminUserResponse> => {
   const user = await getAdminUserWithRolesAndPermissions(adminUserId);
-  
+
   if (!user) {
     throw createError('Admin user not found', 404);
   }
@@ -90,7 +90,7 @@ export const getByEmail = async (email: string): Promise<AdminUserResponse> => {
     where: { email: sanitizedEmail },
     include: ADMIN_USER_ROLES_POLICIES_INCLUDE,
   });
-  
+
   if (!user) {
     throw createError('Admin user not found', 404);
   }
@@ -105,12 +105,12 @@ export const getAll = async (
   page: number = 1,
   limit: number = 20,
   search?: string,
-  isActive?: boolean
+  isActive?: boolean,
 ): Promise<{ users: AdminUserResponse[]; total: number; totalPages: number }> => {
   const offset = (page - 1) * limit;
-  
+
   const whereClause: any = {};
-  
+
   if (search) {
     whereClause[Op.or] = [
       { firstName: { [Op.iLike]: `%${search}%` } },
@@ -118,7 +118,7 @@ export const getAll = async (
       { email: { [Op.iLike]: `%${search}%` } },
     ];
   }
-  
+
   if (isActive !== undefined) {
     whereClause.isActive = isActive;
   }
@@ -141,12 +141,9 @@ export const getAll = async (
 /**
  * Update admin user language preference
  */
-export const updateLanguage = async (
-  adminUserId: string,
-  language: string
-): Promise<AdminUserResponse> => {
+export const updateLanguage = async (adminUserId: string, language: string): Promise<AdminUserResponse> => {
   const user = await getAdminUserOrThrow(adminUserId);
-  
+
   // Validate language
   validateLanguage(language);
 
@@ -163,7 +160,7 @@ export const updateLanguage = async (
  */
 export const update = async (
   adminUserId: string,
-  updateData: Partial<Pick<AdminUser, 'firstName' | 'lastName' | 'email' | 'isActive' | 'preferredLanguage'>>
+  updateData: Partial<Pick<AdminUser, 'firstName' | 'lastName' | 'email' | 'isActive' | 'preferredLanguage'>>,
 ): Promise<AdminUserResponse> => {
   const user = await getAdminUserOrThrow(adminUserId);
 
@@ -171,18 +168,18 @@ export const update = async (
   if (updateData.email) {
     const sanitizedEmail = sanitizeEmail(updateData.email);
     validateEmail(sanitizedEmail);
-    
+
     const existingUser = await AdminUser.findOne({
-      where: { 
+      where: {
         email: sanitizedEmail,
-        id: { [Op.ne]: adminUserId }
-      }
+        id: { [Op.ne]: adminUserId },
+      },
     });
-    
+
     if (existingUser) {
       throw createError('Admin user with this email already exists', 409);
     }
-    
+
     updateData.email = sanitizedEmail;
   }
 
@@ -211,10 +208,7 @@ const updateUserPassword = async (user: AdminUser, newPassword: string): Promise
  * Update admin user password (admin action - no current password verification)
  * Used by super-admin to reset any user's password
  */
-export const updatePassword = async (
-  adminUserId: string,
-  newPassword: string
-): Promise<void> => {
+export const updatePassword = async (adminUserId: string, newPassword: string): Promise<void> => {
   const user = await getAdminUserOrThrow(adminUserId);
   await updateUserPassword(user, newPassword);
 };
@@ -226,7 +220,7 @@ export const updatePassword = async (
 export const changePassword = async (
   adminUserId: string,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> => {
   const user = await getAdminUserOrThrow(adminUserId);
 
@@ -266,7 +260,7 @@ export const deactivate = async (adminUserId: string): Promise<AdminUserResponse
  */
 export const remove = async (adminUserId: string): Promise<void> => {
   const user = await getAdminUserOrThrow(adminUserId);
-  
+
   // Soft delete by deactivating
   await user.update({ isActive: false });
 };

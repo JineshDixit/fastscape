@@ -56,6 +56,6 @@ export const initAdminUserRoleModel = (sequelize: Sequelize) => {
           fields: ['admin_user_id', 'role_id'],
         },
       ],
-    }
+    },
   );
 };

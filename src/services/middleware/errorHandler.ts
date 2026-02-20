@@ -1,17 +1,12 @@
 import { AppError } from '../../common/interfaces/errorInterfaces';
-import '../../config/env/envConfig'
+import '../../config/env/envConfig';
 import { Request, Response, NextFunction } from 'express';
 import logger from '../../config/logger';
 
 /**
  * Global error handler middleware
  */
-export const errorHandler = (
-  error: AppError,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
+export const errorHandler = (error: AppError, req: Request, res: Response, next: NextFunction): void => {
   let { statusCode = 500, message } = error;
 
   // Don't expose internal errors in production

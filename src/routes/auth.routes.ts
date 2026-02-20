@@ -8,12 +8,7 @@ import {
   getProfile,
   updateProfile,
 } from '../controllers/auth/auth.controller';
-import {
-  authenticateUser,
-  authLimiter,
-  refreshTokenLimiter,
-  requireActiveUser,
-} from '../services/middleware';
+import { authenticateUser, authLimiter, refreshTokenLimiter, requireActiveUser } from '../services/middleware';
 
 const router = Router();
 

@@ -35,14 +35,14 @@ export const getPendingDocuments = async (): Promise<UserIdentityDocument[]> => 
  */
 export const getUserDocuments = async (userId: string): Promise<UserIdentityDocument | null> => {
   return await UserIdentityDocument.findOne({
-      where: { userId },
-      include: [
-        {
-          model: User,
-          attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'verificationStatus'],
-        },
-      ],
-    });
+    where: { userId },
+    include: [
+      {
+        model: User,
+        attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'verificationStatus'],
+      },
+    ],
+  });
 };
 
 /**

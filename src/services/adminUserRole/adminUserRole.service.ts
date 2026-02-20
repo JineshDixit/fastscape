@@ -1,9 +1,6 @@
 import { AdminUserRole, AdminUser, Role } from '../../models';
 import { AssignRoleRequest, AdminUserResponse, RoleResponse } from '../../common/interfaces/authTypes';
-import { 
-  formatAdminUserResponse, 
-  getAdminUserWithRolesAndPermissions
-} from '../../utils/adminUser.utils';
+import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '../../utils/adminUser.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields } from '../../utils/validation.utils';
 import { AdminUserWithAssociations, RoleWithAdminUsers } from '../../common//interfaces/userType';
@@ -11,26 +8,23 @@ import { AdminUserWithAssociations, RoleWithAdminUsers } from '../../common//int
 /**
  * Assign role to admin user
  */
-export const assignRole = async (
-  assignData: AssignRoleRequest,
-  assignedBy?: number
-): Promise<AdminUserResponse> => {
+export const assignRole = async (assignData: AssignRoleRequest, assignedBy?: number): Promise<AdminUserResponse> => {
   const { adminUserId, roleId } = assignData;
 
   // Validate required fields
   validateRequiredFields(assignData, ['adminUserId', 'roleId']);
 
   // Check if admin user exists and is active
-  const adminUser = await AdminUser.findOne({ 
-    where: { id: adminUserId, isActive: true } 
+  const adminUser = await AdminUser.findOne({
+    where: { id: adminUserId, isActive: true },
   });
   if (!adminUser) {
     throw createError('Admin user not found or inactive', 404);
   }
 
   // Check if role exists and is active
-  const role = await Role.findOne({ 
-    where: { id: roleId, isActive: true } 
+  const role = await Role.findOne({
+    where: { id: roleId, isActive: true },
   });
   if (!role) {
     throw createError('Role not found or inactive', 404);
@@ -38,7 +32,7 @@ export const assignRole = async (
 
   // Check if assignment already exists
   const existingAssignment = await AdminUserRole.findOne({
-    where: { adminUserId, roleId }
+    where: { adminUserId, roleId },
   });
 
   if (existingAssignment) {
@@ -60,13 +54,10 @@ export const assignRole = async (
 /**
  * Remove role from admin user
  */
-export const removeRole = async (
-  adminUserId: string,
-  roleId: string
-): Promise<AdminUserResponse> => {
+export const removeRole = async (adminUserId: string, roleId: string): Promise<AdminUserResponse> => {
   // Check if assignment exists
   const assignment = await AdminUserRole.findOne({
-    where: { adminUserId, roleId }
+    where: { adminUserId, roleId },
   });
 
   if (!assignment) {
@@ -97,7 +88,7 @@ export const getUserRoles = async (adminUserId: string): Promise<RoleResponse[]>
         through: { attributes: [] },
         where: { isActive: true },
         required: false,
-      }
+      },
     ],
   });
 
@@ -126,7 +117,7 @@ export const getRoleUsers = async (roleId: string): Promise<AdminUserResponse[]>
         through: { attributes: [] },
         where: { isActive: true },
         required: false,
-      }
+      },
     ],
   });
 
@@ -165,7 +156,7 @@ export const getUserPermissions = async (adminUserId: string): Promise<string[]>
  */
 export const hasRole = async (adminUserId: string, roleId: string): Promise<boolean> => {
   const assignment = await AdminUserRole.findOne({
-    where: { adminUserId, roleId }
+    where: { adminUserId, roleId },
   });
 
   return !!assignment;
@@ -176,10 +167,10 @@ export const hasRole = async (adminUserId: string, roleId: string): Promise<bool
  */
 export const hasAnyRole = async (adminUserId: string, roleIds: string[]): Promise<boolean> => {
   const assignments = await AdminUserRole.findAll({
-    where: { 
+    where: {
       adminUserId,
-      roleId: roleIds
-    }
+      roleId: roleIds,
+    },
   });
 
   return assignments.length > 0;
@@ -198,7 +189,7 @@ export const hasPermission = async (adminUserId: string, permission: string): Pr
  */
 export const hasAnyPermission = async (adminUserId: string, permissions: string[]): Promise<boolean> => {
   const userPermissions = await getUserPermissions(adminUserId);
-  return permissions.some(permission => userPermissions.includes(permission));
+  return permissions.some((permission) => userPermissions.includes(permission));
 };
 
 /**
@@ -207,11 +198,11 @@ export const hasAnyPermission = async (adminUserId: string, permissions: string[
 export const bulkAssignRoles = async (
   adminUserId: string,
   roleIds: string[],
-  assignedBy?: number
+  assignedBy?: number,
 ): Promise<AdminUserResponse> => {
   // Check if admin user exists and is active
-  const adminUser = await AdminUser.findOne({ 
-    where: { id: adminUserId, isActive: true } 
+  const adminUser = await AdminUser.findOne({
+    where: { id: adminUserId, isActive: true },
   });
   if (!adminUser) {
     throw createError('Admin user not found or inactive', 404);
@@ -219,7 +210,7 @@ export const bulkAssignRoles = async (
 
   // Check if all roles exist and are active
   const roles = await Role.findAll({
-    where: { id: roleIds, isActive: true }
+    where: { id: roleIds, isActive: true },
   });
 
   if (roles.length !== roleIds.length) {
@@ -228,15 +219,15 @@ export const bulkAssignRoles = async (
 
   // Get existing assignments
   const existingAssignments = await AdminUserRole.findAll({
-    where: { adminUserId, roleId: roleIds }
+    where: { adminUserId, roleId: roleIds },
   });
 
-  const existingRoleIds = existingAssignments.map(assignment => assignment.roleId);
-  const newRoleIds = roleIds.filter(roleId => !existingRoleIds.includes(roleId));
+  const existingRoleIds = existingAssignments.map((assignment) => assignment.roleId);
+  const newRoleIds = roleIds.filter((roleId) => !existingRoleIds.includes(roleId));
 
   // Create new assignments
   if (newRoleIds.length > 0) {
-    const assignmentData = newRoleIds.map(roleId => ({
+    const assignmentData = newRoleIds.map((roleId) => ({
       adminUserId,
       roleId,
       assignedBy,
@@ -256,7 +247,7 @@ export const bulkAssignRoles = async (
 export const removeAllRoles = async (adminUserId: string): Promise<AdminUserResponse> => {
   // Remove all assignments
   await AdminUserRole.destroy({
-    where: { adminUserId }
+    where: { adminUserId },
   });
 
   // Get updated admin user

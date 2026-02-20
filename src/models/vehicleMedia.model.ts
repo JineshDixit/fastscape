@@ -32,7 +32,10 @@ export interface VehicleMediaCreationAttributes extends Optional<
   | 'isPrimary'
 > {}
 
-export class VehicleMedia extends Model<VehicleMediaAttributes, VehicleMediaCreationAttributes> implements VehicleMediaAttributes {
+export class VehicleMedia
+  extends Model<VehicleMediaAttributes, VehicleMediaCreationAttributes>
+  implements VehicleMediaAttributes
+{
   public id!: string;
   public vehicleId!: string;
   public frontImage!: string;
@@ -46,7 +49,7 @@ export class VehicleMedia extends Model<VehicleMediaAttributes, VehicleMediaCrea
   public dashboardImage!: string;
   public engineImage!: string;
   public isPrimary!: boolean;
-  
+
   // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;

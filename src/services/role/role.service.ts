@@ -31,7 +31,7 @@ export const create = async (roleData: CreateRoleRequest): Promise<RoleResponse>
   if (policyIds && policyIds.length > 0) {
     // Validate that all policies exist
     const policies = await Policy.findAll({
-      where: { id: { [Op.in]: policyIds }, isActive: true }
+      where: { id: { [Op.in]: policyIds }, isActive: true },
     });
 
     if (policies.length !== policyIds.length) {
@@ -39,7 +39,7 @@ export const create = async (roleData: CreateRoleRequest): Promise<RoleResponse>
     }
 
     // Create role-policy associations
-    const rolePolicyData = policyIds.map(policyId => ({
+    const rolePolicyData = policyIds.map((policyId) => ({
       roleId: role.id,
       policyId,
     }));
@@ -55,7 +55,7 @@ export const create = async (roleData: CreateRoleRequest): Promise<RoleResponse>
  */
 export const getById = async (roleId: string): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   const role = await getRoleWithPolicies(roleId);
-  
+
   if (!role) {
     throw createError('Role not found', 404);
   }
@@ -71,31 +71,30 @@ export const getAll = async (
   limit: number = 20,
   search?: string,
   isActive?: boolean,
-  includePolicies: boolean = false
+  includePolicies: boolean = false,
 ): Promise<{ roles: RoleResponse[]; total: number; totalPages: number }> => {
   const offset = (page - 1) * limit;
-  
+
   const whereClause: any = {};
-  
+
   if (search) {
-    whereClause[Op.or] = [
-      { name: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } },
-    ];
+    whereClause[Op.or] = [{ name: { [Op.iLike]: `%${search}%` } }, { description: { [Op.iLike]: `%${search}%` } }];
   }
-  
+
   if (isActive !== undefined) {
     whereClause.isActive = isActive;
   }
 
-  const includeOptions = includePolicies ? [
-    {
-      model: Policy,
-      through: { attributes: [] as string[] },
-      where: { isActive: true },
-      required: false,
-    }
-  ] : [];
+  const includeOptions = includePolicies
+    ? [
+        {
+          model: Policy,
+          through: { attributes: [] as string[] },
+          where: { isActive: true },
+          required: false,
+        },
+      ]
+    : [];
 
   const { rows: roles, count: total } = await Role.findAndCountAll({
     where: whereClause,
@@ -106,11 +105,7 @@ export const getAll = async (
   });
 
   return {
-    roles: roles.map(role => 
-      includePolicies 
-        ? formatRoleWithPoliciesResponse(role) 
-        : formatRoleResponse(role)
-    ),
+    roles: roles.map((role) => (includePolicies ? formatRoleWithPoliciesResponse(role) : formatRoleResponse(role))),
     total,
     totalPages: Math.ceil(total / limit),
   };
@@ -119,12 +114,9 @@ export const getAll = async (
 /**
  * Update role
  */
-export const update = async (
-  roleId: string,
-  updateData: UpdateRoleRequest
-): Promise<RoleResponse> => {
+export const update = async (roleId: string, updateData: UpdateRoleRequest): Promise<RoleResponse> => {
   const role = await Role.findByPk(roleId);
-  
+
   if (!role) {
     throw createError('Role not found', 404);
   }
@@ -132,12 +124,12 @@ export const update = async (
   // If name is being updated, check for duplicates
   if (updateData.name) {
     const existingRole = await Role.findOne({
-      where: { 
+      where: {
         name: updateData.name,
-        id: { [Op.ne]: roleId }
-      }
+        id: { [Op.ne]: roleId },
+      },
     });
-    
+
     if (existingRole) {
       throw createError('Role with this name already exists', 409);
     }
@@ -154,7 +146,7 @@ export const update = async (
  */
 export const remove = async (roleId: string): Promise<void> => {
   const role = await Role.findByPk(roleId);
-  
+
   if (!role) {
     throw createError('Role not found', 404);
   }
@@ -166,7 +158,7 @@ export const remove = async (roleId: string): Promise<void> => {
         model: Role,
         through: { attributes: [] },
         where: { id: roleId },
-      }
+      },
     ],
   });
 
@@ -183,7 +175,7 @@ export const remove = async (roleId: string): Promise<void> => {
  */
 export const activate = async (roleId: string): Promise<RoleResponse> => {
   const role = await Role.findByPk(roleId);
-  
+
   if (!role) {
     throw createError('Role not found', 404);
   }
@@ -197,7 +189,7 @@ export const activate = async (roleId: string): Promise<RoleResponse> => {
  */
 export const deactivate = async (roleId: string): Promise<RoleResponse> => {
   const role = await Role.findByPk(roleId);
-  
+
   if (!role) {
     throw createError('Role not found', 404);
   }
@@ -227,7 +219,7 @@ export const isActive = async (roleId: string): Promise<boolean> => {
  */
 export const getByName = async (name: string): Promise<RoleResponse | null> => {
   const role = await Role.findOne({ where: { name } });
-  
+
   if (!role) {
     return null;
   }

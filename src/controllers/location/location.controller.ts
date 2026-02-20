@@ -191,7 +191,7 @@ export const deleteLocation = async (req: Request, res: Response) => {
 export const exportLocations = async (req: Request, res: Response) => {
   try {
     const { CSVExportService } = await import('../../services/csv/csvExport.service');
-    
+
     const filters = {
       city: req.query.city as string,
       isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
@@ -205,20 +205,20 @@ export const exportLocations = async (req: Request, res: Response) => {
       { key: 'name', label: 'Name' },
       { key: 'code', label: 'Code' },
       { key: 'city', label: 'City' },
-      { 
-        key: 'isActive', 
+      {
+        key: 'isActive',
         label: 'Active',
-        format: CSVExportService.formatBoolean
+        format: CSVExportService.formatBoolean,
       },
-      { 
-        key: 'createdAt', 
+      {
+        key: 'createdAt',
         label: 'Created At',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
-      { 
-        key: 'updatedAt', 
+      {
+        key: 'updatedAt',
         label: 'Updated At',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
     ];
 

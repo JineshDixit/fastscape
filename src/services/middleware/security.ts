@@ -4,14 +4,17 @@ import { Request, Response, NextFunction } from 'express';
  * Security headers middleware
  */
 export const securityHeaders = (req: Request, res: Response, next: NextFunction): void => {
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:");
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:",
+  );
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.removeHeader('X-Powered-By');
-  
+
   next();
 };
 
@@ -33,11 +36,11 @@ const sanitizeObject = (obj: any): any => {
   if (typeof obj === 'string') {
     return sanitizeString(obj);
   }
-  
+
   if (Array.isArray(obj)) {
     return obj.map(sanitizeObject);
   }
-  
+
   if (obj && typeof obj === 'object') {
     const sanitized: any = {};
     for (const key in obj) {
@@ -47,7 +50,7 @@ const sanitizeObject = (obj: any): any => {
     }
     return sanitized;
   }
-  
+
   return obj;
 };
 
@@ -81,8 +84,4 @@ export const preventParameterPollution = (req: Request, res: Response, next: Nex
 /**
  * Grouped security middlewares for convenience
  */
-export const applySecurityMiddlewares = [
-  securityHeaders,
-  preventParameterPollution,
-  sanitizeInput,
-];
+export const applySecurityMiddlewares = [securityHeaders, preventParameterPollution, sanitizeInput];

@@ -24,9 +24,7 @@ export const requireRole = (requiredRole: string) => {
         throw createError('No roles assigned to user', 403);
       }
 
-      const hasRole = user.roles.some(role => 
-        role.name === requiredRole && role.isActive
-      );
+      const hasRole = user.roles.some((role) => role.name === requiredRole && role.isActive);
 
       if (!hasRole) {
         throw createError(`Access denied. Required role: ${requiredRole}`, 403);
@@ -51,9 +49,7 @@ export const requireAnyRole = (requiredRoles: string[]) => {
         throw createError('No roles assigned to user', 403);
       }
 
-      const hasAnyRole = user.roles.some(role => 
-        requiredRoles.includes(role.name) && role.isActive
-      );
+      const hasAnyRole = user.roles.some((role) => requiredRoles.includes(role.name) && role.isActive);
 
       if (!hasAnyRole) {
         throw createError(`Access denied. Required roles: ${requiredRoles.join(', ')}`, 403);
@@ -101,9 +97,7 @@ export const requireAnyPermission = (requiredPermissions: string[]) => {
         throw createError('No permissions assigned to user', 403);
       }
 
-      const hasAnyPermission = requiredPermissions.some(permission => 
-        user.permissions.includes(permission)
-      );
+      const hasAnyPermission = requiredPermissions.some((permission) => user.permissions.includes(permission));
 
       if (!hasAnyPermission) {
         throw createError(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`, 403);
@@ -128,14 +122,10 @@ export const requireAllPermissions = (requiredPermissions: string[]) => {
         throw createError('No permissions assigned to user', 403);
       }
 
-      const hasAllPermissions = requiredPermissions.every(permission => 
-        user.permissions.includes(permission)
-      );
+      const hasAllPermissions = requiredPermissions.every((permission) => user.permissions.includes(permission));
 
       if (!hasAllPermissions) {
-        const missingPermissions = requiredPermissions.filter(permission => 
-          !user.permissions.includes(permission)
-        );
+        const missingPermissions = requiredPermissions.filter((permission) => !user.permissions.includes(permission));
         throw createError(`Access denied. Missing permissions: ${missingPermissions.join(', ')}`, 403);
       }
 
@@ -156,7 +146,7 @@ export const requireOwnershipOrRole = (roleForBypass: string) => {
       const targetUserId = req.params.id || req.params.adminUserId || req.body.adminUserId;
 
       // Allow if user is accessing their own resource or has bypass role
-      if (user.userId === targetUserId || (user.roles?.some(role => role.name === roleForBypass && role.isActive))) {
+      if (user.userId === targetUserId || user.roles?.some((role) => role.name === roleForBypass && role.isActive)) {
         return next();
       }
 

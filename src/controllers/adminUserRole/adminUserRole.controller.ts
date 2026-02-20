@@ -200,7 +200,7 @@ export const bulkAssignRolesToUser = async (req: Request, res: Response, next: N
 export const removeAllRolesFromUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { adminUserId } = req.params;
-    
+
     const result = await removeAllRoles(adminUserId);
 
     sendSuccess(res, 'All roles removed from admin user successfully', result);

@@ -93,7 +93,7 @@ export const getAllBookings = async (filters: BookingFilters): Promise<BookingLi
   if (filters.sortBy) {
     const sortOrder = filters.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
     const field = filters.sortBy;
-    
+
     // Map frontend column names to backend sorting
     if (field === 'user') {
       order = [[{ model: User, as: 'User' }, 'firstName', sortOrder]];

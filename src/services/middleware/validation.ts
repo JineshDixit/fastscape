@@ -16,23 +16,16 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 
 // Login validation rules
 export const validateLogin = [
-  body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('Please provide a valid email address'),
-  
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required'),
-  
+  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
+
+  body('password').notEmpty().withMessage('Password is required'),
+
   handleValidationErrors,
 ];
 
 // Refresh token validation rules
 export const validateRefreshToken = [
-  body('refreshToken')
-    .notEmpty()
-    .withMessage('Refresh token is required'),
-  
+  body('refreshToken').notEmpty().withMessage('Refresh token is required'),
+
   handleValidationErrors,
 ];

@@ -1,4 +1,4 @@
-import '../config/env/envConfig'
+import '../config/env/envConfig';
 import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { JwtPayload, TokenPair } from '../common/interfaces/jwtInterfaces';
@@ -14,11 +14,7 @@ export const generateAccessToken = (payload: Omit<JwtPayload, 'type'>): string =
     throw new Error('JWT_ACCESS_SECRET is not defined');
   }
 
-  return jwt.sign(
-    { ...payload, type: 'access' as const },
-    accessSecret,
-    { expiresIn } as jwt.SignOptions
-  );
+  return jwt.sign({ ...payload, type: 'access' as const }, accessSecret, { expiresIn } as jwt.SignOptions);
 };
 
 /**
@@ -32,11 +28,7 @@ export const generateRefreshToken = (payload: Omit<JwtPayload, 'type'>): string 
     throw new Error('JWT_REFRESH_SECRET is not defined');
   }
 
-  return jwt.sign(
-    { ...payload, type: 'refresh' as const },
-    refreshSecret,
-    { expiresIn } as jwt.SignOptions
-  );
+  return jwt.sign({ ...payload, type: 'refresh' as const }, refreshSecret, { expiresIn } as jwt.SignOptions);
 };
 
 /**
@@ -49,7 +41,7 @@ export const generateTokenPair = (payload: Omit<JwtPayload, 'type'>): TokenPair 
   // Calculate expiration dates based on environment variables
   const accessExpiryMs = parseTimeStringToMs(process.env.ACCESS_TOKEN_EXPIRY || '15m');
   const refreshExpiryMs = parseTimeStringToMs(process.env.REFRESH_TOKEN_EXPIRY || '7d');
-  
+
   const accessTokenExpiresAt = new Date(Date.now() + accessExpiryMs);
   const refreshTokenExpiresAt = new Date(Date.now() + refreshExpiryMs);
 
@@ -69,16 +61,21 @@ const parseTimeStringToMs = (timeString: string): number => {
   if (!match) {
     throw new Error(`Invalid time string format: ${timeString}`);
   }
-  
+
   const value = parseInt(match[1], 10);
   const unit = match[2];
-  
+
   switch (unit) {
-    case 's': return value * 1000;
-    case 'm': return value * 60 * 1000;
-    case 'h': return value * 60 * 60 * 1000;
-    case 'd': return value * 24 * 60 * 60 * 1000;
-    default: throw new Error(`Unknown time unit: ${unit}`);
+    case 's':
+      return value * 1000;
+    case 'm':
+      return value * 60 * 1000;
+    case 'h':
+      return value * 60 * 60 * 1000;
+    case 'd':
+      return value * 24 * 60 * 60 * 1000;
+    default:
+      throw new Error(`Unknown time unit: ${unit}`);
   }
 };
 
@@ -94,7 +91,7 @@ export const verifyAccessToken = (token: string): JwtPayload => {
 
   try {
     const decoded = jwt.verify(token, accessSecret) as JwtPayload;
-    
+
     if (decoded.type !== 'access') {
       throw new Error('Invalid token type');
     }
@@ -117,7 +114,7 @@ export const verifyRefreshToken = (token: string): JwtPayload => {
 
   try {
     const decoded = jwt.verify(token, refreshSecret) as JwtPayload;
-    
+
     if (decoded.type !== 'refresh') {
       throw new Error('Invalid token type');
     }

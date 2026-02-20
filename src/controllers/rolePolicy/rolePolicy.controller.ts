@@ -88,7 +88,7 @@ export const getPolicyRolesById = async (req: Request, res: Response, next: Next
  */
 export const checkRoleHasPolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { roleId, policyId } = req.params
+    const { roleId, policyId } = req.params;
 
     const result = await hasPolicy(roleId, policyId);
 

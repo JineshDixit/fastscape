@@ -1,10 +1,6 @@
 import { Policy, Role } from '../../models';
 import { CreatePolicyRequest, UpdatePolicyRequest, PolicyResponse } from '../../common/interfaces/authTypes';
-import { 
-  formatPolicyResponse, 
-  getPolicyWithRoles,
-  PolicyWithRoles 
-} from '../../utils/role.utils';
+import { formatPolicyResponse, getPolicyWithRoles, PolicyWithRoles } from '../../utils/role.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateArrayLength } from '../../utils/validation.utils';
 import { Op } from 'sequelize';
@@ -21,7 +17,7 @@ const validatePermissions = (permissions: string[]): void => {
 
   // Check if all permissions are strings and not empty
   const invalidPermissions = permissions.filter(
-    permission => typeof permission !== 'string' || permission.trim() === ''
+    (permission) => typeof permission !== 'string' || permission.trim() === '',
   );
 
   if (invalidPermissions.length > 0) {
@@ -67,7 +63,7 @@ export const create = async (policyData: CreatePolicyRequest): Promise<PolicyRes
  */
 export const getById = async (policyId: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -82,19 +78,16 @@ export const getAll = async (
   page: number = 1,
   limit: number = 20,
   search?: string,
-  isActive?: boolean
+  isActive?: boolean,
 ): Promise<{ policies: PolicyResponse[]; total: number; totalPages: number }> => {
   const offset = (page - 1) * limit;
-  
+
   const whereClause: any = {};
-  
+
   if (search) {
-    whereClause[Op.or] = [
-      { name: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } },
-    ];
+    whereClause[Op.or] = [{ name: { [Op.iLike]: `%${search}%` } }, { description: { [Op.iLike]: `%${search}%` } }];
   }
-  
+
   if (isActive !== undefined) {
     whereClause.isActive = isActive;
   }
@@ -116,12 +109,9 @@ export const getAll = async (
 /**
  * Update policy
  */
-export const update = async (
-  policyId: string,
-  updateData: UpdatePolicyRequest
-): Promise<PolicyResponse> => {
+export const update = async (policyId: string, updateData: UpdatePolicyRequest): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -129,12 +119,12 @@ export const update = async (
   // If name is being updated, check for duplicates
   if (updateData.name) {
     const existingPolicy = await Policy.findOne({
-      where: { 
+      where: {
         name: updateData.name,
-        id: { [Op.ne]: policyId }
-      }
+        id: { [Op.ne]: policyId },
+      },
     });
-    
+
     if (existingPolicy) {
       throw createError('Policy with this name already exists', 409);
     }
@@ -156,7 +146,7 @@ export const update = async (
  */
 export const remove = async (policyId: string): Promise<void> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -168,7 +158,7 @@ export const remove = async (policyId: string): Promise<void> => {
         model: Policy,
         through: { attributes: [] },
         where: { id: policyId },
-      }
+      },
     ],
   });
 
@@ -183,12 +173,9 @@ export const remove = async (policyId: string): Promise<void> => {
 /**
  * Add permission to policy
  */
-export const addPermission = async (
-  policyId: string, 
-  permission: string
-): Promise<PolicyResponse> => {
+export const addPermission = async (policyId: string, permission: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -214,12 +201,9 @@ export const addPermission = async (
 /**
  * Remove permission from policy
  */
-export const removePermission = async (
-  policyId: string, 
-  permission: string
-): Promise<PolicyResponse> => {
+export const removePermission = async (policyId: string, permission: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -230,8 +214,8 @@ export const removePermission = async (
   }
 
   // Remove permission
-  const updatedPermissions = policy.permissions.filter(p => p !== permission);
-  
+  const updatedPermissions = policy.permissions.filter((p) => p !== permission);
+
   if (updatedPermissions.length === 0) {
     throw createError('Cannot remove all permissions from policy', 400);
   }
@@ -266,7 +250,7 @@ export const getRoles = async (policyId: string): Promise<any[]> => {
  */
 export const activate = async (policyId: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -280,7 +264,7 @@ export const activate = async (policyId: string): Promise<PolicyResponse> => {
  */
 export const deactivate = async (policyId: string): Promise<PolicyResponse> => {
   const policy = await Policy.findByPk(policyId);
-  
+
   if (!policy) {
     throw createError('Policy not found', 404);
   }
@@ -310,7 +294,7 @@ export const isActive = async (policyId: string): Promise<boolean> => {
  */
 export const getByName = async (name: string): Promise<PolicyResponse | null> => {
   const policy = await Policy.findOne({ where: { name } });
-  
+
   if (!policy) {
     return null;
   }
@@ -325,7 +309,7 @@ export const searchByPermission = async (permission: string): Promise<PolicyResp
   const policies = await Policy.findAll({
     where: {
       permissions: {
-        [Op.contains]: [permission]
+        [Op.contains]: [permission],
       },
       isActive: true,
     },

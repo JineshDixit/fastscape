@@ -13,7 +13,13 @@ import {
   getByName,
   searchByPermission,
 } from '../../services/policy/policy.service';
-import { sendSuccess, sendCreated, sendSuccessWithPagination, calculatePagination, parsePaginationParams } from '../../utils/response.utils';
+import {
+  sendSuccess,
+  sendCreated,
+  sendSuccessWithPagination,
+  calculatePagination,
+  parsePaginationParams,
+} from '../../utils/response.utils';
 import { createError } from '../../services/middleware/errorHandler';
 
 /**
@@ -60,12 +66,7 @@ export const getAllPolicies = async (req: Request, res: Response, next: NextFunc
 
     const pagination = calculatePagination(result.total, page, limit);
 
-    sendSuccessWithPagination(
-      res,
-      'Policies retrieved successfully',
-      result.policies,
-      pagination
-    );
+    sendSuccessWithPagination(res, 'Policies retrieved successfully', result.policies, pagination);
   } catch (error) {
     next(error);
   }

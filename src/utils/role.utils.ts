@@ -32,10 +32,12 @@ export const formatRoleResponse = (role: Role): RoleResponse => {
  * Format role response with policies
  * Industrial standard: Explicit type mapping for concatenated responses.
  */
-export const formatRoleWithPoliciesResponse = (role: Role | RoleWithPolicies): RoleResponse & { policies: PolicyResponse[] } => {
+export const formatRoleWithPoliciesResponse = (
+  role: Role | RoleWithPolicies,
+): RoleResponse & { policies: PolicyResponse[] } => {
   const roleWithAssoc = role as RoleWithPolicies;
   const policies = roleWithAssoc.Policies || [];
-  
+
   return {
     id: role.id,
     name: role.name,
@@ -73,7 +75,7 @@ export const ROLE_WITH_POLICIES_INCLUDE: Includeable[] = [
     through: { attributes: [] },
     where: { isActive: true },
     required: false,
-  }
+  },
 ];
 
 /**
@@ -85,7 +87,7 @@ export const POLICY_WITH_ROLES_INCLUDE: Includeable[] = [
     through: { attributes: [] },
     where: { isActive: true },
     required: false,
-  }
+  },
 ];
 
 /**

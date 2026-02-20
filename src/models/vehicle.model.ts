@@ -35,7 +35,7 @@ export interface VehicleCreationAttributes extends Optional<
   | 'isAvailable'
   | 'passengerCapacity'
   | 'locationId'
->{}
+> {}
 
 export class Vehicle extends Model<VehicleAttributes, VehicleCreationAttributes> implements VehicleAttributes {
   public id!: string;

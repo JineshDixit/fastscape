@@ -111,7 +111,6 @@ export const getFinancialStats = async (req: Request, res: Response) => {
   }
 };
 
-
 /**
  * GET /api/finance/invoice/:id
  * Generate and download invoice PDF for a single booking
@@ -187,7 +186,7 @@ export const downloadBulkInvoices = async (req: Request, res: Response) => {
 export const exportFinancials = async (req: Request, res: Response) => {
   try {
     const { CSVExportService } = await import('../../services/csv/csvExport.service');
-    
+
     const filters = {
       paymentStatus: req.query.paymentStatus as string,
       startDate: req.query.startDate as string,
@@ -206,45 +205,45 @@ export const exportFinancials = async (req: Request, res: Response) => {
       { key: 'Vehicle.make', label: 'Vehicle Make' },
       { key: 'Vehicle.model', label: 'Vehicle Model' },
       { key: 'Booking.paymentStatus', label: 'Payment Status' },
-      { 
-        key: 'totalAmount', 
+      {
+        key: 'totalAmount',
         label: 'Total Amount',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
-      { 
-        key: 'vehicleRentalCost', 
+      {
+        key: 'vehicleRentalCost',
         label: 'Vehicle Rental Cost',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
-      { 
-        key: 'chauffeurCost', 
+      {
+        key: 'chauffeurCost',
         label: 'Chauffeur Cost',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
-      { 
-        key: 'depositAmount', 
+      {
+        key: 'depositAmount',
         label: 'Deposit Amount',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
-      { 
-        key: 'delayCharges', 
+      {
+        key: 'delayCharges',
         label: 'Delay Charges',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
-      { 
-        key: 'Booking.startDatetime', 
+      {
+        key: 'Booking.startDatetime',
         label: 'Start Date',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
-      { 
-        key: 'Booking.endDatetime', 
+      {
+        key: 'Booking.endDatetime',
         label: 'End Date',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
-      { 
-        key: 'createdAt', 
+      {
+        key: 'createdAt',
         label: 'Created At',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
     ];
 

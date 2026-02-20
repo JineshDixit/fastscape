@@ -207,7 +207,7 @@ export const cleanupExpiredBooking = async (req: Request, res: Response) => {
 export const exportBookings = async (req: Request, res: Response) => {
   try {
     const { CSVExportService } = await import('../../services/csv/csvExport.service');
-    
+
     const filters = {
       status: req.query.status as string,
       paymentStatus: req.query.paymentStatus as string,
@@ -234,27 +234,27 @@ export const exportBookings = async (req: Request, res: Response) => {
       { key: 'bookingType', label: 'Booking Type' },
       { key: 'bookingStatus', label: 'Status' },
       { key: 'paymentStatus', label: 'Payment Status' },
-      { 
-        key: 'startDatetime', 
+      {
+        key: 'startDatetime',
         label: 'Start Date',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
-      { 
-        key: 'endDatetime', 
+      {
+        key: 'endDatetime',
         label: 'End Date',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
       { key: 'Chauffeur.fullName', label: 'Chauffeur Name' },
       { key: 'Chauffeur.phone', label: 'Chauffeur Phone' },
-      { 
-        key: 'BookingFinancial.totalAmount', 
+      {
+        key: 'BookingFinancial.totalAmount',
         label: 'Total Amount',
-        format: (val: number) => CSVExportService.formatCurrency(val)
+        format: (val: number) => CSVExportService.formatCurrency(val),
       },
-      { 
-        key: 'createdAt', 
+      {
+        key: 'createdAt',
         label: 'Created At',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
     ];
 

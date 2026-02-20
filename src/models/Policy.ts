@@ -31,7 +31,7 @@ export const initPolicyModel = (sequelize: Sequelize) => {
             if (!Array.isArray(value)) {
               throw new Error('Permissions must be an array');
             }
-            if (!value.every(item => typeof item === 'string')) {
+            if (!value.every((item) => typeof item === 'string')) {
               throw new Error('All permissions must be strings');
             }
           },
@@ -64,6 +64,6 @@ export const initPolicyModel = (sequelize: Sequelize) => {
           fields: ['is_active'],
         },
       ],
-    }
+    },
   );
 };

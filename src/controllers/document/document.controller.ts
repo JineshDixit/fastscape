@@ -76,7 +76,7 @@ export const verifyDocuments = async (req: Request, res: Response) => {
 
     logger.info(`Documents verified successfully for user identity document ${id}`, {
       userId: document.userId,
-      verificationStatus: document.verificationStatus
+      verificationStatus: document.verificationStatus,
     });
 
     res.status(200).json({
@@ -87,7 +87,7 @@ export const verifyDocuments = async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error(`Failed to verify documents for identity document ${req.params.id}`, {
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
     res.status(400).json({
       success: false,
@@ -126,7 +126,7 @@ export const rejectDocuments = async (req: Request, res: Response) => {
     logger.info(`Documents rejected successfully for user identity document ${id}`, {
       userId: document.userId,
       verificationStatus: document.verificationStatus,
-      rejectionReason
+      rejectionReason,
     });
 
     res.status(200).json({
@@ -137,7 +137,7 @@ export const rejectDocuments = async (req: Request, res: Response) => {
   } catch (error: any) {
     logger.error(`Failed to reject documents for identity document ${req.params.id}`, {
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
     res.status(400).json({
       success: false,

@@ -3,16 +3,17 @@ import rateLimit from 'express-rate-limit';
 /**
  * Factory function to create a rate limiter
  */
-const createLimiter = (max: number, message: string, windowMs: number = 15 * 60 * 1000) => rateLimit({
-  windowMs,
-  max,
-  message: {
-    success: false,
-    message,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const createLimiter = (max: number, message: string, windowMs: number = 15 * 60 * 1000) =>
+  rateLimit({
+    windowMs,
+    max,
+    message: {
+      success: false,
+      message,
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
 // Rate limiter for authentication endpoints
 export const authLimiter = createLimiter(10, 'Too many authentication attempts, please try again later.');

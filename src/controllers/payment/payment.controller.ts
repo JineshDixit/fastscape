@@ -9,7 +9,7 @@ import logger from '../../config/logger';
 export const getAllPayments = async (req: Request, res: Response) => {
   try {
     logger.debug('Fetching payments with filters', { query: req.query });
-    
+
     const filters = {
       bookingId: req.query.bookingId as string,
       userId: req.query.userId as string,
@@ -21,10 +21,10 @@ export const getAllPayments = async (req: Request, res: Response) => {
     };
 
     const result = await paymentService.getAllPayments(filters);
-    
-    logger.info(`Retrieved ${result.payments.length} payments`, { 
+
+    logger.info(`Retrieved ${result.payments.length} payments`, {
       total: result.pagination.total,
-      page: result.pagination.page 
+      page: result.pagination.page,
     });
 
     res.status(200).json({
@@ -136,14 +136,14 @@ export const markPaymentPaid = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { paidAt, notes } = req.body;
-    
+
     logger.info(`Marking payment ${id} as paid`, { paidAt, notes });
 
     const payment = await paymentService.markPaymentPaid(id, paidAt ? new Date(paidAt) : undefined, notes);
-    
-    logger.info(`Payment ${id} marked as paid successfully`, { 
+
+    logger.info(`Payment ${id} marked as paid successfully`, {
       paymentId: payment.id,
-      amount: payment.amount 
+      amount: payment.amount,
     });
 
     res.status(200).json({
@@ -152,9 +152,9 @@ export const markPaymentPaid = async (req: Request, res: Response) => {
       message: 'Payment marked as paid successfully',
     });
   } catch (error: any) {
-    logger.error(`Failed to mark payment ${req.params.id} as paid`, { 
+    logger.error(`Failed to mark payment ${req.params.id} as paid`, {
       error: error.message,
-      stack: error.stack 
+      stack: error.stack,
     });
     res.status(400).json({
       success: false,
@@ -178,7 +178,7 @@ export const processRefund = async (req: Request, res: Response) => {
     logger.info(`Processing refund for booking ${bookingId}`, {
       refundAmount,
       reason,
-      stripeRefundId
+      stripeRefundId,
     });
 
     if (!refundAmount || refundAmount <= 0) {
@@ -207,7 +207,7 @@ export const processRefund = async (req: Request, res: Response) => {
 
     logger.info(`Refund processed successfully for booking ${bookingId}`, {
       refundAmount,
-      refundId: result.payment.id
+      refundId: result.payment.id,
     });
 
     res.status(200).json({
@@ -219,7 +219,7 @@ export const processRefund = async (req: Request, res: Response) => {
     logger.error(`Failed to process refund for booking ${req.params.bookingId}`, {
       error: error.message,
       stack: error.stack,
-      refundAmount: req.body.refundAmount
+      refundAmount: req.body.refundAmount,
     });
     res.status(400).json({
       success: false,

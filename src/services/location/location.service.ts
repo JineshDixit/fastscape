@@ -100,10 +100,7 @@ export const createLocation = async (data: CreateLocationDto): Promise<Location>
   // Check for duplicate name or code
   const existingLocation = await Location.findOne({
     where: {
-      [Op.or]: [
-        { name: data.name },
-        ...(data.code ? [{ code: data.code }] : []),
-      ],
+      [Op.or]: [{ name: data.name }, ...(data.code ? [{ code: data.code }] : [])],
     },
   });
 
@@ -135,7 +132,7 @@ export const updateLocation = async (locationId: string, data: Partial<CreateLoc
   // Check for duplicate name or code if they're being updated
   if (data.name || data.code) {
     const duplicateConditions = [];
-    
+
     if (data.name && data.name !== location.name) {
       duplicateConditions.push({ name: data.name });
     }

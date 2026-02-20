@@ -164,7 +164,7 @@ export const toggleBlockUser = async (req: Request, res: Response) => {
 export const exportUsers = async (req: Request, res: Response) => {
   try {
     const { CSVExportService } = await import('../../services/csv/csvExport.service');
-    
+
     const filters = {
       verificationStatus: req.query.verificationStatus as string,
       isBlocked: req.query.isBlocked === 'true' ? true : req.query.isBlocked === 'false' ? false : undefined,
@@ -182,24 +182,24 @@ export const exportUsers = async (req: Request, res: Response) => {
       { key: 'email', label: 'Email' },
       { key: 'phone', label: 'Phone' },
       { key: 'verificationStatus', label: 'Verification Status' },
-      { 
-        key: 'isBlocked', 
+      {
+        key: 'isBlocked',
         label: 'Blocked',
-        format: CSVExportService.formatBoolean
+        format: CSVExportService.formatBoolean,
       },
-      { 
-        key: 'dateOfBirth', 
+      {
+        key: 'dateOfBirth',
         label: 'Date of Birth',
-        format: CSVExportService.formatDate
+        format: CSVExportService.formatDate,
       },
       { key: 'nationality', label: 'Nationality' },
       { key: 'city', label: 'City' },
       { key: 'country', label: 'Country' },
       { key: 'address', label: 'Address' },
-      { 
-        key: 'createdAt', 
+      {
+        key: 'createdAt',
         label: 'Created At',
-        format: CSVExportService.formatDateTime
+        format: CSVExportService.formatDateTime,
       },
     ];
 

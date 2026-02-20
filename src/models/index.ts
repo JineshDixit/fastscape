@@ -39,7 +39,7 @@ const initPostgres_DB = (): void => {
     dialectOptions: {
       timezone: 'UTC', // PostgreSQL session timezone
     },
-    logging: false ,
+    logging: false,
     pool: {
       max: 5,
       min: 0,
@@ -49,7 +49,7 @@ const initPostgres_DB = (): void => {
     },
     ssl: true,
   });
-  
+
   initAdminUserModel(sequelize);
   initRoleModel(sequelize);
   initPolicyModel(sequelize);
@@ -66,58 +66,58 @@ const initPostgres_DB = (): void => {
   initChauffeurReviewModel(sequelize);
   initChauffeurModel(sequelize);
   initBookingFinancialModel(sequelize);
-  initLocationModel(sequelize)
+  initLocationModel(sequelize);
 
   // Associations
-  AdminUser.belongsToMany(Role, { 
-    through: AdminUserRole, 
+  AdminUser.belongsToMany(Role, {
+    through: AdminUserRole,
     foreignKey: 'adminUserId',
-    otherKey: 'roleId'
+    otherKey: 'roleId',
   });
-  
-  Role.belongsToMany(AdminUser, { 
-    through: AdminUserRole, 
+
+  Role.belongsToMany(AdminUser, {
+    through: AdminUserRole,
     foreignKey: 'roleId',
-    otherKey: 'adminUserId'
+    otherKey: 'adminUserId',
   });
-  
-  Role.belongsToMany(Policy, { 
-    through: RolePolicy, 
+
+  Role.belongsToMany(Policy, {
+    through: RolePolicy,
     foreignKey: 'roleId',
-    otherKey: 'policyId'
+    otherKey: 'policyId',
   });
-  
-  Policy.belongsToMany(Role, { 
-    through: RolePolicy, 
+
+  Policy.belongsToMany(Role, {
+    through: RolePolicy,
     foreignKey: 'policyId',
-    otherKey: 'roleId'
+    otherKey: 'roleId',
   });
-  
-  AdminUser.hasMany(AdminRefreshToken, { 
-    foreignKey: 'adminUserId'
+
+  AdminUser.hasMany(AdminRefreshToken, {
+    foreignKey: 'adminUserId',
   });
-  
-  AdminRefreshToken.belongsTo(AdminUser, { 
-    foreignKey: 'adminUserId'
+
+  AdminRefreshToken.belongsTo(AdminUser, {
+    foreignKey: 'adminUserId',
   });
 
   // Junction table associations
   AdminUserRole.belongsTo(AdminUser, { foreignKey: 'adminUserId' });
   AdminUserRole.belongsTo(Role, { foreignKey: 'roleId' });
   AdminUserRole.belongsTo(AdminUser, { foreignKey: 'assignedBy', as: 'AssignedByUser' });
-  
+
   RolePolicy.belongsTo(Role, { foreignKey: 'roleId' });
   RolePolicy.belongsTo(Policy, { foreignKey: 'policyId' });
-  
+
   // Vehicle associations
-  Vehicle.hasMany(VehicleMedia, { 
+  Vehicle.hasMany(VehicleMedia, {
     foreignKey: 'vehicleId',
-    as: 'media'
+    as: 'media',
   });
-  
-  VehicleMedia.belongsTo(Vehicle, { 
+
+  VehicleMedia.belongsTo(Vehicle, {
     foreignKey: 'vehicleId',
-    as: 'vehicle'
+    as: 'vehicle',
   });
 
   // Vehicle-Location association
@@ -185,5 +185,5 @@ export {
   ChauffeurReview,
   Chauffeur,
   BookingFinancial,
-  Location
+  Location,
 };

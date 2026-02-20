@@ -20,11 +20,7 @@ export const registerAdmin = async (req: Request, res: Response, next: NextFunct
     const deviceInfo = req.get('User-Agent');
     const ipAddress = req.ip;
 
-    const result = await register(
-      { firstName, lastName, email, password },
-      deviceInfo,
-      ipAddress
-    );
+    const result = await register({ firstName, lastName, email, password }, deviceInfo, ipAddress);
 
     sendCreated(res, 'Admin user registered successfully', result);
   } catch (error) {
@@ -41,11 +37,7 @@ export const loginAdmin = async (req: Request, res: Response, next: NextFunction
     const deviceInfo = req.get('User-Agent');
     const ipAddress = req.ip;
 
-    const result = await login(
-      { email, password },
-      deviceInfo,
-      ipAddress
-    );
+    const result = await login({ email, password }, deviceInfo, ipAddress);
 
     sendSuccess(res, 'Login successful', result);
   } catch (error) {

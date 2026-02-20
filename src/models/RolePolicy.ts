@@ -49,6 +49,6 @@ export const initRolePolicyModel = (sequelize: Sequelize) => {
           fields: ['role_id', 'policy_id'],
         },
       ],
-    }
+    },
   );
 };

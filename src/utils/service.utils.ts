@@ -17,18 +17,18 @@ export abstract class BaseService<T extends Model> {
    * Find by primary key with validation
    */
   protected async findByIdOrThrow(
-    id: string, 
+    id: string,
     options?: FindOptions<T['_attributes']>,
-    errorMessage: string = 'Record not found'
+    errorMessage: string = 'Record not found',
   ): Promise<T> {
     validateUUID(id);
-    
+
     const record = await this.model.findByPk(id, options);
-    
+
     if (!record) {
       throw createError(errorMessage, 404);
     }
-    
+
     return record;
   }
 
@@ -38,14 +38,14 @@ export abstract class BaseService<T extends Model> {
   protected async findOneOrThrow(
     where: WhereOptions<T['_attributes']>,
     options?: FindOptions<T['_attributes']>,
-    errorMessage: string = 'Record not found'
+    errorMessage: string = 'Record not found',
   ): Promise<T> {
     const record = await this.model.findOne({ where, ...options });
-    
+
     if (!record) {
       throw createError(errorMessage, 404);
     }
-    
+
     return record;
   }
 
@@ -60,10 +60,7 @@ export abstract class BaseService<T extends Model> {
   /**
    * Create with validation
    */
-  protected async createRecord(
-    data: T['_creationAttributes'],
-    options?: { transaction?: Transaction }
-  ): Promise<T> {
+  protected async createRecord(data: T['_creationAttributes'], options?: { transaction?: Transaction }): Promise<T> {
     return this.model.create(data, options);
   }
 
@@ -73,7 +70,7 @@ export abstract class BaseService<T extends Model> {
   protected async updateRecord(
     record: T,
     data: Partial<T['_attributes']>,
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction },
   ): Promise<T> {
     await record.update(data, options);
     return record;
@@ -82,10 +79,7 @@ export abstract class BaseService<T extends Model> {
   /**
    * Delete with validation
    */
-  protected async deleteRecord(
-    record: T,
-    options?: { transaction?: Transaction }
-  ): Promise<void> {
+  protected async deleteRecord(record: T, options?: { transaction?: Transaction }): Promise<void> {
     await record.destroy(options);
   }
 
@@ -95,15 +89,15 @@ export abstract class BaseService<T extends Model> {
   protected async findWithPagination(
     where: WhereOptions<T['_attributes']>,
     query: any,
-    options?: Omit<FindOptions<T['_attributes']>, 'where' | 'limit' | 'offset'>
+    options?: Omit<FindOptions<T['_attributes']>, 'where' | 'limit' | 'offset'>,
   ): Promise<{ items: T[]; total: number; pagination: any }> {
     const { page, limit, offset } = parsePaginationParams(query);
-    
+
     const { count, rows } = await this.model.findAndCountAll({
       where,
       limit,
       offset,
-      ...options
+      ...options,
     });
 
     return {
@@ -113,8 +107,8 @@ export abstract class BaseService<T extends Model> {
         page,
         limit,
         total: count,
-        totalPages: Math.ceil(count / limit)
-      }
+        totalPages: Math.ceil(count / limit),
+      },
     };
   }
 
@@ -123,7 +117,7 @@ export abstract class BaseService<T extends Model> {
    */
   protected async bulkCreate(
     records: T['_creationAttributes'][],
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction },
   ): Promise<T[]> {
     return this.model.bulkCreate(records, options);
   }
@@ -131,14 +125,14 @@ export abstract class BaseService<T extends Model> {
   protected async bulkUpdate(
     values: Partial<T['_attributes']>,
     where: WhereOptions<T['_attributes']>,
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction },
   ): Promise<[number]> {
     return this.model.update(values, { where, ...options });
   }
 
   protected async bulkDelete(
     where: WhereOptions<T['_attributes']>,
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction },
   ): Promise<number> {
     return this.model.destroy({ where, ...options });
   }
@@ -156,25 +150,25 @@ export abstract class UserScopedService<T extends Model> extends BaseService<T> 
     userId: string,
     userField: string = 'userId',
     options?: FindOptions<T['_attributes']>,
-    errorMessage: string = 'Record not found or access denied'
+    errorMessage: string = 'Record not found or access denied',
   ): Promise<T> {
     validateUUID(id);
     validateUUID(userId, 'User ID');
-    
+
     const whereCondition: any = {
       id,
-      [userField]: userId
+      [userField]: userId,
     };
-    
+
     const record = await this.model.findOne({
       where: whereCondition,
-      ...options
+      ...options,
     });
-    
+
     if (!record) {
       throw createError(errorMessage, 404);
     }
-    
+
     return record;
   }
 
@@ -184,17 +178,17 @@ export abstract class UserScopedService<T extends Model> extends BaseService<T> 
   protected async findAllWithUserScope(
     userId: string,
     userField: string = 'userId',
-    options?: FindOptions<T['_attributes']>
+    options?: FindOptions<T['_attributes']>,
   ): Promise<T[]> {
     validateUUID(userId, 'User ID');
-    
+
     const whereCondition: any = {
-      [userField]: userId
+      [userField]: userId,
     };
-    
+
     return this.model.findAll({
       where: whereCondition,
-      ...options
+      ...options,
     });
   }
 
@@ -206,7 +200,7 @@ export abstract class UserScopedService<T extends Model> extends BaseService<T> 
     userId: string,
     data: Partial<T['_attributes']>,
     userField: string = 'userId',
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction },
   ): Promise<T> {
     const record = await this.findByIdWithUserScope(id, userId, userField);
     return this.updateRecord(record, data, options);
@@ -219,7 +213,7 @@ export abstract class UserScopedService<T extends Model> extends BaseService<T> 
     id: string,
     userId: string,
     userField: string = 'userId',
-    options?: { transaction?: Transaction }
+    options?: { transaction?: Transaction },
   ): Promise<void> {
     const record = await this.findByIdWithUserScope(id, userId, userField);
     await this.deleteRecord(record, options);
@@ -236,7 +230,7 @@ export const createStandardService = <T extends Model>(
     userField?: string;
     defaultIncludes?: any[];
     defaultOrder?: any[];
-  } = {}
+  } = {},
 ) => {
   if (options.userScoped) {
     return new (class extends UserScopedService<T> {
@@ -264,7 +258,7 @@ export const createStandardService = <T extends Model>(
         if (userId) {
           return this.findAllWithUserScope(userId, options.userField, findOptions);
         }
-        
+
         return this.model.findAll(findOptions);
       }
 
@@ -308,7 +302,7 @@ export const createStandardService = <T extends Model>(
           include: options.defaultIncludes,
           order: options.defaultOrder || [['createdAt', 'DESC']],
         };
-        
+
         return this.model.findAll(findOptions);
       }
 

@@ -100,7 +100,10 @@ export const getAllChauffeurs = async (filters: ChauffeurFilters): Promise<Chauf
   }
 
   // Sorting logic
-  let order: any = [['rating', 'DESC'], ['totalTrips', 'DESC']];
+  let order: any = [
+    ['rating', 'DESC'],
+    ['totalTrips', 'DESC'],
+  ];
   if (filters.sortBy) {
     const sortOrder = filters.sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
     order = [[filters.sortBy, sortOrder]];
@@ -256,13 +259,13 @@ export const createChauffeur = async (data: CreateChauffeurDto): Promise<Chauffe
   }
 
   return await Chauffeur.create({
-      ...data,
-      status: 'AVAILABLE',
-      isVerified: false,
-      rating: 5.0,
-      totalTrips: 0,
-      joinedAt: new Date(),
-    });
+    ...data,
+    status: 'AVAILABLE',
+    isVerified: false,
+    rating: 5.0,
+    totalTrips: 0,
+    joinedAt: new Date(),
+  });
 };
 
 /**
@@ -278,7 +281,7 @@ export const updateChauffeur = async (chauffeurId: string, data: Partial<CreateC
   // Check for duplicate email, phone, or license if they're being updated
   if (data.email || data.phone || data.licenseNumber) {
     const duplicateConditions = [];
-    
+
     if (data.email && data.email !== chauffeur.email) {
       duplicateConditions.push({ email: data.email });
     }
@@ -300,7 +303,8 @@ export const updateChauffeur = async (chauffeurId: string, data: Partial<CreateC
       if (existingChauffeur) {
         if (data.email && existingChauffeur.email === data.email) throw new Error('Email already exists');
         if (data.phone && existingChauffeur.phone === data.phone) throw new Error('Phone number already exists');
-        if (data.licenseNumber && existingChauffeur.licenseNumber === data.licenseNumber) throw new Error('License number already exists');
+        if (data.licenseNumber && existingChauffeur.licenseNumber === data.licenseNumber)
+          throw new Error('License number already exists');
       }
     }
   }

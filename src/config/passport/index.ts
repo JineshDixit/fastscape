@@ -26,7 +26,7 @@ export const configPassport = (): void => {
 
         // Find admin user by ID with roles and permissions
         const adminUser = await getAdminUserWithRolesAndPermissions(jwtPayload.userId);
-        
+
         if (!adminUser) {
           return done(null, false, { message: 'Admin user not found' });
         }

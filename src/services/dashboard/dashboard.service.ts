@@ -23,10 +23,7 @@ export const getRentStatus = async (period: string = 'week') => {
   }
 
   const statusCounts = await Booking.findAll({
-    attributes: [
-      'bookingStatus',
-      [fn('COUNT', col('id')), 'count'],
-    ],
+    attributes: ['bookingStatus', [fn('COUNT', col('id')), 'count']],
     where: {
       created_at: {
         [Op.gte]: startDate,
@@ -93,7 +90,7 @@ export const getEarningSummary = async (months: number = 8) => {
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthKey = date.toISOString().substring(0, 7); // YYYY-MM format
-    
+
     const existing = earnings.find((e: any) => {
       const earnMonth = new Date(e.month).toISOString().substring(0, 7);
       return earnMonth === monthKey;
@@ -119,7 +116,7 @@ export const getBookingsOverview = async (year?: number) => {
 
   const bookings = await Booking.findAll({
     attributes: [
-      [fn('EXTRACT', literal("MONTH FROM created_at")), 'month_num'],
+      [fn('EXTRACT', literal('MONTH FROM created_at')), 'month_num'],
       [fn('COUNT', col('id')), 'count'],
     ],
     where: {
@@ -127,18 +124,18 @@ export const getBookingsOverview = async (year?: number) => {
         [Op.between]: [startDate, endDate],
       },
     },
-    group: [fn('EXTRACT', literal("MONTH FROM created_at"))],
-    order: [[fn('EXTRACT', literal("MONTH FROM created_at")), 'ASC']],
+    group: [fn('EXTRACT', literal('MONTH FROM created_at'))],
+    order: [[fn('EXTRACT', literal('MONTH FROM created_at')), 'ASC']],
     raw: true,
   });
 
   // Fill in all 12 months
   const result = [];
-  
+
   for (let i = 0; i < 12; i++) {
     const monthNum = i + 1; // 1-12
     const date = new Date(targetYear, i, 1);
-    
+
     const existing = bookings.find((b: any) => parseInt(b.month_num) === monthNum);
 
     result.push({
@@ -202,7 +199,7 @@ export const getDashboardStats = async () => {
     WHERE b.booking_status = 'COMPLETED'
     AND b.created_at >= :thisMonthStart
   `;
-  
+
   const revenueThisMonthResult: any = await sequelize.query(revenueThisMonthQuery, {
     replacements: { thisMonthStart },
     type: 'SELECT',
@@ -218,7 +215,7 @@ export const getDashboardStats = async () => {
     AND b.created_at >= :lastMonth
     AND b.created_at < :thisMonthStart
   `;
-  
+
   const revenueLastMonthResult: any = await sequelize.query(revenueLastMonthQuery, {
     replacements: { lastMonth, thisMonthStart },
     type: 'SELECT',

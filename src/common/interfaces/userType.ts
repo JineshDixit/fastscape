@@ -1,4 +1,4 @@
-import { AdminUser, Policy, Role } from "../../models";
+import { AdminUser, Policy, Role } from '../../models';
 
 export interface RoleWithAdminUsers extends Role {
   AdminUsers?: AdminUser[];

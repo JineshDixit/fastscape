@@ -1,11 +1,11 @@
 import { RolePolicy, Role, Policy } from '../../models';
 import { AssignPolicyToRoleRequest, RoleResponse, PolicyResponse } from '../../common/interfaces/authTypes';
-import { 
-  formatRoleWithPoliciesResponse, 
-  formatPolicyResponse, 
+import {
+  formatRoleWithPoliciesResponse,
+  formatPolicyResponse,
   getRoleWithPolicies,
   RoleWithPolicies,
-  PolicyWithRoles
+  PolicyWithRoles,
 } from '../../utils/role.utils';
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields } from '../../utils/validation.utils';
@@ -13,23 +13,25 @@ import { validateRequiredFields } from '../../utils/validation.utils';
 /**
  * Assign policy to role
  */
-export const assignPolicy = async (assignData: AssignPolicyToRoleRequest): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
+export const assignPolicy = async (
+  assignData: AssignPolicyToRoleRequest,
+): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   const { roleId, policyId } = assignData;
 
   // Validate required fields
   validateRequiredFields(assignData, ['roleId', 'policyId']);
 
   // Check if role exists and is active
-  const role = await Role.findOne({ 
-    where: { id: roleId, isActive: true } 
+  const role = await Role.findOne({
+    where: { id: roleId, isActive: true },
   });
   if (!role) {
     throw createError('Role not found or inactive', 404);
   }
 
   // Check if policy exists and is active
-  const policy = await Policy.findOne({ 
-    where: { id: policyId, isActive: true } 
+  const policy = await Policy.findOne({
+    where: { id: policyId, isActive: true },
   });
   if (!policy) {
     throw createError('Policy not found or inactive', 404);
@@ -37,7 +39,7 @@ export const assignPolicy = async (assignData: AssignPolicyToRoleRequest): Promi
 
   // Check if assignment already exists
   const existingAssignment = await RolePolicy.findOne({
-    where: { roleId, policyId }
+    where: { roleId, policyId },
   });
 
   if (existingAssignment) {
@@ -60,11 +62,11 @@ export const assignPolicy = async (assignData: AssignPolicyToRoleRequest): Promi
  */
 export const removePolicy = async (
   roleId: string,
-  policyId: string
+  policyId: string,
 ): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   // Check if assignment exists
   const assignment = await RolePolicy.findOne({
-    where: { roleId, policyId }
+    where: { roleId, policyId },
   });
 
   if (!assignment) {
@@ -109,7 +111,7 @@ export const getPolicyRoles = async (policyId: string): Promise<RoleResponse[]> 
         through: { attributes: [] },
         where: { isActive: true },
         required: false,
-      }
+      },
     ],
   });
 
@@ -118,7 +120,7 @@ export const getPolicyRoles = async (policyId: string): Promise<RoleResponse[]> 
   }
 
   const roles = (policy as PolicyWithRoles).Roles || [];
-  
+
   return roles.map((role) => ({
     id: role.id,
     name: role.name,
@@ -132,7 +134,7 @@ export const getPolicyRoles = async (policyId: string): Promise<RoleResponse[]> 
  */
 export const hasPolicy = async (roleId: string, policyId: string): Promise<boolean> => {
   const assignment = await RolePolicy.findOne({
-    where: { roleId, policyId }
+    where: { roleId, policyId },
   });
 
   return !!assignment;
@@ -143,10 +145,10 @@ export const hasPolicy = async (roleId: string, policyId: string): Promise<boole
  */
 export const hasAnyPolicy = async (roleId: string, policyIds: string[]): Promise<boolean> => {
   const assignments = await RolePolicy.findAll({
-    where: { 
+    where: {
       roleId,
-      policyId: policyIds
-    }
+      policyId: policyIds,
+    },
   });
 
   return assignments.length > 0;
@@ -188,7 +190,7 @@ export const hasPermission = async (roleId: string, permission: string): Promise
  */
 export const hasAnyPermission = async (roleId: string, permissions: string[]): Promise<boolean> => {
   const rolePermissions = await getRolePermissions(roleId);
-  return permissions.some(permission => rolePermissions.includes(permission));
+  return permissions.some((permission) => rolePermissions.includes(permission));
 };
 
 /**
@@ -196,11 +198,11 @@ export const hasAnyPermission = async (roleId: string, permissions: string[]): P
  */
 export const bulkAssignPolicies = async (
   roleId: string,
-  policyIds: string[]
+  policyIds: string[],
 ): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   // Check if role exists and is active
-  const role = await Role.findOne({ 
-    where: { id: roleId, isActive: true } 
+  const role = await Role.findOne({
+    where: { id: roleId, isActive: true },
   });
   if (!role) {
     throw createError('Role not found or inactive', 404);
@@ -208,7 +210,7 @@ export const bulkAssignPolicies = async (
 
   // Check if all policies exist and are active
   const policies = await Policy.findAll({
-    where: { id: policyIds, isActive: true }
+    where: { id: policyIds, isActive: true },
   });
 
   if (policies.length !== policyIds.length) {
@@ -217,15 +219,15 @@ export const bulkAssignPolicies = async (
 
   // Get existing assignments
   const existingAssignments = await RolePolicy.findAll({
-    where: { roleId, policyId: policyIds }
+    where: { roleId, policyId: policyIds },
   });
 
-  const existingPolicyIds = existingAssignments.map(assignment => assignment.policyId);
-  const newPolicyIds = policyIds.filter(policyId => !existingPolicyIds.includes(policyId));
+  const existingPolicyIds = existingAssignments.map((assignment) => assignment.policyId);
+  const newPolicyIds = policyIds.filter((policyId) => !existingPolicyIds.includes(policyId));
 
   // Create new assignments
   if (newPolicyIds.length > 0) {
-    const assignmentData = newPolicyIds.map(policyId => ({
+    const assignmentData = newPolicyIds.map((policyId) => ({
       roleId,
       policyId,
     }));
@@ -244,7 +246,7 @@ export const bulkAssignPolicies = async (
 export const removeAllPolicies = async (roleId: string): Promise<RoleResponse & { policies: PolicyResponse[] }> => {
   // Remove all assignments
   await RolePolicy.destroy({
-    where: { roleId }
+    where: { roleId },
   });
 
   // Get updated role

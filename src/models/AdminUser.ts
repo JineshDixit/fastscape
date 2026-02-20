@@ -76,6 +76,6 @@ export const initAdminUserModel = (sequelize: Sequelize) => {
           fields: ['is_active'],
         },
       ],
-    }
+    },
   );
 };

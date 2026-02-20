@@ -11,7 +11,13 @@ import {
   deactivate,
   remove,
 } from '../../services/adminUser/adminUser.service';
-import { sendSuccess, sendCreated, sendSuccessWithPagination, calculatePagination, parsePaginationParams } from '../../utils/response.utils';
+import {
+  sendSuccess,
+  sendCreated,
+  sendSuccessWithPagination,
+  calculatePagination,
+  parsePaginationParams,
+} from '../../utils/response.utils';
 import { createError } from '../../services/middleware/errorHandler';
 
 /**
@@ -58,12 +64,7 @@ export const getAllAdminUsers = async (req: Request, res: Response, next: NextFu
 
     const pagination = calculatePagination(result.total, page, limit);
 
-    sendSuccessWithPagination(
-      res,
-      'Admin users retrieved successfully',
-      result.users,
-      pagination
-    );
+    sendSuccessWithPagination(res, 'Admin users retrieved successfully', result.users, pagination);
   } catch (error) {
     next(error);
   }
@@ -205,7 +206,7 @@ export const deactivateAdminUser = async (req: Request, res: Response, next: Nex
 export const deleteAdminUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    
+
     await remove(id);
 
     sendSuccess(res, 'Admin user deleted successfully');
