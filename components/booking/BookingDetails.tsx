@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import ChauffeurAssignmentSection from './ChauffeurAssignmentSection';
+import { BalancePaymentModal } from './BalancePaymentModal';
 import {
   AlertCircle,
   CalendarIcon,
@@ -89,6 +90,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
     useBooking();
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBookingById(bookingId);
@@ -112,6 +114,23 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
       } finally {
         setActionLoading(null);
       }
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    // Refresh booking and payment data
+    fetchBookingById(bookingId);
+    fetchPaymentSummary(bookingId);
+    setIsPaymentModalOpen(false);
+  };
+
+  const handleCompletePayment = () => {
+    // If parent provided a callback, use it (for navigation to checkout)
+    if (onPaymentRequired) {
+      onPaymentRequired(bookingId);
+    } else {
+      // Otherwise, open the payment modal
+      setIsPaymentModalOpen(true);
     }
   };
 
@@ -403,7 +422,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                   {needsPayment && (
                     <Button
                       className="shadow-primary/20 w-full transition-transform hover:scale-[1.02]"
-                      onClick={() => onPaymentRequired?.(booking.id)}
+                      onClick={handleCompletePayment}
                     >
                       {t('completeAllPayments')}
                     </Button>
@@ -494,6 +513,17 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
           </Card>
         </div>
       </div>
+
+      {/* Balance Payment Modal */}
+      {paymentSummary && (
+        <BalancePaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          bookingId={bookingId}
+          paymentSummary={paymentSummary}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 }
