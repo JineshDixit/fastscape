@@ -125,7 +125,9 @@ export const BookingHistorySection: React.FC = () => {
       ) : error ? (
         <Alert variant="destructive" className="border-destructive/20 bg-destructive/5 text-destructive rounded-xl">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="font-medium">{t('failedToLoad')}: {error}</AlertDescription>
+          <AlertDescription className="font-medium">
+            {t('failedToLoad')}: {error}
+          </AlertDescription>
         </Alert>
       ) : bookingHistory.length === 0 ? (
         <Card className="bg-muted/5 border-2 border-dashed">
@@ -145,7 +147,8 @@ export const BookingHistorySection: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
             <p className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
-              {bookingHistory.length} {bookingHistory.length !== 1 ? t('recordsFoundPlural') : t('recordsFound')} {t('found')}
+              {bookingHistory.length} {bookingHistory.length !== 1 ? t('recordsFoundPlural') : t('recordsFound')}{' '}
+              {t('found')}
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">

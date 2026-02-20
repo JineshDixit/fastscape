@@ -282,7 +282,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
 
       {/* Read-only Profile Grid */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="mb-3 flex items-center gap-3">
               <User className="text-primary h-4 w-4" />
@@ -294,7 +294,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
           </CardContent>
         </Card>
 
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="mb-3 flex items-center gap-3">
               <Mail className="text-primary h-4 w-4" />
@@ -304,7 +304,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
           </CardContent>
         </Card>
 
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="mb-3 flex items-center gap-3">
               <Phone className="text-primary h-4 w-4" />
@@ -316,7 +316,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
           </CardContent>
         </Card>
 
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="p-0">
           <CardContent className="p-6">
             <div className="mb-3 flex items-center gap-3">
               <ShieldCheck className="text-primary h-4 w-4" />

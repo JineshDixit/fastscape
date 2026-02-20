@@ -94,13 +94,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
                 variant="outline"
                 className={`${getStatusColor(booking.bookingStatus)} border-none text-[10px] font-semibold tracking-wider uppercase`}
               >
-                {tBooking(`status.${formatStatusKey(booking.bookingStatus)}`)}
+                {tBooking(`status.${booking.bookingStatus}`)}
               </Badge>
               <Badge
                 variant="outline"
                 className={`${getPaymentStatusColor(booking.paymentStatus)} border-none text-[10px] font-semibold tracking-wider uppercase`}
               >
-                {tBooking(`status.${formatStatusKey(booking.paymentStatus)}`)}
+                {tBooking(`status.${booking.paymentStatus}`)}
               </Badge>
             </div>
             <Button

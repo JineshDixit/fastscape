@@ -175,12 +175,12 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                 <Badge
                   className={`${getStatusColor(booking.bookingStatus)} rounded-full border-none px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase`}
                 >
-                  {t(`status.${booking.bookingStatus.toLowerCase()}`)}
+                  {t(`status.${booking.bookingStatus}`)}
                 </Badge>
                 <Badge
                   className={`${getStatusColor(booking.paymentStatus)} rounded-full border-none px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase`}
                 >
-                  {t(`status.${booking.paymentStatus.toLowerCase().replace('_', '')}`)}
+                  {t(`status.${booking.paymentStatus}`)}
                 </Badge>
               </div>
               <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">

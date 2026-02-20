@@ -384,17 +384,17 @@
     "refreshData": "تحديث البيانات",
     "cancelConfirmation": "هل أنت متأكد أنك تريد إلغاء هذا الحجز؟",
     "status": {
-      "pending": "قيد الانتظار",
-      "confirmed": "مؤكد",
-      "pickedUp": "تم الاستلام",
-      "droppedOff": "تم التسليم",
-      "completed": "مكتمل",
-      "cancelled": "ملغى",
-      "unpaid": "غير مدفوع",
-      "partiallyPaid": "مدفوع جزئياً",
-      "paid": "مدفوع",
-      "refunded": "مسترد",
-      "overdue": "متأخر"
+      "PENDING": "قيد الانتظار",
+      "CONFIRMED": "مؤكد",
+      "PICKED_UP": "تم الاستلام",
+      "DROPPED_OFF": "تم التسليم",
+      "COMPLETED": "مكتمل",
+      "CANCELLED": "ملغى",
+      "UNPAID": "غير مدفوع",
+      "PARTIALLY_PAID": "مدفوع جزئياً",
+      "PAID": "مدفوع",
+      "REFUNDED": "مسترد",
+      "OVERDUE": "متأخر"
     }
   },
   "activeBookings": {

@@ -16,7 +16,7 @@ import {
   AlertCircleIcon,
   InfoIcon,
   ClockIcon,
-  UserIcon
+  UserIcon,
 } from 'lucide-react';
 import type { PaymentMethod, PaymentBreakdown } from '@/common/interfaces';
 import AdditionalChargesDisplay from './AdditionalChargesDisplay';
@@ -58,7 +58,7 @@ export default function PaymentForm({
   additionalCharges = [],
   onPaymentSuccess,
   onCancel,
-  onBackToOptions
+  onBackToOptions,
 }: PaymentFormProps) {
   const {
     paymentBreakdown,
@@ -67,13 +67,11 @@ export default function PaymentForm({
     processBalancePayment,
     isProcessingPayment,
     error,
-    clearError
+    clearError,
   } = useBooking();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ONLINE');
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState<'deposit' | 'full'>(
-    paymentOption || 'deposit'
-  );
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<'deposit' | 'full'>(paymentOption || 'deposit');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Use provided breakdown or fetch from API
@@ -103,7 +101,7 @@ export default function PaymentForm({
     // Validate minimum amounts
     const paymentAmount = getPaymentAmount();
     const numericAmount = parseFloat(paymentAmount);
-    
+
     if (isNaN(numericAmount) || numericAmount <= 0) {
       errors.push('Payment amount must be greater than zero');
     }
@@ -125,7 +123,7 @@ export default function PaymentForm({
       if (!currentBreakdown && paymentType !== 'balance') {
         errors.push('Payment calculation required for online payment');
       }
-      
+
       // In a real implementation, you'd validate Stripe setup here
       if (numericAmount > 999999) {
         errors.push('Payment amount exceeds maximum allowed limit');
@@ -187,7 +185,7 @@ export default function PaymentForm({
       const baseBalance = parseFloat(currentBreakdown.balanceAmount || '0');
       const delayChargesAmount = parseFloat(currentBreakdown.delayCharges || '0');
       const totalAdditionalCharges = additionalCharges
-        .filter(charge => charge.isApplied)
+        .filter((charge) => charge.isApplied)
         .reduce((sum, charge) => sum + charge.amount, 0);
 
       return (baseBalance + delayChargesAmount + chauffeurCharges + totalAdditionalCharges).toFixed(2);
@@ -243,12 +241,12 @@ export default function PaymentForm({
 
   if (!currentBreakdown && paymentType !== 'balance') {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="mx-auto w-full max-w-2xl">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-8 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 w-3/4 rounded bg-gray-200"></div>
+            <div className="h-8 rounded bg-gray-200"></div>
+            <div className="h-4 w-1/2 rounded bg-gray-200"></div>
           </div>
         </CardContent>
       </Card>
@@ -256,7 +254,7 @@ export default function PaymentForm({
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCardIcon className="h-6 w-6" />
@@ -265,8 +263,7 @@ export default function PaymentForm({
         <p className="text-gray-600">
           {paymentType === 'balance'
             ? 'Complete your final payment at vehicle dropoff'
-            : 'Secure your booking with payment'
-          }
+            : 'Secure your booking with payment'}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -279,14 +276,17 @@ export default function PaymentForm({
               onValueChange={(value) => setSelectedPaymentOption(value as 'deposit' | 'full')}
               className="space-y-3"
             >
-              <div className={`border-2 rounded-lg p-4 transition-colors ${selectedPaymentOption === 'deposit'
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-                }`}>
+              <div
+                className={`rounded-lg border-2 p-4 transition-colors ${
+                  selectedPaymentOption === 'deposit'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem value="deposit" id="deposit-option" />
                   <Label htmlFor="deposit-option" className="flex-1 cursor-pointer">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium">Pay Deposit ({currentBreakdown.depositPercentage}%)</p>
                         <p className="text-sm text-gray-600">Pay remaining balance at dropoff</p>
@@ -299,14 +299,17 @@ export default function PaymentForm({
                 </div>
               </div>
 
-              <div className={`border-2 rounded-lg p-4 transition-colors ${selectedPaymentOption === 'full'
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-200 hover:border-gray-300'
-                }`}>
+              <div
+                className={`rounded-lg border-2 p-4 transition-colors ${
+                  selectedPaymentOption === 'full'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem value="full" id="full-option" />
                   <Label htmlFor="full-option" className="flex-1 cursor-pointer">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div>
                           <p className="font-medium">Pay Full Amount</p>
@@ -317,7 +320,7 @@ export default function PaymentForm({
                         </Badge>
                       </div>
                       <div className="text-right">
-                        <span className="text-lg line-through text-gray-400 block">
+                        <span className="block text-lg text-gray-400 line-through">
                           {formatCurrency(currentBreakdown.totalAmount)}
                         </span>
                         <span className="text-xl font-bold text-green-600">
@@ -364,7 +367,7 @@ export default function PaymentForm({
                   </div>
                   {parseFloat(currentBreakdown.delayCharges || '0') > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-gray-600">
                         <ClockIcon className="h-3 w-3" />
                         Late Return Fee ({delayHours}h)
                       </span>
@@ -373,7 +376,7 @@ export default function PaymentForm({
                   )}
                   {chauffeurCharges > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600 flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-gray-600">
                         <UserIcon className="h-3 w-3" />
                         Chauffeur Service
                       </span>
@@ -391,12 +394,17 @@ export default function PaymentForm({
               )}
 
               <Separator />
-              <div className="flex justify-between font-medium text-lg">
+              <div className="flex justify-between text-lg font-medium">
                 <span>Amount to Pay Now</span>
-                <span className={
-                  paymentType === 'balance' ? 'text-red-600' :
-                    selectedPaymentOption === 'full' ? 'text-green-600' : 'text-blue-600'
-                }>
+                <span
+                  className={
+                    paymentType === 'balance'
+                      ? 'text-red-600'
+                      : selectedPaymentOption === 'full'
+                        ? 'text-green-600'
+                        : 'text-blue-600'
+                  }
+                >
                   {formatCurrency(getPaymentAmount())}
                 </span>
               </div>
@@ -414,7 +422,7 @@ export default function PaymentForm({
               delayHours={delayHours}
               chauffeurHours={0}
               showControls={false}
-              className="border-0 shadow-none bg-gray-50"
+              className="border-0 bg-gray-50 shadow-none"
             />
           </div>
         )}
@@ -427,9 +435,9 @@ export default function PaymentForm({
             onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
             className="space-y-3"
           >
-            <div className="flex items-center space-x-3 p-3 border rounded-lg">
+            <div className="flex items-center space-x-3 rounded-lg border p-3">
               <RadioGroupItem value="ONLINE" id="online" />
-              <Label htmlFor="online" className="flex items-center gap-2 flex-1 cursor-pointer">
+              <Label htmlFor="online" className="flex flex-1 cursor-pointer items-center gap-2">
                 <CreditCardIcon className="h-4 w-4" />
                 <div>
                   <p className="font-medium">Online Payment</p>
@@ -438,9 +446,9 @@ export default function PaymentForm({
               </Label>
             </div>
 
-            <div className="flex items-center space-x-3 p-3 border rounded-lg">
+            <div className="flex items-center space-x-3 rounded-lg border p-3">
               <RadioGroupItem value="PICKUP" id="pickup" />
-              <Label htmlFor="pickup" className="flex items-center gap-2 flex-1 cursor-pointer">
+              <Label htmlFor="pickup" className="flex flex-1 cursor-pointer items-center gap-2">
                 <BanknoteIcon className="h-4 w-4" />
                 <div>
                   <p className="font-medium">Pay at Pickup</p>
@@ -449,9 +457,9 @@ export default function PaymentForm({
               </Label>
             </div>
 
-            <div className="flex items-center space-x-3 p-3 border rounded-lg">
+            <div className="flex items-center space-x-3 rounded-lg border p-3">
               <RadioGroupItem value="DROPOFF" id="dropoff" />
-              <Label htmlFor="dropoff" className="flex items-center gap-2 flex-1 cursor-pointer">
+              <Label htmlFor="dropoff" className="flex flex-1 cursor-pointer items-center gap-2">
                 <BuildingIcon className="h-4 w-4" />
                 <div>
                   <p className="font-medium">Pay at Dropoff</p>
@@ -464,25 +472,23 @@ export default function PaymentForm({
 
         {/* Payment Notes */}
         {paymentMethod === 'ONLINE' && (
-          <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-lg">
+          <div className="rounded-lg bg-blue-50 p-3 text-xs text-gray-600">
             <div className="flex items-start gap-2">
-              <InfoIcon className="h-3 w-3 mt-0.5 shrink-0" />
+              <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
                 <p>• Your payment is secured with 256-bit SSL encryption</p>
                 <p>• You'll receive a confirmation email after successful payment</p>
                 <p>• Refunds are processed within 5-7 business days</p>
-                {selectedPaymentOption === 'full' && (
-                  <p>• Full payment includes 5% discount on total booking amount</p>
-                )}
+                {selectedPaymentOption === 'full' && <p>• Full payment includes 5% discount on total booking amount</p>}
               </div>
             </div>
           </div>
         )}
 
         {paymentMethod === 'PICKUP' && (
-          <div className="text-xs text-gray-600 bg-yellow-50 p-3 rounded-lg">
+          <div className="rounded-lg bg-yellow-50 p-3 text-xs text-gray-600">
             <div className="flex items-start gap-2">
-              <InfoIcon className="h-3 w-3 mt-0.5 shrink-0" />
+              <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
                 <p>• Please bring exact amount in cash</p>
                 <p>• Payment must be completed before vehicle handover</p>
@@ -493,16 +499,14 @@ export default function PaymentForm({
         )}
 
         {paymentMethod === 'DROPOFF' && (
-          <div className="text-xs text-gray-600 bg-green-50 p-3 rounded-lg">
+          <div className="rounded-lg bg-green-50 p-3 text-xs text-gray-600">
             <div className="flex items-start gap-2">
-              <InfoIcon className="h-3 w-3 mt-0.5 shrink-0" />
+              <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
                 <p>• Payment due when returning the vehicle</p>
                 <p>• Cash or card payment accepted at dropoff</p>
                 <p>• Final amount may include any additional charges</p>
-                {paymentType === 'balance' && (
-                  <p>• Late return and chauffeur fees will be added to final payment</p>
-                )}
+                {paymentType === 'balance' && <p>• Late return and chauffeur fees will be added to final payment</p>}
               </div>
             </div>
           </div>
@@ -510,12 +514,12 @@ export default function PaymentForm({
 
         {/* Validation Errors */}
         {validationErrors.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3">
             <div className="flex items-start gap-2">
-              <AlertCircleIcon className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+              <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
               <div>
-                <p className="text-red-600 text-sm font-medium mb-1">Payment Validation Errors:</p>
-                <ul className="text-red-600 text-sm space-y-1">
+                <p className="mb-1 text-sm font-medium text-red-600">Payment Validation Errors:</p>
+                <ul className="space-y-1 text-sm text-red-600">
                   {validationErrors.map((error, index) => (
                     <li key={index}>• {error}</li>
                   ))}
@@ -527,10 +531,10 @@ export default function PaymentForm({
 
         {/* API Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3">
             <div className="flex items-start gap-2">
-              <AlertCircleIcon className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-              <p className="text-red-600 text-sm">{error}</p>
+              <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           </div>
         )}
@@ -538,12 +542,7 @@ export default function PaymentForm({
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           {onBackToOptions && paymentType === 'full' && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onBackToOptions}
-              className="flex-1"
-            >
+            <Button type="button" variant="outline" onClick={onBackToOptions} className="flex-1">
               Back to Options
             </Button>
           )}
@@ -553,7 +552,7 @@ export default function PaymentForm({
               type="button"
               variant="outline"
               onClick={onCancel}
-              className={onBackToOptions ? "flex-1" : "flex-1"}
+              className={onBackToOptions ? 'flex-1' : 'flex-1'}
             >
               Cancel
             </Button>
@@ -570,8 +569,8 @@ export default function PaymentForm({
 
         {/* Payment Success Indicator */}
         {parseFloat(getPaymentAmount()) === 0 && paymentType === 'balance' && (
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <CheckCircleIcon className="h-8 w-8 text-green-600 mx-auto mb-2" />
+          <div className="rounded-lg bg-green-50 p-4 text-center">
+            <CheckCircleIcon className="mx-auto mb-2 h-8 w-8 text-green-600" />
             <p className="font-medium text-green-900">No Payment Required</p>
             <p className="text-sm text-green-700">Your booking is fully paid!</p>
           </div>

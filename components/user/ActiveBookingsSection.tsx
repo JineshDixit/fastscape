@@ -27,11 +27,7 @@ export const ActiveBookingsSection: React.FC = () => {
   if (selectedBooking) {
     return (
       <div className="space-y-6">
-        <Button
-          variant="ghost"
-          onClick={() => setSelectedBooking(null)}
-          className="rounded-full font-semibold"
-        >
+        <Button variant="ghost" onClick={() => setSelectedBooking(null)} className="rounded-full font-semibold">
           ← {t('backToActiveBookings')}
         </Button>
         <BookingDetails bookingId={selectedBooking.id} onClose={() => setSelectedBooking(null)} />
@@ -59,7 +55,9 @@ export const ActiveBookingsSection: React.FC = () => {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{t('failedToLoad')}: {error}</AlertDescription>
+        <AlertDescription>
+          {t('failedToLoad')}: {error}
+        </AlertDescription>
       </Alert>
     );
   }
@@ -74,9 +72,7 @@ export const ActiveBookingsSection: React.FC = () => {
             <Car className="text-muted-foreground h-12 w-12" />
           </div>
           <h3 className="mb-2 text-lg font-semibold">{t('noActiveBookings')}</h3>
-          <p className="text-muted-foreground mb-6 text-center">
-            {t('noActiveBookingsDesc')}
-          </p>
+          <p className="text-muted-foreground mb-6 text-center">{t('noActiveBookingsDesc')}</p>
           <Button className="rounded-full">{t('browseVehicles')}</Button>
         </CardContent>
       </Card>

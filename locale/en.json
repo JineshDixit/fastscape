@@ -384,17 +384,17 @@
     "refreshData": "Refresh Data",
     "cancelConfirmation": "Are you sure you want to cancel this booking?",
     "status": {
-      "pending": "PENDING",
-      "confirmed": "CONFIRMED",
-      "pickedUp": "PICKED UP",
-      "droppedOff": "DROPPED OFF",
-      "completed": "COMPLETED",
-      "cancelled": "CANCELLED",
-      "unpaid": "UNPAID",
-      "partiallyPaid": "PARTIALLY PAID",
-      "paid": "PAID",
-      "refunded": "REFUNDED",
-      "overdue": "OVERDUE"
+      "PENDING": "PENDING",
+      "CONFIRMED": "CONFIRMED",
+      "PICKED_UP": "PICKED UP",
+      "DROPPED_OFF": "DROPPED OFF",
+      "COMPLETED": "COMPLETED",
+      "CANCELLED": "CANCELLED",
+      "UNPAID": "UNPAID",
+      "PARTIALLY_PAID": "PARTIALLY PAID",
+      "PAID": "PAID",
+      "REFUNDED": "REFUNDED",
+      "OVERDUE": "OVERDUE"
     }
   },
   "activeBookings": {
