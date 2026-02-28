@@ -484,14 +484,3 @@ export const bulkUpdateVehicleAvailability = async (vehicleIds: string[], isAvai
     throw error;
   }
 };
-
-/**
- * Get vehicle image URL
- */
-export const getImageUrl = (imagePath: string): string => {
-  if (!imagePath) return '';
-
-  // Return full URL for serving images
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
-  return `${baseUrl}/${imagePath}`;
-};

@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const authController_1 = require("../controllers/authController");
+const authMiddleware_1 = require("../services/middleware/authMiddleware");
+const rateLimiter_1 = require("../services/middleware/rateLimiter");
+const validation_1 = require("../services/middleware/validation");
+const router = (0, express_1.Router)();
+router.post('/login', rateLimiter_1.authLimiter, validation_1.validateAdminLogin, authController_1.AuthController.login);
+router.post('/refresh-token', rateLimiter_1.refreshTokenLimiter, validation_1.validateRefreshToken, authController_1.AuthController.refreshToken);
+router.post('/logout', validation_1.validateRefreshToken, authController_1.AuthController.logout);
+router.get('/profile', authMiddleware_1.authenticateAdmin, authController_1.AuthController.getProfile);
+router.post('/logout-all', authMiddleware_1.authenticateAdmin, authController_1.AuthController.logoutAllDevices);
+router.post('/change-password', authMiddleware_1.authenticateAdmin, validation_1.validatePasswordChange, authController_1.AuthController.changePassword);
+router.post('/check-permissions', authMiddleware_1.authenticateAdmin, authController_1.AuthController.checkPermissions);
+router.get('/sessions', authMiddleware_1.authenticateAdmin, authController_1.AuthController.getUserSessions);
+router.delete('/sessions/:tokenId', authMiddleware_1.authenticateAdmin, authController_1.AuthController.revokeSession);
+router.post('/create-admin', authMiddleware_1.authenticateAdmin, (0, authMiddleware_1.requirePermission)('users.manage'), rateLimiter_1.createAdminLimiter, validation_1.validateAdminUserCreation, authController_1.AuthController.createAdminUser);
+exports.default = router;
+//# sourceMappingURL=authRoutes.js.map

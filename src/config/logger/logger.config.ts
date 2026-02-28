@@ -1,5 +1,5 @@
 import winston from 'winston';
-import path from 'path';
+// import path from 'path';
 
 // Define log levels with priorities
 const levels = {
@@ -42,7 +42,7 @@ const consoleFormat = winston.format.combine(
 );
 
 // JSON format for file logging
-const fileFormat = winston.format.combine(timestampFormat, winston.format.json());
+// const fileFormat = winston.format.combine(timestampFormat, winston.format.json());
 
 // Define transports
 const transports = [
@@ -50,17 +50,17 @@ const transports = [
   new winston.transports.Console({
     format: consoleFormat,
   }),
-  // Error log file - only errors
-  new winston.transports.File({
-    filename: path.join('logs', 'error.log'),
-    level: 'error',
-    format: fileFormat,
-  }),
-  // All logs file - complete audit trail
-  new winston.transports.File({
-    filename: path.join('logs', 'all.log'),
-    format: fileFormat,
-  }),
+  // // Error log file - only errors
+  // new winston.transports.File({
+  //   filename: path.join('logs', 'error.log'),
+  //   level: 'error',
+  //   format: fileFormat,
+  // }),
+  // // All logs file - complete audit trail
+  // new winston.transports.File({
+  //   filename: path.join('logs', 'all.log'),
+  //   format: fileFormat,
+  // }),
 ];
 
 // Create the logger instance
@@ -69,18 +69,18 @@ const logger = winston.createLogger({
   levels,
   transports,
   // Handle exceptions and rejections
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: path.join('logs', 'exceptions.log'),
-      format: fileFormat,
-    }),
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({
-      filename: path.join('logs', 'rejections.log'),
-      format: fileFormat,
-    }),
-  ],
+  // exceptionHandlers: [
+  //   new winston.transports.File({
+  //     filename: path.join('logs', 'exceptions.log'),
+  //     format: fileFormat,
+  //   }),
+  // ],
+  // rejectionHandlers: [
+  //   new winston.transports.File({
+  //     filename: path.join('logs', 'rejections.log'),
+  //     format: fileFormat,
+  //   }),
+  // ],
   exitOnError: false,
 });
 
