@@ -1,0 +1,172 @@
+/chauffeurs:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Get all chauffeurs with filters
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+      - name: isVerified
+        in: query
+        schema:
+          type: boolean
+      - name: minRating
+        in: query
+        schema:
+          type: number
+      - name: city
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of chauffeurs
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Chauffeur'
+
+  post:
+    tags:
+      - Chauffeurs
+    summary: Create a new chauffeur
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Chauffeur'
+    responses:
+      '201':
+        description: Chauffeur created
+
+/chauffeurs/export:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Export chauffeurs to CSV with filters
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: CSV file download
+
+/chauffeurs/{id}:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Get single chauffeur details
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Chauffeur'
+
+  put:
+    tags:
+      - Chauffeurs
+    summary: Update chauffeur details
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Chauffeur'
+    responses:
+      '200':
+        description: Chauffeur updated
+
+  delete:
+    tags:
+      - Chauffeurs
+    summary: Delete a chauffeur
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur deleted
+
+/chauffeurs/{id}/verify:
+  put:
+    tags:
+      - Chauffeurs
+    summary: Mark chauffeur as verified
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur verified
+
+/chauffeurs/{id}/status:
+  put:
+    tags:
+      - Chauffeurs
+    summary: Update chauffeur status
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [AVAILABLE, BUSY, OFF_DUTY, ON_BREAK]
+    responses:
+      '200':
+        description: Status updated

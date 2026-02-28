@@ -1,6 +1,12 @@
 # Node.js dependencies
 node_modules/
 
+#database seed files
+src/seeders/
+
+#postman collection
+postman/
+
 # Logs
 logs/
 *.log

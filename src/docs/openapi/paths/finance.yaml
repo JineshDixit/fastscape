@@ -1,0 +1,140 @@
+/finance:
+  get:
+    tags:
+      - Finance
+    summary: Get all booking financials with filters and pagination
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: paymentStatus
+        in: query
+        schema:
+          type: string
+      - name: bookingStatus
+        in: query
+        schema:
+          type: string
+      - name: startDate
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: endDate
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+    responses:
+      '200':
+        description: List of financial records
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Finance'
+
+/finance/export:
+  get:
+    tags:
+      - Finance
+    summary: Export financials to CSV
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: CSV file download
+
+/finance/stats:
+  get:
+    tags:
+      - Finance
+    summary: Get financial statistics
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Financial stats
+
+/finance/invoice/{id}:
+  get:
+    tags:
+      - Finance
+    summary: Download invoice PDF for a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: PDF file download
+        content:
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+
+/finance/invoices/bulk:
+  post:
+    tags:
+      - Finance
+    summary: Generate and download multiple invoices as PDF
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              bookingIds:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+    responses:
+      '200':
+        description: PDF file download
+
+/finance/{id}:
+  get:
+    tags:
+      - Finance
+    summary: Get single financial record by booking ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Financial details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Finance'
