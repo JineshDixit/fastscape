@@ -8,6 +8,7 @@
     "watch-ts": "tsc --watch",
     "watch-node": "cross-env NODE_ENV=development nodemon --delay 1000ms dist/src/server.js",
     "build": "tsc",
+    "sync-db": "cross-env NODE_ENV=development ts-node src/scripts/syncDatabase.ts",
     "pretty": "npx prettier --write ."
   },
   "author": "Nishchay",
