@@ -1,0 +1,84 @@
+Chauffeur:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    fullName:
+      type: string
+    email:
+      type: string
+      format: email
+    phone:
+      type: string
+    dateOfBirth:
+      type: string
+      format: date
+    nationality:
+      type: string
+    profilePhoto:
+      type: string
+      nullable: true
+    licenseNumber:
+      type: string
+    licenseExpiryDate:
+      type: string
+      format: date
+    licenseIssuingCountry:
+      type: string
+    experienceLevel:
+      type: string
+      enum: [BEGINNER, INTERMEDIATE, EXPERIENCED, EXPERT]
+    yearsOfExperience:
+      type: integer
+    languages:
+      type: array
+      items:
+        type: string
+    specializations:
+      type: array
+      items:
+        type: string
+    hourlyRate:
+      type: number
+    currency:
+      type: string
+    status:
+      type: string
+      enum: [AVAILABLE, BUSY, OFF_DUTY, ON_BREAK]
+    rating:
+      type: number
+    totalTrips:
+      type: integer
+    isVerified:
+      type: boolean
+    emergencyContactName:
+      type: string
+    emergencyContactPhone:
+      type: string
+    address:
+      type: string
+    city:
+      type: string
+    state:
+      type: string
+    zipCode:
+      type: string
+    country:
+      type: string
+    notes:
+      type: string
+      nullable: true
+    joinedAt:
+      type: string
+      format: date-time
+    lastActiveAt:
+      type: string
+      format: date-time
+      nullable: true
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time

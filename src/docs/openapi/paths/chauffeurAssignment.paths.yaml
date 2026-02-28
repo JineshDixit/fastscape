@@ -1,0 +1,17 @@
+/chauffeur-assignment/{bookingId}/status:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Check chauffeur assignment status for a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Assignment status

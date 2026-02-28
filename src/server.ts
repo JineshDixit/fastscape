@@ -18,6 +18,8 @@ import { scheduleBookingCleanup } from './services/cleanup/bookingCleanup.servic
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
 import Logger from './utils/logger';
 import httpLogger from './services/middleware/httpLogger';
+import swaggerUi from 'swagger-ui-express';
+import { loadOpenApiDocument } from './config/swagger/swagger.config';
 
 const server = express();
 const { PORT } = process.env;
@@ -61,6 +63,10 @@ configPassport();
 
 // API routes
 server.use('/api/v1', routes);
+
+// Swagger Documentation
+const openApiDoc = loadOpenApiDocument();
+server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
 
 // 404 handler
 server.use(notFoundHandler);

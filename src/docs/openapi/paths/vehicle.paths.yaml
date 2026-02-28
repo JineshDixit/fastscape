@@ -1,0 +1,99 @@
+/vehicles:
+  get:
+    tags:
+      - Vehicles
+    summary: List all vehicles with optional filters
+    parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+      - name: city
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: A list of vehicles
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Vehicle'
+/vehicles/stats:
+  get:
+    tags:
+      - Vehicles
+    summary: Get vehicle statistics
+    responses:
+      '200':
+        description: Statistics data
+/vehicles/body-types/summary:
+  get:
+    tags:
+      - Vehicles
+    summary: Get vehicle count per body type
+    responses:
+      '200':
+        description: Summary data
+/vehicles/filters/metadata:
+  get:
+    tags:
+      - Vehicles
+    summary: Get available filter options
+    responses:
+      '200':
+        description: Metadata for filters
+/vehicles/available:
+  get:
+    tags:
+      - Vehicles
+    summary: Find vehicles available for specific dates
+    responses:
+      '200':
+        description: List of available vehicles
+/vehicles/most-popular:
+  get:
+    tags:
+      - Vehicles
+    summary: Get top-rated vehicles
+    responses:
+      '200':
+        description: Popular vehicles list
+/vehicles/{id}/availability:
+  get:
+    tags:
+      - Vehicles
+    summary: Check specific vehicle availability
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Availability status
+/vehicles/{id}:
+  get:
+    tags:
+      - Vehicles
+    summary: Get vehicle by ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Vehicle details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehicle'
+      '404':
+        description: Vehicle not found

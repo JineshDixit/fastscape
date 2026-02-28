@@ -1,0 +1,33 @@
+Vehicle:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    make:
+      type: string
+    model:
+      type: string
+    year:
+      type: integer
+    type:
+      type: string
+    bodyType:
+      type: string
+    transmission:
+      type: string
+      enum: [MANUAL, AUTOMATIC]
+    fuelType:
+      type: string
+      enum: [PETROL, DIESEL, ELECTRIC, HYBRID]
+    pricePerDay:
+      type: number
+    currency:
+      type: string
+    status:
+      type: string
+      enum: [AVAILABLE, BOOKED, MAINTENANCE]
+    images:
+      type: array
+      items:
+        type: string

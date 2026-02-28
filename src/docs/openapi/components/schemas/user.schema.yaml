@@ -1,0 +1,25 @@
+User:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    fullName:
+      type: string
+    email:
+      type: string
+      format: email
+    phone:
+      type: string
+    role:
+      type: string
+      enum: [USER, ADMIN, CHAUFFEUR]
+    status:
+      type: string
+      enum: [ACTIVE, INACTIVE, SUSPENDED]
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time

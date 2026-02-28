@@ -1,0 +1,68 @@
+/users/profile:
+  get:
+    tags:
+      - Users
+    summary: Get current user profile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Successfully retrieved user profile
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+  put:
+    tags:
+      - Users
+    summary: Update user profile
+    security:
+      - bearerAuth: []
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+    responses:
+      '200':
+        description: Profile updated successfully
+/users/documents/completeness:
+  get:
+    tags:
+      - Users
+    summary: Check if required documents are uploaded
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Completeness status
+/users/documents/skip-step:
+  get:
+    tags:
+      - Users
+    summary: Check if document step can be skipped
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Skip status
+/users/documents/validate:
+  get:
+    tags:
+      - Users
+    summary: Validate documents for a booking
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Validation result
+/users/documents/eligibility:
+  get:
+    tags:
+      - Users
+    summary: Check overall booking eligibility
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Eligibility status
