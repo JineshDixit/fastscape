@@ -1,4 +1,4 @@
-import '../env/envConfig';
+import '../../src/config/env/envConfig';
 import { initPostgres_DB, sequelize } from '../models';
 
 /**

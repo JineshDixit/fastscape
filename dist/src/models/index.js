@@ -58,16 +58,18 @@ const initPostgres_DB = () => __awaiter(void 0, void 0, void 0, function* () {
         timezone: '+00:00', // Force UTC timezone for all operations
         dialectOptions: {
             timezone: 'UTC', // PostgreSQL session timezone
+            ssl: {
+                require: true,
+                rejectUnauthorized: false,
+            },
         },
-        logging: false,
         pool: {
             max: 5,
             min: 0,
-            acquire: 30000,
+            acquire: 60000,
             idle: 10000,
             evict: 1000 * 60 * 10,
         },
-        ssl: true,
     });
     (0, user_model_1.initUserModel)(sequelize);
     (0, userIdentityDocument_model_1.initUserIdentityDocumentModel)(sequelize);
@@ -120,12 +122,6 @@ const initPostgres_DB = () => __awaiter(void 0, void 0, void 0, function* () {
     chauffeurReview_model_1.ChauffeurReview.belongsTo(chauffeur_model_1.Chauffeur, { foreignKey: 'chauffeurId', as: 'chauffeur' });
     chauffeurReview_model_1.ChauffeurReview.belongsTo(user_model_1.User, { foreignKey: 'userId', as: 'user' });
     refreshToken_model_1.RefreshToken.belongsTo(user_model_1.User, { foreignKey: 'userId', as: 'user' });
-    // try {
-    //   await sequelize.sync({ alter: true });
-    //   console.log('Database connection has been established successfully.');
-    // } catch (error) {
-    //   console.error('Unable to connect to the database:', error);
-    // }
 });
 exports.initPostgres_DB = initPostgres_DB;
 //# sourceMappingURL=index.js.map

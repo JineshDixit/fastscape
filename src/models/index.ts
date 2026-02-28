@@ -33,16 +33,18 @@ const initPostgres_DB = async (): Promise<void> => {
     timezone: '+00:00', // Force UTC timezone for all operations
     dialectOptions: {
       timezone: 'UTC', // PostgreSQL session timezone
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
     },
-    logging: false,
     pool: {
       max: 5,
       min: 0,
-      acquire: 30000,
+      acquire: 60000,
       idle: 10000,
       evict: 1000 * 60 * 10,
     },
-    ssl: true,
   });
   initUserModel(sequelize);
   initUserIdentityDocumentModel(sequelize);
@@ -106,13 +108,6 @@ const initPostgres_DB = async (): Promise<void> => {
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
   RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-  // try {
-  //   await sequelize.sync({ alter: true });
-  //   console.log('Database connection has been established successfully.');
-  // } catch (error) {
-  //   console.error('Unable to connect to the database:', error);
-  // }
 };
 
 export {
