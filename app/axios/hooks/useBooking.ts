@@ -34,39 +34,68 @@ export const useBooking = () => {
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
 
   // Loading States
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Derive global loading state
+  const isLoading = isFetchingInfo || isCreatingBooking || isProcessingPayment;
 
   // Error State
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentId, setIntentId] = useState<string | null>(null);
 
-  // Helper function to handle API calls
+  // Helper function to handle API calls with enhanced error handling
   const handleApiCall = useCallback(
     async <T>(
       apiCall: () => Promise<ApiResponse<T>>,
       onSuccess?: (data: T) => void,
       setLoadingState?: (loading: boolean) => void,
+      silent: boolean = false,
     ): Promise<ApiResponse<T> | null> => {
       try {
         setError(null);
-        if (setLoadingState) setLoadingState(true);
+        if (setLoadingState && !silent) setLoadingState(true);
 
         const response = await apiCall();
 
         if (response.success && response.data && onSuccess) {
           onSuccess(response.data);
+        } else if (!response.success) {
+          // Handle API errors properly
+          const errorMessage = response.message || 'An error occurred';
+          setError(errorMessage);
+          return { success: false, message: errorMessage, data: null as any };
         }
 
         return response;
       } catch (err: any) {
-        const errorMessage = err?.response?.data?.message || err?.message || 'An error occurred';
+        // Enhanced error handling
+        let errorMessage = 'An unexpected error occurred';
+
+        if (err?.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+
+        // Handle specific error codes
+        if (err?.response?.status === 401) {
+          errorMessage = 'Authentication required. Please log in again.';
+          // Could trigger logout here
+        } else if (err?.response?.status === 403) {
+          errorMessage = 'You do not have permission to perform this action.';
+        } else if (err?.response?.status === 409) {
+          errorMessage = 'Conflict: ' + errorMessage;
+        } else if (err?.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+
         setError(errorMessage);
         return { success: false, message: errorMessage, data: null as any };
       } finally {
-        if (setLoadingState) setLoadingState(false);
+        if (setLoadingState && !silent) setLoadingState(false);
       }
     },
     [],
@@ -96,7 +125,7 @@ export const useBooking = () => {
       return handleApiCall(
         () => bookingService.getUserBookings(params),
         (data) => setBookings(data.bookings),
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],
@@ -106,7 +135,7 @@ export const useBooking = () => {
     return handleApiCall(
       () => bookingService.getUpcomingBookings(),
       (bookings) => setUpcomingBookings(bookings),
-      setIsLoading,
+      setIsFetchingInfo,
     );
   }, [handleApiCall]);
 
@@ -114,7 +143,7 @@ export const useBooking = () => {
     return handleApiCall(
       () => bookingService.getActiveBookings(),
       (bookings) => setActiveBookings(bookings),
-      setIsLoading,
+      setIsFetchingInfo,
     );
   }, [handleApiCall]);
 
@@ -122,7 +151,7 @@ export const useBooking = () => {
     return handleApiCall(
       () => bookingService.getBookingStats(),
       (stats) => setBookingStats(stats),
-      setIsLoading,
+      setIsFetchingInfo,
     );
   }, [handleApiCall]);
 
@@ -131,18 +160,19 @@ export const useBooking = () => {
       return handleApiCall(
         () => bookingService.getBookingHistory(params),
         (history) => setBookingHistory(history),
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],
   );
 
   const fetchBookingById = useCallback(
-    async (bookingId: string) => {
+    async (bookingId: string, silent: boolean = false) => {
       return handleApiCall(
         () => bookingService.getBookingById(bookingId),
         (booking) => setCurrentBooking(booking),
-        setIsLoading,
+        setIsFetchingInfo,
+        silent,
       );
     },
     [handleApiCall],
@@ -178,11 +208,21 @@ export const useBooking = () => {
   // Payment Operations
   const calculatePaymentBreakdown = useCallback(
     async (bookingId: string, delayHours?: number) => {
-      return handleApiCall(
+      console.log('[useBooking] Calculating payment breakdown for booking:', bookingId);
+      const result = await handleApiCall(
         () => paymentService.calculatePaymentBreakdown(bookingId, delayHours),
-        (breakdown) => setPaymentBreakdown(breakdown),
-        setIsLoading,
+        (breakdown) => {
+          console.log('[useBooking] Payment breakdown received:', breakdown);
+          setPaymentBreakdown(breakdown);
+        },
+        setIsFetchingInfo,
       );
+
+      if (!result?.success) {
+        console.error('[useBooking] Failed to calculate payment breakdown:', result?.message);
+      }
+
+      return result;
     },
     [handleApiCall],
   );
@@ -214,7 +254,7 @@ export const useBooking = () => {
       return handleApiCall(
         () => paymentService.getPaymentSummary(bookingId),
         (summary) => setPaymentSummary(summary),
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],
@@ -232,7 +272,7 @@ export const useBooking = () => {
             setIntentId(data.id);
           }
         },
-        setIsLoading,
+        setIsFetchingInfo,
       );
     },
     [handleApiCall],

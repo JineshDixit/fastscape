@@ -202,22 +202,22 @@ export const authCookies = {
 
     if (!token || !expiresAt) return false;
 
-    // Check if token is expired with 2-minute buffer (reduced from 5 minutes)
+    // Check if token is expired with 30-second buffer for clock skew
     const now = new Date().getTime();
     const expires = new Date(expiresAt).getTime();
-    const buffer = 2 * TIME_CONSTANTS.ONE_MINUTE;
+    const buffer = 30 * 1000; // 30 seconds
 
     return now < expires - buffer;
   },
 
-  // Check if token needs refresh (within 5 minutes of expiry, reduced from 10 minutes)
+  // Check if token needs refresh (within 3 minutes of expiry)
   needsRefresh: () => {
     const expiresAt = getCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT);
     if (!expiresAt) return false;
 
     const now = new Date().getTime();
     const expires = new Date(expiresAt).getTime();
-    const refreshThreshold = 5 * TIME_CONSTANTS.ONE_MINUTE;
+    const refreshThreshold = 3 * TIME_CONSTANTS.ONE_MINUTE;
 
     return now > expires - refreshThreshold;
   },

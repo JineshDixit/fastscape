@@ -272,12 +272,11 @@ const RegisterModel: FC<RegisterModelPropType> = ({ open, onOpenChange, onLoginC
             })}
 
             <DialogFooter className="flex-col gap-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? t('loading') : t('register')}
-              </Button>
-
               <Button type="button" variant="outline" onClick={handleLoginClick}>
                 {t('alreadyHaveAccount')} {t('login')}
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? t('loading') : t('register')}
               </Button>
             </DialogFooter>
           </form>

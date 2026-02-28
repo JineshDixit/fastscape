@@ -1,9 +1,5 @@
 import { BaseApiService } from '../base';
-import type { 
-  ApiResponse, 
-  UserProfile, 
-  UpdateProfileRequest 
-} from '../../../common/interfaces';
+import type { ApiResponse, UserProfile, UpdateProfileRequest } from '../../../common/interfaces';
 
 export class UserService extends BaseApiService {
   constructor() {
@@ -22,7 +18,7 @@ export class UserService extends BaseApiService {
    */
   async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>> {
     const formData = new FormData();
-    
+
     // Add text fields
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -41,13 +37,13 @@ export class UserService extends BaseApiService {
     // Add file fields
     const fileFields = [
       'driverLicenseFront',
-      'driverLicenseBack', 
+      'driverLicenseBack',
       'passportPhoto',
       'internationalDrivingPermit',
-      'selfieWithLicense'
+      'selfieWithLicense',
     ] as const;
 
-    fileFields.forEach(field => {
+    fileFields.forEach((field) => {
       const file = data[field];
       if (file instanceof File) {
         formData.append(field, file);
@@ -56,9 +52,24 @@ export class UserService extends BaseApiService {
 
     return this.put<UserProfile, FormData>('/profile', formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        'Content-Type': 'multipart/form-data',
+      },
     });
+  }
+
+  /**
+   * Check booking eligibility (comprehensive check)
+   */
+  async checkBookingEligibility(): Promise<
+    ApiResponse<{
+      eligible: boolean;
+      reason?: string;
+      restrictions?: any;
+      missingDocuments?: string[];
+      verificationStatus?: string;
+    }>
+  > {
+    return this.get('/documents/eligibility');
   }
 }
 

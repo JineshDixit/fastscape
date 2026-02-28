@@ -71,8 +71,8 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
         if (response.data.isAvailable) {
           setAvailabilityChecked(true);
         } else {
-          setFormError('startDatetime', { 
-            message: 'Vehicle is not available for the selected dates. Please choose different dates.' 
+          setFormError('startDatetime', {
+            message: 'Vehicle is not available for the selected dates. Please choose different dates.',
           });
         }
       }
@@ -111,7 +111,7 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CarIcon className="h-5 w-5" />
@@ -121,12 +121,14 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Vehicle Info */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Vehicle Details</h3>
+          <div className="rounded-lg bg-gray-50 p-4">
+            <h3 className="mb-2 font-semibold">Vehicle Details</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">Make & Model:</span>
-                <p className="font-medium">{vehicle.make} {vehicle.model}</p>
+                <p className="font-medium">
+                  {vehicle.make} {vehicle.model}
+                </p>
               </div>
               <div>
                 <span className="text-gray-600">Price per day:</span>
@@ -169,7 +171,7 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
           </div>
 
           {/* Date & Time */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Input
                 id="startDatetime"
@@ -178,9 +180,7 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
                 {...register('startDatetime', { required: 'Pickup date is required' })}
                 className={errors.startDatetime ? 'border-red-500' : ''}
               />
-              {errors.startDatetime && (
-                <p className="text-red-500 text-sm">{errors.startDatetime.message}</p>
-              )}
+              {errors.startDatetime && <p className="text-sm text-red-500">{errors.startDatetime.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -191,9 +191,7 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
                 {...register('endDatetime', { required: 'Dropoff date is required' })}
                 className={errors.endDatetime ? 'border-red-500' : ''}
               />
-              {errors.endDatetime && (
-                <p className="text-red-500 text-sm">{errors.endDatetime.message}</p>
-              )}
+              {errors.endDatetime && <p className="text-sm text-red-500">{errors.endDatetime.message}</p>}
             </div>
           </div>
 
@@ -209,12 +207,12 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
               {isCheckingAvailability ? 'Checking...' : 'Check Availability'}
             </Button>
             {availabilityChecked && (
-              <p className="text-green-600 text-sm text-center">✓ Vehicle is available for selected dates</p>
+              <p className="text-center text-sm text-green-600">✓ Vehicle is available for selected dates</p>
             )}
           </div>
 
           {/* Locations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Input
                 id="pickupLocation"
@@ -223,9 +221,7 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
                 {...register('pickupLocation', { required: 'Pickup location is required' })}
                 className={errors.pickupLocation ? 'border-red-500' : ''}
               />
-              {errors.pickupLocation && (
-                <p className="text-red-500 text-sm">{errors.pickupLocation.message}</p>
-              )}
+              {errors.pickupLocation && <p className="text-sm text-red-500">{errors.pickupLocation.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -236,20 +232,14 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
                 {...register('dropoffLocation', { required: 'Dropoff location is required' })}
                 className={errors.dropoffLocation ? 'border-red-500' : ''}
               />
-              {errors.dropoffLocation && (
-                <p className="text-red-500 text-sm">{errors.dropoffLocation.message}</p>
-              )}
+              {errors.dropoffLocation && <p className="text-sm text-red-500">{errors.dropoffLocation.message}</p>}
             </div>
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Additional Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any special requirements or notes..."
-              {...register('notes')}
-            />
+            <Textarea id="notes" placeholder="Any special requirements or notes..." {...register('notes')} />
           </div>
 
           {/* Chauffeur Instructions */}
@@ -266,26 +256,17 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
 
           {/* Error Display */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1"
-            >
+            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isCreatingBooking || !availabilityChecked}
-              className="flex-1"
-            >
+            <Button type="submit" disabled={isCreatingBooking || !availabilityChecked} className="flex-1">
               {isCreatingBooking ? 'Creating Booking...' : 'Create Booking'}
             </Button>
           </div>

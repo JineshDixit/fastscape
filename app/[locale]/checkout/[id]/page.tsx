@@ -2,7 +2,8 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from '@/localization/navigation';
-import { useVehicle, useUser, useBooking } from '@/app/axios/hooks';
+import { useVehicle, useBooking, useDocument } from '@/app/axios/hooks';
+import { useBookingFlow } from '@/app/axios/hooks/useBookingFlow';
 import { vehicleService } from '@/app/axios/services/vehicle';
 import CheckoutSteppers, { CheckoutStep } from '@/components/checkout/CheckoutSteppers';
 import IdentityStep from '@/components/checkout/IdentityStep';
@@ -34,22 +35,33 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const { user } = useAuth();
   const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
-  const { profile, fetchProfile, isLoading: profileLoading } = useUser();
+  const { shouldSkipDocumentStep } = useDocument();
   const {
     createBooking,
     calculatePaymentBreakdown,
     initiatePaymentIntent,
-    fetchUserBookings,
     processDepositPayment,
     currentBooking,
     paymentBreakdown,
     isLoading: bookingLoading,
   } = useBooking();
 
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>('IDENTITY');
-  const [error, setError] = useState<string | null>(null);
+  const {
+    currentStep,
+    profile,
+    isInitialized,
+    isLoading: flowLoading,
+    error: flowError,
+    initializeFlow,
+    proceedToNextStep,
+    goToStepWithCleanup,
+    clearError,
+  } = useBookingFlow();
+
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [bookingCreated, setBookingCreated] = useState(false);
 
   const STEPS: { id: CheckoutStep; label: string }[] = [
     { id: 'IDENTITY', label: t('steps.identity') },
@@ -58,38 +70,46 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     { id: 'SUMMARY', label: t('steps.summary') },
   ];
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[Checkout] Component state:', {
+      currentStep,
+      currentBooking: currentBooking?.id,
+      paymentBreakdown,
+      isLoading: flowLoading || bookingLoading,
+      bookingCreated,
+    });
+  }, [currentStep, currentBooking, paymentBreakdown, flowLoading, bookingLoading, bookingCreated]);
+
   useEffect(() => {
     if (id) {
       fetchVehicleById(id);
     }
   }, [id, fetchVehicleById]);
 
-  // Sync profile when user changes or session initialized
+  // Initialize the booking flow when user is available and not already initialized
   useEffect(() => {
-    if (user) {
-      fetchProfile();
+    if (user && !isInitialized) {
+      initializeFlow();
     }
-  }, [user, fetchProfile]);
+  }, [user, isInitialized, initializeFlow]);
 
-  // Handle automatic step skipping (Smart Flow)
+  // Sync flow error with local error
   useEffect(() => {
-    if (currentStep === 'IDENTITY' && profile && user) {
-      const isVerified = profile.verificationStatus === 'VERIFIED';
-      const hasBasicInfo = !!(profile.firstName && profile.lastName && profile.phone);
-
-      if (isVerified) {
-        console.log('Profile verified, skipping to payment.');
-        handleDocumentsNext();
-      } else if (hasBasicInfo) {
-        console.log('Identity confirmed, proceeding to documents for verification.');
-        setCurrentStep('DOCUMENTS');
-      }
+    if (flowError) {
+      setError(flowError);
     }
-  }, [currentStep, profile, user]);
+  }, [flowError]);
 
-  // Check vehicle availability when checkout page loads
+  // Check vehicle availability when checkout page loads (only if no booking exists)
   useEffect(() => {
     const checkInitialAvailability = async () => {
+      // Skip availability check if booking already exists or is created
+      if (currentBooking || bookingCreated) {
+        console.log('[Checkout] Skipping availability check - booking session active');
+        return;
+      }
+
       if (id && bookingData.pickupDate && bookingData.dropoffDate) {
         setIsCheckingAvailability(true);
         try {
@@ -97,13 +117,14 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
           if (response.success) {
             setAvailabilityStatus(response.data?.isAvailable ?? false);
-            if (!response.data?.isAvailable) {
+            // Only show availability error if we ARE NOT in the middle of creating/retrieving a booking
+            if (!response.data?.isAvailable && !currentBooking && !bookingCreated) {
               setError(t('errorAvailability'));
             }
           }
         } catch (err) {
           console.error('Availability check failed:', err);
-          setError(t('errorAvailabilityGeneric'));
+          // Don't block the UI with a generic error if we might have a session on backend
         } finally {
           setIsCheckingAvailability(false);
         }
@@ -111,93 +132,208 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     };
 
     checkInitialAvailability();
-  }, [id, bookingData.pickupDate, bookingData.dropoffDate]);
+  }, [id, bookingData.pickupDate, bookingData.dropoffDate, bookingCreated, currentBooking]);
 
-  // Session Recovery: Check for existing PENDING booking for this vehicle
+  // Clear session storage when checkout is completed or user leaves
   useEffect(() => {
-    const recoverSession = async () => {
-      if (user && id) {
-        const response = await fetchUserBookings({ status: 'PENDING' });
-        if (response?.success && response.data?.bookings) {
-          const existingBooking = response.data.bookings.find(
-            (b) => b.vehicleId === id && b.bookingStatus === 'PENDING',
-          );
-          if (existingBooking) {
-            console.log('Recovered existing PENDING booking:', existingBooking.id);
-            // We found one, but we don't necessarily jump to PAYMENT yet
-            // unless they've passed documents.
-          }
-        }
+    const clearCheckoutSession = () => {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('documentsUploaded');
+        sessionStorage.removeItem('documentPreviews');
       }
     };
-    recoverSession();
-  }, [user, id, fetchUserBookings]);
 
-  const handleIdentityNext = async (password: string) => {
+    // Clear on successful completion
+    if (currentStep === 'SUMMARY') {
+      clearCheckoutSession();
+    }
+
+    // Clear on page unload (user navigates away)
+    const handleBeforeUnload = () => {
+      if (currentStep !== 'SUMMARY') {
+        clearCheckoutSession();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [currentStep]);
+
+  // Clear booking ONLY when explicitly resetting (e.g. going back to identity after failure)
+  useEffect(() => {
+    // If we are at IDENTITY step but we HAVE a booking, we might have just started
+    // We should only clear if the user is truly "starting over"
+    if (currentStep === 'IDENTITY' && bookingCreated && !currentBooking) {
+      // This case might happen if we just started. Let's not clear it.
+      return;
+    }
+
+    // Preserve booking state unless explicitly navigating back to Identity from Documents/Payment
+    // AND wanting to reset (rare).
+    // Actually, let's just remove this restrictive auto-clear.
+  }, [currentStep, bookingCreated]);
+
+  const createBookingIfNeeded = async () => {
+    // Don't create booking if already exists in state
+    if (currentBooking) {
+      console.log('[Checkout] Booking already exists in state, skipping creation:', currentBooking.id);
+      return currentBooking;
+    }
+
+    if (!bookingData.pickupDate || !bookingData.dropoffDate) {
+      throw new Error('Booking dates are missing');
+    }
+
+    // Check availability first
+    setIsCheckingAvailability(true);
     try {
-      // Identity is confirmed (read-only anyway), transition to DOCUMENTS
-      // Security check could be added here
-      setCurrentStep('DOCUMENTS');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const availabilityResponse = await vehicleService.checkAvailability(
+        id,
+        bookingData.pickupDate,
+        bookingData.dropoffDate,
+      );
+
+      if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
+        // Double check if the "unavailability" is actually due to user's OWN pending booking
+        // handled by backend idempotency, but we check here too for better UX
+        console.warn('[Checkout] Vehicle reported unavailable, but proceeding to attempt create/lookup (idempotency)');
+      }
     } catch (err) {
-      setError(t('errorIdentity'));
+      console.error('[Checkout] Availability check failed, but proceeding with booking attempt:', err);
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+
+    // Create booking (Backend is now idempotent and will return existing pending if it exists)
+    const finalBookingData = {
+      vehicleId: id,
+      startDatetime: bookingData.pickupDate,
+      endDatetime: bookingData.dropoffDate,
+      pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
+      dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
+      bookingType: bookingData.bookingType,
+      paymentMethod: 'ONLINE',
+    };
+
+    console.log('[Checkout] Attempting to create/retrieve booking with data:', finalBookingData);
+    const response = await createBooking(finalBookingData as any);
+    console.log('[Checkout] Booking creation/retrieval response:', response);
+
+    if (response && response.success && response.data) {
+      console.log('[Checkout] Booking established successfully, ID:', response.data.id);
+      setBookingCreated(true);
+      return response.data;
+    } else {
+      // If we get a 409 conflict, it means someone else booked it (unlikely in this flow due to expiration/locking)
+      // or our backend idempotency logic didn't hit.
+      throw new Error(response?.message || 'Failed to initialize booking session.');
     }
   };
 
-  // Fetch breakdown when moving to payment step
-  useEffect(() => {
-    if (currentStep === 'PAYMENT' && currentBooking?.id) {
-      calculatePaymentBreakdown(currentBooking.id);
+  const handleIdentityNext = async () => {
+    try {
+      clearAllErrors();
+
+      // Check if documents will be skipped
+      const skipDocs = await shouldSkipDocumentStep(bookingData.bookingType);
+
+      if (skipDocs) {
+        // If documents are skipped, create booking here before proceeding to payment
+        console.log('[Checkout] Documents will be skipped, creating booking now');
+
+        const booking = await createBookingIfNeeded();
+
+        if (booking) {
+          // Calculate payment breakdown
+          console.log('[Checkout] Calculating payment breakdown...');
+          const breakdownResponse = await calculatePaymentBreakdown(booking.id);
+          console.log('[Checkout] Payment breakdown response:', breakdownResponse);
+
+          if (breakdownResponse && breakdownResponse.success) {
+            await proceedToNextStep();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
+          }
+        }
+      } else {
+        // Documents step is needed, just proceed normally
+        await proceedToNextStep();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (err: any) {
+      console.error('[Checkout] Error in handleIdentityNext:', err);
+      setError(err.message || t('errorIdentity'));
     }
-  }, [currentStep, currentBooking?.id, calculatePaymentBreakdown]);
+  };
 
   const handleDocumentsNext = async () => {
     try {
-      if (profile?.verificationStatus !== 'VERIFIED') {
-        setError(t('errorCredentials'));
+      clearAllErrors();
+
+      // If booking already exists, just proceed to payment with existing breakdown
+      if (currentBooking) {
+        console.log('[Checkout] Booking exists, proceeding to payment with existing booking:', currentBooking.id);
+
+        // Ensure we have payment breakdown
+        if (!paymentBreakdown) {
+          console.log('[Checkout] Fetching payment breakdown for existing booking...');
+          const breakdownResponse = await calculatePaymentBreakdown(currentBooking.id);
+          if (!breakdownResponse?.success) {
+            setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
+            return;
+          }
+        }
+
+        await proceedToNextStep();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
-      // First, check vehicle availability before proceeding
-      if (bookingData.pickupDate && bookingData.dropoffDate) {
-        setIsCheckingAvailability(true);
-        const availabilityResponse = await vehicleService.checkAvailability(
-          id,
-          bookingData.pickupDate,
-          bookingData.dropoffDate,
-        );
-        setIsCheckingAvailability(false);
+      // Refresh profile to get latest verification status
+      console.log('[Checkout] Refreshing profile before proceeding...');
+      await initializeFlow(); // This will fetch fresh profile data
 
-        if (!availabilityResponse.success || !availabilityResponse.data?.isAvailable) {
-          setError(t('errorAvailability'));
-          return;
+      // Create booking if not already created
+      const booking = await createBookingIfNeeded();
+
+      if (booking) {
+        // Calculate payment breakdown
+        console.log('[Checkout] Calculating payment breakdown...');
+        const breakdownResponse = await calculatePaymentBreakdown(booking.id);
+        console.log('[Checkout] Payment breakdown response:', breakdownResponse);
+
+        if (breakdownResponse && breakdownResponse.success) {
+          await proceedToNextStep();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError(breakdownResponse?.message || 'Failed to calculate payment breakdown.');
         }
       }
-
-      // Create PENDING booking on backend
-      const finalBookingData = {
-        vehicleId: id,
-        startDatetime: bookingData.pickupDate!,
-        endDatetime: bookingData.dropoffDate!,
-        pickupLocation: bookingData.pickupLocation || 'Dubai Hub',
-        dropoffLocation: bookingData.dropoffLocation || 'Dubai Hub',
-        bookingType: bookingData.bookingType,
-        paymentMethod: 'ONLINE', // Default to ONLINE, can be changed in payment step
-      };
-
-      const response = await createBooking(finalBookingData as any);
-      if (response && response.success && response.data) {
-        // Success! createBooking already sets currentBooking in hook
-        setCurrentStep('PAYMENT');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setError(response?.message || 'Failed to initialize booking session.');
-      }
-    } catch (err) {
-      setError(t('errorFinalSync'));
+    } catch (err: any) {
+      console.error('[Checkout] Error in handleDocumentsNext:', err);
+      setError(err.message || t('errorFinalSync'));
       setIsCheckingAvailability(false);
     }
   };
+
+  // Fetch breakdown when moving to payment step OR when payment step is loaded with existing booking
+  useEffect(() => {
+    const fetchBreakdown = async () => {
+      if (currentStep === 'PAYMENT' && currentBooking?.id) {
+        console.log('[Checkout] Payment step loaded, fetching breakdown for booking:', currentBooking.id);
+        const result = await calculatePaymentBreakdown(currentBooking.id);
+        if (!result?.success) {
+          console.error('[Checkout] Failed to fetch payment breakdown:', result?.message);
+          setError(result?.message || 'Failed to load payment information');
+        }
+      }
+    };
+
+    fetchBreakdown();
+  }, [currentStep, currentBooking?.id]);
 
   const handlePaymentNext = async (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => {
     if (!currentBooking) {
@@ -221,7 +357,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
-          setCurrentStep('SUMMARY');
+          goToStepWithCleanup('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setError(response?.message || t('errorPaymentSync'));
@@ -233,18 +369,24 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
-          setCurrentStep('SUMMARY');
+          goToStepWithCleanup('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           setError(response?.message || t('errorPaymentManual'));
         }
       }
-    } catch (err) {
-      setError(t('errorFinalSync'));
+    } catch (err: any) {
+      setError(err.message || t('errorFinalSync'));
     }
   };
 
-  if (vehicleLoading || profileLoading) {
+  const clearAllErrors = () => {
+    setError(null);
+    clearError();
+  };
+
+  // Vehicle and basic flow data must be loaded
+  if (vehicleLoading || (flowLoading && !isInitialized)) {
     return (
       <div className="flex h-[80vh] items-center justify-center bg-gray-50/10 dark:bg-gray-950">
         <div className="flex flex-col items-center gap-6">
@@ -325,17 +467,17 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
             <CheckoutSteppers currentStep={currentStep} steps={STEPS} />
 
-            {error && (
-              <Alert variant="destructive" className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
+            {(error || flowError) && (
+              <Alert variant="destructive" className="rounded-xl border-2">
                 <AlertCircle className="h-5 w-5" />
                 <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
-                  {error}
+                  {error || flowError}
                 </AlertDescription>
               </Alert>
             )}
 
             {isCheckingAvailability && (
-              <Alert className="animate-in slide-in-from-top-4 rounded-xl border-2 duration-500">
+              <Alert className="rounded-xl border-2">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <AlertDescription className="ml-2 text-[11px] font-bold tracking-tight uppercase">
                   {t('verifyingAvailability')}
@@ -343,7 +485,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
               </Alert>
             )}
 
-            <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 transition-all duration-700 dark:bg-gray-900 dark:shadow-none dark:ring-gray-800">
+            <Card className="overflow-hidden rounded-xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
               <CardHeader className="border-b border-gray-50/50 px-8 pt-8 pb-4 dark:border-gray-800">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1.5">
@@ -354,9 +496,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       </span>
                     </div>
                     <CardTitle className="text-2xl font-black tracking-tight text-gray-950 dark:text-white">
-                      {STEPS.find((s) => s.id === currentStep)?.label} {t('intel')}
+                      {STEPS.find((s) => s.id === currentStep)?.label}
                     </CardTitle>
-                    <CardDescription className="text-sm font-medium text-gray-400 italic">
+                    <CardDescription className="text-sm font-medium text-gray-400">
                       {currentStep === 'IDENTITY' && t('identityDesc')}
                       {currentStep === 'DOCUMENTS' && t('documentsDesc')}
                       {currentStep === 'PAYMENT' && t('paymentDesc')}
@@ -370,7 +512,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <IdentityStep
                     profile={profile}
                     onNext={handleIdentityNext}
-                    isLoading={profileLoading || bookingLoading}
+                    isLoading={flowLoading || bookingLoading}
                   />
                 )}
 
@@ -378,8 +520,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <DocumentStep
                     profile={profile}
                     onNext={handleDocumentsNext}
-                    onBack={() => setCurrentStep('IDENTITY')}
-                    isLoading={profileLoading || bookingLoading}
+                    onBack={() => goToStepWithCleanup('IDENTITY')}
+                    isLoading={flowLoading || bookingLoading}
+                    onProfileRefresh={initializeFlow}
                   />
                 )}
 
@@ -387,17 +530,16 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   <PaymentMethodForm
                     breakdown={paymentBreakdown}
                     onNext={handlePaymentNext}
-                    onBack={() => setCurrentStep('DOCUMENTS')}
+                    onBack={() => goToStepWithCleanup('DOCUMENTS')}
                     isLoading={bookingLoading}
                   />
                 )}
 
                 {currentStep === 'SUMMARY' && (
-                  <div className="animate-in fade-in zoom-in flex flex-col items-center justify-center space-y-8 py-16 text-center duration-1000">
-                    <div className="group relative cursor-none">
-                      <div className="bg-primary/30 group-hover:bg-primary/50 absolute inset-0 rounded-full blur-[80px] transition-all duration-700" />
-                      <div className="from-primary ring-primary/10 relative rounded-full bg-linear-to-tr via-[#06b0fc] to-[#3ac1fd] p-8 text-white shadow-[0_20px_50px_rgba(6,176,252,0.4)] ring-12">
-                        <BadgeCheck className="animate-in zoom-in spin-in-12 h-20 w-20 stroke-[2.5] delay-300 duration-1000" />
+                  <div className="flex flex-col items-center justify-center space-y-8 py-16 text-center">
+                    <div className="relative">
+                      <div className="bg-primary/20 rounded-full p-8 text-white">
+                        <BadgeCheck className="h-20 w-20 stroke-[2.5]" />
                       </div>
                     </div>
 
@@ -412,15 +554,15 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
                     <div className="flex w-full max-w-md flex-col gap-4 pt-4 sm:flex-row">
                       <Button
-                        onClick={() => router.push('/bookings')}
-                        className="shadow-primary/30 h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase shadow-xl transition-all hover:scale-105 active:scale-95"
+                        onClick={() => router.push('/profile?tab=active')}
+                        className="h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase"
                       >
                         {t('manageAssets')}
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => router.push('/vehicles')}
-                        className="h-12 flex-1 rounded-xl border-2 text-xs font-black tracking-widest uppercase transition-all hover:bg-gray-50 active:scale-95"
+                        className="h-12 flex-1 rounded-xl border-2 text-xs font-black tracking-widest uppercase"
                       >
                         {t('exploreMore')}
                       </Button>
@@ -432,8 +574,8 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
           </div>
 
           <div className="hidden lg:block">
-            <div className="animate-in slide-in-from-right-10 sticky top-28 space-y-6 duration-700">
-              <Card className="overflow-hidden rounded-4xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
+            <div className="sticky top-28 space-y-6">
+              <Card className="overflow-hidden rounded-xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
                 <div className="group relative h-56 w-full overflow-hidden">
                   <img
                     src={getFullUrl(vehicle.media?.[0]?.frontImage || '/placeholder-car.png')}

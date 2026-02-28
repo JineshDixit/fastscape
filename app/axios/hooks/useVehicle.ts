@@ -105,6 +105,12 @@ export const useVehicle = () => {
               limit: response.data!.limit,
               totalPages: response.data!.totalPages,
             },
+            filters: {
+              ...prev.filters,
+              make: params.make,
+              model: params.model,
+              bodyType: params.bodyType,
+            },
             isLoading: false,
           }));
         } else {
@@ -175,17 +181,45 @@ export const useVehicle = () => {
   /**
    * Fetch filter metadata (sidebar filters)
    */
-  const fetchFilterMetadata = useCallback(async () => {
+  const fetchFilterMetadata = useCallback(
+    async (params?: VehicleSearchParams) => {
+      startLoading();
+      try {
+        const response = await vehicleService.getFilterMetadata(params);
+        if (response.success && response.data) {
+          setState((prev) => ({ ...prev, filterMetadata: response.data!, isLoading: false }));
+        } else {
+          setState((prev) => ({ ...prev, error: response.message || 'Failed to fetch filters', isLoading: false }));
+        }
+      } catch (err: any) {
+        handleError(err, 'Failed to fetch filters');
+      }
+    },
+    [startLoading, setState, handleError],
+  );
+
+  /**
+   * Fetch most popular car
+   */
+  const fetchMostPopularCar = useCallback(async () => {
     startLoading();
     try {
-      const response = await vehicleService.getFilterMetadata();
+      const response = await vehicleService.getMostPopularCar();
       if (response.success && response.data) {
-        setState((prev) => ({ ...prev, filterMetadata: response.data!, isLoading: false }));
+        setState((prev) => ({
+          ...prev,
+          mostPopularCar: response.data!,
+          isLoading: false,
+        }));
       } else {
-        setState((prev) => ({ ...prev, error: response.message || 'Failed to fetch filters', isLoading: false }));
+        setState((prev) => ({
+          ...prev,
+          error: response.message || 'Failed to fetch most popular car',
+          isLoading: false,
+        }));
       }
     } catch (err: any) {
-      handleError(err, 'Failed to fetch filters');
+      handleError(err, 'Failed to fetch most popular car');
     }
   }, [startLoading, setState, handleError]);
 
@@ -218,6 +252,7 @@ export const useVehicle = () => {
     fetchStats,
     fetchBodyTypeSummary,
     fetchFilterMetadata,
+    fetchMostPopularCar,
     clearError,
     resetVehicle,
     setBookingData,

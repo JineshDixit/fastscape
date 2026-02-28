@@ -49,10 +49,7 @@ export class VehicleService extends BaseApiService {
     return this.get<{ bodyType: string; count: number }[]>('/body-types/summary');
   }
 
-  /**
-   * Get filter metadata (sidebar filters)
-   */
-  async getFilterMetadata(): Promise<
+  async getFilterMetadata(params?: VehicleSearchParams): Promise<
     ApiResponse<{
       bodyTypes: { bodyType: string; count: number; models: string[] }[];
       brands: { make: string; count: number; models: string[] }[];
@@ -61,8 +58,15 @@ export class VehicleService extends BaseApiService {
     return this.get<{
       bodyTypes: { bodyType: string; count: number; models: string[] }[];
       brands: { make: string; count: number; models: string[] }[];
-    }>('/filters/metadata');
+    }>('/filters/metadata', { params });
   }
+  /**
+   * Get most popular car (most booked vehicle)
+   */
+  async getMostPopularCar(): Promise<ApiResponse<Vehicle & { bookingCount: number }>> {
+    return this.get<Vehicle & { bookingCount: number }>('/most-popular');
+  }
+
   /**
    * Check if a specific vehicle is available for a date range
    */

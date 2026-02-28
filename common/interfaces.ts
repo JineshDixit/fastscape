@@ -196,6 +196,8 @@ export interface User {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
 }
 
 export interface AuthResponse {
@@ -241,7 +243,10 @@ export interface VehicleSearchParams {
   pickupLocation: string;
   pickupDate: string; // ISO string format
   dropoffDate: string; // ISO string format
-  bodyType?: BodyType;
+  bookingType?: 'SELF_DRIVE' | 'CHAUFFEUR';
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: BodyType | BodyType[];
   transmission?: TransmissionType;
   page?: number;
   limit?: number;
@@ -257,6 +262,7 @@ export interface UserProfile extends User {
   licenseIssuingCountry?: string;
   licenseExpiryDate?: string;
   drivingExperienceYears?: number;
+  visaStatus?: 'Resident' | 'Tourist' | 'Visit';
   // Document URLs after upload
   driverLicenseFront?: string;
   driverLicenseBack?: string;
@@ -276,6 +282,7 @@ export interface UpdateProfileRequest {
   licenseIssuingCountry?: string;
   licenseExpiryDate?: string;
   drivingExperienceYears?: number;
+  visaStatus?: 'Resident' | 'Tourist' | 'Visit';
   // Files for document upload
   driverLicenseFront?: File;
   driverLicenseBack?: File;
@@ -490,4 +497,20 @@ export interface CancelBookingResponse {
   booking: Booking;
   refundAmount: number;
   refundPolicy: string;
+}
+
+export interface AssignmentStatusResponse {
+  bookingId: string;
+  bookingType: BookingType;
+  paymentStatus: PaymentStatus;
+  bookingStatus: BookingStatus;
+  chauffeurId?: string;
+  chauffeur?: {
+    id: string;
+    fullName: string;
+    phone: string;
+    rating: number;
+    experienceLevel?: string;
+  };
+  isEligibleForAssignment: boolean;
 }

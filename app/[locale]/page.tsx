@@ -1,6 +1,8 @@
 'use client';
 
 import { CarSearchForm } from '@/components/car-components/carSearchForm';
+import { MobileSearchSheet } from '@/components/car-components/MobileSearchSheet';
+import MostPopularCar from '@/components/car-components/MostPopularCar';
 import Image from 'next/image';
 import { useVehicle } from '@/app/axios';
 import { useEffect, useMemo } from 'react';
@@ -12,13 +14,15 @@ import { useRouter } from '@/localization/navigation';
 const Home = () => {
   const t = useTranslations('home');
   const tFilter = useTranslations('carFilter');
-  const { bodyTypeSummary, fetchBodyTypeSummary, vehicles, fetchVehicles } = useVehicle();
+  const { bodyTypeSummary, fetchBodyTypeSummary, vehicles, fetchVehicles, mostPopularCar, fetchMostPopularCar } =
+    useVehicle();
   const router = useRouter();
 
   useEffect(() => {
     fetchBodyTypeSummary();
     fetchVehicles({ bodyType: 'Supercar', limit: 4 });
-  }, [fetchBodyTypeSummary, fetchVehicles]);
+    fetchMostPopularCar();
+  }, [fetchBodyTypeSummary, fetchVehicles, fetchMostPopularCar]);
 
   const fleetCategoryData = useMemo(() => {
     const map: Record<string, number> = {};
@@ -36,9 +40,12 @@ const Home = () => {
   }, [bodyTypeSummary]);
 
   return (
-    <main className="global-container mb-8">
+    <main className="global-container relative mb-8">
+      {/* Mobile Search FAB */}
+      <MobileSearchSheet />
+
       <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-[340px_1fr] xl:grid-cols-[380px_1fr]">
-        <aside className="border-2 border-gray-100 sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
+        <aside className="border-border bg-card sticky top-28 hidden h-fit flex-col gap-3 rounded-2xl border-2 px-4 py-6 md:gap-4 md:px-6 md:py-8 lg:flex xl:rounded-3xl">
           <span className="text-lg leading-6 font-bold md:text-xl">{t('rentCar')}</span>
           <CarSearchForm />
         </aside>
@@ -50,17 +57,20 @@ const Home = () => {
             height={850}
             className="w-full object-cover"
           />
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
+
+          <div className="grid grid-cols-[1fr] gap-6 md:grid-cols-[427px_1fr]">
+            <div className="h-full overflow-hidden rounded-3xl">
               <Image
                 src="/images/hero-chauffeurs.png"
                 alt="Professional Chauffeur Service"
-                width={500}
-                height={500}
+                width={427}
+                height={427}
                 className="object-cover"
               />
             </div>
-            <div></div>
+            <div className="h-full">
+              {mostPopularCar && <MostPopularCar vehicle={mostPopularCar} className="h-full" />}
+            </div>
           </div>
           <section className="mt-15">
             <h3 className="text-center text-lg font-semibold">{t('exploreFleet')}</h3>
@@ -98,7 +108,7 @@ const Home = () => {
                     />
                   </div>
 
-                  <div className="border-gray-100 bg-gray-50 flex w-full items-center flex-col gap-2 rounded-2xl px-6 pt-10 pb-5">
+                  <div className="border-border bg-muted flex w-full flex-col items-center gap-2 rounded-2xl border px-6 pt-10 pb-5">
                     <span className="text-sm font-semibold">
                       {tFilter(item.label.toLowerCase().replace(' ', '') as any)}
                     </span>
@@ -118,9 +128,9 @@ const Home = () => {
               ))}
             </div>
           </section>
-          <section className="mt-15">
+          <section className="mt-15 px-4">
             <h3 className="text-center text-lg font-semibold">{t('brands')}</h3>
-            <div className="mt-5 flex items-center justify-center gap-5 opacity-55 select-none">
+            <div className="mt-5 grid grid-cols-2 gap-4 opacity-55 select-none sm:grid-cols-3 md:flex md:items-center md:justify-center md:gap-5">
               {[
                 { label: 'BMW', img: '/brands/bmw-brand.png' },
                 { label: 'Jaguar', img: '/brands/jaguar-brand.png' },
@@ -129,22 +139,23 @@ const Home = () => {
                 { label: 'Volkswagen', img: '/brands/volkswagen-brand.png' },
                 { label: 'Hyundai', img: '/brands/hyundai-brand.png' },
               ].map((brand, index) => (
-                <Image
-                  key={`${brand.label}-${index}`}
-                  src={brand.img}
-                  alt={brand.label}
-                  width={90}
-                  height={90}
-                  className="aspect-7/4 object-contain bg-blend-color-burn"
-                />
+                <div key={`${brand.label}-${index}`} className="flex items-center justify-center">
+                  <Image
+                    src={brand.img}
+                    alt={brand.label}
+                    width={90}
+                    height={90}
+                    className="aspect-7/4 w-full max-w-[90px] object-contain bg-blend-color-burn"
+                  />
+                </div>
               ))}
             </div>
           </section>
-          <section className="mt-15 w-full rounded-3xl border-gray-100 bg-gray-100 py-14">
+          <section className="border-border bg-muted mt-15 w-full rounded-3xl border py-14">
             <h3 className="mb-14 text-center text-lg font-semibold">{t('easyRide.title')}</h3>
 
             <div className="relative mx-auto max-w-3xl px-12">
-              <Separator className="relative mx-auto -mb-6 max-w-2/3 bg-gray-500" />
+              <Separator className="bg-border relative mx-auto -mb-6 max-w-2/3" />
 
               <div className="relative z-10 flex justify-between">
                 {[
@@ -166,12 +177,12 @@ const Home = () => {
                 ].map((item) => (
                   <div key={item.step} className="flex max-w-[200px] flex-col items-center text-center">
                     <div className="relative mb-5 flex h-12 w-12 items-center justify-center">
-                      <div className="absolute h-12 w-12 rotate-45 rounded-lg bg-sky-500" />
-                      <span className="relative text-sm font-semibold text-white">{item.step}</span>
+                      <div className="bg-primary absolute h-12 w-12 rotate-45 rounded-lg" />
+                      <span className="text-primary-foreground relative text-sm font-semibold">{item.step}</span>
                     </div>
 
                     <h4 className="text-sm font-semibold">{item.title}</h4>
-                    <p className="mt-1 text-xs text-gray-600">{item.desc}</p>
+                    <p className="text-muted-foreground mt-1 text-xs">{item.desc}</p>
                   </div>
                 ))}
               </div>

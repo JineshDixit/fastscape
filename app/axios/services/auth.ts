@@ -45,7 +45,7 @@ class AuthService extends BaseApiService {
       // So we need to structure it properly for handleTokenResponse
       const authResponse: AuthResponse = {
         user: null as any, // User data is fetched separately
-        tokens: response.data
+        tokens: response.data,
       };
       this.handleTokenResponse(authResponse);
       return { ...response, data: authResponse };
@@ -79,12 +79,25 @@ class AuthService extends BaseApiService {
    */
   async logout(): Promise<ApiResponse<void>> {
     const refreshToken = authCookies.getRefreshToken();
-    // Clear cookies immediately on client side
-    authCookies.clearAll();
-    
+
     if (refreshToken) {
-      return this.post<void>('/logout', { refreshToken });
+      try {
+        // Call logout API first to revoke token on server
+        const response = await this.post<void>('/logout', { refreshToken });
+
+        // Clear cookies after successful server-side revocation
+        authCookies.clearAll();
+
+        return response;
+      } catch (error) {
+        // Even if API call fails, clear cookies locally for security
+        authCookies.clearAll();
+        throw error;
+      }
     }
+
+    // No refresh token, just clear cookies
+    authCookies.clearAll();
     return { success: true, data: undefined };
   }
 
@@ -105,17 +118,10 @@ class AuthService extends BaseApiService {
    */
   private handleTokenResponse(data: AuthResponse) {
     const { tokens } = data;
-    const now = Date.now();
 
-    // Set tokens with correct expiration times (15 minutes for access, 7 days for refresh)
-    authCookies.setAccessToken(
-      tokens.accessToken, 
-      new Date(now + 15 * TIME_CONSTANTS.ONE_MINUTE).toISOString()
-    );
-    authCookies.setRefreshToken(
-      tokens.refreshToken, 
-      new Date(now + TIME_CONSTANTS.SEVEN_DAYS).toISOString()
-    );
+    // Set tokens with correct expiration times provided by the server
+    authCookies.setAccessToken(tokens.accessToken, tokens.accessTokenExpiresAt);
+    authCookies.setRefreshToken(tokens.refreshToken, tokens.refreshTokenExpiresAt);
   }
 }
 

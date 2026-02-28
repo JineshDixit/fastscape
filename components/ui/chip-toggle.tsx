@@ -19,7 +19,8 @@ export function ChipToggle<T extends string>({ options, value, onChange, disable
               isActive
                 ? 'bg-primary text-primary-foreground'
                 : 'border-primary text-primary hover:bg-primary/10 border',
-              disabled && 'cursor-not-allowed opacity-50', className
+              disabled && 'cursor-not-allowed opacity-50',
+              className,
             )}
           >
             {option.label}
