@@ -5,7 +5,7 @@ export class AdminUserRole extends Model {
   public adminUserId!: string;
   public roleId!: string;
   public readonly assignedAt!: Date;
-  public assignedBy?: number;
+  public assignedBy?: string;
 }
 
 export const initAdminUserRoleModel = (sequelize: Sequelize) => {
@@ -19,6 +19,7 @@ export const initAdminUserRoleModel = (sequelize: Sequelize) => {
       adminUserId: {
         type: DataTypes.UUID,
         allowNull: false,
+        field: 'admin_user_id',
         references: {
           model: 'admin_users',
           key: 'id',
@@ -27,14 +28,16 @@ export const initAdminUserRoleModel = (sequelize: Sequelize) => {
       roleId: {
         type: DataTypes.UUID,
         allowNull: false,
+        field: 'role_id',
         references: {
           model: 'roles',
           key: 'id',
         },
       },
       assignedBy: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: true,
+        field: 'assigned_by',
         references: {
           model: 'admin_users',
           key: 'id',

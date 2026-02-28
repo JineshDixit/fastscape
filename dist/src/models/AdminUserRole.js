@@ -15,6 +15,7 @@ const initAdminUserRoleModel = (sequelize) => {
         adminUserId: {
             type: sequelize_1.DataTypes.UUID,
             allowNull: false,
+            field: 'admin_user_id',
             references: {
                 model: 'admin_users',
                 key: 'id',
@@ -23,14 +24,16 @@ const initAdminUserRoleModel = (sequelize) => {
         roleId: {
             type: sequelize_1.DataTypes.UUID,
             allowNull: false,
+            field: 'role_id',
             references: {
                 model: 'roles',
                 key: 'id',
             },
         },
         assignedBy: {
-            type: sequelize_1.DataTypes.INTEGER,
+            type: sequelize_1.DataTypes.UUID,
             allowNull: true,
+            field: 'assigned_by',
             references: {
                 model: 'admin_users',
                 key: 'id',

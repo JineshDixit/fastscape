@@ -34,7 +34,7 @@ server.use(logger_1.morganMiddleware);
 // Security middleware
 server.use(security_1.applySecurityMiddlewares);
 server.use((0, cors_1.default)({
-    origin: ((_a = process.env.FRONTEND_URL) === null || _a === void 0 ? void 0 : _a.split(',')) || 'http://localhost:5173',
+    origin: ((_a = process.env.FRONTEND_URL) === null || _a === void 0 ? void 0 : _a.split(',')) || 'http://3.111.162.90/',
     credentials: true,
     optionsSuccessStatus: 200,
 }));

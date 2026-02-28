@@ -42,7 +42,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getImageUrl = exports.bulkUpdateVehicleAvailability = exports.toggleVehicleAvailability = exports.getVehicleStats = exports.deleteVehicle = exports.updateVehicle = exports.getVehicles = exports.getVehicleById = exports.createVehicle = void 0;
+exports.bulkUpdateVehicleAvailability = exports.toggleVehicleAvailability = exports.getVehicleStats = exports.deleteVehicle = exports.updateVehicle = exports.getVehicles = exports.getVehicleById = exports.createVehicle = void 0;
 const vehicle_model_1 = require("../../models/vehicle.model");
 const vehicleMedia_model_1 = require("../../models/vehicleMedia.model");
 const location_model_1 = require("../../models/location.model");
@@ -400,15 +400,4 @@ const bulkUpdateVehicleAvailability = (vehicleIds, isAvailable) => __awaiter(voi
     }
 });
 exports.bulkUpdateVehicleAvailability = bulkUpdateVehicleAvailability;
-/**
- * Get vehicle image URL
- */
-const getImageUrl = (imagePath) => {
-    if (!imagePath)
-        return '';
-    // Return full URL for serving images
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
-    return `${baseUrl}/${imagePath}`;
-};
-exports.getImageUrl = getImageUrl;
 //# sourceMappingURL=vehicle.service.js.map

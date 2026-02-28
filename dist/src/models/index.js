@@ -58,16 +58,18 @@ const initPostgres_DB = () => {
         timezone: '+00:00', // Force UTC timezone for all operations
         dialectOptions: {
             timezone: 'UTC', // PostgreSQL session timezone
+            ssl: {
+                require: true,
+                rejectUnauthorized: false,
+            },
         },
-        logging: false,
         pool: {
             max: 5,
             min: 0,
-            acquire: 30000,
+            acquire: 60000,
             idle: 10000,
             evict: 1000 * 60 * 10,
         },
-        ssl: true,
     });
     (0, AdminUser_1.initAdminUserModel)(sequelize);
     (0, Role_1.initRoleModel)(sequelize);
@@ -157,12 +159,6 @@ const initPostgres_DB = () => {
     chauffeurReview_model_1.ChauffeurReview.belongsTo(booking_model_1.Booking, { foreignKey: 'bookingId' });
     chauffeurReview_model_1.ChauffeurReview.belongsTo(chauffeur_model_1.Chauffeur, { foreignKey: 'chauffeurId' });
     chauffeurReview_model_1.ChauffeurReview.belongsTo(user_model_1.User, { foreignKey: 'userId' });
-    // try {
-    //   sequelize.sync({ alter: true });
-    //   console.log('Database connection has been established successfully.');
-    // } catch (error) {
-    //   console.error('Unable to connect to the database:', error);
-    // }
 };
 exports.initPostgres_DB = initPostgres_DB;
 //# sourceMappingURL=index.js.map

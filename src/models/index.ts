@@ -38,16 +38,18 @@ const initPostgres_DB = (): void => {
     timezone: '+00:00', // Force UTC timezone for all operations
     dialectOptions: {
       timezone: 'UTC', // PostgreSQL session timezone
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
     },
-    logging: false,
     pool: {
       max: 5,
       min: 0,
-      acquire: 30000,
+      acquire: 60000,
       idle: 10000,
       evict: 1000 * 60 * 10,
     },
-    ssl: true,
   });
 
   initAdminUserModel(sequelize);
@@ -157,13 +159,6 @@ const initPostgres_DB = (): void => {
   ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
   ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
-
-  // try {
-  //   sequelize.sync({ alter: true });
-  //   console.log('Database connection has been established successfully.');
-  // } catch (error) {
-  //   console.error('Unable to connect to the database:', error);
-  // }
 };
 
 export {
