@@ -1,0 +1,59 @@
+Vehicle:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    make:
+      type: string
+    model:
+      type: string
+    trim:
+      type: string
+    year:
+      type: integer
+    exteriorColor:
+      type: string
+    interiorColor:
+      type: string
+    bodyType:
+      type: string
+    transmission:
+      type: string
+    drivetrain:
+      type: string
+    engine:
+      type: string
+    horsepower:
+      type: integer
+    fuelType:
+      type: string
+    fuelConsumption:
+      type: string
+    pricePerDay:
+      type: number
+    delayChargePerHour:
+      type: number
+    depositPercentage:
+      type: number
+    currency:
+      type: string
+    isAvailable:
+      type: boolean
+    passengerCapacity:
+      type: integer
+    locationId:
+      type: string
+      format: uuid
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+  required:
+    - id
+    - make
+    - model
+    - year
+    - pricePerDay

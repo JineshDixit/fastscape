@@ -1,0 +1,199 @@
+/bookings:
+  get:
+    tags:
+      - Bookings
+    summary: Get all bookings with filters and pagination
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+      - name: paymentStatus
+        in: query
+        schema:
+          type: string
+      - name: bookingType
+        in: query
+        schema:
+          type: string
+      - name: userId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: vehicleId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: chauffeurId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: startDate
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: endDate
+        in: query
+        schema:
+          type: string
+          format: date
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+    responses:
+      '200':
+        description: List of bookings
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Booking'
+
+/bookings/export:
+  get:
+    tags:
+      - Bookings
+    summary: Export bookings to CSV with filters
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: CSV file download
+        content:
+          text/csv:
+            schema:
+              type: string
+
+/bookings/expired:
+  get:
+    tags:
+      - Bookings
+    summary: Get all expired PENDING bookings
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of expired bookings
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Booking'
+
+/bookings/{id}:
+  get:
+    tags:
+      - Bookings
+    summary: Get single booking details
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Booking details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+
+/bookings/{id}/status:
+  put:
+    tags:
+      - Bookings
+    summary: Update booking status (admin override)
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              bookingStatus:
+                type: string
+    responses:
+      '200':
+        description: Status updated
+
+/bookings/{id}/cancel:
+  put:
+    tags:
+      - Bookings
+    summary: Cancel a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reason:
+                type: string
+    responses:
+      '200':
+        description: Booking cancelled
+
+/bookings/{id}/cleanup:
+  delete:
+    tags:
+      - Bookings
+    summary: Cleanup an expired booking (soft delete)
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Booking cleaned up

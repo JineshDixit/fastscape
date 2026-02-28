@@ -10,6 +10,8 @@ import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
 import { configPassport } from './config/passport';
 import apiRoutes from './routes';
 import { logger, morganMiddleware } from './config/logger';
+import swaggerUi from 'swagger-ui-express';
+import { loadOpenApiDocument } from './config/swagger/swagger.config';
 
 const server = express();
 const PORT = process.env.PORT || 3001;
@@ -51,6 +53,15 @@ server.get('/health', (req, res) => {
 
 // API routes
 server.use('/api', apiRoutes);
+
+// Swagger UI Documentation
+try {
+  const openApiDoc = loadOpenApiDocument();
+  server.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
+  logger.info('Swagger documentation available at /api/docs');
+} catch (error) {
+  logger.error('Failed to load Swagger documentation', error);
+}
 
 // Handle image not found
 server.use(handleImageNotFound);
