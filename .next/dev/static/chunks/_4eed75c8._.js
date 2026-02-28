@@ -207,8 +207,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$utils$2f$cookies$2e$ts__$5b$
 ;
 ;
 const API_CONFIG = {
-    baseURL: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
-    timeout: 10000,
+    baseURL: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_API_URL || 'http://3.111.162.90:4000/api/v1',
     headers: {
         'Content-Type': 'application/json'
     },

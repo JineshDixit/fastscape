@@ -1,9 +1,8 @@
-import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
-import { authCookies, TIME_CONSTANTS } from '@/utils/cookies';
+import axios, { type AxiosInstance } from 'axios';
+import { authCookies } from '@/utils/cookies';
 
 const API_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://3.111.162.90:4000/api/v1',
-  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },

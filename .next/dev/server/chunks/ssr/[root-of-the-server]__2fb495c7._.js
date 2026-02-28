@@ -292,8 +292,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$utils$2f$cookies$2e$ts__$5b$
 ;
 ;
 const API_CONFIG = {
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
-    timeout: 10000,
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://3.111.162.90:4000/api/v1',
     headers: {
         'Content-Type': 'application/json'
     },
