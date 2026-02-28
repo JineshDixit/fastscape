@@ -10,9 +10,6 @@ const skip = () => {
   return env !== 'development';
 };
 
-const httpLogger = morgan(
-  ':method :url :status :res[content-length] - :response-time ms',
-  { stream, skip }
-);
+const httpLogger = morgan(':method :url :status :res[content-length] - :response-time ms', { stream, skip });
 
 export default httpLogger;

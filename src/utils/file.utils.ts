@@ -1,37 +1,60 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+
+const BASE_DIR = path.resolve(__dirname, '..', '..', 'uploads');
 
 /**
- * Save an uploaded file from memory to disk
+ * Safely resolve a path under BASE_DIR using provided segments.
+ * Rejects absolute paths and directory traversal attempts.
+ */
+function resolveSafePath(...segments: string[]): string {
+  if (segments.some((s) => path.isAbsolute(s))) {
+    throw new Error('Absolute paths are not allowed');
+  }
+
+  const resolved = path.resolve(BASE_DIR, ...segments);
+
+  if (!resolved.startsWith(BASE_DIR + path.sep)) {
+    throw new Error('Path traversal is not allowed');
+  }
+
+  return resolved;
+}
+
+/**
+ * Save an uploaded file from memory to disk with a deterministic structure
  * @param file The multer file object
- * @param subDir The subdirectory within 'uploads' to save the file
+ * @param userId The user ID to scope the storage
+ * @param docType The document type (e.g., 'driverLicenseFront')
  * @returns The relative path to the saved file
  */
-export const saveFile = async (file: Express.Multer.File, subDir: string = 'documents'): Promise<string> => {
+export const saveFile = async (
+  file: Express.Multer.File,
+  userId: string,
+  docType: string = 'general',
+): Promise<string> => {
   if (!file) {
     throw new Error('No file provided');
   }
 
-  // Define upload directory
-  const uploadDir = path.join(process.cwd(), 'uploads', subDir);
+  const uploadDir = resolveSafePath('documents', userId, docType);
 
-  // Ensure directory exists
   try {
     await fs.access(uploadDir);
+    const files = await fs.readdir(uploadDir);
+    for (const f of files) {
+      const fileToDelete = resolveSafePath('documents', userId, docType, f);
+      await fs.unlink(fileToDelete);
+    }
   } catch {
     await fs.mkdir(uploadDir, { recursive: true });
   }
 
-  // Generate unique filename
   const fileExt = path.extname(file.originalname);
-  const fileName = `${uuidv4()}${fileExt}`;
-  const filePath = path.join(uploadDir, fileName);
+  const fileName = `${Date.now()}${fileExt}`;
+  const filePath = resolveSafePath('documents', userId, docType, fileName);
 
-  // Write file to disk
   await fs.writeFile(filePath, file.buffer);
 
-  // Return relative path (for database storage)
-  // Converting backslashes to forward slashes for consistency
-  return path.join('uploads', subDir, fileName).replace(/\\/g, '/');
+  return path.join('uploads', 'documents', userId, docType, fileName).replace(/\\/g, '/');
 };

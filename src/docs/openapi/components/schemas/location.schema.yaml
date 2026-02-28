@@ -1,0 +1,21 @@
+Location:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    city:
+      type: string
+    code:
+      type: string
+      nullable: true
+    isActive:
+      type: boolean
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time

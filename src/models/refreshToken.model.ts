@@ -6,6 +6,7 @@ export class RefreshToken extends Model {
   public token!: string;
   public expiresAt!: Date;
   public isRevoked!: boolean;
+  public rotatedAt?: Date;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -38,6 +39,10 @@ export const initRefreshTokenModel = (sequelize: Sequelize) => {
       isRevoked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+      },
+      rotatedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {

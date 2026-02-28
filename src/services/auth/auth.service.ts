@@ -7,6 +7,7 @@ import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
 import Logger from '../../utils/logger';
 import { generateOtp } from '../../utils/otp.utils';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../email/email.service';
 
 /**
  * Create and store refresh token
@@ -32,7 +33,8 @@ const revokeUserTokens = async (userId: string): Promise<void> => {
  */
 const formatUserResponse = (user: User) => ({
   id: user.id,
-  fullName: user.fullName,
+  firstName: user.firstName,
+  lastName: user.lastName,
   email: user.email,
   phone: user.phone,
   nationality: user.nationality,
@@ -42,10 +44,18 @@ const formatUserResponse = (user: User) => ({
  * Registers a new user
  */
 export const registerUser = async (registerData: RegisterRequest): Promise<AuthResponse> => {
-  const { fullName, dateOfBirth, nationality, email: rawEmail, phone, password } = registerData;
+  const { firstName, lastName, dateOfBirth, nationality, email: rawEmail, phone, password } = registerData;
 
   // Validate required fields
-  validateRequiredFields(registerData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'password']);
+  validateRequiredFields(registerData, [
+    'firstName',
+    'lastName',
+    'dateOfBirth',
+    'nationality',
+    'email',
+    'phone',
+    'password',
+  ]);
 
   const email = sanitizeEmail(rawEmail);
   validateEmail(email);
@@ -62,7 +72,8 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
 
   // Create user
   const user = await User.create({
-    fullName,
+    firstName,
+    lastName,
     dateOfBirth: new Date(dateOfBirth),
     nationality,
     email,
@@ -83,6 +94,11 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
   await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
 
   Logger.info('User registered successfully', { userId: user.id, email: user.email });
+
+  // Send welcome email (non-blocking)
+  sendWelcomeEmail(user.email, user.firstName, user.lastName, user.email).catch((error) => {
+    Logger.error('Failed to send welcome email', { userId: user.id, error });
+  });
 
   return {
     user: formatUserResponse(user),
@@ -159,18 +175,50 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
     throw createError('Invalid or expired refresh token', 401);
   }
 
-  // Check if refresh token exists in database and is not revoked
+  // Check if refresh token exists in database
   const storedToken = await RefreshToken.findOne({
     where: {
       token,
       userId: decoded.userId,
-      isRevoked: false,
     },
   });
 
   if (!storedToken) {
-    Logger.warn('Token refresh failed: Token not found or revoked', { userId: decoded.userId });
-    throw createError('Refresh token not found or revoked', 401);
+    Logger.warn('Token refresh failed: Token not found', { userId: decoded.userId });
+    throw createError('Refresh token not found', 401);
+  }
+
+  // Check if token is revoked
+  if (storedToken.isRevoked) {
+    // Implement grace period: if revoked within the last 30 seconds, allow it
+    // This handles race conditions when multiple tabs refresh simultaneously
+    const GRACE_PERIOD_MS = 30 * 1000; // 30 seconds
+
+    // Check if rotatedAt exists and is within grace period
+    if (!storedToken.rotatedAt) {
+      // Token was revoked but never rotated (shouldn't happen in normal flow)
+      Logger.warn('Token refresh failed: Token revoked without rotation timestamp', {
+        userId: decoded.userId,
+      });
+      throw createError('Refresh token revoked', 401);
+    }
+
+    const timeSinceRotation = new Date().getTime() - new Date(storedToken.rotatedAt).getTime();
+    const isWithinGracePeriod = timeSinceRotation < GRACE_PERIOD_MS;
+
+    if (!isWithinGracePeriod) {
+      Logger.warn('Token refresh failed: Token revoked and grace period expired', {
+        userId: decoded.userId,
+        rotatedAt: storedToken.rotatedAt,
+        timeSinceRotation,
+      });
+      throw createError('Refresh token revoked', 401);
+    }
+
+    Logger.info('Allowing refresh using recently rotated token (grace period)', {
+      userId: decoded.userId,
+      timeSinceRotation,
+    });
   }
 
   // Check if token is expired
@@ -187,8 +235,11 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
     throw createError('User not found or blocked', 401);
   }
 
-  // Revoke old refresh token
-  await storedToken.update({ isRevoked: true });
+  // Revoke old refresh token and mark rotation time
+  await storedToken.update({
+    isRevoked: true,
+    rotatedAt: new Date(),
+  });
 
   // Generate new token pair
   const newTokenPair = generateTokenPair({
@@ -214,7 +265,7 @@ export const logoutUser = async (token: string): Promise<void> => {
 
   // Revoke the refresh token
   await RefreshToken.update({ isRevoked: true }, { where: { token, isRevoked: false } });
-  
+
   Logger.info('User logged out');
 };
 
@@ -246,7 +297,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
 
   // Generate OTP
   const otp = generateOtp();
-  
+
   // Hash OTP for storage
   const otpHash = await hashPassword(otp);
 
@@ -259,12 +310,19 @@ export const forgotPassword = async (email: string): Promise<void> => {
     resetPasswordOtpExpires: expiresAt,
   });
 
-  // LOG OTP TO CONSOLE FOR MANUAL TESTING
-  Logger.info('================================================');
-  Logger.info(`OTP for ${email}: ${otp}`);
-  Logger.info('================================================');
+  // LOG OTP TO CONSOLE FOR DEVELOPMENT/TESTING ONLY
+  if (process.env.NODE_ENV === 'development') {
+    Logger.info('================================================');
+    Logger.info(`Password Reset OTP for ${email}: ${otp}`);
+    Logger.info('================================================');
+  }
 
-  Logger.info(`Forgot password OTP generated`, { userId: user.id });
+  // Send password reset email (non-blocking)
+  sendPasswordResetEmail(user.email, user.firstName, otp, 10).catch((error) => {
+    Logger.error('Failed to send password reset email', { userId: user.id, error });
+  });
+
+  Logger.info(`Forgot password OTP generated and email sent`, { userId: user.id });
 };
 
 /**
@@ -286,8 +344,7 @@ export const verifyOtp = async (email: string, otp: string): Promise<boolean> =>
   }
 
   // Verify OTP hash
-  const isValid = await comparePassword(otp, user.resetPasswordOtp);
-  return isValid;
+  return await comparePassword(otp, user.resetPasswordOtp);
 };
 
 /**
@@ -305,7 +362,7 @@ export const resetPassword = async (email: string, otp: string, newPassword: str
 
   const user = await User.findOne({ where: { email } });
   if (!user) {
-     throw createError('User not found', 404);
+    throw createError('User not found', 404);
   }
 
   // Hash new password

@@ -51,6 +51,8 @@ export const buildStandardOrder = (sortBy: string = 'createdAt', sortOrder: 'ASC
 
 /**
  * Build conflict check conditions for date ranges
+ * Uses exclusive boundaries: [start, end)
+ * A booking starting at exactly the end of another is NOT a conflict.
  */
 export const buildDateConflictConditions = (
   startDate: Date,
@@ -59,21 +61,7 @@ export const buildDateConflictConditions = (
   endField: string = 'endDatetime',
 ): WhereOptions => {
   return {
-    [Op.or]: [
-      {
-        [startField]: {
-          [Op.between]: [startDate, endDate],
-        },
-      },
-      {
-        [endField]: {
-          [Op.between]: [startDate, endDate],
-        },
-      },
-      {
-        [Op.and]: [{ [startField]: { [Op.lte]: startDate } }, { [endField]: { [Op.gte]: endDate } }],
-      },
-    ],
+    [Op.and]: [{ [startField]: { [Op.lt]: endDate } }, { [endField]: { [Op.gt]: startDate } }],
   };
 };
 
@@ -95,7 +83,8 @@ export const EXCLUDE_SENSITIVE_ATTRIBUTES = ['passwordHash', 'password'];
  */
 export const USER_SAFE_ATTRIBUTES = [
   'id',
-  'fullName',
+  'firstName',
+  'lastName',
   'email',
   'phone',
   'dateOfBirth',
@@ -105,6 +94,8 @@ export const USER_SAFE_ATTRIBUTES = [
   'zipCode',
   'country',
   'isBlocked',
+  'verificationStatus',
+  'verificationDate',
   'createdAt',
   'updatedAt',
 ];

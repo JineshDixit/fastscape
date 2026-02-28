@@ -12,6 +12,7 @@ import { initRefreshTokenModel, RefreshToken } from './refreshToken.model';
 import { initChauffeurModel, Chauffeur } from './chauffeur.model';
 import { initChauffeurReviewModel, ChauffeurReview } from './chauffeurReview.model';
 import { initLocationModel, Location } from './location.model';
+import { initWebhookEventModel, WebhookEvent } from './webhookEvent.model';
 
 let sequelize: Sequelize;
 
@@ -22,7 +23,7 @@ let sequelize: Sequelize;
  *
  * @returns {void} - nothing
  */
-const initPostgres_DB = async(): Promise<void> => {
+const initPostgres_DB = async (): Promise<void> => {
   const config = dbConfig;
 
   sequelize = new Sequelize(config.POSTGRES_DB.database, config.POSTGRES_DB.userName, config.POSTGRES_DB.password, {
@@ -55,42 +56,63 @@ const initPostgres_DB = async(): Promise<void> => {
   initChauffeurModel(sequelize);
   initChauffeurReviewModel(sequelize);
   initLocationModel(sequelize);
+  initWebhookEventModel(sequelize);
 
   //Associations
-  User.hasOne(UserIdentityDocument, { foreignKey: 'userId' });
-  User.hasOne(UserDrivingInfo, { foreignKey: 'userId' });
-  User.hasMany(Booking, { foreignKey: 'userId' });
-  User.hasMany(Payment, { foreignKey: 'userId' });
-  User.hasMany(RefreshToken, { foreignKey: 'userId' });
-  User.hasMany(ChauffeurReview, { foreignKey: 'userId' });
+  User.hasOne(UserIdentityDocument, { foreignKey: 'userId', as: 'identityDocument' });
+  User.hasOne(UserDrivingInfo, { foreignKey: 'userId', as: 'drivingInfo' });
+  User.hasMany(Booking, { foreignKey: 'userId', as: 'bookings' });
+  User.hasMany(Payment, { foreignKey: 'userId', as: 'payments' });
+  User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' });
+  User.hasMany(ChauffeurReview, { foreignKey: 'userId', as: 'reviews' });
+
+  UserIdentityDocument.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  UserDrivingInfo.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
   Vehicle.hasMany(VehicleMedia, { foreignKey: 'vehicleId', as: 'media' });
-  Vehicle.hasMany(Booking, { foreignKey: 'vehicleId' });
+  Vehicle.hasMany(Booking, { foreignKey: 'vehicleId', as: 'bookings' });
   VehicleMedia.belongsTo(Vehicle, {
     foreignKey: 'vehicleId',
     as: 'vehicle',
   });
 
-  Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId' });
-  Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId' });
+  Vehicle.belongsTo(Location, {
+    foreignKey: 'locationId',
+    as: 'location',
+  });
 
-  Booking.belongsTo(User, { foreignKey: 'userId' });
-  Booking.belongsTo(Vehicle, { foreignKey: 'vehicleId' });
-  Booking.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
-  Booking.hasOne(BookingFinancial, { foreignKey: 'bookingId' });
-  Booking.hasMany(Payment, { foreignKey: 'bookingId' });
-  Booking.hasOne(ChauffeurReview, { foreignKey: 'bookingId' });
+  Location.hasMany(Vehicle, {
+    foreignKey: 'locationId',
+    as: 'vehicles',
+  });
 
-  BookingFinancial.belongsTo(Booking, { foreignKey: 'bookingId' });
+  Chauffeur.hasMany(Booking, { foreignKey: 'chauffeurId', as: 'bookings' });
+  Chauffeur.hasMany(ChauffeurReview, { foreignKey: 'chauffeurId', as: 'reviews' });
 
-  Payment.belongsTo(Booking, { foreignKey: 'bookingId' });
-  Payment.belongsTo(User, { foreignKey: 'userId' });
+  Booking.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  Booking.belongsTo(Vehicle, { foreignKey: 'vehicleId', as: 'vehicle' });
+  Booking.belongsTo(Chauffeur, { foreignKey: 'chauffeurId', as: 'chauffeur' });
+  Booking.hasOne(BookingFinancial, { foreignKey: 'bookingId', as: 'financial' });
+  Booking.hasMany(Payment, { foreignKey: 'bookingId', as: 'payments' });
+  Booking.hasOne(ChauffeurReview, { foreignKey: 'bookingId', as: 'review' });
 
-  ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
-  ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
-  ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
+  BookingFinancial.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
 
-  RefreshToken.belongsTo(User, { foreignKey: 'userId' });
+  Payment.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+  Payment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+  ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId', as: 'chauffeur' });
+  ChauffeurReview.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  // try {
+  //   await sequelize.sync({ alter: true });
+  //   console.log('Database connection has been established successfully.');
+  // } catch (error) {
+  //   console.error('Unable to connect to the database:', error);
+  // }
 };
 
 export {
@@ -108,4 +130,5 @@ export {
   Chauffeur,
   ChauffeurReview,
   Location,
+  WebhookEvent,
 };

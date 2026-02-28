@@ -1,14 +1,15 @@
 /*
- * MANUAL MIGRATION QUERY:
  * ALTER TABLE users ADD COLUMN reset_password_otp VARCHAR(255);
  * ALTER TABLE users ADD COLUMN reset_password_otp_expires TIMESTAMP WITH TIME ZONE;
+ * ALTER TABLE users ADD COLUMN verification_status VARCHAR(50) DEFAULT 'PENDING';
  */
 
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export class User extends Model {
   public id!: string;
-  public fullName!: string;
+  public firstName!: string;
+  public lastName!: string;
   public dateOfBirth!: Date;
   public nationality!: string;
   public email!: string;
@@ -21,6 +22,8 @@ export class User extends Model {
   public isBlocked!: boolean;
   public resetPasswordOtp!: string | null;
   public resetPasswordOtpExpires!: Date | null;
+  public verificationStatus!: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  public verificationDate!: Date | null;
 }
 
 export const initUserModel = (sequelize: Sequelize) => {
@@ -31,8 +34,12 @@ export const initUserModel = (sequelize: Sequelize) => {
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
       },
-      fullName: {
-        type: DataTypes.STRING(150),
+      firstName: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+      },
+      lastName: {
+        type: DataTypes.STRING(50),
         allowNull: false,
       },
       dateOfBirth: {
@@ -84,6 +91,14 @@ export const initUserModel = (sequelize: Sequelize) => {
         allowNull: true,
       },
       resetPasswordOtpExpires: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      verificationStatus: {
+        type: DataTypes.ENUM('PENDING', 'VERIFIED', 'REJECTED'),
+        defaultValue: 'PENDING',
+      },
+      verificationDate: {
         type: DataTypes.DATE,
         allowNull: true,
       },

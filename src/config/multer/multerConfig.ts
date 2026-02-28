@@ -31,7 +31,7 @@ export const userIdentityDocUpload = multer({
   { name: 'driverLicenseBack', maxCount: 1 },
   { name: 'passportPhoto', maxCount: 1 },
   { name: 'internationalDrivingPermit', maxCount: 1 },
-  { name: 'selfieWithLicense', maxCount: 1 }
+  { name: 'selfieWithLicense', maxCount: 1 },
 ]);
 
 // Single image upload for general purposes

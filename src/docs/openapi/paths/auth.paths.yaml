@@ -1,0 +1,118 @@
+/auth/login:
+  post:
+    tags:
+      - Authentication
+    summary: Login to the application
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+    responses:
+      '200':
+        description: Successfully logged in
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                token:
+                  type: string
+                user:
+                  $ref: '#/components/schemas/User'
+      '401':
+        description: Unauthorized
+/auth/register:
+  post:
+    tags:
+      - Authentication
+    summary: Register a new user
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - fullName
+              - email
+              - password
+              - phone
+            properties:
+              fullName:
+                type: string
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                minLength: 6
+              phone:
+                type: string
+    responses:
+      '201':
+        description: User successfully registered
+      '400':
+        description: Bad request
+/auth/refresh-token:
+  post:
+    tags:
+      - Authentication
+    summary: Refresh JWT token
+    responses:
+      '200':
+        description: Token refreshed
+/auth/logout:
+  post:
+    tags:
+      - Authentication
+    summary: Logout current session
+    responses:
+      '200':
+        description: Successfully logged out
+/auth/forgot-password:
+  post:
+    tags:
+      - Authentication
+    summary: Initiate password recovery
+    responses:
+      '200':
+        description: Recovery email sent
+/auth/verify-otp:
+  post:
+    tags:
+      - Authentication
+    summary: Verify recovery OTP
+    responses:
+      '200':
+        description: OTP verified
+/auth/reset-password:
+  post:
+    tags:
+      - Authentication
+    summary: Reset password with OTP
+    responses:
+      '200':
+        description: Password reset successfully
+/auth/logout-all:
+  post:
+    tags:
+      - Authentication
+    summary: Logout from all devices
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: All sessions invalidated

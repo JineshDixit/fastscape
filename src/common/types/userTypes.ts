@@ -1,6 +1,7 @@
 export type userModelType = {
   id?: string;
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   dateOfBirth?: Date;
   nationality?: string;
   email?: string;
@@ -14,7 +15,8 @@ export type userModelType = {
 };
 
 export interface CreateUserData {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   dateOfBirth: Date;
   nationality?: string;
   email: string;
@@ -27,7 +29,8 @@ export interface CreateUserData {
 }
 
 export interface UpdateUserData {
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   dateOfBirth?: Date;
   nationality?: string;
   phone?: string;
@@ -38,7 +41,7 @@ export interface UpdateUserData {
   // Driving Info
   licenseIssuingCountry?: string;
   licenseExpiryDate?: Date;
-  drivingExperienceYears?: string;
+  drivingExperienceYears?: number;
   visaStatus?: string;
   // Documents (file paths will be handled internally, but these match form fields)
   driverLicenseFront?: any;

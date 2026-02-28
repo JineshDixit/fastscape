@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../common/types/expressTypes';
+import { createError } from '../../services/middleware/errorHandler';
 import {
   calculatePaymentBreakdown,
   processDepositPayment,
@@ -8,10 +9,13 @@ import {
   getPaymentSummary,
   markPaymentCompleted,
   getOverduePayments,
-} from '../../services/payment/enhancedPayment.service';
+  initiatePaymentIntent,
+} from '../../services/payment/payment.service';
 import { BaseController } from '../../utils/controller.utils';
 import { sendSuccess } from '../../utils/response.utils';
 import { validateRequiredFields } from '../../utils/validation.utils';
+import { dbEnums } from '../../common/enum/dbEnums';
+import Logger from '../../utils/logger';
 
 class PaymentController extends BaseController {
   /**
@@ -21,9 +25,31 @@ class PaymentController extends BaseController {
     const bookingId = this.getValidatedId(req, 'bookingId');
     const { delayHours = 0 } = req.query;
 
+    Logger.info('Calculating payment breakdown', { bookingId, delayHours });
+
     const calculation = await calculatePaymentBreakdown(bookingId, Number(delayHours));
 
+    Logger.info('Payment calculation completed', { bookingId, calculation });
+
     sendSuccess(res, 'Payment calculation completed', calculation);
+  });
+
+  /**
+   * Initiate a Stripe PaymentIntent
+   */
+  initiateIntent = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const bookingId = this.getValidatedId(req, 'bookingId');
+    const { paymentType } = req.body;
+
+    validateRequiredFields({ paymentType }, ['paymentType']);
+
+    if (!['DEPOSIT', 'BALANCE', 'FULL'].includes(paymentType)) {
+      throw createError('Invalid payment type. Must be DEPOSIT, BALANCE or FULL', 400);
+    }
+
+    const intent = await initiatePaymentIntent(bookingId, paymentType as 'DEPOSIT' | 'BALANCE' | 'FULL');
+
+    sendSuccess(res, 'Payment intent created successfully', intent);
   });
 
   /**
@@ -31,9 +57,8 @@ class PaymentController extends BaseController {
    */
   processDeposit = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const bookingId = this.getValidatedId(req, 'bookingId');
-    const { paymentMethod = 'ONLINE', stripePaymentIntentId } = req.body;
-
-    const result = await processDepositPayment(bookingId, paymentMethod, stripePaymentIntentId);
+    const { paymentMethod = 'ONLINE', stripePaymentIntentId, paymentType } = req.body;
+    const result = await processDepositPayment(bookingId, paymentMethod, stripePaymentIntentId, undefined, paymentType);
 
     sendSuccess(res, 'Deposit payment processed successfully', {
       payment: result.payment,
@@ -125,7 +150,7 @@ class PaymentController extends BaseController {
     }
 
     await booking.update({
-      bookingStatus: 'PICKED_UP',
+      bookingStatus: dbEnums.BOOKING_STATUS[2], // 'PICKED_UP'
       actualPickupDatetime: new Date(actualPickupTime),
     });
 
@@ -144,7 +169,7 @@ class PaymentController extends BaseController {
 
     // Update booking status
     await result.booking.update({
-      bookingStatus: 'DROPPED_OFF',
+      bookingStatus: dbEnums.BOOKING_STATUS[3], // 'DROPPED_OFF'
     });
 
     sendSuccess(res, 'Vehicle marked as dropped off', {
@@ -160,6 +185,7 @@ const paymentController = new PaymentController();
 
 export const {
   calculatePayment,
+  initiateIntent,
   processDeposit,
   processBalance,
   applyDelayCharge,

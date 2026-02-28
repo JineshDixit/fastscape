@@ -6,6 +6,8 @@ export class Payment extends Model {
   public bookingId!: string;
   public userId!: string;
   public amount!: number;
+  public gatewayFeeAmount!: number;
+  public platformChargeAmount!: number;
   public currency!: string;
   public stripePaymentIntentId!: string;
   public stripeChargeId!: string;
@@ -45,6 +47,16 @@ export const initPaymentModel = (sequelize: Sequelize) => {
       amount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
+      },
+      gatewayFeeAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+        comment: 'Fees deducted by the payment gateway (e.g., Stripe fees)',
+      },
+      platformChargeAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+        comment: 'Portion of this payment allocated to platform charges',
       },
       currency: {
         type: DataTypes.STRING(3),

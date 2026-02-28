@@ -1,9 +1,9 @@
 import { dbEnums } from '../enum/dbEnums';
 
 export interface VehicleFilterOptions {
-  make?: string;
-  model?: string;
-  bodyType?: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  make?: string | string[];
+  model?: string | string[];
+  bodyType?: BodyType | BodyType[];
   transmission?: (typeof dbEnums.TRANSMISSION_TYPE)[number];
   fuelType?: (typeof dbEnums.FUEL_TYPE)[number];
   isAvailable?: boolean;
@@ -14,10 +14,13 @@ export interface VehicleFilterOptions {
   city?: string;
 }
 
+type BodyType = (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+
 export interface VehicleSearchQuery extends VehicleFilterOptions {
   pickupLocation: string;
   pickupDate: string | Date;
   dropoffDate: string | Date;
+  bookingType?: 'SELF_DRIVE' | 'CHAUFFEUR';
 }
 
 export interface PaginationOptions {

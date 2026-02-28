@@ -5,12 +5,16 @@ import {
 } from '../../common/types/chauffeurTypes';
 import { Chauffeur, ChauffeurReview, Booking, Vehicle } from '../../models';
 import { createError } from '../middleware/errorHandler';
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
+import Logger from '../../utils/logger';
 
 /**
  * Find available chauffeurs for a booking
  */
-export const findAvailableChauffeurs = async (query: ChauffeurAvailabilityQuery): Promise<Chauffeur[]> => {
+export const findAvailableChauffeurs = async (
+  query: ChauffeurAvailabilityQuery,
+  transaction?: Transaction,
+): Promise<Chauffeur[]> => {
   const {
     startDatetime,
     endDatetime,
@@ -25,10 +29,33 @@ export const findAvailableChauffeurs = async (query: ChauffeurAvailabilityQuery)
   // Build where conditions
   const whereConditions: any = {
     status: 'AVAILABLE',
-    isVerified: true,
     rating: { [Op.gte]: minRating },
     hourlyRate: { [Op.lte]: maxHourlyRate },
   };
+
+  if (query.isVerified === true) {
+    whereConditions.isVerified = true;
+  }
+
+  const totalChauffeurs = await Chauffeur.count();
+  const availableChauffeursList = await Chauffeur.findAll({
+    where: { status: 'AVAILABLE' },
+    attributes: ['id', 'isVerified', 'specializations'],
+  });
+
+  if (process.env.NODE_ENV === 'development') {
+    Logger.debug('Available chauffeurs details', {
+      chauffeurs: availableChauffeursList.map((c) => ({
+        id: c.id,
+        verified: c.isVerified,
+        specs: c.specializations,
+      })),
+      counts: {
+        total: totalChauffeurs,
+        available: availableChauffeursList.length,
+      },
+    });
+  }
 
   if (city) {
     whereConditions.city = { [Op.iLike]: `%${city}%` };
@@ -72,6 +99,7 @@ export const findAvailableChauffeurs = async (query: ChauffeurAvailabilityQuery)
       ],
     },
     attributes: ['chauffeurId'],
+    transaction,
   });
 
   const busyIds = busyChauffeurIds.map((booking) => booking.chauffeurId);
@@ -80,7 +108,7 @@ export const findAvailableChauffeurs = async (query: ChauffeurAvailabilityQuery)
     whereConditions.id = { [Op.notIn]: busyIds };
   }
 
-  return Chauffeur.findAll({
+  const chauffeurs = await Chauffeur.findAll({
     where: whereConditions,
     order: [
       ['rating', 'DESC'],
@@ -88,7 +116,17 @@ export const findAvailableChauffeurs = async (query: ChauffeurAvailabilityQuery)
       ['hourlyRate', 'ASC'],
     ],
     limit: 20,
+    transaction,
   });
+
+  Logger.info(`Found ${chauffeurs.length} available chauffeurs matching criteria`, {
+    foundCount: chauffeurs.length,
+    city: whereConditions.city,
+    status: whereConditions.status,
+    isVerified: whereConditions.isVerified,
+  });
+
+  return chauffeurs;
 };
 
 /**
@@ -101,10 +139,13 @@ export const autoAssignChauffeur = async (
     minRating?: number;
     maxHourlyRate?: number;
     languages?: string[];
+    isVerified?: boolean;
   },
+  transaction?: Transaction,
 ): Promise<{ chauffeur: Chauffeur; booking: Booking } | null> => {
   const booking = await Booking.findByPk(bookingId, {
-    include: [{ model: Vehicle, attributes: ['bodyType'] }],
+    include: [{ model: Vehicle, as: 'vehicle', attributes: ['bodyType'] }],
+    transaction,
   });
 
   if (!booking) {
@@ -115,17 +156,65 @@ export const autoAssignChauffeur = async (
     throw createError('Booking is not a chauffeur booking', 400);
   }
 
-  const vehicle = (booking as any).Vehicle;
-  const availableChauffeurs = await findAvailableChauffeurs({
-    startDatetime: booking.startDatetime,
-    endDatetime: booking.endDatetime,
-    vehicleType: preferences?.vehicleType || vehicle?.bodyType,
-    minRating: preferences?.minRating || 4.0,
-    maxHourlyRate: preferences?.maxHourlyRate,
-    languages: preferences?.languages,
-  });
+  const { vehicle } = booking as any;
+  const requestedVehicleType = preferences?.vehicleType || vehicle?.bodyType;
+
+  if (process.env.NODE_ENV === 'development') {
+    Logger.debug('Auto-assign chauffeur search params', {
+      bookingId,
+      start: booking.startDatetime,
+      end: booking.endDatetime,
+      vehicleType: requestedVehicleType,
+      minRating: preferences?.minRating ?? 4.0,
+      maxHourlyRate: preferences?.maxHourlyRate,
+      hasTransaction: !!transaction,
+    });
+  }
+
+  let availableChauffeurs = await findAvailableChauffeurs(
+    {
+      startDatetime: booking.startDatetime,
+      endDatetime: booking.endDatetime,
+      vehicleType: requestedVehicleType,
+      minRating: preferences?.minRating ?? 4.0,
+      maxHourlyRate: preferences?.maxHourlyRate,
+      languages: preferences?.languages,
+      isVerified: preferences?.isVerified,
+    },
+    transaction,
+  );
+
+  // Fallback: If no specialized chauffeur found, try without vehicleType filter
+  if (availableChauffeurs.length === 0 && requestedVehicleType) {
+    if (process.env.NODE_ENV === 'development') {
+      Logger.debug('No specialized chauffeur found, trying fallback without vehicle type filter');
+    }
+
+    availableChauffeurs = await findAvailableChauffeurs(
+      {
+        startDatetime: booking.startDatetime,
+        endDatetime: booking.endDatetime,
+        minRating: preferences?.minRating ?? 4.0,
+        maxHourlyRate: preferences?.maxHourlyRate,
+        languages: preferences?.languages,
+        isVerified: preferences?.isVerified,
+      },
+      transaction,
+    );
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    Logger.debug('Final available chauffeurs found', { count: availableChauffeurs.length });
+  }
 
   if (availableChauffeurs.length === 0) {
+    Logger.warn('Auto-assignment failed: No available chauffeurs found', {
+      bookingId,
+      vehicleType: preferences?.vehicleType || vehicle?.bodyType,
+      minRating: preferences?.minRating ?? 4.0,
+      searchStartTime: booking.startDatetime,
+      searchEndTime: booking.endDatetime,
+    });
     return null;
   }
 
@@ -133,19 +222,25 @@ export const autoAssignChauffeur = async (
   const selectedChauffeur = availableChauffeurs[0];
 
   // Assign chauffeur to booking
-  await booking.update({
-    chauffeurId: selectedChauffeur.id,
-  });
+  await booking.update(
+    {
+      chauffeurId: selectedChauffeur.id,
+    },
+    { transaction },
+  );
 
   // Update chauffeur status
-  await selectedChauffeur.update({
-    status: 'BUSY',
-    lastActiveAt: new Date(),
-  });
+  await selectedChauffeur.update(
+    {
+      status: 'BUSY',
+      lastActiveAt: new Date(),
+    },
+    { transaction },
+  );
 
   return {
     chauffeur: selectedChauffeur,
-    booking: await booking.reload(),
+    booking: await booking.reload({ transaction }),
   };
 };
 
@@ -227,14 +322,14 @@ export const assignChauffeurToBooking = async (
  */
 export const releaseChauffeurFromBooking = async (bookingId: string): Promise<void> => {
   const booking = await Booking.findByPk(bookingId, {
-    include: [{ model: Chauffeur }],
+    include: [{ model: Chauffeur, as: 'chauffeur' }],
   });
 
   if (!booking || !booking.chauffeurId) {
     return;
   }
 
-  const chauffeur = (booking as any).Chauffeur;
+  const { chauffeur } = booking as any;
   if (chauffeur) {
     await chauffeur.update({
       status: 'AVAILABLE',
@@ -260,11 +355,13 @@ export const getChauffeurDetails = async (chauffeurId: string) => {
     include: [
       {
         model: ChauffeurReview,
+        as: 'reviews',
         limit: 10,
         order: [['createdAt', 'DESC']],
         include: [
           {
             model: Booking,
+            as: 'booking',
             attributes: ['id', 'startDatetime', 'endDatetime'],
           },
         ],
@@ -277,7 +374,7 @@ export const getChauffeurDetails = async (chauffeurId: string) => {
   }
 
   // Calculate detailed ratings
-  const reviews = (chauffeur as any).ChauffeurReviews || [];
+  const reviews = (chauffeur as any).reviews || [];
   const totalReviews = reviews.length;
 
   const averageRatings = {
@@ -323,7 +420,7 @@ export const getChauffeurDetails = async (chauffeurId: string) => {
       rating: review.rating,
       comment: review.comment,
       createdAt: review.createdAt,
-      booking: review.Booking,
+      booking: review.booking,
     })),
   };
 };

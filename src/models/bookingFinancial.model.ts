@@ -11,6 +11,8 @@ export class BookingFinancial extends Model {
   public delayChargeAmount!: number;
   public delayChargeRate!: number;
   public taxAmount!: number;
+  public platformChargeAmount!: number;
+  public platformChargeRate!: number;
   public totalAmount!: number;
   public paidAmount!: number;
   public remainingAmount!: number;
@@ -18,6 +20,7 @@ export class BookingFinancial extends Model {
   public refundPolicy!: string;
   public refundableUntil!: Date;
   public depositPercentage!: number;
+  public version!: number;
 }
 
 export const initBookingFinancialModel = (sequelize: Sequelize) => {
@@ -75,6 +78,16 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
         type: DataTypes.DECIMAL(10, 2),
         defaultValue: 0,
       },
+      platformChargeAmount: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+        comment: 'Total platform/gateway charges collected from user',
+      },
+      platformChargeRate: {
+        type: DataTypes.DECIMAL(5, 2),
+        defaultValue: 0,
+        comment: 'Percentage rate used to calculate platform charges',
+      },
       totalAmount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -105,6 +118,12 @@ export const initBookingFinancialModel = (sequelize: Sequelize) => {
         allowNull: false,
         defaultValue: 20.0,
         comment: 'Percentage of base amount for deposit',
+      },
+      version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Version field for optimistic locking',
       },
     },
     {

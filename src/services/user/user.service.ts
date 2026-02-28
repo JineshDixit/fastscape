@@ -8,6 +8,7 @@ import { validateRequiredFields, validateEmail } from '../../utils/validation.ut
 import { USER_SAFE_ATTRIBUTES } from '../../utils/database.utils';
 import { Op } from 'sequelize';
 import Logger from '../../utils/logger';
+import { verificationConfig, canUserBook } from '../../config/verification/verificationConfig';
 
 /**
  * Validate and normalize address data
@@ -56,6 +57,61 @@ export const getUserById = async (userId: string): Promise<Partial<User>> => {
 };
 
 /**
+ * Retrieves complete user profile including driving info and documents
+ */
+export const getUserProfile = async (userId: string): Promise<any> => {
+  if (!userId) {
+    throw createError('User ID is required', 400);
+  }
+
+  const user = await User.findByPk(userId, {
+    attributes: USER_SAFE_ATTRIBUTES,
+    include: [
+      {
+        model: UserDrivingInfo,
+        as: 'drivingInfo',
+        required: false,
+      },
+      {
+        model: UserIdentityDocument,
+        as: 'identityDocument',
+        required: false,
+      },
+    ],
+  });
+
+  if (!user) {
+    throw createError('User not found', 404);
+  }
+
+  const userJson = user.toJSON() as any;
+
+  // Flatten the structure for frontend compatibility
+  if (userJson.drivingInfo) {
+    userJson.licenseIssuingCountry = userJson.drivingInfo.licenseIssuingCountry;
+    userJson.licenseExpiryDate = userJson.drivingInfo.licenseExpiryDate;
+    userJson.drivingExperienceYears = userJson.drivingInfo.drivingExperienceYears;
+    userJson.visaStatus = userJson.drivingInfo.visaStatus;
+  }
+
+  if (userJson.identityDocument) {
+    userJson.driverLicenseFront = userJson.identityDocument.driverLicenseFront;
+    userJson.driverLicenseBack = userJson.identityDocument.driverLicenseBack;
+    userJson.passportPhoto = userJson.identityDocument.passportPhoto;
+    userJson.internationalDrivingPermit = userJson.identityDocument.internationalDrivingPermit;
+    userJson.selfieWithLicense = userJson.identityDocument.selfieWithLicense;
+    userJson.documentVerificationStatus = userJson.identityDocument.verificationStatus;
+    userJson.documentVerified = userJson.identityDocument.verified;
+  }
+
+  // Clean up nested objects
+  delete userJson.drivingInfo;
+  delete userJson.identityDocument;
+
+  return userJson;
+};
+
+/**
  * Retrieves a user by email
  */
 export const getUserByEmail = async (email: string): Promise<User | null> => {
@@ -68,17 +124,12 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
 };
 
 /**
- * Updates a user by ID with the provided data
- */
-
-
-/**
  * Updates a user by ID with the provided data, including driving info and documents
  */
 export const updateUser = async (
-  userId: string, 
-  updateData: Partial<userModelType> & any, 
-  files?: { [fieldname: string]: Express.Multer.File[] }
+  userId: string,
+  updateData: Partial<userModelType> & any,
+  files?: { [fieldname: string]: Express.Multer.File[] },
 ): Promise<Partial<User>> => {
   if (!userId) {
     throw createError('User ID is required', 400);
@@ -136,7 +187,7 @@ export const updateUser = async (
       updateData.visaStatus
     ) {
       Logger.info('Updating user driving information', { userId });
-      
+
       const drivingInfoData = {
         userId,
         licenseIssuingCountry: updateData.licenseIssuingCountry,
@@ -157,14 +208,17 @@ export const updateUser = async (
     // 3. Update Identity Documents (if files provided)
     if (files && Object.keys(files).length > 0) {
       Logger.info('Processing user document uploads', { userId, fileCount: Object.keys(files).length });
-      
-      const documentUpdates: any = {};
-      
+
+      const documentUpdates: any = {
+        verificationStatus: 'PENDING', // Reset verification when new docs arrive
+        verified: false,
+      };
+
       // Helper to process file
       const processFile = async (fieldName: string) => {
         if (files[fieldName] && files[fieldName][0]) {
-           const relativePath = await saveFile(files[fieldName][0], 'documents');
-           documentUpdates[fieldName] = relativePath;
+          const relativePath = await saveFile(files[fieldName][0], userId, fieldName);
+          documentUpdates[fieldName] = relativePath;
         }
       };
 
@@ -174,15 +228,33 @@ export const updateUser = async (
       await processFile('internationalDrivingPermit');
       await processFile('selfieWithLicense');
 
-      if (Object.keys(documentUpdates).length > 0) {
-         // Upsert identity documents
+      if (Object.keys(documentUpdates).length > 2) {
+        // More than just status/verified
+        // Upsert identity documents
         const existingDocs = await UserIdentityDocument.findOne({ where: { userId }, transaction });
+
+        // Check if auto-verification is enabled
+        const shouldAutoVerify = verificationConfig.autoVerifyDocuments;
+
+        if (shouldAutoVerify) {
+          Logger.info('Auto-verifying documents (enabled in config)', { userId });
+          documentUpdates.verificationStatus = 'VERIFIED';
+          documentUpdates.verified = true;
+          await user.update({ verificationStatus: 'VERIFIED' }, { transaction });
+        } else {
+          Logger.info('Documents uploaded - pending manual verification', { userId });
+          // Keep as PENDING - admin will verify later
+        }
+
         if (existingDocs) {
           await existingDocs.update(documentUpdates, { transaction });
         } else {
           await UserIdentityDocument.create({ userId, ...documentUpdates }, { transaction });
         }
-        Logger.info('User documents updated successfully', { userId });
+
+        Logger.info(`User documents updated ${shouldAutoVerify ? 'and AUTO-VERIFIED' : '- PENDING verification'}`, {
+          userId,
+        });
       }
     }
 
@@ -195,7 +267,6 @@ export const updateUser = async (
     });
 
     return finalUser!.toJSON();
-
   } catch (error: any) {
     await transaction.rollback();
     Logger.error('Error updating user profile', { userId, error: error.message });
@@ -227,10 +298,18 @@ export const deleteUser = async (userId: string): Promise<void> => {
  * Creates a new user
  */
 export const createUser = async (userData: userModelType): Promise<Partial<User>> => {
-  const { fullName, dateOfBirth, nationality, email: rawEmail, phone, passwordHash } = userData;
+  const { firstName, lastName, dateOfBirth, nationality, email: rawEmail, phone, passwordHash } = userData;
 
   // Validate required fields
-  validateRequiredFields(userData, ['fullName', 'dateOfBirth', 'nationality', 'email', 'phone', 'passwordHash']);
+  validateRequiredFields(userData, [
+    'firstName',
+    'lastName',
+    'dateOfBirth',
+    'nationality',
+    'email',
+    'phone',
+    'passwordHash',
+  ]);
 
   const email = sanitizeEmail(rawEmail);
   validateEmail(email);
@@ -246,7 +325,8 @@ export const createUser = async (userData: userModelType): Promise<Partial<User>
 
   // Create user
   const user = await User.create({
-    fullName,
+    firstName,
+    lastName,
     dateOfBirth: new Date(dateOfBirth),
     nationality,
     email,
@@ -286,7 +366,8 @@ export const getUsersByLocation = async (query: LocationSearchQuery): Promise<Us
     where: whereConditions,
     attributes: [
       'id',
-      'fullName',
+      'firstName',
+      'lastName',
       'email',
       'phone',
       'city',
@@ -296,7 +377,10 @@ export const getUsersByLocation = async (query: LocationSearchQuery): Promise<Us
       'nationality',
       'createdAt',
     ],
-    order: [['fullName', 'ASC']],
+    order: [
+      ['firstName', 'ASC'],
+      ['lastName', 'ASC'],
+    ],
   });
 
   return users.map((user) => ({
@@ -347,5 +431,76 @@ export const getLocationStatistics = async () => {
     totalUsers,
     locationBreakdown: stats,
     addressCompleteness,
+  };
+};
+
+/**
+ * Check if user can proceed with booking
+ */
+export const checkBookingEligibility = async (
+  userId: string,
+): Promise<{
+  eligible: boolean;
+  reason?: string;
+  restrictions?: any;
+  missingDocuments?: string[];
+  verificationStatus?: string;
+}> => {
+  const user = await User.findByPk(userId, {
+    include: [
+      {
+        model: UserIdentityDocument,
+        as: 'identityDocument',
+        required: false,
+      },
+      {
+        model: UserDrivingInfo,
+        as: 'drivingInfo',
+        required: false,
+      },
+    ],
+  });
+
+  if (!user) {
+    throw createError('User not found', 404);
+  }
+
+  const userJson = user.toJSON() as any;
+
+  // Check if user has driving info
+  if (!userJson.drivingInfo) {
+    return {
+      eligible: false,
+      reason: 'Please complete your driving license information first.',
+    };
+  }
+
+  // Check if user has uploaded documents
+  const identityDoc = userJson.identityDocument;
+  const missingDocuments: string[] = [];
+
+  verificationConfig.requiredDocuments.forEach((doc) => {
+    if (!identityDoc || !identityDoc[doc]) {
+      missingDocuments.push(doc);
+    }
+  });
+
+  if (missingDocuments.length > 0) {
+    return {
+      eligible: false,
+      reason: 'Please upload all required identity documents.',
+      missingDocuments,
+    };
+  }
+
+  // Check verification status
+  const verificationStatus = identityDoc?.verificationStatus || 'PENDING';
+  const bookingCheck = canUserBook(verificationStatus);
+
+  return {
+    eligible: bookingCheck.allowed,
+    reason: bookingCheck.reason,
+    restrictions: bookingCheck.restrictions,
+    verificationStatus,
   };
 };

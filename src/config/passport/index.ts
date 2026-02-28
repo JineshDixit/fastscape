@@ -4,7 +4,7 @@ import passport from 'passport';
 import { User } from '../../models';
 import { JwtPayload } from '../../common/types/jwtTypes';
 
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+const { JWT_ACCESS_SECRET } = process.env;
 
 const options: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -38,7 +38,8 @@ export const configPassport = (): void => {
         // Return user data (excluding sensitive information)
         const userData = {
           id: user.id,
-          fullName: user.fullName,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           phone: user.phone,
           nationality: user.nationality,

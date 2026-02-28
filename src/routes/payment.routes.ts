@@ -10,13 +10,22 @@ import {
   getOverduePaymentsList,
   markVehiclePickedUp,
   markVehicleDroppedOff,
+  initiateIntent,
 } from '../controller/payment/payment.controller';
+import { handleWebhook } from '../controller/payment/paymentWebhook.controller';
 import { authenticateUser } from '../services/middleware/authenticateUser';
 import { handleValidationErrors } from '../services/middleware/validation';
 
 const router = Router();
 
-// Apply authentication to all payment routes
+/**
+ * @route POST /api/payments/webhook
+ * @desc Stripe webhook handler (Public)
+ * @access Public
+ */
+router.post('/webhook', handleWebhook);
+
+// Apply authentication to all following payment routes
 router.use(authenticateUser);
 
 /**
@@ -29,6 +38,23 @@ router.get(
   [param('bookingId').isUUID().withMessage('Valid booking ID is required')],
   handleValidationErrors,
   calculatePayment,
+);
+
+/**
+ * @route POST /api/payments/intent/:bookingId
+ * @desc Initiate a Stripe PaymentIntent
+ * @access Private
+ */
+router.post(
+  '/intent/:bookingId',
+  [
+    param('bookingId').isUUID().withMessage('Valid booking ID is required'),
+    body('paymentType')
+      .isIn(['DEPOSIT', 'BALANCE', 'FULL'])
+      .withMessage('Payment type must be DEPOSIT, BALANCE or FULL'),
+  ],
+  handleValidationErrors,
+  initiateIntent,
 );
 
 /**
@@ -45,6 +71,7 @@ router.post(
       .isIn(['PICKUP', 'DROPOFF', 'ONLINE'])
       .withMessage('Payment method must be PICKUP, DROPOFF, or ONLINE'),
     body('stripePaymentIntentId').optional().isString().withMessage('Stripe payment intent ID must be a string'),
+    body('paymentType').optional().isIn(['DEPOSIT', 'FULL']).withMessage('Payment type must be DEPOSIT or FULL'),
   ],
   handleValidationErrors,
   processDeposit,

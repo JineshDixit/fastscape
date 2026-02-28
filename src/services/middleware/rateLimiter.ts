@@ -16,18 +16,18 @@ const createRateLimiter = (options: Partial<Options> & { messageStr: string }) =
 
 // Rate limiter for authentication endpoints
 export const authLimiter = createRateLimiter({
-  max: 5,
+  max: 500,
   messageStr: 'Too many authentication attempts, please try again later.',
 });
 
 // Rate limiter for general API endpoints
 export const generalLimiter = createRateLimiter({
-  max: 5000,
+  max: 500,
   messageStr: 'Too many requests, please try again later.',
 });
 
 // Rate limiter for refresh token endpoint
 export const refreshTokenLimiter = createRateLimiter({
-  max: 10,
+  max: 100,
   messageStr: 'Too many token refresh attempts, please try again later.',
 });

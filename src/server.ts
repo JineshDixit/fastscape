@@ -8,24 +8,35 @@ import cors from 'cors';
 import passport from 'passport';
 import helmet from 'helmet';
 import compression from 'compression';
+import path from 'path';
 import { initPostgres_DB } from './models';
 import { configPassport } from './config/passport';
 import routes from './routes';
 import { sanitizeInput, preventParameterPollution } from './services/middleware/security';
 import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
+import { scheduleBookingCleanup } from './services/cleanup/bookingCleanup.service';
 import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
 import Logger from './utils/logger';
 import httpLogger from './services/middleware/httpLogger';
+import swaggerUi from 'swagger-ui-express';
+import { loadOpenApiDocument } from './config/swagger/swagger.config';
 
 const server = express();
-const PORT = process.env.PORT;
+const { PORT } = process.env;
 
 // HTTP Logging
 server.use(httpLogger);
 
 // Security middleware
-server.use(helmet());
+server.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  }),
+);
 server.use(preventParameterPollution);
+
+// Static files
+server.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Performance middleware
 server.use(compression());
@@ -53,6 +64,10 @@ configPassport();
 // API routes
 server.use('/api/v1', routes);
 
+// Swagger Documentation
+const openApiDoc = loadOpenApiDocument();
+server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
+
 // 404 handler
 server.use(notFoundHandler);
 
@@ -68,6 +83,7 @@ server.listen(PORT, () => {
     initPostgres_DB();
 
     startTokenCleanupJob();
+    scheduleBookingCleanup();
 
     Logger.info('Database initialized successfully');
   } catch (error) {

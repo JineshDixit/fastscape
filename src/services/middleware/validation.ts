@@ -17,7 +17,8 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
 
 // Registration validation rules
 export const validateRegistration = [
-  body('fullName').trim().isLength({ min: 2, max: 150 }).withMessage('Full name must be between 2 and 150 characters'),
+  body('firstName').trim().isLength({ min: 2, max: 50 }).withMessage('First name must be between 2 and 50 characters'),
+  body('lastName').trim().isLength({ min: 2, max: 50 }).withMessage('Last name must be between 2 and 50 characters'),
 
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
 
@@ -101,11 +102,17 @@ export const validateRefreshToken = [
 
 // Update user profile validation rules
 export const validateUserUpdate = [
-  body('fullName')
+  body('firstName')
     .optional()
     .trim()
-    .isLength({ min: 2, max: 150 })
-    .withMessage('Full name must be between 2 and 150 characters'),
+    .isLength({ min: 2, max: 50 })
+    .withMessage('First name must be between 2 and 50 characters'),
+
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
 
   body('phone')
     .optional()
@@ -161,6 +168,35 @@ export const validateUserUpdate = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Country must be between 2 and 100 characters'),
 
+  // Driving info validation
+  body('licenseIssuingCountry')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('License issuing country must be between 2 and 100 characters'),
+
+  body('licenseExpiryDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Please provide a valid license expiry date')
+    .custom((value) => {
+      if (value) {
+        const expiryDate = new Date(value);
+        const today = new Date();
+        if (expiryDate <= today) {
+          throw new Error('License expiry date must be in the future');
+        }
+      }
+      return true;
+    }),
+
+  body('drivingExperienceYears')
+    .optional()
+    .isInt({ min: 0, max: 80 })
+    .withMessage('Driving experience must be between 0 and 80 years'),
+
+  body('visaStatus').optional().isIn(['Resident', 'Tourist', 'Visit']).withMessage('Invalid visa status'),
+
   handleValidationErrors,
 ];
 
@@ -178,9 +214,7 @@ export const validateVerifyOtp = [
 export const validateResetPassword = [
   body('email').isEmail().withMessage('Valid email is required'),
   body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-  body('newPassword')
-    .isLength({ min: 6 })
-    .withMessage('New Password must be at least 6 characters long'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New Password must be at least 6 characters long'),
   handleValidationErrors,
 ];
 

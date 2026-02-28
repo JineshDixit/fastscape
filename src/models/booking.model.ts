@@ -20,6 +20,8 @@ export class Booking extends Model {
   public delayHours!: number;
   public chauffeurInstructions!: string;
   public notes!: string;
+  public expiresAt!: Date | null;
+  public version!: number;
 }
 
 export const initBookingModel = (sequelize: Sequelize) => {
@@ -112,6 +114,17 @@ export const initBookingModel = (sequelize: Sequelize) => {
       notes: {
         type: DataTypes.TEXT,
         allowNull: true,
+      },
+      expiresAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        comment: 'Timestamp when the pending booking expires',
+      },
+      version: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Version field for optimistic locking',
       },
     },
     {

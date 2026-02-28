@@ -6,6 +6,8 @@ export interface PaymentCalculation {
   balanceAmount: number;
   delayChargeAmount: number;
   taxAmount: number;
+  platformChargeAmount: number;
+  platformChargeRate: number;
   totalAmount: number;
   currency: string;
 }
@@ -34,6 +36,8 @@ export interface UpdatePaymentData {
   stripeChargeId?: string;
   stripeRefundId?: string;
   paidAt?: Date;
+  gatewayFeeAmount?: number;
+  platformChargeAmount?: number;
   failureReason?: string;
   metadata?: Record<string, any>;
 }
@@ -57,6 +61,7 @@ export interface PaymentSummary {
     balanceAmount: number;
     delayChargeAmount: number;
     taxAmount: number;
+    platformChargeAmount: number;
     totalAmount: number;
     paidAmount: number;
     remainingAmount: number;
@@ -157,6 +162,8 @@ export interface EnhancedBookingFinancialData {
   delayChargeAmount: number;
   delayChargeRate: number;
   taxAmount: number;
+  platformChargeAmount: number;
+  platformChargeRate: number;
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
@@ -178,6 +185,8 @@ export interface EnhancedPaymentData {
   paymentType: (typeof dbEnums.PAYMENT_TYPE)[number];
   paymentStatus: (typeof dbEnums.PAYMENT_STATUS)[number];
   paymentMethod: (typeof dbEnums.PAYMENT_METHOD)[number];
+  gatewayFeeAmount: number;
+  platformChargeAmount: number;
   metadata?: Record<string, any>;
   paidAt?: Date;
   failureReason?: string;
@@ -191,6 +200,8 @@ export interface PaymentCalculation {
   balanceAmount: number;
   delayChargeAmount: number;
   taxAmount: number;
+  platformChargeAmount: number;
+  platformChargeRate: number;
   totalAmount: number;
   currency: string;
 }

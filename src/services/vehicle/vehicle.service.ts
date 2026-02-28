@@ -1,7 +1,71 @@
 import { PaginationOptions, VehicleFilterOptions, VehicleSearchQuery } from '../../common/types/vehicalType';
 import { Vehicle, VehicleMedia, Booking } from '../../models';
+import { Location } from '../../models/location.model';
 import { createError } from '../middleware/errorHandler';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
+import { normalizeBookingDates } from '../../utils/validation.utils';
+import { buildDateConflictConditions } from '../../utils/database.utils';
+
+interface MostPopularCar extends Vehicle {
+  media: VehicleMedia[];
+  bookingCount: number;
+}
+
+/**
+ * Get most popular car (most booked vehicle)
+ */
+export const getMostPopularCar = async (): Promise<MostPopularCar> => {
+  // Find vehicle with most bookings
+  const bookingStats = await Booking.findAll({
+    attributes: [
+      ['vehicle_id', 'vehicleId'],
+      [Sequelize.fn('COUNT', Sequelize.col('vehicle_id')), 'bookingCount'],
+    ],
+    group: ['vehicle_id'],
+    order: [[Sequelize.literal('"bookingCount"'), 'DESC']],
+    limit: 1,
+    raw: true,
+  });
+
+  if (!bookingStats || bookingStats.length === 0) {
+    // If no bookings found, return most recently added available vehicle
+    const fallbackVehicle = await Vehicle.findOne({
+      where: { isAvailable: true },
+      include: [
+        {
+          model: VehicleMedia,
+          as: 'media',
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!fallbackVehicle) {
+      throw createError('No vehicles available', 404);
+    }
+
+    return { ...fallbackVehicle.toJSON(), bookingCount: 0 } as MostPopularCar;
+  }
+
+  const mostBookedVehicleId = (bookingStats[0] as any).vehicleId;
+  const bookingCount = parseInt((bookingStats[0] as any).bookingCount);
+
+  // Get full vehicle details with media
+  const vehicle = await Vehicle.findByPk(mostBookedVehicleId, {
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+  });
+
+  if (!vehicle) {
+    throw createError('Most popular vehicle not found', 404);
+  }
+
+  return { ...vehicle.toJSON(), bookingCount } as MostPopularCar;
+};
 
 export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
   const vehicle = await Vehicle.findByPk(vehicleId, {
@@ -36,16 +100,33 @@ export const getVehicles = async (
 
   const whereClause: any = {};
 
-  if (filters.make) {
-    whereClause.make = { [Op.iLike]: `%${filters.make}%` };
+  if (filters.make && (!Array.isArray(filters.make) || filters.make.length > 0)) {
+    whereClause.make = Array.isArray(filters.make) ? { [Op.in]: filters.make } : { [Op.iLike]: `%${filters.make}%` };
   }
 
-  if (filters.model) {
-    whereClause.model = { [Op.iLike]: `%${filters.model}%` };
+  if (filters.model && (!Array.isArray(filters.model) || filters.model.length > 0)) {
+    const models = Array.isArray(filters.model) ? filters.model : [filters.model];
+    // Allow matching either the specific model OR the full 'Make Model' display name
+    const modelConditions = models.map((m) => ({
+      [Op.or]: [
+        { model: { [Op.iLike]: m } },
+        Sequelize.where(Sequelize.fn('CONCAT', Sequelize.col('make'), ' ', Sequelize.col('model')), {
+          [Op.iLike]: m,
+        }),
+      ],
+    }));
+
+    if (whereClause[Op.or]) {
+      // If Op.or already exists, combine conditions
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: modelConditions }];
+      delete whereClause[Op.or];
+    } else {
+      whereClause[Op.or] = modelConditions;
+    }
   }
 
-  if (filters.bodyType) {
-    whereClause.bodyType = filters.bodyType;
+  if (filters.bodyType && (!Array.isArray(filters.bodyType) || filters.bodyType.length > 0)) {
+    whereClause.bodyType = Array.isArray(filters.bodyType) ? { [Op.in]: filters.bodyType } : filters.bodyType;
   }
 
   if (filters.transmission) {
@@ -75,12 +156,20 @@ export const getVehicles = async (
   }
 
   if (filters.search) {
-    whereClause[Op.or] = [
+    const searchConditions = [
       { make: { [Op.iLike]: `%${filters.search}%` } },
       { model: { [Op.iLike]: `%${filters.search}%` } },
       { trim: { [Op.iLike]: `%${filters.search}%` } },
       { exteriorColor: { [Op.iLike]: `%${filters.search}%` } },
     ];
+
+    if (whereClause[Op.or]) {
+      // If Op.or already exists, combine conditions
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: searchConditions }];
+      delete whereClause[Op.or];
+    } else {
+      whereClause[Op.or] = searchConditions;
+    }
   }
 
   const { count, rows } = await Vehicle.findAndCountAll({
@@ -105,6 +194,56 @@ export const getVehicles = async (
   };
 };
 
+/**
+ * Get IDs of vehicles that are unavailable for a given date range and location
+ */
+export const getUnavailableVehicleIds = async (
+  searchQuery: Partial<VehicleSearchQuery>,
+): Promise<{ unavailableVehicleIds: string[]; locationWhereClause: any }> => {
+  const { pickupLocation, pickupDate, dropoffDate, bookingType } = searchQuery;
+
+  let unavailableVehicleIds: string[] = [];
+
+  // 1. Find all vehicles that have conflicting bookings in the given range
+  if (pickupDate && dropoffDate) {
+    const { start, end } = normalizeBookingDates(pickupDate as string, dropoffDate as string);
+
+    const conflictingBookings = await Booking.findAll({
+      attributes: ['vehicleId'],
+      where: {
+        bookingStatus: {
+          [Op.notIn]: ['CANCELLED', 'COMPLETED'],
+        },
+        ...buildDateConflictConditions(start, end),
+      },
+      raw: true,
+    });
+
+    unavailableVehicleIds = conflictingBookings.map((b) => b.vehicleId);
+  }
+
+  const locationWhereClause: any = {};
+
+  // 2. Add location filtering for SELF_DRIVE bookings
+  if (pickupLocation && bookingType === 'SELF_DRIVE') {
+    const location = await Location.findOne({
+      where: {
+        [Op.and]: [{ name: { [Op.iLike]: `%${pickupLocation.trim()}%` } }, { isActive: true }],
+      },
+      attributes: ['id'],
+    });
+
+    if (location) {
+      locationWhereClause.locationId = location.id;
+    } else {
+      // If location not found, force empty results
+      locationWhereClause.id = { [Op.in]: [] };
+    }
+  }
+
+  return { unavailableVehicleIds, locationWhereClause };
+};
+
 export const getAvailableVehicles = async (
   searchQuery: VehicleSearchQuery,
   pagination: PaginationOptions = {},
@@ -115,61 +254,58 @@ export const getAvailableVehicles = async (
   limit: number;
   totalPages: number;
 }> => {
-  const { pickupLocation, pickupDate, dropoffDate, ...otherFilters } = searchQuery;
+  const { pickupLocation, pickupDate, dropoffDate, bookingType, ...otherFilters } = searchQuery;
   const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
   const offset = (page - 1) * limit;
 
-  // Normalize dates to UTC matching checkVehicleAvailability logic
-  const pickupDateObj = new Date(pickupDate);
-  const dropoffDateObj = new Date(dropoffDate);
-
-  if (isNaN(pickupDateObj.getTime()) || isNaN(dropoffDateObj.getTime())) {
-    throw createError('Invalid pickup or dropoff date', 400);
-  }
-
-  if (pickupDateObj > dropoffDateObj) {
-    throw createError('Pickup date must be before or equal to dropoff date', 400);
-  }
-
-  // Normalize to UTC: start of day for pickup, start of next day for dropoff
-  const start = new Date(
-    Date.UTC(pickupDateObj.getUTCFullYear(), pickupDateObj.getUTCMonth(), pickupDateObj.getUTCDate(), 0, 0, 0, 0),
-  );
-
-  const dropoffPlusOne = new Date(dropoffDateObj);
-  dropoffPlusOne.setUTCDate(dropoffPlusOne.getUTCDate() + 1);
-  const end = new Date(
-    Date.UTC(dropoffPlusOne.getUTCFullYear(), dropoffPlusOne.getUTCMonth(), dropoffPlusOne.getUTCDate(), 0, 0, 0, 0),
-  );
-
-  // 1. Find all vehicles that have conflicting bookings in the given range
-  const conflictingBookings = await Booking.findAll({
-    attributes: ['vehicleId'],
-    where: {
-      bookingStatus: {
-        [Op.notIn]: ['CANCELLED', 'COMPLETED'],
-      },
-      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
-    },
-    raw: true,
+  // 1. Get availability and location restrictions
+  const { unavailableVehicleIds, locationWhereClause } = await getUnavailableVehicleIds({
+    pickupLocation,
+    pickupDate,
+    dropoffDate,
+    bookingType,
   });
-
-  const unavailableVehicleIds = conflictingBookings.map((b) => b.vehicleId);
 
   // 2. Build where clause for available vehicles
   const whereClause: any = {
     isAvailable: true,
     id: { [Op.notIn]: unavailableVehicleIds },
+    ...locationWhereClause,
   };
 
-  // if (pickupLocation) {
-  //   whereClause.city = { [Op.iLike]: `%${pickupLocation}%` };
-  // }
-
   // Apply additional filters
-  if (otherFilters.make) whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
-  if (otherFilters.model) whereClause.model = { [Op.iLike]: `%${otherFilters.model}%` };
-  if (otherFilters.bodyType) whereClause.bodyType = otherFilters.bodyType;
+  if (otherFilters.make && (!Array.isArray(otherFilters.make) || otherFilters.make.length > 0)) {
+    whereClause.make = Array.isArray(otherFilters.make)
+      ? { [Op.in]: otherFilters.make }
+      : { [Op.iLike]: `%${otherFilters.make}%` };
+  }
+
+  if (otherFilters.model && (!Array.isArray(otherFilters.model) || otherFilters.model.length > 0)) {
+    const models = Array.isArray(otherFilters.model) ? otherFilters.model : [otherFilters.model];
+    // Allow matching either the specific model OR the full 'Make Model' display name
+    const modelConditions = models.map((m) => ({
+      [Op.or]: [
+        { model: { [Op.iLike]: m } },
+        Sequelize.where(Sequelize.fn('CONCAT', Sequelize.col('make'), ' ', Sequelize.col('model')), {
+          [Op.iLike]: m,
+        }),
+      ],
+    }));
+
+    if (whereClause[Op.or]) {
+      // If Op.or already exists, combine conditions
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: modelConditions }];
+      delete whereClause[Op.or];
+    } else {
+      whereClause[Op.or] = modelConditions;
+    }
+  }
+
+  if (otherFilters.bodyType && (!Array.isArray(otherFilters.bodyType) || otherFilters.bodyType.length > 0)) {
+    whereClause.bodyType = Array.isArray(otherFilters.bodyType)
+      ? { [Op.in]: otherFilters.bodyType }
+      : otherFilters.bodyType;
+  }
   if (otherFilters.transmission) whereClause.transmission = otherFilters.transmission;
   if (otherFilters.fuelType) whereClause.fuelType = otherFilters.fuelType;
 
@@ -180,11 +316,19 @@ export const getAvailableVehicles = async (
   }
 
   if (otherFilters.search) {
-    whereClause[Op.or] = [
+    const searchConditions = [
       { make: { [Op.iLike]: `%${otherFilters.search}%` } },
       { model: { [Op.iLike]: `%${otherFilters.search}%` } },
       { trim: { [Op.iLike]: `%${otherFilters.search}%` } },
     ];
+
+    if (whereClause[Op.or]) {
+      // If Op.or already exists, combine conditions
+      whereClause[Op.and] = [{ [Op.or]: whereClause[Op.or] }, { [Op.or]: searchConditions }];
+      delete whereClause[Op.or];
+    } else {
+      whereClause[Op.or] = searchConditions;
+    }
   }
 
   // 3. Query vehicles
@@ -275,48 +419,67 @@ export const getVehicleBodyTypeSummary = async (): Promise<{ bodyType: string; c
   }));
 };
 
-export const getVehicleFilterMetadata = async () => {
+export const getVehicleFilterMetadata = async (searchQuery: Partial<VehicleSearchQuery> = {}) => {
+  const { unavailableVehicleIds, locationWhereClause } = await getUnavailableVehicleIds(searchQuery);
+
+  const baseWhereClause = {
+    isAvailable: true,
+    id: { [Op.notIn]: unavailableVehicleIds },
+    ...locationWhereClause,
+  };
+
+  // Use explicit aliases to ensure raw results match expected keys exactly
   const bodyTypeRaw = await Vehicle.findAll({
-    attributes: ['bodyType', 'make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
-    where: { isAvailable: true },
-    group: ['bodyType', 'make', 'model'],
+    attributes: [
+      ['body_type', 'bodyType'],
+      'make',
+      'model',
+      [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count'],
+    ],
+    where: baseWhereClause,
+    group: ['body_type', 'make', 'model'],
     raw: true,
   });
 
   const brandRaw = await Vehicle.findAll({
-    attributes: ['make', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
-    where: { isAvailable: true },
-    group: ['make'],
+    attributes: ['make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: baseWhereClause,
+    group: ['make', 'model'],
     raw: true,
   });
 
-  const bodyTypeMap = new Map<string, { count: number; vehicles: Set<string> }>();
-
+  const bodyTypeMap = new Map<string, { count: number; models: Set<string> }>();
   (bodyTypeRaw as any[]).forEach((item) => {
     const { bodyType, make, model, count } = item;
-    const vehicleName = `${make} ${model}`;
-    const numCount = Number(count);
-
     if (!bodyTypeMap.has(bodyType)) {
-      bodyTypeMap.set(bodyType, { count: 0, vehicles: new Set() });
+      bodyTypeMap.set(bodyType, { count: 0, models: new Set() });
     }
-
     const entry = bodyTypeMap.get(bodyType)!;
-    entry.count += numCount;
-    entry.vehicles.add(vehicleName);
+    entry.count += Number(count);
+    if (make && model) entry.models.add(`${make} ${model}`);
   });
 
-  // Format Body Type Output
+  const brandMap = new Map<string, { count: number; models: Set<string> }>();
+  (brandRaw as any[]).forEach((item) => {
+    const { make, model, count } = item;
+    if (!brandMap.has(make)) {
+      brandMap.set(make, { count: 0, models: new Set() });
+    }
+    const entry = brandMap.get(make)!;
+    entry.count += Number(count);
+    if (make && model) entry.models.add(`${make} ${model}`);
+  });
+
   const bodyTypes = Array.from(bodyTypeMap.entries()).map(([type, data]) => ({
     bodyType: type,
     count: data.count,
-    vehicles: Array.from(data.vehicles).sort(),
+    models: Array.from(data.models).sort(),
   }));
 
-  // Format Brand Output
-  const brands = (brandRaw as any[]).map((item) => ({
-    make: item.make,
-    count: Number(item.count),
+  const brands = Array.from(brandMap.entries()).map(([make, data]) => ({
+    make: make,
+    count: data.count,
+    models: Array.from(data.models).sort(),
   }));
 
   return {
@@ -329,6 +492,7 @@ export const checkVehicleAvailability = async (
   vehicleId: string,
   pickupDate: string,
   dropoffDate: string,
+  excludeUserId?: string,
 ): Promise<{ isAvailable: boolean }> => {
   // 1. Check if vehicle exists and is generally available
   const vehicle = await Vehicle.findByPk(vehicleId);
@@ -341,40 +505,27 @@ export const checkVehicleAvailability = async (
     return { isAvailable: false };
   }
 
-  // 2. Validate dates
-  const pickupDateObj = new Date(pickupDate);
-  const dropoffDateObj = new Date(dropoffDate);
+  // 2. Validate and normalize dates
+  const { start, end } = normalizeBookingDates(pickupDate, dropoffDate);
 
-  if (isNaN(pickupDateObj.getTime()) || isNaN(dropoffDateObj.getTime())) {
-    throw createError('Invalid pickup or dropoff date', 400);
-  }
-
-  if (pickupDateObj > dropoffDateObj) {
-    throw createError('Pickup date must be before or equal to dropoff date', 400);
-  }
-
-  // Normalize to UTC: start of day for pickup, start of next day for dropoff
-  // This ensures full-day rentals are properly represented
-  const start = new Date(
-    Date.UTC(pickupDateObj.getUTCFullYear(), pickupDateObj.getUTCMonth(), pickupDateObj.getUTCDate(), 0, 0, 0, 0),
-  );
-
-  // For dropoff, add 1 day to make it the start of the next day (exclusive end)
-  const dropoffPlusOne = new Date(dropoffDateObj);
-  dropoffPlusOne.setUTCDate(dropoffPlusOne.getUTCDate() + 1);
-  const end = new Date(
-    Date.UTC(dropoffPlusOne.getUTCFullYear(), dropoffPlusOne.getUTCMonth(), dropoffPlusOne.getUTCDate(), 0, 0, 0, 0),
-  );
-
-  // 3. Check for conflicting bookings
-  const conflictingBooking = await Booking.findOne({
-    where: {
-      vehicleId,
-      bookingStatus: {
-        [Op.notIn]: ['CANCELLED', 'COMPLETED'],
-      },
-      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
+  // 3. Check for conflicting bookings (exclude user's own bookings if specified)
+  const whereConditions: any = {
+    vehicleId,
+    bookingStatus: {
+      [Op.notIn]: ['CANCELLED', 'COMPLETED'],
     },
+    ...buildDateConflictConditions(start, end),
+  };
+
+  // Exclude the user's own bookings from the conflict check
+  if (excludeUserId) {
+    whereConditions.userId = {
+      [Op.ne]: excludeUserId,
+    };
+  }
+
+  const conflictingBooking = await Booking.findOne({
+    where: whereConditions,
   });
 
   return { isAvailable: !conflictingBooking };

@@ -4,7 +4,8 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   dateOfBirth: Date;
   nationality: string;
   email: string;
@@ -15,7 +16,8 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: {
     id: string;
-    fullName: string;
+    firstName: string;
+    lastName: string;
     email: string;
     phone: string;
     nationality: string;

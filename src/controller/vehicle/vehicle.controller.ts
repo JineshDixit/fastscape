@@ -12,9 +12,9 @@ class VehicleController extends BaseController {
    */
   getVehicles = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const filters = {
-      make: req.query.make as string,
-      model: req.query.model as string,
-      bodyType: req.query.bodyType as (typeof dbEnums.VEHICLE_BODY_TYPE)[number],
+      make: req.query.make as any,
+      model: req.query.model as any,
+      bodyType: req.query.bodyType as any,
       transmission: req.query.transmission as (typeof dbEnums.TRANSMISSION_TYPE)[number],
       fuelType: req.query.fuelType as (typeof dbEnums.FUEL_TYPE)[number],
       isAvailable: req.query.isAvailable ? req.query.isAvailable === 'true' : undefined,
@@ -64,7 +64,13 @@ class VehicleController extends BaseController {
    * Get vehicle filter metadata
    */
   getVehicleFilterMetadata = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const result = await vehicleService.getVehicleFilterMetadata();
+    const searchQuery = {
+      pickupLocation: req.query.pickupLocation as string,
+      pickupDate: req.query.pickupDate as string,
+      dropoffDate: req.query.dropoffDate as string,
+      bookingType: req.query.bookingType as 'SELF_DRIVE' | 'CHAUFFEUR',
+    };
+    const result = await vehicleService.getVehicleFilterMetadata(searchQuery);
     sendSuccess(res, 'Vehicle filter metadata retrieved successfully', result);
   });
 
@@ -76,9 +82,10 @@ class VehicleController extends BaseController {
       pickupLocation: req.query.pickupLocation as string,
       pickupDate: req.query.pickupDate as string,
       dropoffDate: req.query.dropoffDate as string,
-      make: req.query.make as string,
-      model: req.query.model as string,
-      bodyType: req.query.bodyType as (typeof dbEnums.VEHICLE_BODY_TYPE)[number],
+      bookingType: req.query.bookingType as 'SELF_DRIVE' | 'CHAUFFEUR',
+      make: req.query.make as any,
+      model: req.query.model as any,
+      bodyType: req.query.bodyType as any,
       transmission: req.query.transmission as (typeof dbEnums.TRANSMISSION_TYPE)[number],
       fuelType: req.query.fuelType as (typeof dbEnums.FUEL_TYPE)[number],
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
@@ -98,18 +105,27 @@ class VehicleController extends BaseController {
   });
 
   /**
+   * Get most popular car (most booked vehicle)
+   */
+  getMostPopularCar = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const result = await vehicleService.getMostPopularCar();
+    sendSuccess(res, 'Most popular car retrieved successfully', result);
+  });
+
+  /**
    * Check if a specific vehicle is available for a date range
    */
   checkVehicleAvailability = this.asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const id = this.getValidatedId(req, 'id');
     const pickupDate = req.query.pickupDate as string;
     const dropoffDate = req.query.dropoffDate as string;
+    const excludeUserId = req.user?.id; // Exclude current user's bookings
 
     if (!pickupDate || !dropoffDate) {
       throw createError('pickupDate and dropoffDate are required', 400);
     }
 
-    const result = await vehicleService.checkVehicleAvailability(id, pickupDate, dropoffDate);
+    const result = await vehicleService.checkVehicleAvailability(id, pickupDate, dropoffDate, excludeUserId);
     sendSuccess(res, 'Vehicle availability checked successfully', result);
   });
 }
@@ -123,5 +139,6 @@ export const {
   getVehicleBodyTypeSummary,
   getVehicleFilterMetadata,
   getAvailableVehicles,
+  getMostPopularCar,
   checkVehicleAvailability,
 } = vehicleController;
