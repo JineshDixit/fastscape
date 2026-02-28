@@ -3,7 +3,6 @@ import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
 // API configuration
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
-  timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,
   headers: {
     'Content-Type': 'application/json',
   },
