@@ -1,0 +1,7 @@
+module.exports = [
+"[project]/package.json (json)", ((__turbopack_context__) => {
+
+__turbopack_context__.v({"name":"rental-car-client-frontend","version":"0.1.0","private":true,"scripts":{"dev":"next dev -p 5174","build":"next build","start":"next start","lint":"eslint","prettier":"prettier --write ."},"dependencies":{"@hookform/resolvers":"^5.2.2","@radix-ui/react-aspect-ratio":"^1.1.8","@radix-ui/react-avatar":"^1.1.11","@radix-ui/react-checkbox":"^1.3.3","@radix-ui/react-dialog":"^1.1.15","@radix-ui/react-dropdown-menu":"^2.1.16","@radix-ui/react-label":"^2.1.8","@radix-ui/react-popover":"^1.1.15","@radix-ui/react-radio-group":"^1.3.8","@radix-ui/react-select":"^2.2.6","@radix-ui/react-separator":"^1.1.8","@radix-ui/react-slot":"^1.2.4","axios":"^1.13.2","class-variance-authority":"^0.7.1","clsx":"^2.1.1","date-fns":"^4.1.0","input-otp":"^1.4.2","lucide-react":"^0.559.0","next":"16.0.8","next-intl":"^4.7.0","postcss":"^8.5.6","react":"19.2.1","react-day-picker":"^9.13.0","react-dom":"19.2.1","react-hook-form":"^7.69.0","tailwind-merge":"^3.4.0","zod":"^4.2.1"},"devDependencies":{"@tailwindcss/postcss":"^4.1.17","@types/node":"^20","@types/react":"^19","@types/react-dom":"^19","eslint":"^9","eslint-config-next":"16.0.8","prettier":"^3.7.4","prettier-plugin-tailwindcss":"^0.7.2","tailwindcss":"^4.1.17","tailwindcss-rtl":"^0.9.0","tw-animate-css":"^1.4.0","typescript":"^5"}});}),
+];
+
+//# sourceMappingURL=package_json_4b1b4d6f._.js.map
