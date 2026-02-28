@@ -1,6 +1,7 @@
 {
   "/[locale]/checkout/[id]/page": "/[locale]/checkout/[id]",
   "/[locale]/page": "/[locale]",
+  "/[locale]/profile/page": "/[locale]/profile",
   "/[locale]/vehicles/[id]/page": "/[locale]/vehicles/[id]",
   "/[locale]/vehicles/page": "/[locale]/vehicles",
   "/_global-error/page": "/_global-error",

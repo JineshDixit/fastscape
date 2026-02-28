@@ -1,6 +1,7 @@
 {
   "/[locale]/checkout/[id]/page": "app/[locale]/checkout/[id]/page.js",
   "/[locale]/page": "app/[locale]/page.js",
+  "/[locale]/profile/page": "app/[locale]/profile/page.js",
   "/[locale]/vehicles/[id]/page": "app/[locale]/vehicles/[id]/page.js",
   "/[locale]/vehicles/page": "app/[locale]/vehicles/page.js",
   "/_global-error/page": "app/_global-error/page.js",
