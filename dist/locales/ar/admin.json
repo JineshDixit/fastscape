@@ -1,0 +1,55 @@
+{
+  "title": "إدارة المسؤولين",
+  "users": "المستخدمون المسؤولون",
+  "roles": "الأدوار",
+  "permissions": "الصلاحيات",
+  "addUser": "إضافة مستخدم مسؤول",
+  "editUser": "تعديل المستخدم المسؤول",
+  "userDetails": "تفاصيل المستخدم",
+  "fields": {
+    "userId": "رقم المستخدم",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "role": "الدور",
+    "roles": "الأدوار",
+    "permissions": "الصلاحيات",
+    "status": "الحالة",
+    "lastLogin": "آخر تسجيل دخول",
+    "createdAt": "تاريخ الإنشاء",
+    "updatedAt": "تاريخ التحديث",
+    "language": "اللغة المفضلة"
+  },
+  "roles": {
+    "superAdmin": "مسؤول رئيسي",
+    "admin": "مسؤول",
+    "manager": "مدير",
+    "staff": "موظف",
+    "viewer": "مشاهد"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "suspended": "موقوف"
+  },
+  "actions": {
+    "assignRole": "تعيين دور",
+    "removeRole": "إزالة دور",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "activate": "تفعيل",
+    "deactivate": "إلغاء التفعيل",
+    "suspend": "إيقاف"
+  },
+  "messages": {
+    "confirmDelete": "هل أنت متأكد من حذف هذا المستخدم المسؤول؟",
+    "confirmDeactivate": "هل أنت متأكد من إلغاء تفعيل هذا المستخدم المسؤول؟",
+    "deleteSuccess": "تم حذف المستخدم المسؤول بنجاح",
+    "updateSuccess": "تم تحديث المستخدم المسؤول بنجاح",
+    "createSuccess": "تم إنشاء المستخدم المسؤول بنجاح",
+    "activateSuccess": "تم تفعيل المستخدم المسؤول بنجاح",
+    "deactivateSuccess": "تم إلغاء تفعيل المستخدم المسؤول بنجاح",
+    "roleAssigned": "تم تعيين الدور بنجاح",
+    "passwordReset": "تم إعادة تعيين كلمة المرور بنجاح"
+  }
+}

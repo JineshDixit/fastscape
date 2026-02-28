@@ -1,0 +1,77 @@
+{
+  "title": "Finance",
+  "financials": "Financials",
+  "transactions": "Transactions",
+  "reports": "Reports",
+  "fields": {
+    "transactionId": "Transaction ID",
+    "bookingId": "Booking ID",
+    "customer": "Customer",
+    "amount": "Amount",
+    "type": "Type",
+    "method": "Payment Method",
+    "status": "Status",
+    "date": "Date",
+    "description": "Description",
+    "reference": "Reference",
+    "invoice": "Invoice",
+    "receipt": "Receipt"
+  },
+  "types": {
+    "payment": "Payment",
+    "refund": "Refund",
+    "deposit": "Deposit",
+    "balance": "Balance",
+    "delaycharge": "Delay Charge",
+    "withdrawal": "Withdrawal"
+  },
+  "methods": {
+    "pickup": "At Pickup",
+    "dropoff": "At Dropoff",
+    "online": "Online Payment",
+    "cash": "Cash",
+    "card": "Card",
+    "banktransfer": "Bank Transfer",
+    "wallet": "Wallet"
+  },
+  "status": {
+    "unpaid": "Unpaid",
+    "partiallypaid": "Partially Paid",
+    "paid": "Paid",
+    "refunded": "Refunded",
+    "overdue": "Overdue",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "succeeded": "Succeeded"
+  },
+  "reports": {
+    "daily": "Daily Report",
+    "weekly": "Weekly Report",
+    "monthly": "Monthly Report",
+    "yearly": "Yearly Report",
+    "custom": "Custom Report",
+    "revenue": "Revenue Report",
+    "expenses": "Expenses Report",
+    "profit": "Profit Report"
+  },
+  "filters": {
+    "dateRange": "Date Range",
+    "type": "Type",
+    "method": "Method",
+    "status": "Status",
+    "customer": "Customer"
+  },
+  "actions": {
+    "exportPDF": "Export PDF",
+    "exportCSV": "Export CSV",
+    "generateInvoice": "Generate Invoice",
+    "sendReceipt": "Send Receipt",
+    "processRefund": "Process Refund"
+  },
+  "messages": {
+    "exportSuccess": "Report exported successfully",
+    "refundSuccess": "Refund processed successfully",
+    "invoiceGenerated": "Invoice generated successfully"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "title": "السائقون",
+  "addChauffeur": "إضافة سائق",
+  "editChauffeur": "تعديل السائق",
+  "chauffeurDetails": "تفاصيل السائق",
+  "fields": {
+    "chauffeurId": "رقم السائق",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "dateOfBirth": "تاريخ الميلاد",
+    "address": "العنوان",
+    "city": "المدينة",
+    "state": "الولاية",
+    "country": "الدولة",
+    "nationality": "الجنسية",
+    "zipCode": "الرمز البريدي",
+    "licenseNumber": "رقم الرخصة",
+    "licenseExpiry": "انتهاء الرخصة",
+    "experience": "الخبرة",
+    "yearsOfExperience": "سنوات الخبرة",
+    "experienceLevel": "مستوى الخبرة",
+    "languages": "اللغات",
+    "rating": "التقييم",
+    "totalTrips": "إجمالي الرحلات",
+    "hourlyRate": "الأجر بالساعة",
+    "status": "الحالة",
+    "isVerified": "موثق",
+    "availability": "التوفر",
+    "photo": "الصورة",
+    "documents": "المستندات"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "available": "متاح",
+    "busy": "مشغول",
+    "offduty": "خارج الخدمة",
+    "onbreak": "في استراحة",
+    "unavailable": "غير متاح",
+    "ontrip": "في رحلة",
+    "suspended": "موقوف",
+    "offline": "غير متصل"
+  },
+  "experienceLevel": {
+    "beginner": "مبتدئ",
+    "intermediate": "متوسط",
+    "experienced": "ذو خبرة",
+    "advanced": "متقدم",
+    "expert": "خبير"
+  },
+  "availability": {
+    "available": "متاح",
+    "busy": "مشغول",
+    "offline": "غير متصل"
+  },
+  "messages": {
+    "confirmDelete": "هل أنت متأكد من حذف هذا السائق؟",
+    "confirmSuspend": "هل أنت متأكد من إيقاف هذا السائق؟",
+    "confirmVerify": "هل أنت متأكد من توثيق هذا السائق؟",
+    "deleteSuccess": "تم حذف السائق بنجاح",
+    "updateSuccess": "تم تحديث السائق بنجاح",
+    "createSuccess": "تم إنشاء السائق بنجاح",
+    "suspendSuccess": "تم إيقاف السائق بنجاح",
+    "activateSuccess": "تم تفعيل السائق بنجاح",
+    "verifySuccess": "تم توثيق السائق بنجاح"
+  }
+}

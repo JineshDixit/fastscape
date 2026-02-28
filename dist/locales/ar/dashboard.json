@@ -1,0 +1,24 @@
+{
+  "title": "لوحة التحكم",
+  "welcome": "مرحباً بعودتك",
+  "overview": "نظرة عامة",
+  "statistics": {
+    "totalBookings": "إجمالي الحجوزات",
+    "activeVehicles": "المركبات النشطة",
+    "totalRevenue": "إجمالي الإيرادات",
+    "activeChauffeurs": "السائقون النشطون",
+    "pendingBookings": "الحجوزات المعلقة",
+    "completedBookings": "الحجوزات المكتملة",
+    "totalClients": "إجمالي العملاء",
+    "monthlyRevenue": "الإيرادات الشهرية"
+  },
+  "charts": {
+    "revenueOverTime": "الإيرادات عبر الوقت",
+    "bookingsByStatus": "الحجوزات حسب الحالة",
+    "topVehicles": "أفضل المركبات",
+    "topChauffeurs": "أفضل السائقين"
+  },
+  "recentActivity": "النشاط الأخير",
+  "quickActions": "إجراءات سريعة",
+  "viewAll": "عرض الكل"
+}
