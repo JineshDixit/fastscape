@@ -1,0 +1,65 @@
+{
+  "title": "الحجوزات",
+  "addBooking": "إضافة حجز",
+  "editBooking": "تعديل الحجز",
+  "bookingDetails": "تفاصيل الحجز",
+  "fields": {
+    "bookingId": "رقم الحجز",
+    "customer": "العميل",
+    "vehicle": "المركبة",
+    "chauffeur": "السائق",
+    "pickupLocation": "موقع الاستلام",
+    "dropoffLocation": "موقع التسليم",
+    "pickupDate": "تاريخ الاستلام",
+    "dropoffDate": "تاريخ التسليم",
+    "pickupTime": "وقت الاستلام",
+    "dropoffTime": "وقت التسليم",
+    "duration": "المدة",
+    "totalAmount": "المبلغ الإجمالي",
+    "paidAmount": "المبلغ المدفوع",
+    "remainingAmount": "المبلغ المتبقي",
+    "paymentStatus": "حالة الدفع",
+    "bookingStatus": "حالة الحجز",
+    "notes": "ملاحظات",
+    "specialRequests": "طلبات خاصة"
+  },
+  "status": {
+    "pending": "قيد الانتظار",
+    "confirmed": "مؤكد",
+    "pickedup": "تم الاستلام",
+    "droppedoff": "تم التسليم",
+    "cancelled": "ملغى",
+    "completed": "مكتمل"
+  },
+  "paymentStatus": {
+    "unpaid": "غير مدفوع",
+    "partiallypaid": "مدفوع جزئياً",
+    "paid": "مدفوع",
+    "refunded": "مسترد",
+    "overdue": "متأخر"
+  },
+  "paymentMethod": {
+    "pickup": "عند الاستلام",
+    "dropoff": "عند التسليم",
+    "online": "عبر الإنترنت"
+  },
+  "bookingType": {
+    "selfdrive": "قيادة ذاتية",
+    "chauffeur": "مع سائق"
+  },
+  "filters": {
+    "all": "جميع الحجوزات",
+    "today": "اليوم",
+    "upcoming": "القادمة",
+    "past": "السابقة",
+    "byStatus": "حسب الحالة",
+    "byPayment": "حسب الدفع",
+    "dateRange": "نطاق التاريخ"
+  },
+  "messages": {
+    "confirmCancel": "هل أنت متأكد من إلغاء هذا الحجز؟",
+    "cancelSuccess": "تم إلغاء الحجز بنجاح",
+    "updateSuccess": "تم تحديث الحجز بنجاح",
+    "createSuccess": "تم إنشاء الحجز بنجاح"
+  }
+}

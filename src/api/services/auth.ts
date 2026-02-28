@@ -1,6 +1,6 @@
-import { BaseApiService } from "../base";
-import type { ApiResponse } from "../../common/interface/apiInterface";
-import { authCookies } from "@/utils/cookies";
+import { BaseApiService } from '../base';
+import type { ApiResponse } from '../../common/interface/apiInterface';
+import { authCookies } from '@/utils/cookies';
 import type {
   LoginRequest,
   LoginResponse,
@@ -11,8 +11,8 @@ import type {
   PasswordChangeData,
   PasswordResetData,
   TokenInfo,
-} from "@/common/interface/authInterface";
-import { AUTH } from "@/common/constant/auth";
+} from '@/common/interface/authInterface';
+import { AUTH } from '@/common/constant/auth';
 
 /**
  * Authentication API service with optimized token management
@@ -22,7 +22,7 @@ class AuthService extends BaseApiService {
   private autoRefreshInterval: number | null = null;
 
   constructor() {
-    super("/auth");
+    super('/auth');
   }
 
   // ===== AUTHENTICATION METHODS =====
@@ -31,15 +31,11 @@ class AuthService extends BaseApiService {
    * Login user and store authentication data
    */
   async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
-    const response = await this.post<LoginResponse, LoginRequest>(
-      "/login",
-      credentials
-    );
+    const response = await this.post<LoginResponse, LoginRequest>('/login', credentials);
 
     if (response.success && response.data) {
       this.storeAuthenticationData(response.data);
       this.startAutoRefresh();
-      this.logSuccessfulLogin(response.data);
     }
 
     return response;
@@ -48,10 +44,8 @@ class AuthService extends BaseApiService {
   /**
    * Register new user
    */
-  async register(
-    userData: RegisterRequest
-  ): Promise<ApiResponse<LoginResponse>> {
-    return this.post<LoginResponse, RegisterRequest>("/register", userData);
+  async register(userData: RegisterRequest): Promise<ApiResponse<LoginResponse>> {
+    return this.post<LoginResponse, RegisterRequest>('/register', userData);
   }
 
   /**
@@ -59,11 +53,11 @@ class AuthService extends BaseApiService {
    */
   async logout(): Promise<ApiResponse<void>> {
     try {
-      const response = await this.post<void>("/logout");
+      const response = await this.post<void>('/logout');
       this.clearTokens();
 
       if (import.meta.env.DEV) {
-        console.log("Logout successful - All cookies cleared");
+        console.log('Logout successful - All cookies cleared');
       }
 
       return response;
@@ -72,7 +66,7 @@ class AuthService extends BaseApiService {
       this.clearTokens();
 
       if (import.meta.env.DEV) {
-        console.log("Logout API failed but cookies cleared locally");
+        console.log('Logout API failed but cookies cleared locally');
       }
 
       throw error;
@@ -83,94 +77,38 @@ class AuthService extends BaseApiService {
    * Store authentication data in cookies
    */
   private storeAuthenticationData(data: LoginResponse): void {
-    const { user, tokens } = data;
+    const { tokens } = data;
+
+    if (import.meta.env.DEV) {
+      console.log('Storing authentication data:', {
+        accessTokenLength: tokens.accessToken.length,
+        refreshTokenLength: tokens.refreshToken.length,
+        accessExpiresAt: tokens.accessTokenExpiresAt,
+        refreshExpiresAt: tokens.refreshTokenExpiresAt,
+      });
+    }
 
     // Store tokens
     authCookies.setAccessToken(tokens.accessToken, tokens.accessTokenExpiresAt);
-    authCookies.setRefreshToken(
-      tokens.refreshToken,
-      tokens.refreshTokenExpiresAt
-    );
+    authCookies.setRefreshToken(tokens.refreshToken, tokens.refreshTokenExpiresAt);
 
-    // Store user data
-    authCookies.setUserData({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      fullName: user.fullName,
-      email: user.email,
-      isActive: user.isActive,
-    });
-
-    // Store roles and permissions
-    authCookies.setUserRoles(user.roles);
-    authCookies.setUserPermissions(user.permissions);
-  }
-
-  /**
-   * Log successful login for debugging
-   */
-  private logSuccessfulLogin(data: LoginResponse): void {
     if (import.meta.env.DEV) {
-      console.log("Login successful - Data stored in cookies:", {
-        accessToken: "***" + data.tokens.accessToken.slice(-10),
-        refreshToken: "***" + data.tokens.refreshToken.slice(-10),
-        user: data.user.fullName,
-        roles: data.user.roles.map((r) => r.name),
-        permissions: data.user.permissions.length + " permissions",
-      });
+      console.log('Tokens stored successfully in cookies');
     }
-  }
-
-  // ===== USER PROFILE METHODS =====
-
-  /**
-   * Get current user profile from cookies (cached)
-   */
-  getCurrentUser(): User | null {
-    const userData = authCookies.getUserData();
-    if (!userData) return null;
-
-    const roles = authCookies.getUserRoles();
-    const permissions = authCookies.getUserPermissions();
-
-    return { ...userData, roles, permissions };
   }
 
   /**
    * Get current user profile from API (fresh data)
    */
   async getProfile(): Promise<ApiResponse<User>> {
-    return this.get<User>("/profile");
+    return this.get<User>('/profile');
   }
 
   /**
    * Update user profile and sync with cookies
    */
   async updateProfile(userData: Partial<User>): Promise<ApiResponse<User>> {
-    const response = await this.patch<User, Partial<User>>(
-      "/profile",
-      userData
-    );
-
-    if (response.success && response.data) {
-      this.syncUserDataToCookies(response.data);
-    }
-
-    return response;
-  }
-
-  /**
-   * Sync updated user data to cookies
-   */
-  private syncUserDataToCookies(updatedUser: User): void {
-    const currentUser = authCookies.getUserData();
-    if (currentUser) {
-      authCookies.setUserData({
-        ...currentUser,
-        ...updatedUser,
-      });
-    }
+    return this.patch<User, Partial<User>>('/profile', userData);
   }
 
   // ===== PASSWORD MANAGEMENT METHODS =====
@@ -179,28 +117,28 @@ class AuthService extends BaseApiService {
    * Change user password
    */
   async changePassword(data: PasswordChangeData): Promise<ApiResponse<void>> {
-    return this.post<void>("/change-password", data);
+    return this.post<void>('/change-password', data);
   }
 
   /**
    * Request password reset email
    */
   async requestPasswordReset(email: string): Promise<ApiResponse<void>> {
-    return this.post<void>("/forgot-password", { email });
+    return this.post<void>('/forgot-password', { email });
   }
 
   /**
    * Reset password with token
    */
   async resetPassword(data: PasswordResetData): Promise<ApiResponse<void>> {
-    return this.post<void>("/reset-password", data);
+    return this.post<void>('/reset-password', data);
   }
 
   /**
    * Verify email with token
    */
   async verifyEmail(token: string): Promise<ApiResponse<void>> {
-    return this.post<void>("/verify-email", { token });
+    return this.post<void>('/verify-email', { token });
   }
 
   // ===== TOKEN MANAGEMENT METHODS =====
@@ -209,21 +147,48 @@ class AuthService extends BaseApiService {
    * Get a valid access token, refreshing if necessary
    */
   async getValidAccessToken(): Promise<string | null> {
+    // If we're already refreshing, wait for that to complete
+    if (this.refreshPromise) {
+      try {
+        return await this.refreshPromise;
+      } catch {
+        // If the refresh failed, continue with normal flow
+      }
+    }
+
     const currentToken = authCookies.getAccessToken();
 
-    if (!currentToken) return null;
-    if (!this.isTokenExpired()) return currentToken;
+    // If we have a valid non-expired access token, return it
+    if (currentToken && !this.isTokenExpired()) {
+      return currentToken;
+    }
 
+    // Check if we have refresh token
+    const refreshToken = authCookies.getRefreshToken();
+    if (!refreshToken) {
+      if (import.meta.env.DEV) {
+        console.warn('Cannot refresh: No refresh token available');
+      }
+      return null;
+    }
+
+    // Check if refresh token is actually expired
     if (this.isRefreshTokenExpired()) {
-      this.handleRefreshTokenExpiry();
+      if (import.meta.env.DEV) {
+        console.warn('Refresh token expired - cannot refresh access token');
+      }
+      // Don't immediately logout here - let the calling code handle it
       return null;
     }
 
     try {
+      if (import.meta.env.DEV) {
+        console.log('Access token expired, attempting refresh...');
+      }
       return await this.refreshAccessToken();
     } catch (error) {
-      console.error("Failed to refresh token:", error);
-      this.handleRefreshTokenExpiry();
+      console.error('Failed to get valid access token:', error);
+      // Don't automatically logout here - let the calling code handle auth errors
       return null;
     }
   }
@@ -238,7 +203,55 @@ class AuthService extends BaseApiService {
 
     const refreshToken = authCookies.getRefreshToken();
     if (!refreshToken) {
-      throw new Error("No refresh token available");
+      throw new Error('No refresh token available');
+    }
+
+    // Implement cross-tab lock using localStorage
+    if (typeof window !== 'undefined') {
+      const isLocked = () => {
+        const lock = localStorage.getItem('auth_refresh_lock');
+        if (!lock) return false;
+        const lockTime = parseInt(lock, 10);
+        return !isNaN(lockTime) && Date.now() - lockTime < 10000; // 10s timeout
+      };
+
+      if (isLocked()) {
+        if (import.meta.env.DEV) {
+          console.log('🔄 Token refresh currently locked by another tab, waiting...');
+        }
+
+        // Wait for lock to be released or new tokens to appear
+        let waitAttempts = 0;
+        const maxAttempts = 10; // Max 5 seconds
+
+        while (isLocked() && waitAttempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          waitAttempts++;
+
+          // Check if tokens were updated while we were waiting
+          const currentToken = authCookies.getAccessToken();
+          if (currentToken && !this.isTokenExpired()) {
+            if (import.meta.env.DEV) {
+              console.log('✅ New token detected from another tab, skipping redundant refresh');
+            }
+            return currentToken;
+          }
+        }
+
+        // If we timed out and it's still locked, something might be wrong with the lock,
+        // but let's check one last time for the token.
+        const finalCheckToken = authCookies.getAccessToken();
+        if (finalCheckToken && !this.isTokenExpired()) {
+          return finalCheckToken;
+        }
+
+        if (import.meta.env.DEV && isLocked()) {
+          console.warn('⚠️ Refresh lock timeout - proceeding anyway');
+        }
+      }
+
+      // Acquire lock
+      localStorage.setItem('auth_refresh_lock', Date.now().toString());
     }
 
     this.refreshPromise = this.performTokenRefresh(refreshToken);
@@ -247,22 +260,24 @@ class AuthService extends BaseApiService {
       return await this.refreshPromise;
     } finally {
       this.refreshPromise = null;
+      // Release lock
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_refresh_lock');
+      }
     }
   }
 
   /**
    * Public refresh token method for external use
    */
-  async refreshToken(): Promise<
-    ApiResponse<{ accessToken: string; accessTokenExpiresAt: string }>
-  > {
+  async refreshToken(): Promise<ApiResponse<{ accessToken: string; accessTokenExpiresAt: string }>> {
     const newToken = await this.refreshAccessToken();
 
     return {
       success: true,
       data: {
         accessToken: newToken,
-        accessTokenExpiresAt: authCookies.getTokenExpiresAt() || "",
+        accessTokenExpiresAt: authCookies.getTokenExpiresAt() || '',
       },
     };
   }
@@ -272,23 +287,15 @@ class AuthService extends BaseApiService {
    */
   private async performTokenRefresh(refreshToken: string): Promise<string> {
     try {
-      const response = await this.post<
-        RefreshTokenResponse,
-        RefreshTokenRequest
-      >("/refresh", {
+      const response = await this.post<RefreshTokenResponse, RefreshTokenRequest>('/refresh', {
         refreshToken,
       });
 
       if (!response.success || !response.data) {
-        throw new Error("Invalid refresh response");
+        throw new Error('Invalid refresh response');
       }
 
-      const {
-        accessToken,
-        accessTokenExpiresAt,
-        refreshToken: newRefreshToken,
-        refreshTokenExpiresAt,
-      } = response.data;
+      const { accessToken, accessTokenExpiresAt, refreshToken: newRefreshToken, refreshTokenExpiresAt } = response.data;
 
       // Update tokens in cookies
       authCookies.setAccessToken(accessToken, accessTokenExpiresAt);
@@ -298,23 +305,25 @@ class AuthService extends BaseApiService {
       }
 
       if (import.meta.env.DEV) {
-        console.log("Token refreshed successfully");
+        console.log('Token refreshed successfully');
       }
 
       return accessToken;
     } catch (error: any) {
       if (this.isRefreshTokenError(error)) {
         this.handleRefreshTokenExpiry();
-        throw new Error("Refresh token expired");
+        throw new Error('Refresh token expired');
       }
       throw error;
     }
   }
 
   /**
-   * Check if error indicates refresh token expiry
+   * Check if error indicates refresh token expiry (not network errors)
    */
   private isRefreshTokenError(error: any): boolean {
+    // Only treat as auth error if we get a proper HTTP response with 401/403
+    // Network errors (no response) should not trigger logout
     return error.response?.status === 401 || error.response?.status === 403;
   }
 
@@ -325,12 +334,25 @@ class AuthService extends BaseApiService {
    */
   isTokenExpired(): boolean {
     const expiresAt = authCookies.getTokenExpiresAt();
-    if (!expiresAt) return true;
+    if (!expiresAt) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ No access token expiration found');
+      }
+      return true;
+    }
 
     const now = Date.now();
     const expires = new Date(expiresAt).getTime();
+    const timeUntilExpiry = expires - now;
+    const isExpired = now >= expires - AUTH.REFRESH_THRESHOLD;
 
-    return now >= expires - AUTH.REFRESH_THRESHOLD;
+    if (import.meta.env.DEV && timeUntilExpiry < AUTH.REFRESH_THRESHOLD * 2) {
+      console.log(
+        `🕐 Token expires in ${Math.round(timeUntilExpiry / 1000)}s, threshold: ${AUTH.REFRESH_THRESHOLD / 1000}s, should refresh: ${isExpired}`,
+      );
+    }
+
+    return isExpired;
   }
 
   /**
@@ -338,12 +360,24 @@ class AuthService extends BaseApiService {
    */
   isRefreshTokenExpired(): boolean {
     const refreshExpiresAt = authCookies.getRefreshExpiresAt();
-    if (!refreshExpiresAt) return true;
+    if (!refreshExpiresAt) {
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ No refresh token expiration found');
+      }
+      return true;
+    }
 
     const now = Date.now();
     const expires = new Date(refreshExpiresAt).getTime();
+    const timeUntilExpiry = expires - now;
+    const isExpired = now >= expires;
 
-    return now >= expires;
+    if (import.meta.env.DEV && timeUntilExpiry < 10 * 60 * 1000) {
+      // Log if less than 10 minutes left
+      console.log(`🔄 Refresh token expires in ${Math.round(timeUntilExpiry / 1000)}s, expired: ${isExpired}`);
+    }
+
+    return isExpired;
   }
 
   // ===== AUTO-REFRESH METHODS =====
@@ -356,13 +390,22 @@ class AuthService extends BaseApiService {
       try {
         await this.refreshAccessToken();
         if (import.meta.env.DEV) {
-          console.log("Proactive token refresh completed");
+          console.log('✅ Proactive token refresh completed');
         }
-      } catch (error) {
-        console.error("Proactive token refresh failed:", error);
-        this.handleRefreshTokenExpiry();
+      } catch (error: any) {
+        // Only trigger logout if it's an auth error (401/403), not a transient network error
+        if (this.isRefreshTokenError(error)) {
+          console.error('❌ Proactive refresh failed with auth error - logging out');
+          this.handleRefreshTokenExpiry();
+        } else {
+          console.warn('⚠️ Proactive refresh failed with transient error - will retry later', error.message);
+          // Don't logout on network errors - let the next interval retry
+        }
       }
     } else if (this.isRefreshTokenExpired()) {
+      if (import.meta.env.DEV) {
+        console.log('❌ Refresh token expired - stopping auto refresh');
+      }
       this.handleRefreshTokenExpiry();
     }
   }
@@ -381,7 +424,7 @@ class AuthService extends BaseApiService {
     this.stopAutoRefresh(); // Clear any existing interval
 
     this.autoRefreshInterval = setInterval(async () => {
-      if (authCookies.getAccessToken()) {
+      if (authCookies.getAccessToken() || authCookies.getRefreshToken()) {
         await this.proactiveRefresh();
       } else {
         this.stopAutoRefresh();
@@ -418,17 +461,14 @@ class AuthService extends BaseApiService {
    */
   private handleRefreshTokenExpiry(): void {
     if (import.meta.env.DEV) {
-      console.log("Refresh token expired - logging out user");
+      console.log('Refresh token expired - logging out user');
     }
 
     this.clearTokens();
 
     // Only redirect in browser environment and not already on login page
-    if (
-      typeof window !== "undefined" &&
-      window.location.pathname !== "/login"
-    ) {
-      window.location.href = "/login";
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      window.location.href = '/login';
     }
   }
 
@@ -437,7 +477,7 @@ class AuthService extends BaseApiService {
    */
   forceLogout(): void {
     if (import.meta.env.DEV) {
-      console.log("Force logout triggered due to refresh token expiry");
+      console.log('Force logout triggered due to refresh token expiry');
     }
     this.handleRefreshTokenExpiry();
   }
@@ -473,10 +513,26 @@ class AuthService extends BaseApiService {
     const refreshExpiresAt = authCookies.getRefreshExpiresAt();
 
     let timeUntilExpiry: number | null = null;
+    const now = Date.now();
+
+    // Prioritize refresh token expiry if access token is expired or missing
     if (accessExpiresAt) {
-      const now = Date.now();
-      const expires = new Date(accessExpiresAt).getTime();
-      timeUntilExpiry = Math.max(0, expires - now);
+      const accessExpires = new Date(accessExpiresAt).getTime();
+      const accessTimeUntil = accessExpires - now;
+
+      if (accessTimeUntil > 0) {
+        timeUntilExpiry = accessTimeUntil;
+      }
+    }
+
+    // If access token is expired or missing, check refresh token
+    if ((!timeUntilExpiry || timeUntilExpiry <= 0) && refreshExpiresAt) {
+      const refreshExpires = new Date(refreshExpiresAt).getTime();
+      const refreshTimeUntil = refreshExpires - now;
+
+      if (refreshTimeUntil > 0) {
+        timeUntilExpiry = refreshTimeUntil;
+      }
     }
 
     return {
@@ -489,62 +545,10 @@ class AuthService extends BaseApiService {
       timeUntilExpiry,
     };
   }
-
-  // ===== PERMISSION AND ROLE METHODS =====
-
-  /**
-   * Get user permissions from cookies
-   */
-  getUserPermissions(): string[] {
-    return authCookies.getUserPermissions();
-  }
-
-  /**
-   * Get user roles from cookies
-   */
-  getUserRoles(): any[] {
-    return authCookies.getUserRoles();
-  }
-
-  /**
-   * Check if user has specific permission
-   */
-  hasPermission(permission: string): boolean {
-    return this.getUserPermissions().includes(permission);
-  }
-
-  /**
-   * Check if user has any of the specified permissions
-   */
-  hasAnyPermission(permissions: string[]): boolean {
-    const userPermissions = this.getUserPermissions();
-    return permissions.some((permission) =>
-      userPermissions.includes(permission)
-    );
-  }
-
-  /**
-   * Check if user has all specified permissions
-   */
-  hasAllPermissions(permissions: string[]): boolean {
-    const userPermissions = this.getUserPermissions();
-    return permissions.every((permission) =>
-      userPermissions.includes(permission)
-    );
-  }
-
-  /**
-   * Check if user has specific role
-   */
-  hasRole(roleName: string): boolean {
-    return this.getUserRoles().some((role) => role.name === roleName);
-  }
 }
 
-// Create and export singleton instance
 export const authService = new AuthService();
 
-// Auto-start monitoring when module loads if user is authenticated
-if (typeof window !== "undefined" && authCookies.getAccessToken()) {
+if (typeof window !== 'undefined' && (authCookies.getAccessToken() || authCookies.getRefreshToken())) {
   authService.startAutoRefresh();
 }

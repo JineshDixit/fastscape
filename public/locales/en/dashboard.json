@@ -1,0 +1,24 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back",
+  "overview": "Overview",
+  "statistics": {
+    "totalBookings": "Total Bookings",
+    "activeVehicles": "Active Vehicles",
+    "totalRevenue": "Total Revenue",
+    "activeChauffeurs": "Active Chauffeurs",
+    "pendingBookings": "Pending Bookings",
+    "completedBookings": "Completed Bookings",
+    "totalClients": "Total Clients",
+    "monthlyRevenue": "Monthly Revenue"
+  },
+  "charts": {
+    "revenueOverTime": "Revenue Over Time",
+    "bookingsByStatus": "Bookings by Status",
+    "topVehicles": "Top Vehicles",
+    "topChauffeurs": "Top Chauffeurs"
+  },
+  "recentActivity": "Recent Activity",
+  "quickActions": "Quick Actions",
+  "viewAll": "View All"
+}
