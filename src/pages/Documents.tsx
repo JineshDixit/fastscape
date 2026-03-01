@@ -106,7 +106,7 @@ const Documents = () => {
 
   const getAssetUrl = (assetPath?: string): string | undefined => {
     if (!assetPath) return undefined;
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://3.111.162.90:5000/api';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
     const serverRoot = baseUrl.replace(/\/api$/, '');
     return `${serverRoot}/${assetPath.replace(/\\/g, '/')}`;
   };
