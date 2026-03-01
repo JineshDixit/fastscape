@@ -14,11 +14,12 @@
 /coverage
 
 # next.js
-# /.next/
-# /out/
+/.next
+/out/
+/dist
 
 # production
-# /build
+/build
 
 # misc
 .DS_Store
@@ -35,7 +36,7 @@ yarn-error.log*
 
 # vercel
 .vercel
-*.vscode
+/.vscode
 
 # typescript
 *.tsbuildinfo

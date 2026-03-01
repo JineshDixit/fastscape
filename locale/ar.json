@@ -1,6 +1,7 @@
 {
   "navigation": {
     "activeBookings": "الحجوزات النشطة",
+    "exploreCars": "استكشف السيارات",
     "bookingHistory": "سجل الحجوزات",
     "login": "تسجيل الدخول",
     "myAccount": "حسابي",

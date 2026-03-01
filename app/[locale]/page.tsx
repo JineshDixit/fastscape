@@ -120,14 +120,16 @@ const Home = () => {
               ))}
             </div>
           </section>
-          <section className="mt-15">
-            <h3 className="text-center text-lg font-semibold">{t('luxury')}</h3>
-            <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {vehicles.map((item) => (
-                <VehicleCard key={item.id} vehicle={item} onClick={() => router.push(`/vehicles/${item.id}`)} />
-              ))}
-            </div>
-          </section>
+          {vehicles.length > 0 && (
+            <section className="mt-15">
+              <h3 className="text-center text-lg font-semibold">{t('luxury')}</h3>
+              <div className="mt-5 grid grid-cols-1 justify-items-stretch gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {vehicles.map((item) => (
+                  <VehicleCard key={item.id} vehicle={item} onClick={() => router.push(`/vehicles/${item.id}`)} />
+                ))}
+              </div>
+            </section>
+          )}
           <section className="mt-15 px-4">
             <h3 className="text-center text-lg font-semibold">{t('brands')}</h3>
             <div className="mt-5 grid grid-cols-2 gap-4 opacity-55 select-none sm:grid-cols-3 md:flex md:items-center md:justify-center md:gap-5">

@@ -8,7 +8,6 @@ const Footer = () => {
   const FOOTER_LINKS = [
     { label: t('aboutUs'), href: '/' },
     { label: t('privacyPolicy'), href: '/' },
-    { label: t('availableCars'), href: '/' },
     { label: t('refundPolicy'), href: '/' },
     { label: t('contactUs'), href: '/' },
     { label: t('terms'), href: '/' },

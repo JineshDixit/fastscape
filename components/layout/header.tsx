@@ -7,7 +7,7 @@ import { UserRound, Menu, X } from 'lucide-react';
 
 import { HeaderPropType } from '@/common/propTypes';
 import { useTranslations } from 'next-intl';
-import { useAuth } from '@/app/axios';
+import { useAuth, useVehicle } from '@/app/axios';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,15 +22,39 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
   const t = useTranslations('navigation');
   const authData = useAuth();
   const { isAuthenticated, user, logout } = authData;
+  const { setBookingData, setFilters } = useVehicle();
+
+  const handleExploreClick = () => {
+    // Clear search criteria and filters
+    setBookingData({
+      pickupDate: null,
+      dropoffDate: null,
+      pickupLocation: null,
+      dropoffLocation: null,
+    });
+    setFilters({
+      make: undefined,
+      model: undefined,
+      bodyType: undefined,
+    });
+  };
 
   const NAV_ITEMS = [
     {
+      label: t('exploreCars'),
+      href: '/vehicles',
+      onClick: handleExploreClick,
+      public: true,
+    },
+    {
       label: t('activeBookings'),
       href: '/profile?tab=active',
+      public: false,
     },
     {
       label: t('bookingHistory'),
       href: '/profile?tab=history',
+      public: false,
     },
   ];
 
@@ -57,40 +81,46 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
 
           <div className="flex items-center gap-4 md:gap-8 lg:gap-12">
             <nav className="hidden md:flex md:gap-6 lg:gap-8 xl:gap-12">
-              {NAV_ITEMS.map(({ label, href }, index) => (
-                <Link className="hover:text-primary text-sm transition-colors lg:text-base" href={href} key={index}>
+              {NAV_ITEMS.filter((item) => item.public || isAuthenticated).map(({ label, href, onClick }, index) => (
+                <Link
+                  className="hover:text-primary text-sm transition-colors lg:text-base"
+                  href={href}
+                  key={index}
+                  onClick={onClick}
+                >
                   {label}
                 </Link>
               ))}
             </nav>
 
             {/* Mobile Menu */}
-            {isAuthenticated && (
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="sm" className="px-2">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[280px]">
-                  <SheetHeader>
-                    <SheetTitle>Menu</SheetTitle>
-                  </SheetHeader>
-                  <nav className="mt-6 flex flex-col gap-4">
-                    {NAV_ITEMS.map(({ label, href }, index) => (
-                      <Link
-                        key={index}
-                        href={href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="hover:text-primary rounded-md px-3 py-2 text-base transition-colors"
-                      >
-                        {label}
-                      </Link>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            )}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="sm" className="px-2">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px]">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="mt-6 flex flex-col gap-4">
+                  {NAV_ITEMS.filter((item) => item.public || isAuthenticated).map(({ label, href, onClick }, index) => (
+                    <Link
+                      key={index}
+                      href={href}
+                      onClick={() => {
+                        onClick?.();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="hover:text-primary rounded-md px-3 py-2 text-base transition-colors"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
 
             {isAuthenticated ? (
               <DropdownMenu>

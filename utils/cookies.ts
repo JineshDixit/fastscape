@@ -138,15 +138,15 @@ export const authCookies = {
   // Set access token with expiration
   setAccessToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isSecureProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:';
     setCookie(COOKIE_NAMES.ACCESS_TOKEN, token, {
       expires: expiresDate,
-      secure: isProduction,
+      secure: isSecureProtocol,
       sameSite: 'strict',
     });
     setCookie(COOKIE_NAMES.TOKEN_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
-      secure: isProduction,
+      secure: isSecureProtocol,
       sameSite: 'strict',
     });
   },
@@ -154,26 +154,26 @@ export const authCookies = {
   // Set refresh token with expiration
   setRefreshToken: (token: string, expiresAt: string) => {
     const expiresDate = new Date(expiresAt);
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isSecureProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:';
     setCookie(COOKIE_NAMES.REFRESH_TOKEN, token, {
       expires: expiresDate,
-      secure: isProduction,
+      secure: isSecureProtocol,
       sameSite: 'strict',
     });
     setCookie(COOKIE_NAMES.REFRESH_EXPIRES_AT, expiresAt, {
       expires: expiresDate,
-      secure: isProduction,
+      secure: isSecureProtocol,
       sameSite: 'strict',
     });
   },
 
   // Set remember me
   setRememberMe: (remember: boolean) => {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isSecureProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:';
     if (remember) {
       setCookie(COOKIE_NAMES.REMEMBER_ME, 'true', {
         expires: 30, // 30 days
-        secure: isProduction,
+        secure: isSecureProtocol,
         sameSite: 'strict',
       });
     } else {

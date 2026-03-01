@@ -1,6 +1,7 @@
 {
   "navigation": {
     "activeBookings": "Active Bookings",
+    "exploreCars": "Explore Cars",
     "bookingHistory": "Booking History",
     "login": "Login",
     "myAccount": "My Account",
