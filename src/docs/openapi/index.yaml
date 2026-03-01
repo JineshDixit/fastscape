@@ -4,8 +4,8 @@ info:
   description: API documentation for the Fastscape Admin Backend.
   version: 1.0.0
 servers:
-  - url: http://localhost:3001/api
-    description: Local development server
+  - url: http://3.111.162.90:5000/api
+    description: Production server
 paths: {}
 components:
   securitySchemes:
