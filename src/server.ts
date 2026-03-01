@@ -20,6 +20,24 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://3.111.162.90')
   .map((origin) => origin.trim().replace(/\/$/, ''))
   .filter(Boolean);
 
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser clients (curl/postman) with no Origin header
+    if (!origin) return callback(null, true);
+
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200,
+};
+
 // HTTP request logging
 server.use(morganMiddleware);
 
@@ -27,12 +45,9 @@ server.use(morganMiddleware);
 server.use(applySecurityMiddlewares);
 
 server.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    optionsSuccessStatus: 200,
-  }),
+  cors(corsOptions),
 );
+server.options('*', cors(corsOptions));
 
 // Body parsing middleware
 server.use(express.json({ limit: '10mb' }));
