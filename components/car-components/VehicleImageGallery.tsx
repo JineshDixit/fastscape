@@ -13,7 +13,7 @@ interface VehicleImageGalleryProps {
 
 const VehicleImageGallery: FC<VehicleImageGalleryProps> = ({ media, model }) => {
   const t = useTranslations('vehicleDetails');
-  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000';
 
   const allImages = media.reduce((acc: string[], m) => {
     const images = [

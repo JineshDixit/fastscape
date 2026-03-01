@@ -117,7 +117,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
             <div className="bg-muted/20 relative h-40 w-full shrink-0 overflow-hidden sm:h-auto sm:w-44">
               {booking.vehicle?.media?.[0]?.leftSideImage ? (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001'}/${booking.vehicle.media[0].leftSideImage.replace(/\\/g, '/')}`}
+                  src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000'}/${booking.vehicle.media[0].leftSideImage.replace(/\\/g, '/')}`}
                   alt={`${booking.vehicle.make} ${booking.vehicle.model}`}
                   className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                 />

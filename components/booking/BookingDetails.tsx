@@ -176,7 +176,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
         <div className="relative h-64 w-full overflow-hidden sm:h-80">
           {booking.vehicle?.media?.[0]?.leftSideImage ? (
             <img
-              src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001'}/${booking.vehicle.media[0].leftSideImage.replace(/\\/g, '/')}`}
+              src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000'}/${booking.vehicle.media[0].leftSideImage.replace(/\\/g, '/')}`}
               alt={`${booking.vehicle.make} ${booking.vehicle.model}`}
               className="h-full w-full object-cover transition-transform duration-1000 hover:scale-105"
             />

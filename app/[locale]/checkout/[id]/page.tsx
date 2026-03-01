@@ -425,7 +425,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const getFullUrl = (path: string) => {
     if (!path) return '';
-    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3001';
+    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000';
     return `${baseUrl}/${path.replace(/\\/g, '/')}`;
   };
 
