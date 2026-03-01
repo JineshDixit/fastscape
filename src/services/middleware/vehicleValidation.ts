@@ -83,6 +83,8 @@ export const createVehicleValidation = [
     .isInt({ min: 1, max: 100 })
     .withMessage('Passenger capacity must be between 1 and 100'),
 
+  body('locationId').optional().isUUID().withMessage('locationId must be a valid UUID'),
+
   body('city').optional().isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
 ];
 
@@ -160,6 +162,8 @@ export const updateVehicleValidation = [
     .isInt({ min: 1, max: 100 })
     .withMessage('Passenger capacity must be between 1 and 100'),
 
+  body('locationId').optional().isUUID().withMessage('locationId must be a valid UUID'),
+
   body('city').optional().isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
 ];
 
@@ -217,6 +221,8 @@ export const vehicleQueryValidation = [
     .withMessage('Search term must be between 1 and 100 characters'),
 
   query('city').optional().isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
+
+  query('locationId').optional().isUUID().withMessage('locationId must be a valid UUID'),
 
   query('passengerCapacity').optional().isInt({ min: 1 }).withMessage('Passenger capacity must be a positive integer'),
 ];

@@ -74,6 +74,8 @@ export const getVehiclesController = async (req: Request, res: Response, next: N
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice as string) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
       year: req.query.year ? parseInt(req.query.year as string) : undefined,
+      city: req.query.city as string,
+      locationId: req.query.locationId as string,
       passengerCapacity: req.query.passengerCapacity ? parseInt(req.query.passengerCapacity as string) : undefined,
       search: req.query.search as string,
     };

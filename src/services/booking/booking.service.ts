@@ -290,13 +290,14 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string):
       }
     }
 
+    const previousStatus = booking.bookingStatus;
     await booking.update({ bookingStatus: newStatus }, { transaction });
     await transaction.commit();
 
     const duration = Date.now() - startTime;
     logger.info('Booking status updated successfully', {
       bookingId,
-      previousStatus: booking.bookingStatus,
+      previousStatus,
       newStatus,
       duration: `${duration}ms`,
     });

@@ -38,6 +38,7 @@ export interface VehicleFilterOptions {
   year?: number;
   search?: string;
   city?: string;
+  locationId?: string;
   passengerCapacity?: number;
 }
 
@@ -275,8 +276,8 @@ export const getVehicles = async (
     whereClause.year = filters.year;
   }
 
-  if (filters.city) {
-    whereClause.city = { [Op.iLike]: `%${filters.city}%` };
+  if (filters.locationId) {
+    whereClause.locationId = filters.locationId;
   }
 
   if (filters.passengerCapacity) {
@@ -292,6 +293,20 @@ export const getVehicles = async (
     ];
   }
 
+  const locationInclude = {
+    model: Location,
+    as: 'location',
+    attributes: ['id', 'name', 'city', 'code'],
+    ...(filters.city
+      ? {
+          where: {
+            city: { [Op.iLike]: `%${filters.city}%` },
+          },
+          required: true,
+        }
+      : {}),
+  };
+
   const { count, rows } = await Vehicle.findAndCountAll({
     where: whereClause,
     include: [
@@ -299,11 +314,7 @@ export const getVehicles = async (
         model: VehicleMedia,
         as: 'media',
       },
-      {
-        model: Location,
-        as: 'location',
-        attributes: ['id', 'name', 'city', 'code'],
-      },
+      locationInclude,
     ],
     limit,
     offset,

@@ -66,6 +66,7 @@ exports.createVehicleValidation = [
         .optional()
         .isInt({ min: 1, max: 100 })
         .withMessage('Passenger capacity must be between 1 and 100'),
+    (0, express_validator_1.body)('locationId').optional().isUUID().withMessage('locationId must be a valid UUID'),
     (0, express_validator_1.body)('city').optional().isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
 ];
 exports.updateVehicleValidation = [
@@ -122,6 +123,7 @@ exports.updateVehicleValidation = [
         .optional()
         .isInt({ min: 1, max: 100 })
         .withMessage('Passenger capacity must be between 1 and 100'),
+    (0, express_validator_1.body)('locationId').optional().isUUID().withMessage('locationId must be a valid UUID'),
     (0, express_validator_1.body)('city').optional().isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
 ];
 exports.vehicleIdValidation = [(0, express_validator_1.param)('id').isUUID().withMessage('Vehicle ID must be a valid UUID')];
@@ -162,6 +164,7 @@ exports.vehicleQueryValidation = [
         .isLength({ min: 1, max: 100 })
         .withMessage('Search term must be between 1 and 100 characters'),
     (0, express_validator_1.query)('city').optional().isLength({ min: 1, max: 100 }).withMessage('City must be between 1 and 100 characters'),
+    (0, express_validator_1.query)('locationId').optional().isUUID().withMessage('locationId must be a valid UUID'),
     (0, express_validator_1.query)('passengerCapacity').optional().isInt({ min: 1 }).withMessage('Passenger capacity must be a positive integer'),
 ];
 //# sourceMappingURL=vehicleValidation.js.map

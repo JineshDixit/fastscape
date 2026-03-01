@@ -72,6 +72,8 @@ const getVehiclesController = (req, res, next) => __awaiter(void 0, void 0, void
             minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
             maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
             year: req.query.year ? parseInt(req.query.year) : undefined,
+            city: req.query.city,
+            locationId: req.query.locationId,
             passengerCapacity: req.query.passengerCapacity ? parseInt(req.query.passengerCapacity) : undefined,
             search: req.query.search,
         };

@@ -63,6 +63,7 @@ const initPostgres_DB = () => {
                 rejectUnauthorized: false,
             },
         },
+        logging: false,
         pool: {
             max: 5,
             min: 0,

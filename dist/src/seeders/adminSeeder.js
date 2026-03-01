@@ -21,6 +21,71 @@ const seedPolicies = [
         name: 'super-admin-policy',
         description: 'Full system access with all permissions',
         permissions: [
+            // Wildcard access
+            'admin:all',
+            // Bookings
+            'booking:read',
+            'booking:list',
+            'booking:view',
+            'booking:create',
+            'booking:update',
+            'booking:delete',
+            'booking:export',
+            // Vehicles
+            'vehicle:read',
+            'vehicle:list',
+            'vehicle:view',
+            'vehicle:create',
+            'vehicle:update',
+            'vehicle:write',
+            'vehicle:delete',
+            'vehicle:stats',
+            'vehicle:export',
+            // Chauffeurs
+            'chauffeur:read',
+            'chauffeur:list',
+            'chauffeur:view',
+            'chauffeur:create',
+            'chauffeur:update',
+            'chauffeur:write',
+            'chauffeur:delete',
+            'chauffeur:verify',
+            'chauffeur:export',
+            // Clients/Users
+            'user:read',
+            'user:list',
+            'user:view',
+            'user:create',
+            'user:update',
+            'user:write',
+            'user:delete',
+            'user:export',
+            // Locations
+            'location:read',
+            'location:list',
+            'location:view',
+            'location:create',
+            'location:update',
+            'location:write',
+            'location:delete',
+            'location:export',
+            // Financials
+            'finance:read',
+            'finance:list',
+            'finance:view',
+            'finance:create',
+            'finance:update',
+            'finance:delete',
+            'finance:export',
+            'finance:generate-invoice',
+            // Documents
+            'document:read',
+            'document:list',
+            'document:view',
+            'document:create',
+            'document:update',
+            'document:delete',
+            'document:download',
             // Admin User Management
             'admin.users.create',
             'admin.users.read',
@@ -63,64 +128,6 @@ const seedPolicies = [
         ],
         isActive: true,
     },
-    {
-        name: 'admin-policy',
-        description: 'Standard admin permissions for user and content management',
-        permissions: [
-            // Limited Admin User Management
-            'admin.users.read',
-            'admin.users.update',
-            'admin.users.deactivate',
-            // Limited Role Management
-            'admin.roles.read',
-            // Limited Policy Management
-            'admin.policies.read',
-            // Content Management
-            'admin.content.create',
-            'admin.content.read',
-            'admin.content.update',
-            'admin.content.delete',
-            'admin.content.moderate',
-            // Analytics & Reports (Read Only)
-            'admin.analytics.read',
-            'admin.reports.generate',
-        ],
-        isActive: true,
-    },
-    {
-        name: 'moderator-policy',
-        description: 'Content moderation and basic user management',
-        permissions: [
-            // Basic User Management
-            'admin.users.read',
-            'admin.users.deactivate',
-            // Content Management
-            'admin.content.read',
-            'admin.content.update',
-            'admin.content.moderate',
-            'admin.content.delete',
-            // Basic Analytics
-            'admin.analytics.read',
-        ],
-        isActive: true,
-    },
-    {
-        name: 'support-policy',
-        description: 'Customer support and read-only access',
-        permissions: [
-            // Read-only User Access
-            'admin.users.read',
-            // Read-only Content Access
-            'admin.content.read',
-            // Basic Analytics
-            'admin.analytics.read',
-            // Support specific permissions
-            'admin.support.tickets.read',
-            'admin.support.tickets.update',
-            'admin.support.tickets.respond',
-        ],
-        isActive: true,
-    },
 ];
 /**
  * Seed data for roles
@@ -129,21 +136,6 @@ const seedRoles = [
     {
         name: 'super-admin',
         description: 'Super Administrator with full system access',
-        isActive: true,
-    },
-    {
-        name: 'admin',
-        description: 'Administrator with standard admin permissions',
-        isActive: true,
-    },
-    {
-        name: 'moderator',
-        description: 'Content moderator with limited admin access',
-        isActive: true,
-    },
-    {
-        name: 'support',
-        description: 'Support agent with read-only access',
         isActive: true,
     },
 ];
@@ -159,40 +151,11 @@ const seedAdminUsers = [
         isActive: true,
         roles: ['super-admin'],
     },
-    {
-        firstName: 'John',
-        lastName: 'Admin',
-        email: 'admin@gmail.com',
-        password: 'Admin123!',
-        isActive: true,
-        roles: ['admin'],
-    },
-    {
-        firstName: 'Jane',
-        lastName: 'Moderator',
-        email: 'moderator@gmail.com',
-        password: 'Moderator123!',
-        isActive: true,
-        roles: ['moderator'],
-    },
-    {
-        firstName: 'Mike',
-        lastName: 'Support',
-        email: 'support@gmail.com',
-        password: 'Support123!',
-        isActive: true,
-        roles: ['support'],
-    },
 ];
 /**
  * Role-Policy mappings
  */
-const rolePolicyMappings = [
-    { roleName: 'super-admin', policyName: 'super-admin-policy' },
-    { roleName: 'admin', policyName: 'admin-policy' },
-    { roleName: 'moderator', policyName: 'moderator-policy' },
-    { roleName: 'support', policyName: 'support-policy' },
-];
+const rolePolicyMappings = [{ roleName: 'super-admin', policyName: 'super-admin-policy' }];
 /**
  * Seed policies
  */
@@ -248,7 +211,7 @@ const seedRolePolicyMappings = () => __awaiter(void 0, void 0, void 0, function*
         const policy = yield models_1.Policy.findOne({ where: { name: mapping.policyName } });
         if (role && policy) {
             const existingMapping = yield models_1.RolePolicy.findOne({
-                where: { roleId: role.id, policyId: policy.id }
+                where: { roleId: role.id, policyId: policy.id },
             });
             if (!existingMapping) {
                 yield models_1.RolePolicy.create({
@@ -324,9 +287,6 @@ const runAdminSeeder = () => __awaiter(void 0, void 0, void 0, function* () {
         console.log('│ Email                    │ Password        │ Role           │');
         console.log('├─────────────────────────────────────────────────────────────┤');
         console.log('│ superadmin@gmail.com     │ SuperAdmin123!  │ super-admin    │');
-        console.log('│ admin@gmail.com          │ Admin123!       │ admin          │');
-        console.log('│ moderator@gmail.com      │ Moderator123!   │ moderator      │');
-        console.log('│ support@gmail.com        │ Support123!     │ support        │');
         console.log('└─────────────────────────────────────────────────────────────┘');
         console.log('\n🔐 Use these credentials to test the admin authentication system.');
     }
@@ -345,7 +305,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         // Initialize database
         (0, models_1.initPostgres_DB)();
         // Wait a moment for database to initialize
-        yield new Promise(resolve => setTimeout(resolve, 2000));
+        yield new Promise((resolve) => setTimeout(resolve, 2000));
         console.log('✅ Database connection established');
         // Run admin seeder
         yield (0, exports.runAdminSeeder)();

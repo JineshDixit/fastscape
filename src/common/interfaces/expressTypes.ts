@@ -1,18 +1,9 @@
-import { Request } from 'express';
+import type { AuthenticatedRequest as AuthenticatedRequestBase } from './authTypes';
 
 /**
  * Extended Request interface with authenticated user
  */
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    roles?: string[];
-    permissions?: string[];
-  };
-}
+export type AuthenticatedRequest = AuthenticatedRequestBase;
 
 /**
  * Pagination parameters

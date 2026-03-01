@@ -1,5 +1,3 @@
-import { AdminUserResponse } from './authTypes';
+import type { AuthenticatedRequest as AuthenticatedRequestBase } from './authTypes';
 
-export interface AuthenticatedRequest extends Request {
-  user?: AdminUserResponse;
-}
+export type AuthenticatedRequest = AuthenticatedRequestBase;

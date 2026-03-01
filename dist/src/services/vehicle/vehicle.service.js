@@ -227,8 +227,8 @@ const getVehicles = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
     if (filters.year) {
         whereClause.year = filters.year;
     }
-    if (filters.city) {
-        whereClause.city = { [sequelize_1.Op.iLike]: `%${filters.city}%` };
+    if (filters.locationId) {
+        whereClause.locationId = filters.locationId;
     }
     if (filters.passengerCapacity) {
         whereClause.passengerCapacity = { [sequelize_1.Op.gte]: filters.passengerCapacity };
@@ -241,6 +241,14 @@ const getVehicles = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
             { exteriorColor: { [sequelize_1.Op.iLike]: `%${filters.search}%` } },
         ];
     }
+    const locationInclude = Object.assign({ model: location_model_1.Location, as: 'location', attributes: ['id', 'name', 'city', 'code'] }, (filters.city
+        ? {
+            where: {
+                city: { [sequelize_1.Op.iLike]: `%${filters.city}%` },
+            },
+            required: true,
+        }
+        : {}));
     const { count, rows } = yield vehicle_model_1.Vehicle.findAndCountAll({
         where: whereClause,
         include: [
@@ -248,11 +256,7 @@ const getVehicles = (...args_1) => __awaiter(void 0, [...args_1], void 0, functi
                 model: vehicleMedia_model_1.VehicleMedia,
                 as: 'media',
             },
-            {
-                model: location_model_1.Location,
-                as: 'location',
-                attributes: ['id', 'name', 'city', 'code'],
-            },
+            locationInclude,
         ],
         limit,
         offset,

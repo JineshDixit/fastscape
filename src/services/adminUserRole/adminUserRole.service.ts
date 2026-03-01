@@ -8,7 +8,7 @@ import { AdminUserWithAssociations, RoleWithAdminUsers } from '../../common//int
 /**
  * Assign role to admin user
  */
-export const assignRole = async (assignData: AssignRoleRequest, assignedBy?: number): Promise<AdminUserResponse> => {
+export const assignRole = async (assignData: AssignRoleRequest, assignedBy?: string): Promise<AdminUserResponse> => {
   const { adminUserId, roleId } = assignData;
 
   // Validate required fields
@@ -198,7 +198,7 @@ export const hasAnyPermission = async (adminUserId: string, permissions: string[
 export const bulkAssignRoles = async (
   adminUserId: string,
   roleIds: string[],
-  assignedBy?: number,
+  assignedBy?: string,
 ): Promise<AdminUserResponse> => {
   // Check if admin user exists and is active
   const adminUser = await AdminUser.findOne({

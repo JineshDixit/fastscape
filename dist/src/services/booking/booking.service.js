@@ -248,12 +248,13 @@ const updateBookingStatus = (bookingId, newStatus) => __awaiter(void 0, void 0, 
                 });
             }
         }
+        const previousStatus = booking.bookingStatus;
         yield booking.update({ bookingStatus: newStatus }, { transaction });
         yield transaction.commit();
         const duration = Date.now() - startTime;
         logger_1.default.info('Booking status updated successfully', {
             bookingId,
-            previousStatus: booking.bookingStatus,
+            previousStatus,
             newStatus,
             duration: `${duration}ms`,
         });

@@ -12,6 +12,17 @@ const ensureAuthenticated = (req) => {
     return req.user;
 };
 /**
+ * Super access guard:
+ * - active `super-admin` role
+ * - OR explicit wildcard permission `admin:all`
+ */
+const hasSuperAccess = (user) => {
+    var _a, _b;
+    const hasSuperAdminRole = ((_a = user.roles) === null || _a === void 0 ? void 0 : _a.some((role) => { var _a; return role.isActive && ((_a = role.name) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'super-admin'; })) || false;
+    const hasAdminAllPermission = ((_b = user.permissions) === null || _b === void 0 ? void 0 : _b.includes('admin:all')) || false;
+    return hasSuperAdminRole || hasAdminAllPermission;
+};
+/**
  * Middleware to check if admin user has required role
  */
 const requireRole = (requiredRole) => {
@@ -19,6 +30,9 @@ const requireRole = (requiredRole) => {
         var _a;
         try {
             const user = ensureAuthenticated(req);
+            if (hasSuperAccess(user)) {
+                return next();
+            }
             if (!((_a = user.roles) === null || _a === void 0 ? void 0 : _a.length)) {
                 throw (0, errorHandler_1.createError)('No roles assigned to user', 403);
             }
@@ -42,6 +56,9 @@ const requireAnyRole = (requiredRoles) => {
         var _a;
         try {
             const user = ensureAuthenticated(req);
+            if (hasSuperAccess(user)) {
+                return next();
+            }
             if (!((_a = user.roles) === null || _a === void 0 ? void 0 : _a.length)) {
                 throw (0, errorHandler_1.createError)('No roles assigned to user', 403);
             }
@@ -65,6 +82,9 @@ const requirePermission = (requiredPermission) => {
         var _a;
         try {
             const user = ensureAuthenticated(req);
+            if (hasSuperAccess(user)) {
+                return next();
+            }
             if (!((_a = user.permissions) === null || _a === void 0 ? void 0 : _a.length)) {
                 throw (0, errorHandler_1.createError)('No permissions assigned to user', 403);
             }
@@ -87,6 +107,9 @@ const requireAnyPermission = (requiredPermissions) => {
         var _a;
         try {
             const user = ensureAuthenticated(req);
+            if (hasSuperAccess(user)) {
+                return next();
+            }
             if (!((_a = user.permissions) === null || _a === void 0 ? void 0 : _a.length)) {
                 throw (0, errorHandler_1.createError)('No permissions assigned to user', 403);
             }
@@ -110,6 +133,9 @@ const requireAllPermissions = (requiredPermissions) => {
         var _a;
         try {
             const user = ensureAuthenticated(req);
+            if (hasSuperAccess(user)) {
+                return next();
+            }
             if (!((_a = user.permissions) === null || _a === void 0 ? void 0 : _a.length)) {
                 throw (0, errorHandler_1.createError)('No permissions assigned to user', 403);
             }
@@ -136,7 +162,9 @@ const requireOwnershipOrRole = (roleForBypass) => {
             const user = ensureAuthenticated(req);
             const targetUserId = req.params.id || req.params.adminUserId || req.body.adminUserId;
             // Allow if user is accessing their own resource or has bypass role
-            if (user.userId === targetUserId || ((_a = user.roles) === null || _a === void 0 ? void 0 : _a.some((role) => role.name === roleForBypass && role.isActive))) {
+            if (user.userId === targetUserId ||
+                hasSuperAccess(user) ||
+                ((_a = user.roles) === null || _a === void 0 ? void 0 : _a.some((role) => role.name === roleForBypass && role.isActive))) {
                 return next();
             }
             throw (0, errorHandler_1.createError)('Access denied. You can only access your own resources or need admin privileges', 403);
