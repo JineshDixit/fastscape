@@ -47,7 +47,7 @@ server.use(applySecurityMiddlewares);
 server.use(
   cors(corsOptions),
 );
-server.options('*', cors(corsOptions));
+server.options(/.*/, cors(corsOptions));
 
 // Body parsing middleware
 server.use(express.json({ limit: '10mb' }));
