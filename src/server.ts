@@ -15,6 +15,10 @@ import { loadOpenApiDocument } from './config/swagger/swagger.config';
 
 const server = express();
 const PORT = process.env.PORT || 3001;
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://3.111.162.90')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
 
 // HTTP request logging
 server.use(morganMiddleware);
@@ -24,7 +28,7 @@ server.use(applySecurityMiddlewares);
 
 server.use(
   cors({
-    origin: process.env.FRONTEND_URL?.split(',') || 'http://3.111.162.90/',
+    origin: allowedOrigins,
     credentials: true,
     optionsSuccessStatus: 200,
   }),

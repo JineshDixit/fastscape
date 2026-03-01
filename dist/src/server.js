@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./config/env/envConfig");
 const express_1 = __importDefault(require("express"));
@@ -29,12 +28,16 @@ const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const swagger_config_1 = require("./config/swagger/swagger.config");
 const server = (0, express_1.default)();
 const PORT = process.env.PORT || 3001;
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://3.111.162.90')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean);
 // HTTP request logging
 server.use(logger_1.morganMiddleware);
 // Security middleware
 server.use(security_1.applySecurityMiddlewares);
 server.use((0, cors_1.default)({
-    origin: ((_a = process.env.FRONTEND_URL) === null || _a === void 0 ? void 0 : _a.split(',')) || 'http://3.111.162.90/',
+    origin: allowedOrigins,
     credentials: true,
     optionsSuccessStatus: 200,
 }));
