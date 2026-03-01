@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   dashboardService,
   type DashboardStats,
@@ -37,20 +37,27 @@ const Dashboard = () => {
   const [rentPeriod, setRentPeriod] = useState<'week' | 'month' | 'year'>('week');
   const [earningMonths, setEarningMonths] = useState(8);
   const [bookingsYear, setBookingsYear] = useState(new Date().getFullYear());
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   useEffect(() => {
+    if (isFirstRender.current) return;
     fetchRentStatus();
   }, [rentPeriod]);
 
   useEffect(() => {
+    if (isFirstRender.current) return;
     fetchEarningSummary();
   }, [earningMonths]);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     fetchBookingsOverview();
   }, [bookingsYear]);
 

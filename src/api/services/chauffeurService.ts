@@ -82,13 +82,13 @@ export const chauffeurService = {
   },
 
   getChauffeurById: async (id: string) => {
-    const response = await apiClient.get<{ success: boolean; data: { chauffeur: Chauffeur } }>(`/chauffeurs/${id}`);
-    return response.data.data.chauffeur;
+    const response = await apiClient.get<{ success: boolean; data: Chauffeur }>(`/chauffeurs/${id}`);
+    return response.data.data;
   },
 
   createChauffeur: async (data: any) => {
-    const response = await apiClient.post<{ success: boolean; data: { chauffeur: Chauffeur } }>(`/chauffeurs`, data);
-    return response.data.data.chauffeur;
+    const response = await apiClient.post<{ success: boolean; data: Chauffeur }>(`/chauffeurs`, data);
+    return response.data.data;
   },
 
   updateChauffeur: async (id: string, data: any) => {
@@ -97,21 +97,15 @@ export const chauffeurService = {
   },
 
   updateChauffeurStatus: async (id: string, status: ChauffeurStatus) => {
-    const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(
-      `/chauffeurs/${id}/status`,
-      {
-        status,
-      },
-    );
-    return response.data.data.chauffeur;
+    const response = await apiClient.put<{ success: boolean; data: Chauffeur }>(`/chauffeurs/${id}/status`, {
+      status,
+    });
+    return response.data.data;
   },
 
   verifyChauffeur: async (id: string) => {
-    const response = await apiClient.put<{ success: boolean; data: { chauffeur: Chauffeur } }>(
-      `/chauffeurs/${id}/verify`,
-      {},
-    );
-    return response.data.data.chauffeur;
+    const response = await apiClient.put<{ success: boolean; data: Chauffeur }>(`/chauffeurs/${id}/verify`, {});
+    return response.data.data;
   },
 
   deleteChauffeur: async (id: string) => {

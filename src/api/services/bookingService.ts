@@ -22,9 +22,8 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
 
 export const BookingType = {
-  ONE_WAY: 'ONE_WAY',
-  HOURLY: 'HOURLY',
-  AIRPORT_TRANSFER: 'AIRPORT_TRANSFER',
+  SELF_DRIVE: 'SELF_DRIVE',
+  CHAUFFEUR: 'CHAUFFEUR',
 } as const;
 
 export type BookingType = (typeof BookingType)[keyof typeof BookingType];

@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import LocationFilters, { type LocationFilterValues } from '@/components/locations/LocationFilters';
+import { usePermissions } from '@/hooks/usePermissions';
+import PermissionGuard from '@/components/auth/PermissionGuard';
 
 const Locations = () => {
   const [data, setData] = useState<Location[]>([]);
@@ -27,6 +29,7 @@ const Locations = () => {
   const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<LocationFilterValues>({});
+  const { canCreate, canUpdate, canDelete } = usePermissions();
 
   useEffect(() => {
     fetchLocations();
@@ -82,8 +85,10 @@ const Locations = () => {
           setDeleteDialogOpen(true);
         },
         onRefresh: fetchLocations,
+        canUpdate: canUpdate('locations'),
+        canDelete: canDelete('locations'),
       }),
-    [],
+    [canUpdate, canDelete],
   );
 
   if (loading && data.length === 0) {
@@ -101,7 +106,7 @@ const Locations = () => {
         data={data}
         searchKey="name"
         searchPlaceholder="Search locations by name, city, or code..."
-        showAddButton={true}
+        showAddButton={canCreate('locations')}
         addButtonText="Add New Location"
         addButtonIcon={<Plus className="h-4 w-4" />}
         addButtonOnClick={() => setFormOpen(true)}
@@ -114,10 +119,12 @@ const Locations = () => {
               onApplyFilters={(newFilters) => setFilters(newFilters)}
               onResetFilters={() => setFilters({})}
             />
-            <ExportButton
-              onExport={() => locationService.exportLocations({ search, ...filters })}
-              filename="locations"
-            />
+            <PermissionGuard module="locations" action="export">
+              <ExportButton
+                onExport={() => locationService.exportLocations({ search, ...filters })}
+                filename="locations"
+              />
+            </PermissionGuard>
           </div>
         }
       />

@@ -13,6 +13,7 @@ import debounce from 'lodash.debounce';
 import VehicleFilters from '@/pages/Units/VehicleFilters';
 import type { VehicleFilters as FilterInterface } from '@/common/interface/vehicleInterface';
 import PermissionGuard from '@/components/auth/PermissionGuard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Units = () => {
   const [pageSize, setPageSize] = React.useState(10);
@@ -20,6 +21,7 @@ const Units = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [filters, setFilters] = useState<FilterInterface>({});
+  const { canUpdate, canDelete } = usePermissions();
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,7 +81,7 @@ const Units = () => {
     setShowAddForm(false);
     setSelectedVehicle(null);
     setSearchParams({}); // Clear query params
-    fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
+    // Removed redundant fetchVehicles - the effect handles it via dependency changes if any
   };
 
   const handleFormCancel = () => {
@@ -101,7 +103,11 @@ const Units = () => {
     try {
       await deleteVehicle(vehicleId);
       toast.success('Vehicle deleted successfully!');
-      fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
+      // Explicit refresh is okay here if state doesn't change,
+      // but let's see if we should just rely on state.
+      // Actually, deleteVehicle doesn't change currentPage or filters, so we DO need an explicit refresh or local filter.
+      // Base on useVehicle, it already does setVehicles((prev) => prev.filter(...)).
+      // So no need to fetch again!
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete vehicle');
     }
@@ -142,13 +148,13 @@ const Units = () => {
     setFilters(newFilters);
     // Reset to page 1 when filters change
     setCurrentPage(1);
-    fetchVehicles({ page: 1, limit: pageSize, ...newFilters });
+    // Removed redundant fetchVehicles - state update triggers useEffect
   };
 
   const handleResetFilters = () => {
     setFilters({});
     setCurrentPage(1);
-    fetchVehicles({ page: 1, limit: pageSize });
+    // Removed redundant fetchVehicles - state update triggers useEffect
   };
 
   // Show form view
@@ -209,6 +215,8 @@ const Units = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onDetails={handleVehicleDetails}
+              canUpdate={canUpdate('vehicles')}
+              canDelete={canDelete('vehicles')}
             />
           ))
         ) : (

@@ -4,6 +4,7 @@ export interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   path: string;
+  requiredPermissions?: string[];
 }
 
 export interface SidebarState {

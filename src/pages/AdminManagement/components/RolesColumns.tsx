@@ -19,9 +19,22 @@ interface ColumnsProps {
   onEdit: (role: Role) => void;
   onToggleStatus: (role: Role) => void;
   onDelete: (role: Role) => void;
+  canView?: boolean;
+  canEdit?: boolean;
+  canToggleStatus?: (role: Role) => boolean;
+  canDelete?: boolean;
 }
 
-export const getColumns = ({ onView, onEdit, onToggleStatus, onDelete }: ColumnsProps): ColumnDef<Role>[] => [
+export const getColumns = ({
+  onView,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  canView = true,
+  canEdit = false,
+  canToggleStatus = () => false,
+  canDelete = false,
+}: ColumnsProps): ColumnDef<Role>[] => [
   {
     accessorKey: 'name',
     header: 'Security Role',
@@ -101,6 +114,13 @@ export const getColumns = ({ onView, onEdit, onToggleStatus, onDelete }: Columns
     id: 'actions',
     cell: ({ row }) => {
       const role = row.original;
+      const canToggle = canToggleStatus(role);
+      const hasActions = canView || canEdit || canToggle || canDelete;
+
+      if (!hasActions) {
+        return null;
+      }
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -112,31 +132,38 @@ export const getColumns = ({ onView, onEdit, onToggleStatus, onDelete }: Columns
             <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Role Settings
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => onView(role)} className="rounded-md">
-              <Eye className="text-muted-foreground mr-2 h-4 w-4" /> View Layout
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(role)} className="rounded-md">
-              <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Modify Config
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onToggleStatus(role)} className="rounded-md">
-              {role.isActive ? (
-                <span className="flex items-center text-orange-500">
-                  <ShieldAlert className="mr-2 h-4 w-4" /> Suspend
-                </span>
-              ) : (
-                <span className="flex items-center text-green-500">
-                  <ShieldCheck className="mr-2 h-4 w-4" /> Reactivate
-                </span>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(role)}
-              className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md font-medium"
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Erase Role
-            </DropdownMenuItem>
+            {canView && (
+              <DropdownMenuItem onClick={() => onView(role)} className="rounded-md">
+                <Eye className="text-muted-foreground mr-2 h-4 w-4" /> View Layout
+              </DropdownMenuItem>
+            )}
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(role)} className="rounded-md">
+                <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Modify Config
+              </DropdownMenuItem>
+            )}
+            {(canToggle || canDelete) && <DropdownMenuSeparator />}
+            {canToggle && (
+              <DropdownMenuItem onClick={() => onToggleStatus(role)} className="rounded-md">
+                {role.isActive ? (
+                  <span className="flex items-center text-orange-500">
+                    <ShieldAlert className="mr-2 h-4 w-4" /> Suspend
+                  </span>
+                ) : (
+                  <span className="flex items-center text-green-500">
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Reactivate
+                  </span>
+                )}
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={() => onDelete(role)}
+                className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md font-medium"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Erase Role
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

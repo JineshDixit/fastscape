@@ -18,9 +18,19 @@ interface ColumnsProps {
   onEdit: (policy: Policy) => void;
   onToggleStatus: (policy: Policy) => void;
   onDelete: (policy: Policy) => void;
+  canEdit?: boolean;
+  canToggleStatus?: (policy: Policy) => boolean;
+  canDelete?: boolean;
 }
 
-export const getColumns = ({ onEdit, onToggleStatus, onDelete }: ColumnsProps): ColumnDef<Policy>[] => [
+export const getColumns = ({
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  canEdit = false,
+  canToggleStatus = () => false,
+  canDelete = false,
+}: ColumnsProps): ColumnDef<Policy>[] => [
   {
     accessorKey: 'name',
     header: 'Security Policy',
@@ -88,6 +98,13 @@ export const getColumns = ({ onEdit, onToggleStatus, onDelete }: ColumnsProps): 
     id: 'actions',
     cell: ({ row }) => {
       const policy = row.original;
+      const canToggle = canToggleStatus(policy);
+      const hasActions = canEdit || canToggle || canDelete;
+
+      if (!hasActions) {
+        return null;
+      }
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -99,28 +116,33 @@ export const getColumns = ({ onEdit, onToggleStatus, onDelete }: ColumnsProps): 
             <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Policy Actions
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => onEdit(policy)} className="rounded-md">
-              <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Modify Policy
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onToggleStatus(policy)} className="rounded-md">
-              {policy.isActive ? (
-                <span className="flex items-center text-orange-500">
-                  <ShieldX className="mr-2 h-4 w-4" /> Deactivate
-                </span>
-              ) : (
-                <span className="flex items-center text-green-500">
-                  <ShieldCheck className="mr-2 h-4 w-4" /> Activate
-                </span>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(policy)}
-              className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md font-medium"
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Erase Policy
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(policy)} className="rounded-md">
+                <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Modify Policy
+              </DropdownMenuItem>
+            )}
+            {(canToggle || canDelete) && <DropdownMenuSeparator />}
+            {canToggle && (
+              <DropdownMenuItem onClick={() => onToggleStatus(policy)} className="rounded-md">
+                {policy.isActive ? (
+                  <span className="flex items-center text-orange-500">
+                    <ShieldX className="mr-2 h-4 w-4" /> Deactivate
+                  </span>
+                ) : (
+                  <span className="flex items-center text-green-500">
+                    <ShieldCheck className="mr-2 h-4 w-4" /> Activate
+                  </span>
+                )}
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={() => onDelete(policy)}
+                className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md font-medium"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Erase Policy
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

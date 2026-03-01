@@ -1,6 +1,8 @@
 import { Users, Shield, Key, CheckCircle2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { adminUserService, roleService, policyService } from '@/api/services/adminService';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/config/permissions';
 
 interface Stats {
   users: number;
@@ -10,6 +12,7 @@ interface Stats {
 }
 
 const StatsOverview = () => {
+  const { hasPermission } = usePermissions();
   const [stats, setStats] = useState<Stats>({
     users: 0,
     roles: 0,
@@ -17,14 +20,16 @@ const StatsOverview = () => {
     activeSessions: 0,
   });
 
+  const canReadUsers = hasPermission(PERMISSIONS.ADMIN.USERS.READ);
+  const canReadRoles = hasPermission(PERMISSIONS.ADMIN.ROLES.READ);
+  const canReadPolicies = hasPermission(PERMISSIONS.ADMIN.POLICIES.READ);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [usersRes, rolesRes, policiesRes] = await Promise.all([
-          adminUserService.getAllAdminUsers({ limit: 1 }),
-          roleService.getAllRoles({ limit: 1 }),
-          policyService.getAllPolicies({ limit: 1 }),
-        ]);
+        const usersRes = canReadUsers ? await adminUserService.getAllAdminUsers({ limit: 1 }) : { total: 0 };
+        const rolesRes = canReadRoles ? await roleService.getAllRoles({ limit: 1 }) : { total: 0 };
+        const policiesRes = canReadPolicies ? await policyService.getAllPolicies({ limit: 1 }) : { total: 0 };
 
         setStats({
           users: usersRes.total || 0,
@@ -38,7 +43,7 @@ const StatsOverview = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [canReadUsers, canReadRoles, canReadPolicies]);
 
   const cards = [
     {

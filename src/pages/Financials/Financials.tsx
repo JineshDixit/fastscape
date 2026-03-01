@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
 import FinanceFilters, { type FinanceFilterValues } from '@/components/finance/FinanceFilters';
 import { ExportButton } from '@/components/shared/ExportButton';
+import PermissionGuard from '@/components/auth/PermissionGuard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const Financials = () => {
   const [data, setData] = useState<FinancialRecord[]>([]);
@@ -27,6 +29,7 @@ const Financials = () => {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<FinanceFilterValues>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const { canPerformAction } = usePermissions();
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -292,20 +295,24 @@ const Financials = () => {
                 setPageIndex(0);
               }}
             />
-            <ExportButton
-              onExport={() => financeService.exportFinancials({ search, ...filters })}
-              filename="financials"
-            />
-            <Button
-              onClick={handlePrintInvoice}
-              variant="default"
-              size="sm"
-              className="gap-2"
-              disabled={Object.keys(rowSelection).length === 0}
-            >
-              <FileDown className="h-4 w-4" />
-              Print Invoice ({Object.keys(rowSelection).filter((key) => rowSelection[key]).length})
-            </Button>
+            <PermissionGuard module="financials" action="export">
+              <ExportButton
+                onExport={() => financeService.exportFinancials({ search, ...filters })}
+                filename="financials"
+              />
+            </PermissionGuard>
+            {canPerformAction('financials', 'generateInvoice') && (
+              <Button
+                onClick={handlePrintInvoice}
+                variant="default"
+                size="sm"
+                className="gap-2"
+                disabled={Object.keys(rowSelection).length === 0}
+              >
+                <FileDown className="h-4 w-4" />
+                Print Invoice ({Object.keys(rowSelection).filter((key) => rowSelection[key]).length})
+              </Button>
+            )}
           </div>
         }
       />

@@ -10,12 +10,14 @@ import { toast } from 'sonner';
 import { Car, Calendar, User, Mail, Phone, DollarSign, Receipt, Download } from 'lucide-react';
 import { PaymentStatus } from '@/api/services/bookingService';
 import { FileText } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const FinanceDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [financial, setFinancial] = useState<FinancialRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const { canPerformAction } = usePermissions();
 
   useEffect(() => {
     const fetchFinancial = async () => {
@@ -143,10 +145,12 @@ const FinanceDetails = () => {
         </div>
         <div className="flex items-center gap-3">
           {booking && getStatusBadge(booking.paymentStatus)}
-          <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
-            Download PDF
-          </Button>
+          {canPerformAction('financials', 'generateInvoice') && (
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="gap-2">
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Button>
+          )}
         </div>
       </div>
 

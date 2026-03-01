@@ -29,9 +29,11 @@ interface UnitCardProps {
   onEdit?: (vehicle: Vehicle) => void;
   onDelete?: (vehicleId: string) => void;
   onDetails?: (vehicleId: string) => void;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 }
 
-const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) => {
+const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails, canUpdate = false, canDelete = false }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { localizeTransmission, localizeFuelType } = useVehicleLocalization();
   const { t } = useTranslation('vehicles');
@@ -139,48 +141,56 @@ const UnitCard: FC<UnitCardProps> = ({ vehicle, onEdit, onDelete, onDetails }) =
         <Button className="flex-1" onClick={() => onDetails?.(vehicle.id)}>
           {t('actions.viewDetails')}
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <Ellipsis />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(vehicle)}>
-              {t('actions.edit')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive hover:text-destructive! hover:bg-destructive/10! cursor-pointer"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              {t('actions.delete')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {(canUpdate || canDelete) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Ellipsis />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {canUpdate && (
+                <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit?.(vehicle)}>
+                  {t('actions.edit')}
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem
+                  className="text-destructive hover:text-destructive! hover:bg-destructive/10! cursor-pointer"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  {t('actions.delete')}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </CardFooter>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('messages.deleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('messages.deleteConfirm', { make: vehicle.make, model: vehicle.model })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                onDelete?.(vehicle.id);
-                setShowDeleteDialog(false);
-              }}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {t('actions.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {canDelete && (
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('messages.deleteTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('messages.deleteConfirm', { make: vehicle.make, model: vehicle.model })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('actions.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  onDelete?.(vehicle.id);
+                  setShowDeleteDialog(false);
+                }}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                {t('actions.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </Card>
   );
 };

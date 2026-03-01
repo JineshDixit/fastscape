@@ -8,6 +8,8 @@ import ManagementDeleteDialog from './ManagementDeleteDialog';
 import { DataTable } from '@/components/ui/data-table';
 import { getColumns } from './AdminUsersColumns';
 import type { SortingState } from '@tanstack/react-table';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/config/permissions';
 
 const AdminUsersTab = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -23,6 +25,15 @@ const AdminUsersTab = () => {
   const [pageCount, setPageCount] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const { hasPermission, hasAnyPermission } = usePermissions();
+
+  const canCreateUser = hasPermission(PERMISSIONS.ADMIN.USERS.CREATE);
+  const canViewUser = hasPermission(PERMISSIONS.ADMIN.USERS.READ);
+  const canEditUser = hasPermission(PERMISSIONS.ADMIN.USERS.UPDATE);
+  const canDeleteUser = hasPermission(PERMISSIONS.ADMIN.USERS.DELETE);
+  const canChangePassword = hasPermission(PERMISSIONS.ADMIN.USERS.UPDATE);
+  const canToggleToActive = hasAnyPermission([PERMISSIONS.ADMIN.USERS.ACTIVATE, PERMISSIONS.ADMIN.USERS.UPDATE]);
+  const canToggleToInactive = hasAnyPermission([PERMISSIONS.ADMIN.USERS.DEACTIVATE, PERMISSIONS.ADMIN.USERS.UPDATE]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -46,34 +57,42 @@ const AdminUsersTab = () => {
   }, [fetchUsers]);
 
   const handleCreateUser = () => {
+    if (!canCreateUser) return;
     setSelectedUser(null);
     setSheetMode('create');
     setSheetOpen(true);
   };
 
   const handleViewUser = (user: AdminUser) => {
+    if (!canViewUser) return;
     setSelectedUser(user);
     setSheetMode('view');
     setSheetOpen(true);
   };
 
   const handleEditUser = (user: AdminUser) => {
+    if (!canEditUser) return;
     setSelectedUser(user);
     setSheetMode('edit');
     setSheetOpen(true);
   };
 
   const handleChangePassword = (user: AdminUser) => {
+    if (!canChangePassword) return;
     setSelectedUser(user);
     setDialogType('password');
   };
 
   const handleDeleteUser = (user: AdminUser) => {
+    if (!canDeleteUser) return;
     setSelectedUser(user);
     setDialogType('delete');
   };
 
   const handleToggleStatus = async (user: AdminUser) => {
+    const allowed = user.isActive ? canToggleToInactive : canToggleToActive;
+    if (!allowed) return;
+
     try {
       if (user.isActive) {
         await adminUserService.deactivateAdminUser(user.id);
@@ -104,6 +123,11 @@ const AdminUsersTab = () => {
     onPasswordChange: handleChangePassword,
     onToggleStatus: handleToggleStatus,
     onDelete: handleDeleteUser,
+    canView: canViewUser,
+    canEdit: canEditUser,
+    canChangePassword,
+    canToggleStatus: (user) => (user.isActive ? canToggleToInactive : canToggleToActive),
+    canDelete: canDeleteUser,
   });
 
   return (
@@ -126,7 +150,7 @@ const AdminUsersTab = () => {
         onSortingChange={setSorting}
         addButtonText="Add Administrator"
         addButtonOnClick={handleCreateUser}
-        showAddButton={true}
+        showAddButton={canCreateUser}
         addButtonIcon={<Plus className="h-4 w-4" />}
       />
 

@@ -7,6 +7,8 @@ import ManagementDeleteDialog from './ManagementDeleteDialog';
 import { DataTable } from '@/components/ui/data-table';
 import { getColumns } from './RolesColumns';
 import type { SortingState } from '@tanstack/react-table';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/config/permissions';
 
 const RolesTab = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -22,6 +24,14 @@ const RolesTab = () => {
   const [pageCount, setPageCount] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const { hasPermission, hasAnyPermission } = usePermissions();
+
+  const canCreateRole = hasPermission(PERMISSIONS.ADMIN.ROLES.CREATE);
+  const canViewRole = hasPermission(PERMISSIONS.ADMIN.ROLES.READ);
+  const canEditRole = hasPermission(PERMISSIONS.ADMIN.ROLES.UPDATE);
+  const canDeleteRole = hasPermission(PERMISSIONS.ADMIN.ROLES.DELETE);
+  const canActivateRole = hasAnyPermission([PERMISSIONS.ADMIN.ROLES.ACTIVATE, PERMISSIONS.ADMIN.ROLES.UPDATE]);
+  const canDeactivateRole = hasAnyPermission([PERMISSIONS.ADMIN.ROLES.DEACTIVATE, PERMISSIONS.ADMIN.ROLES.UPDATE]);
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -46,29 +56,36 @@ const RolesTab = () => {
   }, [fetchRoles]);
 
   const handleCreateRole = () => {
+    if (!canCreateRole) return;
     setSelectedRole(null);
     setSheetMode('create');
     setSheetOpen(true);
   };
 
   const handleViewRole = (role: Role) => {
+    if (!canViewRole) return;
     setSelectedRole(role);
     setSheetMode('view');
     setSheetOpen(true);
   };
 
   const handleEditRole = (role: Role) => {
+    if (!canEditRole) return;
     setSelectedRole(role);
     setSheetMode('edit');
     setSheetOpen(true);
   };
 
   const handleDeleteRole = (role: Role) => {
+    if (!canDeleteRole) return;
     setSelectedRole(role);
     setDeleteDialogOpen(true);
   };
 
   const handleToggleStatus = async (role: Role) => {
+    const allowed = role.isActive ? canDeactivateRole : canActivateRole;
+    if (!allowed) return;
+
     try {
       if (role.isActive) {
         await roleService.deactivateRole(role.id);
@@ -93,6 +110,10 @@ const RolesTab = () => {
     onEdit: handleEditRole,
     onToggleStatus: handleToggleStatus,
     onDelete: handleDeleteRole,
+    canView: canViewRole,
+    canEdit: canEditRole,
+    canToggleStatus: (role) => (role.isActive ? canDeactivateRole : canActivateRole),
+    canDelete: canDeleteRole,
   });
 
   return (
@@ -115,7 +136,7 @@ const RolesTab = () => {
         onSortingChange={setSorting}
         addButtonText="Create Access Role"
         addButtonOnClick={handleCreateRole}
-        showAddButton={true}
+        showAddButton={canCreateRole}
         addButtonIcon={<Plus className="h-4 w-4" />}
       />
 

@@ -5,14 +5,22 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
+import PermissionGuard from '@/components/auth/PermissionGuard';
 
-// Define types locally for now or move to service
-interface Document {
+interface PendingDocumentApi {
   id: string;
   userId: string;
-  type: string;
-  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
-  url: string;
+  driverLicenseFront?: string;
+  driverLicenseBack?: string;
+  passportPhoto?: string;
+  internationalDrivingPermit?: string;
+  selfieWithLicense?: string;
+  verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  User?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
   user?: {
     firstName: string;
     lastName: string;
@@ -21,7 +29,21 @@ interface Document {
   createdAt: string;
 }
 
-const columns: ColumnDef<Document>[] = [
+interface DocumentRow {
+  id: string;
+  userId: string;
+  type: string;
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  url?: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  createdAt: string;
+}
+
+const columns: ColumnDef<DocumentRow>[] = [
   {
     accessorKey: 'user',
     header: 'User',
@@ -58,24 +80,63 @@ const columns: ColumnDef<Document>[] = [
   },
   {
     id: 'actions',
-    cell: () => (
-      <Button variant="ghost" size="sm">
-        <Eye className="mr-2 h-4 w-4" /> Review
-      </Button>
-    ),
+    cell: ({ row }) => {
+      const documentUrl = row.original.url;
+      return (
+        <PermissionGuard module="documents" action="download">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={!documentUrl}
+            onClick={() => {
+              if (documentUrl) window.open(documentUrl, '_blank', 'noopener,noreferrer');
+            }}
+          >
+            <Eye className="mr-2 h-4 w-4" /> Review
+          </Button>
+        </PermissionGuard>
+      );
+    },
   },
 ];
 
 const Documents = () => {
-  const [data, setData] = useState<Document[]>([]);
+  const [data, setData] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getAssetUrl = (assetPath?: string): string | undefined => {
+    if (!assetPath) return undefined;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://3.111.162.90:5000/api';
+    const serverRoot = baseUrl.replace(/\/api$/, '');
+    return `${serverRoot}/${assetPath.replace(/\\/g, '/')}`;
+  };
+
+  const mapPendingDocument = (doc: PendingDocumentApi): DocumentRow => {
+    const user = doc.User || doc.user;
+    const previewPath =
+      doc.driverLicenseFront ||
+      doc.passportPhoto ||
+      doc.driverLicenseBack ||
+      doc.internationalDrivingPermit ||
+      doc.selfieWithLicense;
+
+    return {
+      id: doc.id,
+      userId: doc.userId,
+      type: 'identity_document',
+      status: doc.verificationStatus,
+      url: getAssetUrl(previewPath),
+      user,
+      createdAt: doc.createdAt,
+    };
+  };
 
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
-        const res = await apiClient.get<{ success: boolean; data: Document[] }>('/documents/pending');
+        const res = await apiClient.get<{ success: boolean; data: PendingDocumentApi[] }>('/documents/pending');
         if (res.data.success) {
-          setData(res.data.data);
+          setData((res.data.data || []).map(mapPendingDocument));
         }
       } catch (error) {
         console.error('Failed to fetch documents', error);

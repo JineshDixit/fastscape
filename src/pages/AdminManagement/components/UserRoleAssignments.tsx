@@ -16,6 +16,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DataTable } from '@/components/ui/data-table';
 import { getColumns } from './UserRoleColumns';
 import type { SortingState } from '@tanstack/react-table';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/config/permissions';
 
 const UserRoleAssignments = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -32,18 +34,25 @@ const UserRoleAssignments = () => {
   const [pageCount, setPageCount] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const { hasPermission } = usePermissions();
+
+  const canReadUsers = hasPermission(PERMISSIONS.ADMIN.USERS.READ);
+  const canReadRoles = hasPermission(PERMISSIONS.ADMIN.ROLES.READ);
+  const canManageAssignments = hasPermission(PERMISSIONS.ADMIN.USERS.UPDATE);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [usersResponse, rolesResponse] = await Promise.all([
-        adminUserService.getAllAdminUsers({
-          search: search || undefined,
-          page: pageIndex + 1,
-          limit: pageSize,
-        }),
-        roleService.getAllRoles({ limit: 100 }),
-      ]);
+      const usersResponse = canReadUsers
+        ? await adminUserService.getAllAdminUsers({
+            search: search || undefined,
+            page: pageIndex + 1,
+            limit: pageSize,
+          })
+        : { users: [], total: 0, totalPages: 0 };
+
+      const rolesResponse = canReadRoles ? await roleService.getAllRoles({ limit: 100 }) : { roles: [] };
+
       setUsers(usersResponse.users || []);
       setTotalRows(usersResponse.total || 0);
       setPageCount(usersResponse.totalPages || 0);
@@ -56,13 +65,18 @@ const UserRoleAssignments = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, pageIndex, pageSize]);
+  }, [search, pageIndex, pageSize, canReadUsers, canReadRoles]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const handleAssignRole = async () => {
+    if (!canManageAssignments) {
+      toast.error('You do not have permission to assign roles');
+      return;
+    }
+
     if (!selectedUser || !selectedRole) {
       toast.error('Please select both user and role');
       return;
@@ -84,6 +98,11 @@ const UserRoleAssignments = () => {
   };
 
   const handleRemoveRole = async (userId: string, roleId: string) => {
+    if (!canManageAssignments) {
+      toast.error('You do not have permission to remove roles');
+      return;
+    }
+
     try {
       await adminUserRoleService.removeRoleFromUser(userId, roleId);
       toast.success('Access revoked successfully');
@@ -94,7 +113,10 @@ const UserRoleAssignments = () => {
     }
   };
 
-  const columns = useMemo(() => getColumns({ onRemoveRole: handleRemoveRole }), [handleRemoveRole]);
+  const columns = useMemo(
+    () => getColumns({ onRemoveRole: handleRemoveRole, canRemoveRole: canManageAssignments }),
+    [handleRemoveRole, canManageAssignments],
+  );
 
   if (loading && users.length === 0) {
     return (
@@ -129,7 +151,7 @@ const UserRoleAssignments = () => {
               <label className="text-muted-foreground ml-1 text-[10px] font-bold tracking-widest uppercase">
                 Target Subject
               </label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
+              <Select value={selectedUser} onValueChange={setSelectedUser} disabled={!canManageAssignments}>
                 <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
                   <SelectValue placeholder="Identify an admin user..." />
                 </SelectTrigger>
@@ -158,7 +180,7 @@ const UserRoleAssignments = () => {
               <label className="text-muted-foreground ml-1 text-[10px] font-bold tracking-widest uppercase">
                 Permission Cluster
               </label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <Select value={selectedRole} onValueChange={setSelectedRole} disabled={!canManageAssignments}>
                 <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white">
                   <SelectValue placeholder="Select an access role..." />
                 </SelectTrigger>
@@ -177,7 +199,7 @@ const UserRoleAssignments = () => {
 
             <Button
               onClick={handleAssignRole}
-              disabled={assigning || !selectedUser || !selectedRole}
+              disabled={assigning || !selectedUser || !selectedRole || !canManageAssignments}
               className="bg-primary hover:bg-primary/90 h-11 w-full rounded-xl px-8 font-semibold shadow-md transition-all lg:w-auto"
             >
               {assigning ? <Spinner className="h-4 w-4 text-white" /> : <Plus className="mr-2 h-4 w-4" />}

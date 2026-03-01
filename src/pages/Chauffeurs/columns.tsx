@@ -52,7 +52,12 @@ const ExperienceLevelCell = ({ level }: { level: string }) => {
   );
 };
 
-export const columns: ColumnDef<Chauffeur>[] = [
+interface ColumnsOptions {
+  canVerify?: boolean;
+  canDelete?: boolean;
+}
+
+export const createColumns = ({ canVerify = false, canDelete = false }: ColumnsOptions = {}): ColumnDef<Chauffeur>[] => [
   {
     accessorKey: 'fullName',
     header: ({ column }) => {
@@ -178,18 +183,20 @@ export const columns: ColumnDef<Chauffeur>[] = [
             >
               <Copy className="text-muted-foreground mr-2 h-4 w-4" /> Copy Identifier
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {!chauffeur.isVerified && (
+            {(canVerify || canDelete) && <DropdownMenuSeparator />}
+            {canVerify && !chauffeur.isVerified && (
               <DropdownMenuItem onClick={handleVerify} className="text-primary rounded-md font-medium">
                 <ShieldCheck className="mr-2 h-4 w-4" /> Verify Credentials
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem
-              onClick={handleDelete}
-              className="text-destructive focus:bg-destructive/10 focus:text-destructive-foreground rounded-md font-medium"
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Remove Chauffeur
-            </DropdownMenuItem>
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={handleDelete}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive-foreground rounded-md font-medium"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Remove Chauffeur
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

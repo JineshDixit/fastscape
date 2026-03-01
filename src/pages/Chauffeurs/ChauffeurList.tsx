@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { type Chauffeur, ChauffeurStatus, chauffeurService } from '@/api/services/chauffeurService';
-import { columns } from './columns';
+import { createColumns } from './columns';
 import { DataTable } from '@/components/ui/data-table';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import ChauffeurFilters, { type ChauffeurFilterValues } from '@/components/chauffeurs/ChauffeurFilters';
 import { ExportButton } from '@/components/shared/ExportButton';
 import PermissionGuard from '@/components/auth/PermissionGuard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const ChauffeurList = () => {
   const [data, setData] = useState<Chauffeur[]>([]);
@@ -17,6 +18,16 @@ const ChauffeurList = () => {
   const [openCreate, setOpenCreate] = useState(false);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<ChauffeurFilterValues>({});
+  const { canCreate, canDelete, canPerformAction } = usePermissions();
+
+  const columns = useMemo(
+    () =>
+      createColumns({
+        canVerify: canPerformAction('chauffeurs', 'verify'),
+        canDelete: canDelete('chauffeurs'),
+      }),
+    [canDelete, canPerformAction],
+  );
 
   useEffect(() => {
     fetchChauffeurs();
@@ -124,7 +135,7 @@ const ChauffeurList = () => {
         data={data}
         searchKey="fullName"
         searchPlaceholder="Search drivers by name, email, phone..."
-        showAddButton={true}
+        showAddButton={canCreate('chauffeurs')}
         addButtonText="Add New Driver"
         addButtonIcon={<Plus className="h-4 w-4" />}
         addButtonOnClick={() => setOpenCreate(true)}

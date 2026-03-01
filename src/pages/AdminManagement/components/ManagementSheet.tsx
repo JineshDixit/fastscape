@@ -57,18 +57,18 @@ const ManagementSheet = ({
           <Separator />
         </SheetHeader>
 
-        <div className="py-6">{children}</div>
+        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">{children}</div>
 
         {!isViewOnly && (
           <SheetFooter className="flex items-center gap-4 pt-4 sm:justify-between">
-            <Button type="button" variant="ghost" onClick={onSecondaryAction || onClose} className="rounded-full">
+            <Button type="button" variant="ghost" onClick={onSecondaryAction || onClose} className="rounded-full w-full">
               {secondaryActionText}
             </Button>
             <Button
               type="submit"
               disabled={loading || primaryActionDisabled}
               onClick={onPrimaryAction}
-              className="bg-primary hover:shadow-primary/20 rounded-full px-10 shadow-lg"
+              className="bg-primary hover:shadow-primary/20 rounded-full px-10 shadow-lg w-full"
             >
               {loading ? (
                 <div className="flex items-center gap-2">

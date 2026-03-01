@@ -7,6 +7,8 @@ import { Loader2, Plus, X, Shield, Key, Zap, ListChecks, ShieldCheck, Box } from
 import { toast } from 'sonner';
 import { roleService, policyService, rolePolicyService } from '@/api/services/adminService';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/config/permissions';
 
 interface Role {
   id: string;
@@ -31,11 +33,16 @@ const RolePolicyAssignments = () => {
   const [assignedPolicies, setAssignedPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const { hasPermission } = usePermissions();
+
+  const canReadRoles = hasPermission(PERMISSIONS.ADMIN.ROLES.READ);
+  const canReadPolicies = hasPermission(PERMISSIONS.ADMIN.POLICIES.READ);
+  const canManageRolePolicies = hasPermission(PERMISSIONS.ADMIN.ROLES.UPDATE);
 
   useEffect(() => {
     fetchRoles();
     fetchPolicies();
-  }, []);
+  }, [canReadRoles, canReadPolicies]);
 
   useEffect(() => {
     if (selectedRole) {
@@ -46,6 +53,11 @@ const RolePolicyAssignments = () => {
   }, [selectedRole]);
 
   const fetchRoles = async () => {
+    if (!canReadRoles) {
+      setRoles([]);
+      return;
+    }
+
     try {
       const response = await roleService.getAllRoles({ page: 1, limit: 100 });
       setRoles(response.roles || []);
@@ -55,6 +67,11 @@ const RolePolicyAssignments = () => {
   };
 
   const fetchPolicies = async () => {
+    if (!canReadPolicies) {
+      setPolicies([]);
+      return;
+    }
+
     try {
       const response = await policyService.getAllPolicies({ page: 1, limit: 100 });
       setPolicies(response.policies || []);
@@ -64,6 +81,11 @@ const RolePolicyAssignments = () => {
   };
 
   const fetchRolePolicies = async (roleId: string) => {
+    if (!canReadRoles) {
+      setAssignedPolicies([]);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await rolePolicyService.getRolePolicies(roleId);
@@ -76,6 +98,11 @@ const RolePolicyAssignments = () => {
   };
 
   const handleAssignPolicy = async () => {
+    if (!canManageRolePolicies) {
+      toast.error('You do not have permission to assign policies');
+      return;
+    }
+
     if (!selectedRole || !selectedPolicy) {
       toast.error('Please select both role and policy');
       return;
@@ -95,6 +122,11 @@ const RolePolicyAssignments = () => {
   };
 
   const handleRemovePolicy = async (policyId: string) => {
+    if (!canManageRolePolicies) {
+      toast.error('You do not have permission to remove policies');
+      return;
+    }
+
     if (!selectedRole) return;
 
     try {
@@ -130,7 +162,7 @@ const RolePolicyAssignments = () => {
               <label className="pl-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
                 Primary Role Cluster
               </label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <Select value={selectedRole} onValueChange={setSelectedRole} disabled={!canReadRoles}>
                 <SelectTrigger className="focus:ring-primary/20 h-11 rounded-xl border-gray-200 bg-white text-sm">
                   <SelectValue placeholder="Identify role context..." />
                 </SelectTrigger>
@@ -185,7 +217,7 @@ const RolePolicyAssignments = () => {
                   Attach Policy Registry
                 </label>
                 <div className="space-y-4">
-                  <Select value={selectedPolicy} onValueChange={setSelectedPolicy}>
+                  <Select value={selectedPolicy} onValueChange={setSelectedPolicy} disabled={!canManageRolePolicies}>
                     <SelectTrigger className="focus:ring-primary/20 h-11 rounded-xl border-gray-200 bg-white text-sm">
                       <SelectValue placeholder="Choose policy string..." />
                     </SelectTrigger>
@@ -205,7 +237,7 @@ const RolePolicyAssignments = () => {
                   </Select>
                   <Button
                     onClick={handleAssignPolicy}
-                    disabled={!selectedPolicy || assigning}
+                    disabled={!selectedPolicy || assigning || !canManageRolePolicies}
                     className="h-11 w-full rounded-xl text-sm font-semibold shadow-md transition-all active:scale-[0.98]"
                   >
                     {assigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
@@ -287,14 +319,16 @@ const RolePolicyAssignments = () => {
                               {policy.name}
                             </h4>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemovePolicy(policy.id)}
-                            className="h-8 w-8 rounded-full opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          {canManageRolePolicies && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemovePolicy(policy.id)}
+                              className="h-8 w-8 rounded-full opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
 
                         <p className="mb-4 line-clamp-2 text-[11px] leading-relaxed text-gray-500">

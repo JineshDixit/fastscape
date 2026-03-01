@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChauffeurForm } from './ChauffeurForm';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const ChauffeurDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +47,7 @@ const ChauffeurDetails = () => {
   const [processing, setProcessing] = useState(false);
   const [statusToUpdate, setStatusToUpdate] = useState<ChauffeurStatus | ''>('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const { canUpdate, canDelete, canPerformAction } = usePermissions();
 
   const fetchChauffeur = async () => {
     if (!id) return;
@@ -173,48 +175,52 @@ const ChauffeurDetails = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" className="h-10 gap-2 font-medium" onClick={() => setEditDialogOpen(true)}>
-            <Edit className="h-4 w-4" /> Edit Details
-          </Button>
+          {canUpdate('chauffeurs') && (
+            <Button variant="outline" className="h-10 gap-2 font-medium" onClick={() => setEditDialogOpen(true)}>
+              <Edit className="h-4 w-4" /> Edit Details
+            </Button>
+          )}
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="h-10 gap-2 font-medium">
-                <RefreshCw className="h-4 w-4" /> Update Status
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Chauffeur Status</DialogTitle>
-                <DialogDescription>
-                  Modify the current availability status for {chauffeur.fullName || 'this chauffeur'}.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label>New Status</Label>
-                  <Select value={statusToUpdate} onValueChange={(val) => setStatusToUpdate(val as ChauffeurStatus)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ChauffeurStatus.AVAILABLE}>Available</SelectItem>
-                      <SelectItem value={ChauffeurStatus.BUSY}>Busy</SelectItem>
-                      <SelectItem value={ChauffeurStatus.ON_BREAK}>On Break</SelectItem>
-                      <SelectItem value={ChauffeurStatus.OFF_DUTY}>Off Duty</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleStatusUpdate} disabled={!statusToUpdate || processing} className="w-full">
-                  Update Availability
+          {canUpdate('chauffeurs') && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="h-10 gap-2 font-medium">
+                  <RefreshCw className="h-4 w-4" /> Update Status
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Update Chauffeur Status</DialogTitle>
+                  <DialogDescription>
+                    Modify the current availability status for {chauffeur.fullName || 'this chauffeur'}.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label>New Status</Label>
+                    <Select value={statusToUpdate} onValueChange={(val) => setStatusToUpdate(val as ChauffeurStatus)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ChauffeurStatus.AVAILABLE}>Available</SelectItem>
+                        <SelectItem value={ChauffeurStatus.BUSY}>Busy</SelectItem>
+                        <SelectItem value={ChauffeurStatus.ON_BREAK}>On Break</SelectItem>
+                        <SelectItem value={ChauffeurStatus.OFF_DUTY}>Off Duty</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleStatusUpdate} disabled={!statusToUpdate || processing} className="w-full">
+                    Update Availability
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
 
-          {!chauffeur.isVerified && (
+          {canPerformAction('chauffeurs', 'verify') && !chauffeur.isVerified && (
             <Button
               onClick={handleVerify}
               disabled={processing}
@@ -224,27 +230,33 @@ const ChauffeurDetails = () => {
             </Button>
           )}
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-10 w-10 text-red-600 hover:bg-red-50 hover:text-red-700">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete Chauffeur</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete {chauffeur.fullName || 'this chauffeur'}? This action cannot be undone
-                  and will remove all their data from the system.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="destructive" onClick={handleDelete} disabled={processing} className="w-full">
-                  Confirm Deletion
+          {canDelete('chauffeurs') && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Chauffeur</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete {chauffeur.fullName || 'this chauffeur'}? This action cannot be
+                    undone and will remove all their data from the system.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="destructive" onClick={handleDelete} disabled={processing} className="w-full">
+                    Confirm Deletion
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 

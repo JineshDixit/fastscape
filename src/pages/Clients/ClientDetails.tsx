@@ -32,6 +32,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const ClientDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +42,7 @@ const ClientDetails = () => {
   const [processing, setProcessing] = useState(false);
   const [blockReason, setBlockReason] = useState('');
   const [verificationStatusToUpdate, setVerificationStatusToUpdate] = useState<VerificationStatus | ''>('');
+  const { canUpdate } = usePermissions();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -147,87 +149,91 @@ const ClientDetails = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="h-9 gap-2">
-                <Shield className="h-4 w-4" /> Update Verification
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Verification Status</DialogTitle>
-                <DialogDescription>Change the verification status of this client.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label>New Status</Label>
-                  <Select
-                    value={verificationStatusToUpdate}
-                    onValueChange={(val) => setVerificationStatusToUpdate(val as VerificationStatus)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={VerificationStatus.PENDING}>Pending</SelectItem>
-                      <SelectItem value={VerificationStatus.VERIFIED}>Verified</SelectItem>
-                      <SelectItem value={VerificationStatus.REJECTED}>Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  onClick={handleVerificationStatusUpdate}
-                  disabled={!verificationStatusToUpdate || processing}
-                  className="w-full"
-                >
-                  Confirm Change
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {user.isBlocked ? (
-            <Button variant="default" className="h-9 gap-2" onClick={() => handleToggleBlock(false)}>
-              <CheckCircle className="h-4 w-4" /> Unblock User
-            </Button>
-          ) : (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="destructive" className="h-9 gap-2">
-                  <Ban className="h-4 w-4" /> Block User
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Block User</DialogTitle>
-                  <DialogDescription>
-                    This will prevent the user from accessing the platform. Are you sure?
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label>Reason for Blocking</Label>
-                    <Textarea
-                      value={blockReason}
-                      onChange={(e) => setBlockReason(e.target.value)}
-                      placeholder="Enter reason..."
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleToggleBlock(true)}
-                    disabled={!blockReason || processing}
-                    className="w-full"
-                  >
-                    Confirm Block
+          {canUpdate('clients') && (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="h-9 gap-2">
+                    <Shield className="h-4 w-4" /> Update Verification
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Update Verification Status</DialogTitle>
+                    <DialogDescription>Change the verification status of this client.</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>New Status</Label>
+                      <Select
+                        value={verificationStatusToUpdate}
+                        onValueChange={(val) => setVerificationStatusToUpdate(val as VerificationStatus)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={VerificationStatus.PENDING}>Pending</SelectItem>
+                          <SelectItem value={VerificationStatus.VERIFIED}>Verified</SelectItem>
+                          <SelectItem value={VerificationStatus.REJECTED}>Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={handleVerificationStatusUpdate}
+                      disabled={!verificationStatusToUpdate || processing}
+                      className="w-full"
+                    >
+                      Confirm Change
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {user.isBlocked ? (
+                <Button variant="default" className="h-9 gap-2" onClick={() => handleToggleBlock(false)}>
+                  <CheckCircle className="h-4 w-4" /> Unblock User
+                </Button>
+              ) : (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive" className="h-9 gap-2">
+                      <Ban className="h-4 w-4" /> Block User
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Block User</DialogTitle>
+                      <DialogDescription>
+                        This will prevent the user from accessing the platform. Are you sure?
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label>Reason for Blocking</Label>
+                        <Textarea
+                          value={blockReason}
+                          onChange={(e) => setBlockReason(e.target.value)}
+                          placeholder="Enter reason..."
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleToggleBlock(true)}
+                        disabled={!blockReason || processing}
+                        className="w-full"
+                      >
+                        Confirm Block
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </>
           )}
         </div>
       </div>

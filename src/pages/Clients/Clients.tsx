@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import type { SortingState } from '@tanstack/react-table';
 import ClientFilters, { type ClientFilterValues } from '@/components/clients/ClientFilters';
 import { ExportButton } from '@/components/shared/ExportButton';
+import PermissionGuard from '@/components/auth/PermissionGuard';
 
 const Clients = () => {
   const [data, setData] = useState<User[]>([]);
@@ -114,7 +115,9 @@ const Clients = () => {
                   setPageIndex(0);
                 }}
               />
-              <ExportButton onExport={() => userService.exportUsers({ search, ...filters })} filename="clients" />
+              <PermissionGuard module="clients" action="export">
+                <ExportButton onExport={() => userService.exportUsers({ search, ...filters })} filename="clients" />
+              </PermissionGuard>
             </div>
           }
         />

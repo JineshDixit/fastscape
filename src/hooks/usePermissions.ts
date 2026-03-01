@@ -1,12 +1,12 @@
 import { useAuthContext } from '@/context/authContext';
-import { PERMISSIONS } from '@/config/permissions';
+import { ACTION_PERMISSIONS, PERMISSIONS } from '@/config/permissions';
 
 /**
  * Custom hook for permission checking
  * Provides utility functions to check user permissions
  */
 export const usePermissions = () => {
-  const { user, hasPermission, hasAnyPermission } = useAuthContext();
+  const { user, hasPermission, hasAnyPermission, isSuperAdmin: isSuperAdminUser } = useAuthContext();
 
   /**
    * Check if user has permission for a specific action on a module
@@ -14,24 +14,16 @@ export const usePermissions = () => {
    * @param action - The action name (e.g., 'create', 'read', 'update', 'delete')
    */
   const canPerformAction = (module: string, action: string): boolean => {
-    // Super admin has all permissions
-    if (hasPermission(PERMISSIONS.SUPER_ADMIN)) {
+    if (isSuperAdminUser()) {
       return true;
     }
 
-    // Get the permission list for the module and action
-    const modulePermissions = (PERMISSIONS as any)[module.toUpperCase()];
-    if (!modulePermissions) return false;
-
-    const actionPermission = modulePermissions[action.toUpperCase()];
-    if (!actionPermission) return false;
-
-    // Check if it's a single permission or array
-    if (Array.isArray(actionPermission)) {
-      return hasAnyPermission(actionPermission);
-    }
-
-    return hasPermission(actionPermission);
+    const moduleConfig = (ACTION_PERMISSIONS as Record<string, any>)[module];
+    if (!moduleConfig) return false;
+    const actionPermissions = moduleConfig[action];
+    if (!actionPermissions) return false;
+    const normalizedPermissions = Array.isArray(actionPermissions) ? actionPermissions : [actionPermissions];
+    return hasAnyPermission(normalizedPermissions);
   };
 
   /**
@@ -73,7 +65,7 @@ export const usePermissions = () => {
    * Check if user is super admin
    */
   const isSuperAdmin = (): boolean => {
-    return hasPermission(PERMISSIONS.SUPER_ADMIN);
+    return isSuperAdminUser();
   };
 
   /**

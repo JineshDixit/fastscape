@@ -21,6 +21,11 @@ interface ColumnsProps {
   onPasswordChange: (user: AdminUser) => void;
   onToggleStatus: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
+  canView?: boolean;
+  canEdit?: boolean;
+  canChangePassword?: boolean;
+  canToggleStatus?: (user: AdminUser) => boolean;
+  canDelete?: boolean;
 }
 
 export const getColumns = ({
@@ -29,6 +34,11 @@ export const getColumns = ({
   onPasswordChange,
   onToggleStatus,
   onDelete,
+  canView = true,
+  canEdit = false,
+  canChangePassword = false,
+  canToggleStatus = () => false,
+  canDelete = false,
 }: ColumnsProps): ColumnDef<AdminUser>[] => [
   {
     accessorKey: 'fullName',
@@ -106,6 +116,13 @@ export const getColumns = ({
     id: 'actions',
     cell: ({ row }) => {
       const user = row.original;
+      const canToggle = canToggleStatus(user);
+      const hasActions = canView || canEdit || canChangePassword || canToggle || canDelete;
+
+      if (!hasActions) {
+        return null;
+      }
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -117,40 +134,49 @@ export const getColumns = ({
             <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               User Operations
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => onView(user)} className="rounded-md">
-              <Eye className="text-muted-foreground mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(user)} className="rounded-md">
-              <Edit className="text-muted-foreground mr-2 h-4 w-4" />
-              Edit Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPasswordChange(user)} className="rounded-md">
-              <Key className="text-muted-foreground mr-2 h-4 w-4" />
-              Security Key
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onToggleStatus(user)} className="rounded-md">
-              {user.isActive ? (
-                <>
-                  <UserX className="mr-2 h-4 w-4 text-orange-500" />
-                  <span className="font-medium text-orange-500">Suspend Access</span>
-                </>
-              ) : (
-                <>
-                  <UserCheck className="mr-2 h-4 w-4 text-green-500" />
-                  <span className="font-medium text-green-500">Re-activate</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(user)}
-              className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Remove Admin
-            </DropdownMenuItem>
+            {canView && (
+              <DropdownMenuItem onClick={() => onView(user)} className="rounded-md">
+                <Eye className="text-muted-foreground mr-2 h-4 w-4" />
+                View Details
+              </DropdownMenuItem>
+            )}
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(user)} className="rounded-md">
+                <Edit className="text-muted-foreground mr-2 h-4 w-4" />
+                Edit Profile
+              </DropdownMenuItem>
+            )}
+            {canChangePassword && (
+              <DropdownMenuItem onClick={() => onPasswordChange(user)} className="rounded-md">
+                <Key className="text-muted-foreground mr-2 h-4 w-4" />
+                Security Key
+              </DropdownMenuItem>
+            )}
+            {(canToggle || canDelete) && <DropdownMenuSeparator />}
+            {canToggle && (
+              <DropdownMenuItem onClick={() => onToggleStatus(user)} className="rounded-md">
+                {user.isActive ? (
+                  <>
+                    <UserX className="mr-2 h-4 w-4 text-orange-500" />
+                    <span className="font-medium text-orange-500">Suspend Access</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+                    <span className="font-medium text-green-500">Re-activate</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={() => onDelete(user)}
+                className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove Admin
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -97,9 +97,15 @@ const FilterContent: React.FC<{
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="PENDING" id="payment-pending" />
-                <Label htmlFor="payment-pending" className="cursor-pointer font-normal">
-                  Pending
+                <RadioGroupItem value="UNPAID" id="payment-unpaid" />
+                <Label htmlFor="payment-unpaid" className="cursor-pointer font-normal">
+                  Unpaid
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="PARTIALLY_PAID" id="payment-partially-paid" />
+                <Label htmlFor="payment-partially-paid" className="cursor-pointer font-normal">
+                  Partially Paid
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -109,9 +115,9 @@ const FilterContent: React.FC<{
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="FAILED" id="payment-failed" />
-                <Label htmlFor="payment-failed" className="cursor-pointer font-normal">
-                  Failed
+                <RadioGroupItem value="OVERDUE" id="payment-overdue" />
+                <Label htmlFor="payment-overdue" className="cursor-pointer font-normal">
+                  Overdue
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -145,7 +151,7 @@ const FilterContent: React.FC<{
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="WITH_CHAUFFEUR" id="type-chauffeur" />
+                <RadioGroupItem value="CHAUFFEUR" id="type-chauffeur" />
                 <Label htmlFor="type-chauffeur" className="cursor-pointer font-normal">
                   With Chauffeur
                 </Label>

@@ -12,10 +12,14 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
   requireAll = false,
   fallbackPath = '/dashboard',
 }) => {
-  const { user, hasRole, hasPermission } = useAuthContext();
+  const { user, hasRole, hasPermission, hasAnyPermission, isSuperAdmin } = useAuthContext();
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isSuperAdmin()) {
+    return <>{children}</>;
   }
 
   // Check roles
@@ -36,7 +40,7 @@ const RoleGuard: React.FC<RoleGuardProps> = ({
     if (requireAll) {
       return requiredPermissions.every((permission) => hasPermission(permission));
     } else {
-      return requiredPermissions.some((permission) => hasPermission(permission));
+      return hasAnyPermission(requiredPermissions);
     }
   };
 

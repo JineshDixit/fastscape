@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, typ
 import { authService } from '@/api/services/auth';
 import { authCookies } from '@/utils/cookies';
 import type { User, LoginResponse } from '@/common/interface/authInterface';
-import { useTranslation } from 'react-i18next';
-import { adminUserService } from '@/api/services/adminUserService';
+// import i18next from 'i18next';
+// import { adminUserService } from '@/api/services/adminUserService';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +17,7 @@ interface AuthContextType {
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   hasRole: (roleName: string) => boolean;
+  isSuperAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,27 +27,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { i18n } = useTranslation();
 
   const clearError = useCallback(() => setError(null), []);
 
+  const isSuperAdmin = useCallback((): boolean => {
+    if (!user) return false;
+
+    const hasSuperAdminRole =
+      user.roles?.some((role) => role.isActive !== false && role.name?.toLowerCase() === 'super-admin') || false;
+    const hasSuperAdminPermission = user.permissions?.includes('admin:all') || false;
+
+    return hasSuperAdminRole || hasSuperAdminPermission;
+  }, [user]);
+
   const hasPermission = useCallback(
     (permission: string) => {
-      return user?.permissions?.includes(permission) || false;
+      if (!user) return false;
+      if (isSuperAdmin()) return true;
+      return user.permissions?.includes(permission) || false;
     },
-    [user],
+    [user, isSuperAdmin],
   );
 
   const hasAnyPermission = useCallback(
     (permissions: string[]) => {
-      return permissions.some((p) => user?.permissions?.includes(p)) || false;
+      if (!user) return false;
+      if (isSuperAdmin()) return true;
+      return permissions.some((p) => user.permissions?.includes(p)) || false;
     },
-    [user],
+    [user, isSuperAdmin],
   );
 
   const hasRole = useCallback(
     (roleName: string) => {
-      return user?.roles?.some((r) => r.name === roleName) || false;
+      const normalized = roleName.toLowerCase();
+      return user?.roles?.some((r) => r.name?.toLowerCase() === normalized && r.isActive !== false) || false;
     },
     [user],
   );
@@ -72,8 +87,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
+      /* i18n disabled for now
       // Get current i18n language (user's current selection, possibly from login page)
-      const currentLanguage = i18n.language;
+      const currentLanguage = i18next.language;
 
       // Now fetch the profile with the valid token
       const response = await authService.getProfile();
@@ -103,9 +119,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         // Ensure i18n is set to current language (should already be, but just in case)
-        if (i18n.language !== currentLanguage) {
-          await i18n.changeLanguage(currentLanguage);
+        if (i18next.language !== currentLanguage) {
+          await i18next.changeLanguage(currentLanguage);
         }
+      } else {
+        throw new Error(response.message || 'Failed to fetch profile');
+      }
+      */
+
+      // Basic profile fetch while i18n is disabled
+      const response = await authService.getProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+        setIsAuthenticated(true);
       } else {
         throw new Error(response.message || 'Failed to fetch profile');
       }
@@ -119,7 +145,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoading(false);
     }
-  }, [i18n]);
+  }, []); // Remove unstable i18n dependency
 
   const login = async (credentials: any): Promise<LoginResponse> => {
     setIsLoading(true);
@@ -159,26 +185,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // 1. Initial authentication check (Only on mount)
   useEffect(() => {
-    const initAuth = async () => {
-      await refreshProfile();
-    };
+    refreshProfile();
+  }, []); // Run ONLY once on mount
 
-    initAuth();
-
-    // Listen for storage events (e.g. logout or token refresh from another tab)
+  // 2. Real-time tab synchronization
+  useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'auth_logout_timestamp') {
         if (import.meta.env.DEV) console.log('🚪 Logout detected from another tab');
         setIsAuthenticated(false);
         setUser(null);
-        // Ensure tokens are cleared locally too
         authService.clearTokens();
       } else if (e.key === 'auth_sync_timestamp') {
         if (import.meta.env.DEV) console.log('🔄 Token update detected from another tab, syncing profile...');
         refreshProfile();
       }
     };
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [refreshProfile]);
@@ -197,6 +222,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         hasPermission,
         hasAnyPermission,
         hasRole,
+        isSuperAdmin,
       }}
     >
       {children}

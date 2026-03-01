@@ -19,9 +19,17 @@ interface ColumnsProps {
   onEdit: (location: Location) => void;
   onDelete: (location: Location) => void;
   onRefresh: () => void;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 }
 
-export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): ColumnDef<Location>[] => [
+export const createColumns = ({
+  onEdit,
+  onDelete,
+  onRefresh,
+  canUpdate = false,
+  canDelete = false,
+}: ColumnsProps): ColumnDef<Location>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => {
@@ -146,9 +154,11 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
             <DropdownMenuLabel className="text-muted-foreground px-2 py-1.5 text-[10px] font-bold uppercase">
               Location Operations
             </DropdownMenuLabel>
-            <DropdownMenuItem onClick={handleEdit} className="flex items-center rounded-md">
-              <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Edit Location
-            </DropdownMenuItem>
+            {canUpdate && (
+              <DropdownMenuItem onClick={handleEdit} className="flex items-center rounded-md">
+                <Edit className="text-muted-foreground mr-2 h-4 w-4" /> Edit Location
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(location.id);
@@ -158,27 +168,31 @@ export const createColumns = ({ onEdit, onDelete, onRefresh }: ColumnsProps): Co
             >
               <Copy className="text-muted-foreground mr-2 h-4 w-4" /> Copy Identifier
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={handleToggleStatus}
-              className="text-primary flex items-center rounded-md font-medium"
-            >
-              {location.isActive ? (
-                <>
-                  <ToggleLeft className="mr-2 h-4 w-4" /> Deactivate
-                </>
-              ) : (
-                <>
-                  <ToggleRight className="mr-2 h-4 w-4" /> Activate
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleDelete}
-              className="text-destructive focus:bg-destructive/10 focus:text-destructive-foreground rounded-md font-medium"
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Remove Location
-            </DropdownMenuItem>
+            {(canUpdate || canDelete) && <DropdownMenuSeparator />}
+            {canUpdate && (
+              <DropdownMenuItem
+                onClick={handleToggleStatus}
+                className="text-primary flex items-center rounded-md font-medium"
+              >
+                {location.isActive ? (
+                  <>
+                    <ToggleLeft className="mr-2 h-4 w-4" /> Deactivate
+                  </>
+                ) : (
+                  <>
+                    <ToggleRight className="mr-2 h-4 w-4" /> Activate
+                  </>
+                )}
+              </DropdownMenuItem>
+            )}
+            {canDelete && (
+              <DropdownMenuItem
+                onClick={handleDelete}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive-foreground rounded-md font-medium"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> Remove Location
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -6,9 +6,10 @@ import { type AdminUser } from '@/api/services/adminService';
 
 interface ColumnProps {
   onRemoveRole: (userId: string, roleId: string) => void;
+  canRemoveRole?: boolean;
 }
 
-export const getColumns = ({ onRemoveRole }: ColumnProps): ColumnDef<AdminUser>[] => [
+export const getColumns = ({ onRemoveRole, canRemoveRole = false }: ColumnProps): ColumnDef<AdminUser>[] => [
   {
     accessorKey: 'fullName',
     header: 'Administrative Subject',
@@ -42,12 +43,14 @@ export const getColumns = ({ onRemoveRole }: ColumnProps): ColumnDef<AdminUser>[
             >
               <Shield className="mr-1 h-3 w-3 opacity-50" />
               <span className="text-[10px] font-bold tracking-tight uppercase">{role.name}</span>
-              <button
-                onClick={() => onRemoveRole(user.id, role.id)}
-                className="ml-1 rounded p-0.5 transition-colors hover:bg-red-50 hover:text-red-600 md:opacity-0 md:group-hover/badge:opacity-100"
-              >
-                <X className="h-2 w-2" />
-              </button>
+              {canRemoveRole && (
+                <button
+                  onClick={() => onRemoveRole(user.id, role.id)}
+                  className="ml-1 rounded p-0.5 transition-colors hover:bg-red-50 hover:text-red-600 md:opacity-0 md:group-hover/badge:opacity-100"
+                >
+                  <X className="h-2 w-2" />
+                </button>
+              )}
             </Badge>
           ))}
           {!user.roles?.length && <span className="text-[10px] text-gray-400 italic">Unassigned</span>}

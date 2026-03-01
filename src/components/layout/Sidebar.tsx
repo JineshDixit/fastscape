@@ -6,25 +6,68 @@ import logo from '@/assets/Logo.png';
 import { useSidebar } from '@/context/sidebarContext';
 import { useAuthContext } from '@/context/authContext';
 import type { SidebarItem } from '@/common/interface/sidebarInterface';
+import { PERMISSIONS } from '@/config/permissions';
 import { Button } from '../ui/button';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const sidebarItems: SidebarItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Calendar, label: 'Bookings', path: '/bookings' },
-  { icon: Car, label: 'Units', path: '/units' },
-  { icon: Users, label: 'Clients', path: '/clients' },
-  { icon: BookUser, label: 'Driver', path: '/drivers' },
-  { icon: ChartPie, label: 'Financials', path: '/financials' },
-  { icon: MapPin, label: 'Locations', path: '/locations' },
-  { icon: Shield, label: 'Admin', path: '/admin-management' },
+  {
+    icon: Calendar,
+    label: 'Bookings',
+    path: '/bookings',
+    requiredPermissions: [PERMISSIONS.BOOKINGS.LIST, PERMISSIONS.BOOKINGS.READ],
+  },
+  {
+    icon: Car,
+    label: 'Units',
+    path: '/units',
+    requiredPermissions: [PERMISSIONS.VEHICLES.LIST, PERMISSIONS.VEHICLES.READ],
+  },
+  {
+    icon: Users,
+    label: 'Clients',
+    path: '/clients',
+    requiredPermissions: [PERMISSIONS.CLIENTS.LIST, PERMISSIONS.CLIENTS.READ],
+  },
+  {
+    icon: BookUser,
+    label: 'Driver',
+    path: '/drivers',
+    requiredPermissions: [PERMISSIONS.CHAUFFEURS.LIST, PERMISSIONS.CHAUFFEURS.READ],
+  },
+  {
+    icon: ChartPie,
+    label: 'Financials',
+    path: '/financials',
+    requiredPermissions: [PERMISSIONS.FINANCIALS.LIST, PERMISSIONS.FINANCIALS.READ],
+  },
+  {
+    icon: MapPin,
+    label: 'Locations',
+    path: '/locations',
+    requiredPermissions: [PERMISSIONS.LOCATIONS.LIST, PERMISSIONS.LOCATIONS.READ],
+  },
+  {
+    icon: Shield,
+    label: 'Admin',
+    path: '/admin-management',
+    requiredPermissions: [PERMISSIONS.ADMIN.USERS.READ, PERMISSIONS.ADMIN.ROLES.READ, PERMISSIONS.ADMIN.POLICIES.READ],
+  },
 ];
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const { isCollapsed, isMobile, isOpen, closeSidebar } = useSidebar();
-  const { logout } = useAuthContext();
+  const { logout, hasAnyPermission } = useAuthContext();
+
+  const visibleSidebarItems = sidebarItems.filter((item) => {
+    if (!item.requiredPermissions || item.requiredPermissions.length === 0) {
+      return true;
+    }
+    return hasAnyPermission(item.requiredPermissions);
+  });
 
   const handleLogout = async () => {
     try {
@@ -60,7 +103,7 @@ const Sidebar = () => {
 
       <nav className="flex-1 space-y-2 p-4">
         <TooltipProvider delayDuration={80}>
-          {sidebarItems.map((item) => {
+          {visibleSidebarItems.map((item) => {
             const Icon = item.icon;
 
             const navItem = (

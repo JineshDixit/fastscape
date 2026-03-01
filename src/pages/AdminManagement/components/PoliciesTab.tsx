@@ -7,6 +7,8 @@ import ManagementDeleteDialog from './ManagementDeleteDialog';
 import { DataTable } from '@/components/ui/data-table';
 import { getColumns } from './PoliciesColumns';
 import type { SortingState } from '@tanstack/react-table';
+import { usePermissions } from '@/hooks/usePermissions';
+import { PERMISSIONS } from '@/config/permissions';
 
 const PoliciesTab = () => {
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -22,6 +24,16 @@ const PoliciesTab = () => {
   const [pageCount, setPageCount] = useState(0);
   const [totalRows, setTotalRows] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const { hasPermission, hasAnyPermission } = usePermissions();
+
+  const canCreatePolicy = hasPermission(PERMISSIONS.ADMIN.POLICIES.CREATE);
+  const canEditPolicy = hasPermission(PERMISSIONS.ADMIN.POLICIES.UPDATE);
+  const canDeletePolicy = hasPermission(PERMISSIONS.ADMIN.POLICIES.DELETE);
+  const canActivatePolicy = hasAnyPermission([PERMISSIONS.ADMIN.POLICIES.ACTIVATE, PERMISSIONS.ADMIN.POLICIES.UPDATE]);
+  const canDeactivatePolicy = hasAnyPermission([
+    PERMISSIONS.ADMIN.POLICIES.DEACTIVATE,
+    PERMISSIONS.ADMIN.POLICIES.UPDATE,
+  ]);
 
   const fetchPolicies = useCallback(async () => {
     try {
@@ -45,23 +57,29 @@ const PoliciesTab = () => {
   }, [fetchPolicies]);
 
   const handleCreatePolicy = () => {
+    if (!canCreatePolicy) return;
     setSelectedPolicy(null);
     setSheetMode('create');
     setSheetOpen(true);
   };
 
   const handleEditPolicy = (policy: Policy) => {
+    if (!canEditPolicy) return;
     setSelectedPolicy(policy);
     setSheetMode('edit');
     setSheetOpen(true);
   };
 
   const handleDeletePolicy = (policy: Policy) => {
+    if (!canDeletePolicy) return;
     setSelectedPolicy(policy);
     setDeleteDialogOpen(true);
   };
 
   const handleToggleStatus = async (policy: Policy) => {
+    const allowed = policy.isActive ? canDeactivatePolicy : canActivatePolicy;
+    if (!allowed) return;
+
     try {
       if (policy.isActive) {
         await policyService.deactivatePolicy(policy.id);
@@ -85,6 +103,9 @@ const PoliciesTab = () => {
     onEdit: handleEditPolicy,
     onToggleStatus: handleToggleStatus,
     onDelete: handleDeletePolicy,
+    canEdit: canEditPolicy,
+    canToggleStatus: (policy) => (policy.isActive ? canDeactivatePolicy : canActivatePolicy),
+    canDelete: canDeletePolicy,
   });
 
   return (
@@ -107,7 +128,7 @@ const PoliciesTab = () => {
         onSortingChange={setSorting}
         addButtonText="Create Security Policy"
         addButtonOnClick={handleCreatePolicy}
-        showAddButton={true}
+        showAddButton={canCreatePolicy}
         addButtonIcon={<Plus className="h-4 w-4" />}
       />
 

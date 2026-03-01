@@ -35,6 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const BookingDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +47,7 @@ const BookingDetails = () => {
   const [refundReason, setRefundReason] = useState('');
   const [cancelReason, setCancelReason] = useState('');
   const [statusToUpdate, setStatusToUpdate] = useState<BookingStatus | ''>('');
+  const { canUpdate } = usePermissions();
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -171,78 +173,82 @@ const BookingDetails = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="h-9 gap-2">
-                <RefreshCcw className="h-4 w-4" /> Update Status
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Booking Status</DialogTitle>
-                <DialogDescription>Change the current progress of this booking.</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label>New Status</Label>
-                  <Select value={statusToUpdate} onValueChange={(val) => setStatusToUpdate(val as BookingStatus)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={BookingStatus.PENDING}>Pending</SelectItem>
-                      <SelectItem value={BookingStatus.CONFIRMED}>Confirmed</SelectItem>
-                      <SelectItem value={BookingStatus.PICKED_UP}>Picked Up</SelectItem>
-                      <SelectItem value={BookingStatus.DROPPED_OFF}>Dropped Off</SelectItem>
-                      <SelectItem value={BookingStatus.COMPLETED}>Completed</SelectItem>
-                      <SelectItem value={BookingStatus.CANCELLED}>Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleStatusUpdate} disabled={!statusToUpdate || processing} className="w-full">
-                  Confirm Change
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {booking.bookingStatus !== BookingStatus.CANCELLED && booking.bookingStatus !== BookingStatus.COMPLETED && (
+          {canUpdate('bookings') && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="destructive" className="h-9 gap-2">
-                  <Ban className="h-4 w-4" /> Cancel
+                <Button variant="outline" className="h-9 gap-2">
+                  <RefreshCcw className="h-4 w-4" /> Update Status
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Cancel Booking</DialogTitle>
-                  <DialogDescription>This will mark the booking as cancelled. Are you sure?</DialogDescription>
+                  <DialogTitle>Update Booking Status</DialogTitle>
+                  <DialogDescription>Change the current progress of this booking.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label>Cancellation Reason</Label>
-                    <Textarea
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      placeholder="Enter reason..."
-                    />
+                    <Label>New Status</Label>
+                    <Select value={statusToUpdate} onValueChange={(val) => setStatusToUpdate(val as BookingStatus)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={BookingStatus.PENDING}>Pending</SelectItem>
+                        <SelectItem value={BookingStatus.CONFIRMED}>Confirmed</SelectItem>
+                        <SelectItem value={BookingStatus.PICKED_UP}>Picked Up</SelectItem>
+                        <SelectItem value={BookingStatus.DROPPED_OFF}>Dropped Off</SelectItem>
+                        <SelectItem value={BookingStatus.COMPLETED}>Completed</SelectItem>
+                        <SelectItem value={BookingStatus.CANCELLED}>Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button
-                    variant="destructive"
-                    onClick={handleCancel}
-                    disabled={!cancelReason || processing}
-                    className="w-full"
-                  >
-                    Confirm Cancellation
+                  <Button onClick={handleStatusUpdate} disabled={!statusToUpdate || processing} className="w-full">
+                    Confirm Change
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           )}
+
+          {canUpdate('bookings') &&
+            booking.bookingStatus !== BookingStatus.CANCELLED &&
+            booking.bookingStatus !== BookingStatus.COMPLETED && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="h-9 gap-2">
+                    <Ban className="h-4 w-4" /> Cancel
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Cancel Booking</DialogTitle>
+                    <DialogDescription>This will mark the booking as cancelled. Are you sure?</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label>Cancellation Reason</Label>
+                      <Textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Enter reason..."
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="destructive"
+                      onClick={handleCancel}
+                      disabled={!cancelReason || processing}
+                      className="w-full"
+                    >
+                      Confirm Cancellation
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
         </div>
       </div>
 
@@ -425,53 +431,55 @@ const BookingDetails = () => {
                 </div>
               </div>
 
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full text-xs"
-                    disabled={
-                      booking.paymentStatus === PaymentStatus.REFUNDED || booking.paymentStatus === PaymentStatus.UNPAID
-                    }
-                  >
-                    Process Refund
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Initiate Refund</DialogTitle>
-                    <DialogDescription>Process a refund for this booking.</DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label>Refund Amount ({currency})</Label>
-                      <Input
-                        type="number"
-                        value={refundAmount}
-                        onChange={(e) => setRefundAmount(e.target.value)}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Reason</Label>
-                      <Textarea
-                        value={refundReason}
-                        onChange={(e) => setRefundReason(e.target.value)}
-                        placeholder="Internal notes..."
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
+              {canUpdate('bookings') && (
+                <Dialog>
+                  <DialogTrigger asChild>
                     <Button
-                      onClick={handleRefund}
-                      disabled={!refundAmount || !refundReason || processing}
-                      className="w-full"
+                      variant="outline"
+                      className="w-full text-xs"
+                      disabled={
+                        booking.paymentStatus === PaymentStatus.REFUNDED || booking.paymentStatus === PaymentStatus.UNPAID
+                      }
                     >
-                      Refund Amount
+                      Process Refund
                     </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Initiate Refund</DialogTitle>
+                      <DialogDescription>Process a refund for this booking.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label>Refund Amount ({currency})</Label>
+                        <Input
+                          type="number"
+                          value={refundAmount}
+                          onChange={(e) => setRefundAmount(e.target.value)}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Reason</Label>
+                        <Textarea
+                          value={refundReason}
+                          onChange={(e) => setRefundReason(e.target.value)}
+                          placeholder="Internal notes..."
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        onClick={handleRefund}
+                        disabled={!refundAmount || !refundReason || processing}
+                        className="w-full"
+                      >
+                        Refund Amount
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
             </CardContent>
           </Card>
         </div>
