@@ -160,7 +160,9 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
     const imagePath = imageMap[fieldName];
     if (!imagePath) return undefined;
 
-    return `http://localhost:3001/${imagePath.replace(/\\/g, '/')}`;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://3.111.162.90:5000/api';
+    const serverRoot = baseUrl.replace(/\/api$/, '');
+    return `${serverRoot}/${imagePath.replace(/\\/g, '/')}`;
   };
 
   const handleInputChange = (field: string, value: string) => {
