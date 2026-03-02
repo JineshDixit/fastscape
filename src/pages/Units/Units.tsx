@@ -78,10 +78,20 @@ const Units = () => {
   };
 
   const handleFormSuccess = () => {
+    const wasCreating = !selectedVehicle;
+
     setShowAddForm(false);
     setSelectedVehicle(null);
     setSearchParams({}); // Clear query params
-    // Removed redundant fetchVehicles - the effect handles it via dependency changes if any
+
+    // Explicit refresh is required because list query dependencies may not change.
+    // For create flow, move to page 1 so newly created records are visible with default sorting.
+    if (wasCreating && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
+    fetchVehicles({ page: currentPage, limit: pageSize, ...filters });
   };
 
   const handleFormCancel = () => {

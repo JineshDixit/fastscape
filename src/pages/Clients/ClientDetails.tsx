@@ -11,7 +11,7 @@ import {
   User as UserIcon,
   Mail,
   Phone,
-  MapPin,
+  // MapPin,
   Calendar,
   Shield,
   Ban,
@@ -267,7 +267,7 @@ const ClientDetails = () => {
           </Card>
 
           {/* Address Information */}
-          <Card>
+          {/* <Card>
             <CardHeader className="border-b [.border-b]:pb-2.5">
               <CardTitle className="flex items-center gap-2 text-sm font-bold">
                 <MapPin className="text-primary h-4 w-4" /> Address Information
@@ -283,7 +283,7 @@ const ClientDetails = () => {
                 <DataRow label="Country" value={user.country} />
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Driving Information */}
           {user.UserDrivingInfo && (
