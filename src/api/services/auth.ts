@@ -21,6 +21,12 @@ class AuthService extends BaseApiService {
   private refreshPromise: Promise<string> | null = null;
   private autoRefreshInterval: number | null = null;
 
+  private getLoginPath(): string {
+    const baseUrl = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '');
+    const loginPath = `${baseUrl}/login`;
+    return loginPath.startsWith('/') ? loginPath : `/${loginPath}`;
+  }
+
   constructor() {
     super('/auth');
   }
@@ -52,8 +58,19 @@ class AuthService extends BaseApiService {
    * Logout user and clear all authentication data
    */
   async logout(): Promise<ApiResponse<void>> {
+    const refreshToken = authCookies.getRefreshToken();
+
+    if (!refreshToken) {
+      this.clearTokens();
+      return {
+        success: true,
+        data: undefined,
+        message: 'Logged out locally',
+      };
+    }
+
     try {
-      const response = await this.post<void>('/logout');
+      const response = await this.post<void, { refreshToken: string }>('/logout', { refreshToken });
       this.clearTokens();
 
       if (import.meta.env.DEV) {
@@ -450,8 +467,8 @@ class AuthService extends BaseApiService {
   /**
    * Clear all tokens and stop monitoring
    */
-  clearTokens(): void {
-    authCookies.clearAll();
+  clearTokens(options: { broadcast?: boolean } = {}): void {
+    authCookies.clearAll(options);
     this.refreshPromise = null;
     this.stopAutoRefresh();
   }
@@ -467,8 +484,14 @@ class AuthService extends BaseApiService {
     this.clearTokens();
 
     // Only redirect in browser environment and not already on login page
-    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-      window.location.href = '/login';
+    if (typeof window !== 'undefined') {
+      const loginPath = this.getLoginPath();
+      const currentPath = window.location.pathname.replace(/\/+$/, '');
+      const normalizedLoginPath = loginPath.replace(/\/+$/, '');
+
+      if (currentPath !== normalizedLoginPath) {
+        window.location.href = loginPath;
+      }
     }
   }
 

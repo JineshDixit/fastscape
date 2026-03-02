@@ -63,6 +63,8 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [canSubmit, setCanSubmit] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationsError, setLocationsError] = useState<string | null>(null);
 
   const isEditMode = !!vehicle;
 
@@ -95,10 +97,28 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
   useEffect(() => {
     const fetchLocations = async () => {
       try {
+        setLocationsLoading(true);
+        setLocationsError(null);
         const response = await locationService.getAllLocations({ limit: 1000, isActive: true });
-        setLocations(response.data || []);
+
+        // Normalize possible API shapes: { data: Location[] } or { locations: Location[] }
+        const rawLocations = Array.isArray(response?.data)
+          ? response.data
+          : Array.isArray((response as any)?.locations)
+            ? (response as any).locations
+            : [];
+
+        const sanitizedLocations = rawLocations
+          .filter((loc: any) => Boolean(loc?.id))
+          .map((loc: any) => ({ ...loc, id: String(loc.id) }));
+
+        setLocations(sanitizedLocations);
       } catch (error) {
         console.error('Failed to fetch locations:', error);
+        setLocations([]);
+        setLocationsError('Unable to load locations');
+      } finally {
+        setLocationsLoading(false);
       }
     };
     fetchLocations();
@@ -681,21 +701,35 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
                   Location <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={formData.locationId}
-                  onValueChange={(value) => handleInputChange('locationId', value)}
-                  disabled={isLoading}
+                  value={formData.locationId || undefined}
+                  onValueChange={(value) => {
+                    if (value === '__no_locations') return;
+                    handleInputChange('locationId', value);
+                  }}
+                  disabled={isLoading || locationsLoading || locations.length === 0}
                 >
                   <SelectTrigger id="locationId">
-                    <SelectValue placeholder="Select a location" />
+                    <SelectValue
+                      placeholder={
+                        locationsLoading ? 'Loading locations...' : locations.length === 0 ? 'No locations available' : 'Select a location'
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name} - {location.city}
+                    {locations.length > 0 ? (
+                      locations.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name} - {location.city}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="__no_locations" disabled>
+                        {locationsLoading ? 'Loading locations...' : 'No active locations found'}
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
+                {locationsError && <p className="text-destructive text-sm">{locationsError}</p>}
                 {errors.locationId && <p className="text-destructive text-sm">{errors.locationId}</p>}
               </div>
 

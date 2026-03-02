@@ -80,9 +80,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const validToken = await authService.getValidAccessToken();
 
       if (!validToken) {
-        // No valid token could be obtained (refresh token expired)
-        setIsAuthenticated(false);
-        setUser(null);
+        const hasRefreshToken = !!authCookies.getRefreshToken();
+        const refreshExpired = authService.isRefreshTokenExpired();
+
+        // Only hard logout if refresh token is truly invalid.
+        if (!hasRefreshToken || refreshExpired) {
+          setIsAuthenticated(false);
+          setUser(null);
+          authService.clearTokens();
+        }
+
         setIsLoading(false);
         return;
       }
@@ -138,9 +145,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err: any) {
       console.error('Failed to sync profile:', err);
       if (err.response?.status === 401) {
-        setIsAuthenticated(false);
-        setUser(null);
-        authService.clearTokens();
+        const hasRefreshToken = !!authCookies.getRefreshToken();
+        const refreshExpired = authService.isRefreshTokenExpired();
+
+        if (!hasRefreshToken || refreshExpired) {
+          setIsAuthenticated(false);
+          setUser(null);
+          authService.clearTokens();
+        }
       }
     } finally {
       setIsLoading(false);
@@ -197,7 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (import.meta.env.DEV) console.log('🚪 Logout detected from another tab');
         setIsAuthenticated(false);
         setUser(null);
-        authService.clearTokens();
+        authService.clearTokens({ broadcast: false });
       } else if (e.key === 'auth_sync_timestamp') {
         if (import.meta.env.DEV) console.log('🔄 Token update detected from another tab, syncing profile...');
         refreshProfile();

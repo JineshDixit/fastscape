@@ -193,12 +193,15 @@ export const authCookies = {
   getRememberMe: () => getCookie(COOKIE_NAMES.REMEMBER_ME) === 'true',
 
   // Clear all auth cookies
-  clearAll: () => {
+  clearAll: (options: { broadcast?: boolean } = {}) => {
+    const { broadcast = true } = options;
+
     Object.values(COOKIE_NAMES).forEach((cookieName) => {
       deleteCookie(cookieName);
     });
+
     // Trigger storage event for other tabs to notice logout
-    if (typeof window !== 'undefined') {
+    if (broadcast && typeof window !== 'undefined') {
       localStorage.removeItem('auth_sync_timestamp');
       localStorage.setItem('auth_logout_timestamp', Date.now().toString());
     }

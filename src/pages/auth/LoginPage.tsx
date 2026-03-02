@@ -23,7 +23,12 @@ const LoginPage = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  const from = location.state?.from || '/dashboard';
+  const normalizeFromPath = (path?: string): string => {
+    if (!path) return '/dashboard';
+    return path.startsWith('/admin/') ? path.replace('/admin', '') : path;
+  };
+
+  const from = normalizeFromPath(location.state?.from);
 
   useEffect(() => {
     if (isAuth) {
