@@ -28,7 +28,7 @@ export const ActiveBookingsSection: React.FC = () => {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => setSelectedBooking(null)} className="rounded-full font-semibold">
-          ← {t('backToActiveBookings')}
+          {'<-'} {t('backToActiveBookings')}
         </Button>
         <BookingDetails bookingId={selectedBooking.id} onClose={() => setSelectedBooking(null)} />
       </div>
@@ -113,3 +113,4 @@ export const ActiveBookingsSection: React.FC = () => {
     </div>
   );
 };
+

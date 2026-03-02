@@ -162,19 +162,19 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
             <div className="grid grid-cols-2 gap-4 border-t border-gray-200 pt-6 dark:border-gray-700">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-gray-500">Driver License (Front)</p>
-                <p className="text-sm text-green-600">✓ Uploaded</p>
+                <p className="text-sm text-green-600">Uploaded</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-gray-500">Driver License (Back)</p>
-                <p className="text-sm text-green-600">✓ Uploaded</p>
+                <p className="text-sm text-green-600">Uploaded</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-gray-500">Passport Photo</p>
-                <p className="text-sm text-green-600">✓ Uploaded</p>
+                <p className="text-sm text-green-600">Uploaded</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-gray-500">Selfie with License</p>
-                <p className="text-sm text-green-600">✓ Uploaded</p>
+                <p className="text-sm text-green-600">Uploaded</p>
               </div>
             </div>
 
@@ -327,3 +327,4 @@ const DocumentStep: React.FC<DocumentStepProps> = ({ profile, onNext, onBack, is
 };
 
 export default DocumentStep;
+

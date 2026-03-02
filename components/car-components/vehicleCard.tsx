@@ -27,7 +27,7 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle, onClick }) => {
 
   return (
     <div className="relative flex w-full flex-col items-center">
-      <div className="relative z-10 -mb-8 w-60">
+      <div className="relative z-10 -mb-8 w-full max-w-60">
         <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg">
           <img src={getDisplayImage()} alt={vehicle.model} className="h-full w-full object-cover" />
         </AspectRatio>
@@ -36,7 +36,7 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle, onClick }) => {
       <div className="flex w-full flex-col gap-2 rounded-2xl border-gray-100 bg-gray-50 px-6 pt-10 pb-5">
         <h3 className="text-sm font-semibold">{vehicle.make}</h3>
 
-        <div className="border-foreground/70 flex w-full shrink-0 items-center justify-between gap-2 border-b-2 pb-2 text-xs">
+        <div className="border-foreground/70 flex w-full shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b-2 pb-2 text-xs">
           <span>{tEnum(vehicle.fuelType.toLowerCase() as any)}</span>
           <span className="flex items-center gap-1">
             <Users2 className="text-primary h-3.5 w-3.5" /> {vehicle.passengerCapacity}

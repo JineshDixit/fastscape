@@ -74,7 +74,7 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
               alt="Fastscape Logo"
               width={270}
               height={68}
-              className="h-7 w-auto sm:h-9 md:h-12 lg:h-14"
+              className="h-9 w-auto md:h-12 lg:h-14"
               priority
             />
           </Link>

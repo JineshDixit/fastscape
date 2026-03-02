@@ -73,7 +73,7 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                         : 'hover:border-primary/20 border-gray-100 bg-white dark:border-gray-800 dark:bg-gray-900',
                     )}
                   >
-                    <div className="flex items-center gap-6">
+                    <div className="flex min-w-0 items-center gap-4 sm:gap-6">
                       <div
                         className={cn(
                           'flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-500',
@@ -82,11 +82,11 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                       >
                         <Icon className="h-7 w-7 stroke-[2.5]" />
                       </div>
-                      <div className="space-y-0.5">
+                      <div className="min-w-0 space-y-0.5">
                         <p className="text-sm font-black tracking-tight text-gray-950 uppercase dark:text-white">
                           {item.label}
                         </p>
-                        <p className="text-[10px] font-medium text-gray-400 italic opacity-80">{item.desc}</p>
+                        <p className="text-[10px] leading-relaxed font-medium text-gray-400 italic opacity-80">{item.desc}</p>
                       </div>
                     </div>
 

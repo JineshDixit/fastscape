@@ -57,6 +57,46 @@ export class DocumentService extends BaseApiService {
     super('/users');
   }
 
+  private getDefaultRequiredDocuments(bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE'): RequiredDocument[] {
+    return [
+      {
+        field: 'driverLicenseFront',
+        name: 'Driver License (Front)',
+        description: 'Front side image of your valid driving license',
+        required: true,
+        bookingTypes: ['SELF_DRIVE', 'CHAUFFEUR'],
+      },
+      {
+        field: 'driverLicenseBack',
+        name: 'Driver License (Back)',
+        description: 'Back side image of your valid driving license',
+        required: true,
+        bookingTypes: ['SELF_DRIVE', 'CHAUFFEUR'],
+      },
+      {
+        field: 'passportPhoto',
+        name: 'Passport Photo',
+        description: 'Clear image of passport photo page',
+        required: true,
+        bookingTypes: ['SELF_DRIVE', 'CHAUFFEUR'],
+      },
+      {
+        field: 'selfieWithLicense',
+        name: 'Selfie With License',
+        description: 'Selfie while holding your driving license',
+        required: true,
+        bookingTypes: ['SELF_DRIVE', 'CHAUFFEUR'],
+      },
+      {
+        field: 'internationalDrivingPermit',
+        name: 'International Driving Permit',
+        description: 'International permit if applicable',
+        required: false,
+        bookingTypes: ['SELF_DRIVE', 'CHAUFFEUR'],
+      },
+    ].filter((doc) => doc.bookingTypes.includes(bookingType));
+  }
+
   /**
    * Check document completeness for a user
    */
@@ -70,7 +110,11 @@ export class DocumentService extends BaseApiService {
   async getRequiredDocuments(
     bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE',
   ): Promise<ApiResponse<RequiredDocument[]>> {
-    return this.get<RequiredDocument[]>(`/documents/required?bookingType=${bookingType}`);
+    return {
+      success: true,
+      message: 'Required documents retrieved successfully',
+      data: this.getDefaultRequiredDocuments(bookingType),
+    };
   }
 
   /**
@@ -88,7 +132,33 @@ export class DocumentService extends BaseApiService {
   async getMissingDocuments(
     bookingType: 'SELF_DRIVE' | 'CHAUFFEUR' = 'SELF_DRIVE',
   ): Promise<ApiResponse<MissingDocument[]>> {
-    return this.get<MissingDocument[]>(`/documents/missing?bookingType=${bookingType}`);
+    const [requiredResponse, completenessResponse] = await Promise.all([
+      this.getRequiredDocuments(bookingType),
+      this.checkDocumentCompleteness(),
+    ]);
+
+    if (!requiredResponse.success || !completenessResponse.success) {
+      return {
+        success: false,
+        message: 'Unable to determine missing documents',
+        data: [],
+      };
+    }
+
+    const missingSet = new Set(completenessResponse.data?.missingDocuments || []);
+    const missingDocuments = (requiredResponse.data || [])
+      .filter((doc) => doc.required && missingSet.has(doc.field))
+      .map((doc) => ({
+        field: doc.field,
+        name: doc.name,
+        description: doc.description,
+      }));
+
+    return {
+      success: true,
+      message: 'Missing documents retrieved successfully',
+      data: missingDocuments,
+    };
   }
 
   /**
@@ -119,29 +189,36 @@ export class DocumentService extends BaseApiService {
    * Update document verification status (admin only)
    */
   async updateVerificationStatus(
-    verificationStatus: 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED',
-    verificationNotes?: string,
+    _verificationStatus: 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED',
+    _verificationNotes?: string,
   ): Promise<ApiResponse<DocumentStatus>> {
-    return this.put<DocumentStatus>('/documents/verification-status', {
-      verificationStatus,
-      verificationNotes,
-    });
+    return {
+      success: false,
+      message: 'Document verification status update is not supported by current backend API',
+      data: null as any,
+    };
   }
 
   /**
    * Update document expiry date
    */
-  async updateExpiryDate(expiryDate: Date): Promise<ApiResponse<void>> {
-    return this.put<void>('/documents/expiry-date', {
-      expiryDate: expiryDate.toISOString(),
-    });
+  async updateExpiryDate(_expiryDate: Date): Promise<ApiResponse<void>> {
+    return {
+      success: false,
+      message: 'Document expiry date update is not supported by current backend API',
+      data: undefined as any,
+    };
   }
 
   /**
    * Get documents expiring soon
    */
-  async getExpiringDocuments(daysAhead: number = 30): Promise<ApiResponse<string[]>> {
-    return this.get<string[]>(`/documents/expiring?daysAhead=${daysAhead}`);
+  async getExpiringDocuments(_daysAhead: number = 30): Promise<ApiResponse<string[]>> {
+    return {
+      success: false,
+      message: 'Expiring documents endpoint is not supported by current backend API',
+      data: [],
+    };
   }
 }
 

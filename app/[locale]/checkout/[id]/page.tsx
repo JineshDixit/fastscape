@@ -53,6 +53,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     isLoading: flowLoading,
     error: flowError,
     initializeFlow,
+    refreshProfile,
     proceedToNextStep,
     goToStepWithCleanup,
     clearError,
@@ -236,6 +237,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     try {
       clearAllErrors();
 
+      // Ensure identity validation in flow uses latest profile data after any edits.
+      await refreshProfile();
+
       // Check if documents will be skipped
       const skipDocs = await shouldSkipDocumentStep(bookingData.bookingType);
 
@@ -294,7 +298,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       // Refresh profile to get latest verification status
       console.log('[Checkout] Refreshing profile before proceeding...');
-      await initializeFlow(); // This will fetch fresh profile data
+      await refreshProfile();
 
       // Create booking if not already created
       const booking = await createBookingIfNeeded();
@@ -486,7 +490,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
             )}
 
             <Card className="overflow-hidden rounded-xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
-              <CardHeader className="border-b border-gray-50/50 px-8 pt-8 pb-4 dark:border-gray-800">
+              <CardHeader className="border-b border-gray-50/50 px-4 pt-6 pb-4 sm:px-8 sm:pt-8 dark:border-gray-800">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
@@ -495,7 +499,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                         {t('step', { number: STEPS.findIndex((s) => s.id === currentStep) + 1 })}
                       </span>
                     </div>
-                    <CardTitle className="text-2xl font-black tracking-tight text-gray-950 dark:text-white">
+                    <CardTitle className="text-xl font-black tracking-tight text-gray-950 sm:text-2xl dark:text-white">
                       {STEPS.find((s) => s.id === currentStep)?.label}
                     </CardTitle>
                     <CardDescription className="text-sm font-medium text-gray-400">
@@ -507,7 +511,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-8 pt-2">
+              <CardContent className="p-4 pt-2 sm:p-8 sm:pt-2">
                 {currentStep === 'IDENTITY' && (
                   <IdentityStep
                     profile={profile}
@@ -522,7 +526,9 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     onNext={handleDocumentsNext}
                     onBack={() => goToStepWithCleanup('IDENTITY')}
                     isLoading={flowLoading || bookingLoading}
-                    onProfileRefresh={initializeFlow}
+                    onProfileRefresh={async () => {
+                      await refreshProfile();
+                    }}
                   />
                 )}
 
@@ -544,7 +550,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                     </div>
 
                     <div className="space-y-4">
-                      <h2 className="text-4xl font-black tracking-tighter text-gray-950 dark:text-white">
+                      <h2 className="text-3xl font-black tracking-tighter text-gray-950 sm:text-4xl dark:text-white">
                         {t('successMessage')}
                       </h2>
                       <p className="mx-auto max-w-sm text-lg leading-relaxed font-medium text-gray-400">
@@ -636,7 +642,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                           {t('missionWindow')}
                         </p>
                         <p className="text-xs font-bold text-gray-950 dark:text-white">
-                          {bookingData.pickupDate ? parseISO(bookingData.pickupDate).toLocaleDateString() : t('tbd')} —{' '}
+                          {bookingData.pickupDate ? parseISO(bookingData.pickupDate).toLocaleDateString() : t('tbd')} -{' '}
                           {bookingData.dropoffDate ? parseISO(bookingData.dropoffDate).toLocaleDateString() : t('tbd')}
                         </p>
                       </div>
@@ -719,3 +725,4 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 };
 
 export default CheckoutPage;
+

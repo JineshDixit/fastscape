@@ -123,7 +123,7 @@ export const UserProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl space-y-6">
+    <div className="container mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
       {/* Profile Header Card */}
       <Card className="overflow-hidden pt-0">
         <div className="h-24 bg-linear-to-r from-blue-500 to-purple-600 sm:h-32" />
@@ -217,14 +217,14 @@ export const UserProfilePage: React.FC = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 rounded-lg">
-          <TabsTrigger value="overview" className="rounded-md">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-lg sm:grid-cols-3">
+          <TabsTrigger value="overview" className="rounded-md text-xs sm:text-sm">
             {t('overview')}
           </TabsTrigger>
-          <TabsTrigger value="active" className="rounded-md">
+          <TabsTrigger value="active" className="rounded-md text-xs sm:text-sm">
             {tNav('activeBookings')}
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-md">
+          <TabsTrigger value="history" className="rounded-md text-xs sm:text-sm">
             {tNav('bookingHistory')}
           </TabsTrigger>
         </TabsList>

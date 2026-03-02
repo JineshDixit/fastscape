@@ -207,7 +207,7 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
               {isCheckingAvailability ? 'Checking...' : 'Check Availability'}
             </Button>
             {availabilityChecked && (
-              <p className="text-center text-sm text-green-600">✓ Vehicle is available for selected dates</p>
+              <p className="text-center text-sm text-green-600">Vehicle is available for selected dates</p>
             )}
           </div>
 
@@ -275,3 +275,4 @@ export default function BookingForm({ vehicle, onBookingCreated, onCancel }: Boo
     </Card>
   );
 }
+

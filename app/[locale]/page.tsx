@@ -58,14 +58,14 @@ const Home = () => {
             className="w-full object-cover"
           />
 
-          <div className="grid grid-cols-[1fr] gap-6 md:grid-cols-[427px_1fr]">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="h-full overflow-hidden rounded-3xl">
               <Image
                 src="/images/hero-chauffeurs.png"
                 alt="Professional Chauffeur Service"
                 width={427}
                 height={427}
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
             <div className="h-full">
@@ -132,7 +132,7 @@ const Home = () => {
           )}
           <section className="mt-15 px-4">
             <h3 className="text-center text-lg font-semibold">{t('brands')}</h3>
-            <div className="mt-5 grid grid-cols-2 gap-4 opacity-55 select-none sm:grid-cols-3 md:flex md:items-center md:justify-center md:gap-5">
+            <div className="mt-5 grid grid-cols-2 gap-4 opacity-55 select-none sm:grid-cols-3 md:flex md:flex-wrap md:items-center md:justify-center md:gap-5">
               {[
                 { label: 'BMW', img: '/brands/bmw-brand.png' },
                 { label: 'Jaguar', img: '/brands/jaguar-brand.png' },
@@ -153,13 +153,13 @@ const Home = () => {
               ))}
             </div>
           </section>
-          <section className="border-border bg-muted mt-15 w-full rounded-3xl border py-14">
+          <section className="border-border bg-muted mt-15 w-full rounded-3xl border py-10 sm:py-14">
             <h3 className="mb-14 text-center text-lg font-semibold">{t('easyRide.title')}</h3>
 
-            <div className="relative mx-auto max-w-3xl px-12">
-              <Separator className="bg-border relative mx-auto -mb-6 max-w-2/3" />
+            <div className="relative mx-auto max-w-4xl px-4 sm:px-8">
+              <Separator className="bg-border relative mx-auto -mb-6 hidden max-w-2/3 md:block" />
 
-              <div className="relative z-10 flex justify-between">
+              <div className="relative z-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {[
                   {
                     step: '01',
@@ -177,7 +177,7 @@ const Home = () => {
                     desc: t('easyRide.step3Desc'),
                   },
                 ].map((item) => (
-                  <div key={item.step} className="flex max-w-[200px] flex-col items-center text-center">
+                  <div key={item.step} className="flex flex-col items-center text-center">
                     <div className="relative mb-5 flex h-12 w-12 items-center justify-center">
                       <div className="bg-primary absolute h-12 w-12 rotate-45 rounded-lg" />
                       <span className="text-primary-foreground relative text-sm font-semibold">{item.step}</span>
@@ -192,7 +192,7 @@ const Home = () => {
           </section>
           <section className="mt-15">
             <h3 className="text-center text-lg font-semibold">{t('whyChoose.title')}</h3>
-            <div className="mt-5 flex items-center justify-between gap-5">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 {
                   title: t('whyChoose.driverTitle'),
@@ -207,21 +207,27 @@ const Home = () => {
                   desc: t('whyChoose.supportDesc'),
                 },
               ].map((items, index) => (
-                <div key={index} className="space-y-2">
+                <div key={index} className="bg-muted/40 space-y-2 rounded-2xl p-4">
                   <h4 className="text-primary font-semibold">{items.title}</h4>
-                  <p className="text-foreground">{items.desc}</p>
+                  <p className="text-foreground text-sm leading-relaxed">{items.desc}</p>
                 </div>
               ))}
             </div>
           </section>
           <section className="mt-17">
-            <div className="grid grid-cols-[auto_1fr] gap-20">
-              <Image src="/images/hero-driver.png" alt="hero-driver" width={350} height={350} />
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,350px)_1fr] lg:gap-16">
+              <Image
+                src="/images/hero-driver.png"
+                alt="hero-driver"
+                width={350}
+                height={350}
+                className="mx-auto h-auto w-full max-w-[350px]"
+              />
               <div className="my-auto space-y-3 text-start">
-                <h4 className="text-primary">{t('partnerships.subtitle')}</h4>
-                <h2 className="text-3xl font-bold">{t('partnerships.title')}</h2>
-                <p className="text-foreground">{t('partnerships.desc')}</p>
-                <div className="flex items-center gap-8">
+                <h4 className="text-primary text-sm sm:text-base">{t('partnerships.subtitle')}</h4>
+                <h2 className="text-2xl font-bold sm:text-3xl">{t('partnerships.title')}</h2>
+                <p className="text-foreground text-sm leading-relaxed sm:text-base">{t('partnerships.desc')}</p>
+                <div className="flex flex-wrap items-center gap-6 sm:gap-8">
                   <div>
                     <h2 className="text-primary text-3xl font-bold">1500+</h2>
                     <span>{t('partnerships.statsVehicles')}</span>

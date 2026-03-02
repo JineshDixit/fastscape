@@ -175,8 +175,8 @@ const VehiclePage = () => {
           </section>
 
           {pagination && pagination.totalPages > 1 && (
-            <Pagination className="mt-4">
-              <PaginationContent>
+            <Pagination className="mt-4 overflow-x-auto">
+              <PaginationContent className="min-w-max">
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(pagination.page - 1)}

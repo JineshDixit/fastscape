@@ -172,9 +172,9 @@ export default function PaymentOptionsForm({
                   <div className="mt-3 flex items-start gap-2 rounded bg-blue-100 p-2 text-xs text-gray-600">
                     <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
                     <div>
-                      <p>• Secure your booking with a small deposit</p>
-                      <p>• Pay the remaining balance when you return the vehicle</p>
-                      <p>• Additional charges (if any) will be added to final payment</p>
+                      <p>- Secure your booking with a small deposit</p>
+                      <p>- Pay the remaining balance when you return the vehicle</p>
+                      <p>- Additional charges (if any) will be added to final payment</p>
                     </div>
                   </div>
                 </div>
@@ -221,9 +221,9 @@ export default function PaymentOptionsForm({
                   <div className="mt-3 flex items-start gap-2 rounded bg-green-100 p-2 text-xs text-gray-600">
                     <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
                     <div>
-                      <p>• Complete your payment now and you're all set</p>
-                      <p>• No additional payments required at dropoff</p>
-                      <p>• Get a 5% discount on total booking amount</p>
+                      <p>- Complete your payment now and you're all set</p>
+                      <p>- No additional payments required at dropoff</p>
+                      <p>- Get a 5% discount on total booking amount</p>
                     </div>
                   </div>
                 </div>
@@ -294,3 +294,4 @@ export default function PaymentOptionsForm({
     </Card>
   );
 }
+

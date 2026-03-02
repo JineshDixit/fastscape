@@ -31,10 +31,10 @@ apiClient.interceptors.request.use(
 
 // Track active refresh state to prevent multiple concurrent refresh calls
 let isRefreshing = false;
-let refreshQueue: Array<(token: string) => void> = [];
+let refreshQueue: Array<(token: string | null) => void> = [];
 
 const processQueue = (token: string | null = null) => {
-  refreshQueue.forEach((callback) => callback(token || ''));
+  refreshQueue.forEach((callback) => callback(token));
   refreshQueue = [];
 };
 
@@ -51,8 +51,13 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       // If a refresh is already in progress, queue this request
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          refreshQueue.push((token: string) => {
+        return new Promise((resolve, reject) => {
+          refreshQueue.push((token: string | null) => {
+            if (!token) {
+              reject(new Error('Session refresh failed'));
+              return;
+            }
+            originalRequest.headers = originalRequest.headers || {};
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(apiClient(originalRequest));
           });
@@ -71,12 +76,13 @@ apiClient.interceptors.response.use(
         // If it was less than 10 seconds ago, consider it active
         if (now - refreshTime < 10000) {
           isRefreshing = true;
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
             // Listen for storage event from other tab
             const handleStorageChange = (e: StorageEvent) => {
               if (e.key === LS_NEW_ACCESS_TOKEN && e.newValue) {
                 window.removeEventListener('storage', handleStorageChange);
                 isRefreshing = false;
+                originalRequest.headers = originalRequest.headers || {};
                 originalRequest.headers.Authorization = `Bearer ${e.newValue}`;
                 resolve(apiClient(originalRequest));
                 processQueue(e.newValue);
@@ -92,15 +98,23 @@ apiClient.interceptors.response.use(
                 // If it timed out, try to refresh ourselves if no new token appeared
                 const token = authCookies.getAccessToken();
                 if (token) {
+                  originalRequest.headers = originalRequest.headers || {};
                   originalRequest.headers.Authorization = `Bearer ${token}`;
                   resolve(apiClient(originalRequest));
+                } else {
+                  reject(new Error('Session refresh timed out'));
                 }
               }
             }, 10000);
 
-            refreshQueue.push((token: string) => {
+            refreshQueue.push((token: string | null) => {
               isRefreshing = false;
               window.removeEventListener('storage', handleStorageChange);
+              if (!token) {
+                reject(new Error('Session refresh failed'));
+                return;
+              }
+              originalRequest.headers = originalRequest.headers || {};
               originalRequest.headers.Authorization = `Bearer ${token}`;
               resolve(apiClient(originalRequest));
             });
@@ -143,24 +157,27 @@ apiClient.interceptors.response.use(
             processQueue(accessToken);
 
             // Retry original request with new token
+            originalRequest.headers = originalRequest.headers || {};
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return apiClient(originalRequest);
           }
+          processQueue(null);
+        } else {
+          localStorage.removeItem(LS_THROTTLE_REFRESH);
+          processQueue(null);
         }
       } catch (refreshError: any) {
-        // Refresh failed - only clear and redirect if it's an auth error (400 or 401)
+        // Refresh failed - clear session only on definitive auth failure and no replacement tokens.
         const isAuthError = refreshError.response?.status === 401 || refreshError.response?.status === 400;
+        const hasSessionAfterFailure = !!authCookies.getAccessToken() && !!authCookies.getRefreshToken();
 
         if (isAuthError) {
           localStorage.removeItem(LS_THROTTLE_REFRESH);
           localStorage.removeItem(LS_NEW_ACCESS_TOKEN);
           processQueue(null);
           console.error('Token refresh failed (Unauthorized):', refreshError);
-          authCookies.clearAll();
-
-          // Redirect to login if in browser
-          if (typeof window !== 'undefined') {
-            window.location.href = '/';
+          if (!hasSessionAfterFailure) {
+            authCookies.clearAll();
           }
         } else {
           // For network errors or 500s, keep the state and let the request fail

@@ -30,7 +30,7 @@ const Footer = () => {
             </Link>
 
             <p className="text-xs opacity-90 sm:text-sm">
-              © {new Date().getFullYear()} {t('rights')}.
+              (c) {new Date().getFullYear()} {t('rights')}.
             </p>
           </div>
 
@@ -55,3 +55,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

@@ -476,10 +476,10 @@ export default function PaymentForm({
             <div className="flex items-start gap-2">
               <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
-                <p>• Your payment is secured with 256-bit SSL encryption</p>
-                <p>• You'll receive a confirmation email after successful payment</p>
-                <p>• Refunds are processed within 5-7 business days</p>
-                {selectedPaymentOption === 'full' && <p>• Full payment includes 5% discount on total booking amount</p>}
+                <p>- Your payment is secured with 256-bit SSL encryption</p>
+                <p>- You'll receive a confirmation email after successful payment</p>
+                <p>- Refunds are processed within 5-7 business days</p>
+                {selectedPaymentOption === 'full' && <p>- Full payment includes 5% discount on total booking amount</p>}
               </div>
             </div>
           </div>
@@ -490,9 +490,9 @@ export default function PaymentForm({
             <div className="flex items-start gap-2">
               <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
-                <p>• Please bring exact amount in cash</p>
-                <p>• Payment must be completed before vehicle handover</p>
-                <p>• Receipt will be provided at the time of payment</p>
+                <p>- Please bring exact amount in cash</p>
+                <p>- Payment must be completed before vehicle handover</p>
+                <p>- Receipt will be provided at the time of payment</p>
               </div>
             </div>
           </div>
@@ -503,10 +503,10 @@ export default function PaymentForm({
             <div className="flex items-start gap-2">
               <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
-                <p>• Payment due when returning the vehicle</p>
-                <p>• Cash or card payment accepted at dropoff</p>
-                <p>• Final amount may include any additional charges</p>
-                {paymentType === 'balance' && <p>• Late return and chauffeur fees will be added to final payment</p>}
+                <p>- Payment due when returning the vehicle</p>
+                <p>- Cash or card payment accepted at dropoff</p>
+                <p>- Final amount may include any additional charges</p>
+                {paymentType === 'balance' && <p>- Late return and chauffeur fees will be added to final payment</p>}
               </div>
             </div>
           </div>
@@ -521,7 +521,7 @@ export default function PaymentForm({
                 <p className="mb-1 text-sm font-medium text-red-600">Payment Validation Errors:</p>
                 <ul className="space-y-1 text-sm text-red-600">
                   {validationErrors.map((error, index) => (
-                    <li key={index}>• {error}</li>
+                    <li key={index}>- {error}</li>
                   ))}
                 </ul>
               </div>
@@ -579,3 +579,4 @@ export default function PaymentForm({
     </Card>
   );
 }
+

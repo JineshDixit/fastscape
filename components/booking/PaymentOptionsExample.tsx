@@ -162,28 +162,28 @@ export default function PaymentOptionsExample() {
             <div>
               <h4 className="mb-2 font-medium text-blue-600">PaymentOptionsForm</h4>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• Deposit vs full payment selection</li>
-                <li>• Automatic discount calculation</li>
-                <li>• Payment breakdown display</li>
-                <li>• Responsive design</li>
+                <li>- Deposit vs full payment selection</li>
+                <li>- Automatic discount calculation</li>
+                <li>- Payment breakdown display</li>
+                <li>- Responsive design</li>
               </ul>
             </div>
             <div>
               <h4 className="mb-2 font-medium text-green-600">DropoffPaymentCalculator</h4>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• Real-time payment calculation</li>
-                <li>• Delay charge computation</li>
-                <li>• Timeline comparison</li>
-                <li>• Payment breakdown</li>
+                <li>- Real-time payment calculation</li>
+                <li>- Delay charge computation</li>
+                <li>- Timeline comparison</li>
+                <li>- Payment breakdown</li>
               </ul>
             </div>
             <div>
               <h4 className="mb-2 font-medium text-purple-600">AdditionalChargesDisplay</h4>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• Multiple charge types</li>
-                <li>• Interactive charge management</li>
-                <li>• Visual charge categorization</li>
-                <li>• Total calculation</li>
+                <li>- Multiple charge types</li>
+                <li>- Interactive charge management</li>
+                <li>- Visual charge categorization</li>
+                <li>- Total calculation</li>
               </ul>
             </div>
           </div>
@@ -192,3 +192,4 @@ export default function PaymentOptionsExample() {
     </div>
   );
 }
+

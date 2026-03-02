@@ -177,7 +177,7 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
               </Badge>
             </div>
             <p className="text-lg font-medium text-gray-500">
-              {vehicle.bodyType} • {vehicle.city}
+              {vehicle.bodyType} - {vehicle.city}
             </p>
           </div>
 
@@ -252,3 +252,4 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
 };
 
 export default VehicleDetailsPage;
+

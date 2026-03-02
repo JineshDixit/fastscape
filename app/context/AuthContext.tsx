@@ -70,10 +70,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       console.error('Error fetching user:', error);
-      // Only clear auth state if it's a 401 (unauthorized) error
-      if (error?.response?.status === 401) {
-        console.log('401 error, clearing auth state');
-        clearAuthState();
+      const status = error?.response?.status;
+      if (status === 401) {
+        const hasRefreshToken = !!authCookies.getRefreshToken();
+
+        // Preserve session if refresh token exists; axios/auth refresh flow can recover.
+        if (!hasRefreshToken) {
+          console.log('401 without refresh token, clearing auth state');
+          clearAuthState();
+        } else {
+          console.log('401 with refresh token present, preserving auth state for refresh recovery');
+        }
       } else {
         console.log('Non-401 error, keeping current auth state');
       }
@@ -106,9 +113,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         throw new Error('No refresh token available');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Token refresh failed:', error);
-      clearAuthState();
+      const status = error?.response?.status;
+      const isAuthError = status === 400 || status === 401;
+
+      // Only clear session on definitive auth failures, not transient network/server issues.
+      if (isAuthError || !authCookies.getRefreshToken()) {
+        clearAuthState();
+      }
       throw error; // Re-throw to let caller handle it
     }
   }, [fetchCurrentUser, clearAuthState]);

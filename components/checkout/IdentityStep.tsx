@@ -350,7 +350,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       </div>
 
       {/* Driving Information Section */}
-      <div className="border-primary/10 bg-primary/5 dark:bg-primary/5 space-y-6 rounded-3xl border-2 p-8">
+      <div className="border-primary/10 space-y-6 rounded-xl border-2 p-8">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <Car className="text-primary h-5 w-5" />
@@ -406,7 +406,6 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
                 id="licenseCountry"
                 type="text"
                 label="License Issuing Country *"
-                placeholder="e.g., United Arab Emirates"
                 value={drivingInfo.licenseIssuingCountry}
                 onChange={(e) => handleDrivingInfoChange('licenseIssuingCountry', e.target.value)}
                 className="h-12 rounded-xl"
@@ -432,10 +431,10 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
                 label="Driving Experience (Years) *"
                 min="0"
                 max="80"
-                placeholder="e.g., 5"
                 value={drivingInfo.drivingExperienceYears}
                 onChange={(e) => handleDrivingInfoChange('drivingExperienceYears', e.target.value)}
                 className="h-12 rounded-xl"
+                containerClassName='md:mt-[16px]'
               />
             </div>
 
@@ -447,7 +446,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
                 value={drivingInfo.visaStatus}
                 onValueChange={(value) => handleDrivingInfoChange('visaStatus', value)}
               >
-                <SelectTrigger className="h-12 rounded-xl">
+                <SelectTrigger className="h-12 w-full">
                   <SelectValue placeholder="Select visa status" />
                 </SelectTrigger>
                 <SelectContent>

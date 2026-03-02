@@ -43,8 +43,8 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
   };
 
   return (
-    <div className={`w-current relative flex h-full flex-col items-center ${className || ''} w-full`}>
-      <div className="absolute top-0 left-10 z-20">
+    <div className={`relative flex h-full w-full flex-col items-center ${className || ''}`}>
+      <div className="absolute top-0 left-4 z-20 sm:left-10">
         <Badge className="rounded-full border-none bg-[#EFBF5F] px-6 py-2 text-sm font-medium text-gray-800 hover:bg-[#dfaf4f]">
           Hot Choice
         </Badge>
@@ -60,10 +60,10 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
         </AspectRatio>
       </div>
 
-      <div className="border-border bg-muted flex w-full flex-col items-center gap-6 rounded-3xl border p-10 text-start">
+      <div className="border-border bg-muted flex w-full flex-col items-center gap-6 rounded-3xl border p-6 text-start sm:p-10">
         <div className="flex w-full flex-col gap-4">
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-lg mt-2 md:mt-0 font-bold text-gray-900 sm:text-xl">
               {vehicle.make} {vehicle.model} {vehicle.year} {vehicle.trim}
             </h3>
 
@@ -93,16 +93,16 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
+          <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2 sm:gap-4">
             <Button
               variant="default"
-              className="rounded-xl bg-black py-5 font-semibold text-white hover:bg-gray-800"
+              className="rounded-xl bg-black py-5 text-sm font-semibold text-white hover:bg-gray-800"
               onClick={() => router.push(`/vehicles/${vehicle.id}`)}
             >
               View Car Details
             </Button>
             <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/80 rounded-xl border-none py-5 font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/80 rounded-xl border-none py-5 text-sm font-semibold"
               onClick={() => router.push(`/vehicles/${vehicle.id}?action=book`)}
             >
               Book the Car

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios';
 import { Card, CardContent } from '@/components/ui/card';
@@ -85,7 +85,6 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
     <Card className="border-muted/60 overflow-hidden p-0 transition-all hover:shadow-lg">
       <CardContent className="p-0">
         <div className="flex h-full flex-col">
-          {/* Top Bar - Localized Refresh and Badges */}
           <div className="bg-muted/30 border-muted/40 flex items-center justify-between border-b px-4 py-2">
             <div className="flex gap-2">
               <Badge
@@ -113,20 +112,6 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking: initialBookin
           </div>
 
           <div className="flex flex-1 flex-col sm:flex-row">
-            {/* Vehicle Image */}
-            <div className="bg-muted/20 relative h-40 w-full shrink-0 overflow-hidden sm:h-auto sm:w-44">
-              {booking.vehicle?.media?.[0]?.leftSideImage ? (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000'}/${booking.vehicle.media[0].leftSideImage.replace(/\\/g, '/')}`}
-                  alt={`${booking.vehicle.make} ${booking.vehicle.model}`}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <Car className="text-muted-foreground/40 h-10 w-10" />
-                </div>
-              )}
-            </div>
 
             {/* Booking Details */}
             <div className="flex flex-1 flex-col p-4 sm:p-5">

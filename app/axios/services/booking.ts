@@ -1,4 +1,5 @@
 import { BaseApiService } from '../base';
+import apiClient from '../client';
 import type {
   ApiResponse,
   Booking,
@@ -14,6 +15,7 @@ import type {
   PaymentBreakdown,
   ExtendBookingResponse,
   CancelBookingResponse,
+  Vehicle,
 } from '../../../common/interfaces';
 
 export class BookingService extends BaseApiService {
@@ -25,7 +27,42 @@ export class BookingService extends BaseApiService {
    * Check vehicle availability for booking dates
    */
   async checkAvailability(data: CheckAvailabilityRequest): Promise<ApiResponse<AvailabilityResponse>> {
-    return this.post<AvailabilityResponse>('/check-availability', data);
+    const availabilityResponse = await apiClient.get<ApiResponse<{ isAvailable: boolean }>>(
+      `/vehicles/${data.vehicleId}/availability`,
+      {
+        params: {
+          pickupDate: data.startDatetime,
+          dropoffDate: data.endDatetime,
+        },
+      },
+    );
+
+    const start = new Date(data.startDatetime);
+    const end = new Date(data.endDatetime);
+    const durationMs = Math.max(0, end.getTime() - start.getTime());
+    const durationHours = Math.ceil(durationMs / (1000 * 60 * 60));
+    const durationDays = Math.max(1, Math.ceil(durationHours / 24));
+
+    return {
+      success: availabilityResponse.data.success,
+      message: availabilityResponse.data.message,
+      data: {
+        isAvailable: availabilityResponse.data.data?.isAvailable ?? false,
+        vehicle: {
+          id: data.vehicleId,
+          make: '',
+          model: '',
+          isAvailable: availabilityResponse.data.data?.isAvailable ?? false,
+        },
+        conflictingBookings: [],
+        requestedPeriod: {
+          start: data.startDatetime,
+          end: data.endDatetime,
+          durationHours,
+          durationDays,
+        },
+      },
+    };
   }
 
   /**
@@ -34,7 +71,53 @@ export class BookingService extends BaseApiService {
   async getBookingQuote(
     data: CreateBookingRequest,
   ): Promise<ApiResponse<{ availability: AvailabilityResponse; calculation: PaymentBreakdown }>> {
-    return this.post<{ availability: AvailabilityResponse; calculation: PaymentBreakdown }>('/quote', data);
+    const availability = await this.checkAvailability({
+      vehicleId: data.vehicleId,
+      startDatetime: data.startDatetime,
+      endDatetime: data.endDatetime,
+    });
+
+    if (!availability.success || !availability.data?.isAvailable) {
+      return {
+        success: false,
+        message: availability.message || 'Vehicle is not available for the selected dates',
+        data: null as any,
+      };
+    }
+
+    const vehicleResponse = await apiClient.get<ApiResponse<Vehicle>>(`/vehicles/${data.vehicleId}`);
+    const vehicle = vehicleResponse.data.data;
+
+    const start = new Date(data.startDatetime);
+    const end = new Date(data.endDatetime);
+    const durationMs = Math.max(0, end.getTime() - start.getTime());
+    const daysCount = Math.max(1, Math.ceil(durationMs / (1000 * 60 * 60 * 24)));
+
+    const pricePerDay = Number(vehicle?.pricePerDay || 0);
+    const baseAmount = pricePerDay * daysCount;
+    const depositPercentage = Number(vehicle?.depositPercentage || 30);
+    const depositAmount = (baseAmount * depositPercentage) / 100;
+    const balanceAmount = baseAmount - depositAmount;
+    const taxAmount = 0;
+    const totalAmount = baseAmount + taxAmount;
+
+    return {
+      success: true,
+      message: 'Booking quote calculated successfully',
+      data: {
+        availability: availability.data,
+        calculation: {
+          baseAmount: baseAmount.toFixed(2),
+          depositAmount: depositAmount.toFixed(2),
+          balanceAmount: balanceAmount.toFixed(2),
+          taxAmount: taxAmount.toFixed(2),
+          totalAmount: totalAmount.toFixed(2),
+          currency: vehicle?.currency || 'USD',
+          daysCount,
+          depositPercentage,
+        },
+      },
+    };
   }
 
   /**
@@ -98,28 +181,67 @@ export class BookingService extends BaseApiService {
     bookingId: string,
     data?: { paymentIntentId?: string; actualPickupDatetime?: string },
   ): Promise<ApiResponse<Booking>> {
-    return this.post<Booking>(`/${bookingId}/confirm`, data);
+    return this.put<Booking>(`/${bookingId}`, {
+      bookingStatus: 'CONFIRMED',
+      ...(data?.actualPickupDatetime ? { actualPickupDatetime: data.actualPickupDatetime } : {}),
+    } as any);
   }
 
   /**
    * Start a booking (vehicle pickup)
    */
   async startBooking(bookingId: string): Promise<ApiResponse<Booking>> {
-    return this.post<Booking>(`/${bookingId}/start`);
+    const response = await apiClient.put<ApiResponse<Booking>>(`/payments/pickup/${bookingId}`, {});
+    return response.data;
   }
 
   /**
    * Complete a booking (vehicle dropoff)
    */
   async completeBooking(bookingId: string, data?: { actualDropoffDatetime?: string }): Promise<ApiResponse<Booking>> {
-    return this.post<Booking>(`/${bookingId}/complete`, data);
+    const response = await apiClient.put<ApiResponse<{ booking?: Booking }>>(`/payments/dropoff/${bookingId}`, {
+      ...(data?.actualDropoffDatetime ? { actualDropoffTime: data.actualDropoffDatetime } : {}),
+    });
+
+    if (!response.data.success) {
+      return {
+        success: false,
+        message: response.data.message,
+        data: null as any,
+      };
+    }
+
+    return {
+      success: true,
+      message: response.data.message,
+      data: response.data.data?.booking as Booking,
+    };
   }
 
   /**
    * Extend a booking (change end date)
    */
   async extendBooking(bookingId: string, data: ExtendBookingRequest): Promise<ApiResponse<ExtendBookingResponse>> {
-    return this.post<ExtendBookingResponse>(`/${bookingId}/extend`, data);
+    const updateResponse = await this.put<Booking>(`/${bookingId}`, {
+      endDatetime: data.newEndDatetime,
+    });
+
+    if (!updateResponse.success || !updateResponse.data) {
+      return {
+        success: false,
+        message: updateResponse.message || 'Failed to extend booking',
+        data: null as any,
+      };
+    }
+
+    return {
+      success: true,
+      message: updateResponse.message || 'Booking extended successfully',
+      data: {
+        booking: updateResponse.data,
+        additionalCost: 0,
+      },
+    };
   }
 
   /**

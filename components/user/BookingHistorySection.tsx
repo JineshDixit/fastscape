@@ -51,7 +51,7 @@ export const BookingHistorySection: React.FC = () => {
           onClick={() => setSelectedBooking(null)}
           className="hover:bg-primary/5 text-primary rounded-full font-semibold"
         >
-          ← {t('backToHistory')}
+          {'<-'} {t('backToHistory')}
         </Button>
         <BookingDetails bookingId={selectedBooking.id} onClose={() => setSelectedBooking(null)} />
       </div>
@@ -81,9 +81,9 @@ export const BookingHistorySection: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('allStatuses')}</SelectItem>
-                  <SelectItem value="COMPLETED">{tBooking('status.completed')}</SelectItem>
-                  <SelectItem value="CANCELLED">{tBooking('status.cancelled')}</SelectItem>
-                  <SelectItem value="DROPPED_OFF">{tBooking('status.droppedOff')}</SelectItem>
+                  <SelectItem value="COMPLETED">{tBooking('status.COMPLETED')}</SelectItem>
+                  <SelectItem value="CANCELLED">{tBooking('status.CANCELLED')}</SelectItem>
+                  <SelectItem value="DROPPED_OFF">{tBooking('status.DROPPED_OFF')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -161,3 +161,4 @@ export const BookingHistorySection: React.FC = () => {
     </div>
   );
 };
+

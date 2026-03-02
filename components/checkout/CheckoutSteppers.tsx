@@ -15,14 +15,14 @@ const CheckoutSteppers: React.FC<CheckoutSteppersProps> = ({ currentStep, steps 
   const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
 
   return (
-    <div className="w-full py-4">
-      <div className="relative flex justify-between px-2 sm:px-10">
+    <div className="w-full overflow-x-auto py-4">
+      <div className="relative mx-auto flex min-w-[520px] justify-between px-2 sm:min-w-0 sm:px-10">
         {/* Progress Bar Background */}
-        <div className="absolute top-4 left-0 h-[2px] w-full -translate-y-1/2 bg-gray-100 dark:bg-gray-800" />
+        <div className="absolute top-4 left-0 h-0.5 w-full -translate-y-1/2 bg-gray-100 dark:bg-gray-800" />
 
         {/* Progress Bar Active with Gradient */}
         <div
-          className="from-primary to-secondary absolute top-4 left-0 h-[2px] -translate-y-1/2 bg-linear-to-r shadow-[0_0_8px_rgba(6,176,252,0.2)] transition-all duration-700 ease-in-out"
+          className="from-primary to-secondary absolute top-4 left-0 h-0.5 -translate-y-1/2 bg-linear-to-r shadow-[0_0_8px_rgba(6,176,252,0.2)] transition-all duration-700 ease-in-out"
           style={{ width: `${(currentStepIndex / (steps.length - 1)) * 100}%` }}
         />
 
@@ -66,7 +66,7 @@ const CheckoutSteppers: React.FC<CheckoutSteppersProps> = ({ currentStep, steps 
               </div>
 
               {/* Label */}
-              <div className="absolute top-10 flex flex-col items-center">
+              <div className="absolute top-10 hidden flex-col items-center sm:flex">
                 <span
                   className={cn(
                     'text-[9px] font-black tracking-[0.2em] uppercase transition-all duration-500',

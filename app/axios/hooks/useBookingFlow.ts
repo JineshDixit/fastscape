@@ -19,9 +19,10 @@ interface BookingFlowState {
 
 interface UseBookingFlowReturn extends BookingFlowState {
   initializeFlow: () => Promise<void>;
+  refreshProfile: () => Promise<UserProfile | null>;
   proceedToNextStep: () => Promise<void>;
   goToStep: (step: BookingFlowStep) => void;
-  validateCurrentStep: () => Promise<boolean>;
+  validateCurrentStep: (profileOverride?: UserProfile | null) => Promise<boolean>;
   goToStepWithCleanup: (step: BookingFlowStep) => void;
   clearError: () => void;
   profile: UserProfile | null;
@@ -37,7 +38,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
   });
 
   const { profile, fetchProfile, isLoading: profileLoading } = useUser();
-  const { shouldSkipDocumentStep, checkBookingEligibility, isLoading: documentLoading } = useDocument();
+  const { shouldSkipDocumentStep, isLoading: documentLoading } = useDocument();
   const { isLoading: bookingLoading } = useBooking();
   const { bookingData } = useVehicle();
 
@@ -56,14 +57,21 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
     setState((prev) => ({ ...prev, isLoading: loading }));
   }, []);
 
-  const validateIdentityStep = useCallback(async (): Promise<boolean> => {
-    if (!profile) {
+  const validateIdentityStep = useCallback(async (profileOverride?: UserProfile | null): Promise<boolean> => {
+    const profileToValidate = profileOverride ?? profile;
+
+    if (!profileToValidate) {
       setError('User profile not loaded');
       return false;
     }
 
     // Check if basic user info is complete
-    const hasBasicInfo = !!(profile.firstName && profile.lastName && profile.phone && profile.email);
+    const hasBasicInfo = !!(
+      profileToValidate.firstName &&
+      profileToValidate.lastName &&
+      profileToValidate.phone &&
+      profileToValidate.email
+    );
 
     if (!hasBasicInfo) {
       setError('Please complete your basic profile information');
@@ -72,9 +80,9 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
 
     // Check if driving info is complete
     const hasDrivingInfo = !!(
-      profile.licenseIssuingCountry &&
-      profile.licenseExpiryDate &&
-      profile.drivingExperienceYears !== undefined
+      profileToValidate.licenseIssuingCountry &&
+      profileToValidate.licenseExpiryDate &&
+      profileToValidate.drivingExperienceYears !== undefined
     );
 
     if (!hasDrivingInfo) {
@@ -83,8 +91,8 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
     }
 
     // Check if license is not expired
-    if (profile.licenseExpiryDate) {
-      const expiryDate = new Date(profile.licenseExpiryDate);
+    if (profileToValidate.licenseExpiryDate) {
+      const expiryDate = new Date(profileToValidate.licenseExpiryDate);
       if (expiryDate <= new Date()) {
         setError('Your driving license has expired');
         return false;
@@ -109,12 +117,12 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
     }
   }, [profile, setError]);
 
-  const validateCurrentStep = useCallback(async (): Promise<boolean> => {
+  const validateCurrentStep = useCallback(async (profileOverride?: UserProfile | null): Promise<boolean> => {
     clearError();
 
     switch (state.currentStep) {
       case 'IDENTITY':
-        return await validateIdentityStep();
+        return await validateIdentityStep(profileOverride);
       case 'DOCUMENTS':
         return await validateDocumentStep();
       case 'PAYMENT':
@@ -126,6 +134,16 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
         return false;
     }
   }, [state.currentStep, validateIdentityStep, validateDocumentStep, clearError]);
+
+  const refreshProfile = useCallback(async (): Promise<UserProfile | null> => {
+    clearError();
+    try {
+      return await fetchProfile();
+    } catch (err: any) {
+      setError(err.message || 'Failed to refresh profile');
+      return null;
+    }
+  }, [fetchProfile, clearError, setError]);
 
   const determineInitialStep = useCallback(
     async (userProfile: UserProfile | null): Promise<BookingFlowStep> => {
@@ -180,7 +198,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
       console.log('[useBookingFlow] Starting at DOCUMENTS');
       return 'DOCUMENTS';
     },
-    [shouldSkipDocumentStep],
+    [bookingData.bookingType, shouldSkipDocumentStep],
   );
 
   const initializeFlow = useCallback(async () => {
@@ -210,7 +228,14 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
   const proceedToNextStep = useCallback(async () => {
     console.log('[useBookingFlow] proceedToNextStep called, current step:', state.currentStep);
 
-    const isValid = await validateCurrentStep();
+    let latestProfile = profile;
+
+    // Validate identity step against freshly fetched profile data to avoid stale state.
+    if (state.currentStep === 'IDENTITY') {
+      latestProfile = await refreshProfile();
+    }
+
+    const isValid = await validateCurrentStep(latestProfile);
     if (!isValid) {
       console.log('[useBookingFlow] Current step validation failed');
       return;
@@ -241,7 +266,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
       console.log('[useBookingFlow] Moving to step:', nextStep);
       setState((prev) => ({ ...prev, currentStep: nextStep }));
     }
-  }, [state.currentStep, validateCurrentStep, shouldSkipDocumentStep]);
+  }, [state.currentStep, profile, refreshProfile, validateCurrentStep, shouldSkipDocumentStep, bookingData.bookingType]);
 
   const goToStep = useCallback((step: BookingFlowStep) => {
     console.log('[useBookingFlow] Manually navigating to step:', step);
@@ -294,6 +319,7 @@ export const useBookingFlow = (): UseBookingFlowReturn => {
     profile, // Use profile from useUser hook
     isLoading,
     initializeFlow,
+    refreshProfile,
     proceedToNextStep,
     goToStep,
     goToStepWithCleanup,

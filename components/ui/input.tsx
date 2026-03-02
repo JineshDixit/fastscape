@@ -5,14 +5,16 @@ import { cn } from '@/lib/utils';
 
 type FloatingInputProps = React.ComponentProps<'input'> & {
   label: string;
+  labelClassName?: string;
+  containerClassName?: string;
   endContent?: React.ReactNode;
 };
 
-function FloatingInput({ className, type = 'text', label, id, endContent, ...props }: FloatingInputProps) {
+function FloatingInput({ className, type = 'text', label, id, endContent, labelClassName, containerClassName, ...props }: FloatingInputProps) {
   const inputId = id ?? React.useId();
 
   return (
-    <div className="relative w-full">
+    <div className={cn("relative w-full", containerClassName)}>
       <input
         id={inputId}
         type={type}
@@ -62,6 +64,7 @@ function FloatingInput({ className, type = 'text', label, id, endContent, ...pro
           'peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:scale-75',
           'peer-disabled:opacity-50',
           'peer-aria-invalid:text-destructive',
+          labelClassName,
         )}
       >
         {label}

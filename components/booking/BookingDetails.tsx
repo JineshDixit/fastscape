@@ -172,22 +172,10 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 w-full space-y-6 duration-500">
       {/* Hero Section */}
-      <Card className="border-muted/40 overflow-hidden p-0 shadow-sm">
-        <div className="relative h-64 w-full overflow-hidden sm:h-80">
-          {booking.vehicle?.media?.[0]?.leftSideImage ? (
-            <img
-              src={`${process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000'}/${booking.vehicle.media[0].leftSideImage.replace(/\\/g, '/')}`}
-              alt={`${booking.vehicle.make} ${booking.vehicle.model}`}
-              className="h-full w-full object-cover transition-transform duration-1000 hover:scale-105"
-            />
-          ) : (
-            <div className="bg-muted/20 flex h-full items-center justify-center">
-              <CarIcon className="text-muted-foreground/20 h-20 w-20" />
-            </div>
-          )}
-
+      <Card className="overflow-hidden p-0 shadow-sm">
+        <div className="relative h-56.5 md:h-32.5 w-full overflow-hidden">
           {/* Transparent Overlay with Badges */}
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-primary" />
           <div className="absolute right-6 bottom-6 left-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div className="space-y-1">
               <div className="mb-2 flex gap-2">
@@ -479,7 +467,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                 {booking.bookingStatus === 'PICKED_UP' && (
                   <div className="animate-in fade-in flex items-start gap-4 duration-700">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100">
-                      <span className="text-sm">🚗</span>
+                      <span className="text-sm">Car in use</span>
                     </div>
                     <div>
                       <p className="text-foreground mb-1 text-xs font-black tracking-tight uppercase">
@@ -527,3 +515,4 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
     </div>
   );
 }
+
