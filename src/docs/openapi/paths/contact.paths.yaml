@@ -1,0 +1,67 @@
+/contact-us:
+  post:
+    tags:
+      - Contact
+    summary: Submit a contact-us request
+    description: Public endpoint to send a support/contact message to the Fastscape team.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+              - email
+              - message
+            properties:
+              name:
+                type: string
+                minLength: 2
+                maxLength: 100
+                example: John Doe
+              email:
+                type: string
+                format: email
+                example: john@example.com
+              phone:
+                type: string
+                minLength: 7
+                maxLength: 20
+                example: "+971501234567"
+              message:
+                type: string
+                minLength: 10
+                maxLength: 5000
+                example: I need help with my booking and payment confirmation.
+    responses:
+      '200':
+        description: Contact request submitted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: Contact request submitted successfully
+                data:
+                  type: object
+                  properties:
+                    queued:
+                      type: boolean
+                      example: true
+                    messageId:
+                      type: string
+                      nullable: true
+                      example: '<a1b2c3d4@example.com>'
+      '400':
+        description: Validation error
+      '429':
+        description: Too many requests
+      '500':
+        description: Failed to submit contact request

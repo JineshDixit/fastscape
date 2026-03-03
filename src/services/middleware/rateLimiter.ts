@@ -31,3 +31,9 @@ export const refreshTokenLimiter = createRateLimiter({
   max: 100,
   messageStr: 'Too many token refresh attempts, please try again later.',
 });
+
+// Rate limiter for public contact endpoint
+export const contactLimiter = createRateLimiter({
+  max: 100,
+  messageStr: 'Too many contact requests, please try again later.',
+});

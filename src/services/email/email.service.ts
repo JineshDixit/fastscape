@@ -165,6 +165,7 @@ class EmailService {
     subject: string;
     html?: string;
     text?: string;
+    replyTo?: string;
     cc?: string | string[];
     bcc?: string | string[];
     attachments?: any[];
@@ -202,6 +203,12 @@ class EmailService {
       }
       if (options.text) {
         mailOptions.text = options.text;
+      }
+      if (options.replyTo) {
+        const sanitizedReplyTo = this.sanitizeRecipients(options.replyTo);
+        if (sanitizedReplyTo.length > 0) {
+          mailOptions.replyTo = sanitizedReplyTo[0];
+        }
       }
 
       // Add optional fields

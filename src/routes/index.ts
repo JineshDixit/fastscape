@@ -7,6 +7,7 @@ import paymentRoutes from './payment.routes';
 import chauffeurRoutes from './chauffeur.routes';
 import chauffeurAssignmentRoutes from './chauffeurAssignment.routes';
 import locationRoutes from './location.routes';
+import contactRoutes from './contact.routes';
 import { generalLimiter } from '../services/middleware/rateLimiter';
 
 const router = Router();
@@ -23,6 +24,7 @@ router.use('/payments', paymentRoutes);
 router.use('/chauffeurs', chauffeurRoutes);
 router.use('/chauffeur-assignment', chauffeurAssignmentRoutes);
 router.use('/locations', locationRoutes);
+router.use('/contact-us', contactRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {

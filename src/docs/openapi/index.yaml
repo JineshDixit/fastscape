@@ -24,6 +24,8 @@ tags:
     description: Chauffeur management and assignment
   - name: Locations
     description: Location search and autocomplete
+  - name: Contact
+    description: Public contact and support requests
 components:
   securitySchemes:
     bearerAuth:
