@@ -25,7 +25,11 @@ import {
   ComboboxEmpty,
 } from '@/components/ui/combobox';
 
-export function CarSearchForm() {
+interface CarSearchFormProps {
+  onSearchComplete?: () => void;
+}
+
+export function CarSearchForm({ onSearchComplete }: CarSearchFormProps = {}) {
   const t = useTranslations('carSearch');
   const tVal = useTranslations('validation');
   const { searchAvailableVehicles, setBookingData } = useVehicle();
@@ -88,8 +92,7 @@ export function CarSearchForm() {
   const filteredToLocations =
     toQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(toQuery.toLowerCase()));
 
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: z.infer<typeof carSearchSchema>) => {
     // Use local date format to avoid timezone issues
     const formatDateForAPI = (date: Date) => {
       const year = date.getFullYear();
@@ -113,8 +116,11 @@ export function CarSearchForm() {
       dropoffDate: bookingData.dropoffDate,
       bookingType: bookingData.bookingType,
     });
+    onSearchComplete?.();
     router.push('/vehicles');
     form.reset();
+    setFromQuery('');
+    setToQuery('');
   };
 
   return (

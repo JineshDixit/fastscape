@@ -3,18 +3,18 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Car, Calendar, MapPin, User, Clock, CreditCard, ChevronRight, AlertCircle } from 'lucide-react';
+import { Car, AlertCircle } from 'lucide-react';
 import type { Booking } from '@/common/interfaces';
 import { BookingCard } from '../booking/BookingCard';
 import { BookingDetails } from '@/components/booking';
+import { useRouter } from '@/localization/navigation';
 
 export const ActiveBookingsSection: React.FC = () => {
   const t = useTranslations('activeBookings');
+  const router = useRouter();
   const { upcomingBookings, activeBookings, fetchUpcomingBookings, fetchActiveBookings, isLoading, error } =
     useBooking();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -73,7 +73,9 @@ export const ActiveBookingsSection: React.FC = () => {
           </div>
           <h3 className="mb-2 text-lg font-semibold">{t('noActiveBookings')}</h3>
           <p className="text-muted-foreground mb-6 text-center">{t('noActiveBookingsDesc')}</p>
-          <Button className="rounded-full">{t('browseVehicles')}</Button>
+          <Button className="rounded-full" onClick={() => router.push('/vehicles')}>
+            {t('browseVehicles')}
+          </Button>
         </CardContent>
       </Card>
     );

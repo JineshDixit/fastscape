@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { FloatingInput as Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import DatePicker from '@/components/ui/date-picker';
 import {
   User,
   ShieldCheck,
@@ -16,7 +16,6 @@ import {
   Phone,
   ChevronRight,
   Car,
-  Calendar,
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react';
@@ -45,6 +44,29 @@ interface DrivingInfoForm {
   visaStatus: 'Resident' | 'Tourist' | 'Visit' | '';
 }
 
+const formatDateForStorage = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeDateString = (dateString?: string): string => {
+  if (!dateString) return '';
+  return dateString.split('T')[0];
+};
+
+const parseDateFromStorage = (dateString?: string): Date | undefined => {
+  const normalized = normalizeDateString(dateString);
+  if (!normalized) return undefined;
+
+  const [year, month, day] = normalized.split('-').map(Number);
+  if (!year || !month || !day) return undefined;
+
+  const parsed = new Date(year, month - 1, day);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
 const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading }) => {
   const t = useTranslations('identityStep');
   const { user } = useAuth();
@@ -57,7 +79,10 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
     eligible: boolean;
     reason?: string;
     verificationStatus?: string;
-    restrictions?: any;
+    restrictions?: {
+      maxBookingValue?: number;
+      requireDepositPayment?: boolean;
+    };
   } | null>(null);
 
   // Driving info form state
@@ -80,9 +105,9 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
     if (profile && hasDrivingInfo) {
       setDrivingInfo({
         licenseIssuingCountry: profile.licenseIssuingCountry || '',
-        licenseExpiryDate: profile.licenseExpiryDate || '',
+        licenseExpiryDate: normalizeDateString(profile.licenseExpiryDate),
         drivingExperienceYears: profile.drivingExperienceYears?.toString() || '',
-        visaStatus: (profile as any).visaStatus || '',
+        visaStatus: profile.visaStatus || '',
       });
     }
   }, [profile, hasDrivingInfo]);
@@ -206,8 +231,8 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
       setTimeout(() => {
         onNext('');
       }, 500);
-    } catch (err: any) {
-      setError(err.message || 'Failed to save driving information');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save driving information');
     } finally {
       setIsSubmitting(false);
     }
@@ -394,7 +419,7 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
             <div className="space-y-2">
               <Label className="text-xs font-bold text-gray-500">Visa Status</Label>
               <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-                <p className="font-semibold text-gray-900 dark:text-white">{(profile as any)?.visaStatus || 'N/A'}</p>
+                <p className="font-semibold text-gray-900 dark:text-white">{profile?.visaStatus || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -413,14 +438,16 @@ const IdentityStep: React.FC<IdentityStepProps> = ({ profile, onNext, isLoading 
             </div>
 
             <div className="space-y-2">
-              <Input
+              <DatePicker
                 id="licenseExpiry"
-                type="date"
-                label="License Expiry Date *"
-                value={drivingInfo.licenseExpiryDate}
-                onChange={(e) => handleDrivingInfoChange('licenseExpiryDate', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="h-12 rounded-xl"
+                placeholder="License Expiry Date *"
+                value={parseDateFromStorage(drivingInfo.licenseExpiryDate)}
+                onChange={(selectedDate?: Date) =>
+                  handleDrivingInfoChange(
+                    'licenseExpiryDate',
+                    selectedDate ? formatDateForStorage(selectedDate) : '',
+                  )
+                }
               />
             </div>
 

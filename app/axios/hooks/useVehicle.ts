@@ -244,6 +244,23 @@ export const useVehicle = () => {
     [setState],
   );
 
+  const clearBookingData = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      bookingData: {
+        pickupDate: null,
+        dropoffDate: null,
+        pickupLocation: null,
+        dropoffLocation: null,
+        bookingType: 'SELF_DRIVE',
+      },
+    }));
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('vehicleBookingData');
+    }
+  }, [setState]);
+
   return {
     ...state,
     fetchVehicles,
@@ -256,6 +273,7 @@ export const useVehicle = () => {
     clearError,
     resetVehicle,
     setBookingData,
+    clearBookingData,
     setFilters,
   };
 };

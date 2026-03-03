@@ -55,8 +55,8 @@ export const getCookie = (name: string): string | null => {
   const nameEQ = encodeURIComponent(name) + '=';
   const cookies = document.cookie.split(';');
 
-  for (let cookie of cookies) {
-    let c = cookie.trim();
+  for (const cookie of cookies) {
+    const c = cookie.trim();
     if (c.indexOf(nameEQ) === 0) {
       return decodeURIComponent(c.substring(nameEQ.length));
     }

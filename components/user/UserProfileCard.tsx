@@ -120,7 +120,7 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({ profile, onEdi
               </span>
             </div>
             <div className="flex justify-between">
-              <span>Int'l Permit:</span>
+              <span>Int&apos;l Permit:</span>
               <span className={profile.internationalDrivingPermit ? 'text-green-600' : 'text-gray-400'}>
                 {profile.internationalDrivingPermit ? 'Uploaded' : 'Optional'}
               </span>

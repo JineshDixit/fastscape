@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios/hooks';
 import {
   Dialog,
@@ -15,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CreditCard, Wallet, Banknote, Loader2, CheckCircle2, AlertCircle, Lock, Info } from 'lucide-react';
+import { CreditCard, Wallet, Banknote, Loader2, CheckCircle2, AlertCircle, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PaymentSummary } from '@/common/interfaces';
 
@@ -34,12 +33,10 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
   paymentSummary,
   onSuccess,
 }) => {
-  const t = useTranslations('paymentStep');
-  const tCommon = useTranslations('common');
   const {
+    processDepositPayment,
     processBalancePayment,
     initiatePaymentIntent,
-    isProcessingPayment,
     error: paymentError,
     clearError,
   } = useBooking();
@@ -48,14 +45,23 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState('Payment processed successfully! Redirecting...');
 
   // Calculate remaining balance
   const remainingBalance = parseFloat(paymentSummary.remainingBalance || '0');
+  const totalPaid = parseFloat(paymentSummary.totalPaid || '0');
+  const isFullSettlement = totalPaid <= 0;
+  const paymentIntentType: 'FULL' | 'BALANCE' = isFullSettlement ? 'FULL' : 'BALANCE';
+  const modalTitle = isFullSettlement ? 'Complete Payment' : 'Complete Balance Payment';
+  const modalDescription = isFullSettlement
+    ? 'Complete the pending payment for your booking.'
+    : 'Complete the remaining balance for your booking to finalize the payment.';
 
   useEffect(() => {
     if (isOpen) {
       setSuccess(false);
       setError(null);
+      setSuccessMessage('Payment processed successfully! Redirecting...');
       clearError();
     }
   }, [isOpen, clearError]);
@@ -72,26 +78,34 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
     try {
       if (paymentMethod === 'ONLINE') {
         // Step 1: Create payment intent
-        console.log('[BalancePayment] Creating payment intent for balance...');
-        const intentResponse = await initiatePaymentIntent(bookingId, 'BALANCE');
+        console.log('[BalancePayment] Creating payment intent...');
+        const intentResponse = await initiatePaymentIntent(bookingId, paymentIntentType);
 
         if (!intentResponse?.success || !intentResponse.data) {
-          // throw new Error(intentResponse?.message || 'Failed to create payment intent');
+          throw new Error(intentResponse?.message || 'Failed to create payment intent');
         }
 
-        console.log('[BalancePayment] Payment intent created:', intentResponse!.data.id);
+        console.log('[BalancePayment] Payment intent created:', intentResponse.data.id);
 
         // Step 2: Process the payment
-        const paymentResponse: any = await processBalancePayment(bookingId, {
-          paymentMethod: 'ONLINE',
-          stripePaymentIntentId: intentResponse!.data.id,
-        });
+        const paymentResponse =
+          paymentIntentType === 'FULL'
+            ? await processDepositPayment(bookingId, {
+                paymentMethod: 'ONLINE',
+                paymentType: 'FULL',
+                stripePaymentIntentId: intentResponse.data.id,
+              })
+            : await processBalancePayment(bookingId, {
+                paymentMethod: 'ONLINE',
+                stripePaymentIntentId: intentResponse.data.id,
+              });
 
         if (!paymentResponse?.success) {
           throw new Error(paymentResponse?.message || 'Payment processing failed');
         }
 
         console.log('[BalancePayment] Balance payment processed successfully');
+        setSuccessMessage('Payment processed successfully! Redirecting...');
         setSuccess(true);
 
         // Call success callback after a brief delay
@@ -101,15 +115,26 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
         }, 2000);
       } else {
         // Manual payment (PICKUP or DROPOFF)
-        const paymentResponse = await processBalancePayment(bookingId, {
-          paymentMethod: paymentMethod,
-        });
+        const paymentResponse =
+          paymentIntentType === 'FULL'
+            ? await processDepositPayment(bookingId, {
+                paymentMethod,
+                paymentType: 'FULL',
+              })
+            : await processBalancePayment(bookingId, {
+                paymentMethod,
+              });
 
         if (!paymentResponse?.success) {
           throw new Error(paymentResponse?.message || 'Payment processing failed');
         }
 
         console.log('[BalancePayment] Manual payment recorded successfully');
+        setSuccessMessage(
+          paymentMethod === 'PICKUP'
+            ? 'Payment method saved. Please complete payment at pickup.'
+            : 'Payment method saved. Please complete payment at dropoff.',
+        );
         setSuccess(true);
 
         setTimeout(() => {
@@ -117,9 +142,9 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
           onClose();
         }, 2000);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[BalancePayment] Payment failed:', err);
-      setError(err.message || 'Payment processing failed');
+      setError(err instanceof Error ? err.message : 'Payment processing failed');
     } finally {
       setIsProcessing(false);
     }
@@ -134,10 +159,8 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black tracking-tight">Complete Balance Payment</DialogTitle>
-          <DialogDescription>
-            Complete the remaining balance for your booking to finalize the payment.
-          </DialogDescription>
+          <DialogTitle className="text-2xl font-black tracking-tight">{modalTitle}</DialogTitle>
+          <DialogDescription>{modalDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="max-h-[calc(100vh-230px)] space-y-6 overflow-y-auto py-4">
@@ -170,7 +193,7 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
 
             <RadioGroup
               value={paymentMethod}
-              onValueChange={(v) => setPaymentMethod(v as any)}
+              onValueChange={(v) => setPaymentMethod(v as 'ONLINE' | 'PICKUP' | 'DROPOFF')}
               className="grid grid-cols-1 gap-4"
             >
               {[
@@ -256,9 +279,7 @@ export const BalancePaymentModal: React.FC<BalancePaymentModalProps> = ({
           {success && (
             <Alert className="border-green-500/20 bg-green-500/10">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-600">
-                Payment processed successfully! Redirecting...
-              </AlertDescription>
+              <AlertDescription className="text-green-600">{successMessage}</AlertDescription>
             </Alert>
           )}
         </div>

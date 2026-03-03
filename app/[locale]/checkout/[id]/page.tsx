@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from '@/localization/navigation';
 import { useVehicle, useBooking, useDocument } from '@/app/axios/hooks';
 import { useBookingFlow } from '@/app/axios/hooks/useBookingFlow';
@@ -34,7 +34,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const t = useTranslations('checkout');
 
   const { user } = useAuth();
-  const { vehicle, fetchVehicleById, bookingData, isLoading: vehicleLoading } = useVehicle();
+  const { vehicle, fetchVehicleById, bookingData, clearBookingData, isLoading: vehicleLoading } = useVehicle();
   const { shouldSkipDocumentStep } = useDocument();
   const {
     createBooking,
@@ -63,6 +63,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingCreated, setBookingCreated] = useState(false);
+  const shouldClearBookingDataOnUnmount = useRef(false);
 
   const STEPS: { id: CheckoutStep; label: string }[] = [
     { id: 'IDENTITY', label: t('steps.identity') },
@@ -339,13 +340,15 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     fetchBreakdown();
   }, [currentStep, currentBooking?.id]);
 
-  const handlePaymentNext = async (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => {
+  const handlePaymentNext = async (method: 'ONLINE' | 'PICKUP' | 'DROPOFF', payFull: boolean) => {
     if (!currentBooking) {
       setError('No active booking session found.');
       return;
     }
 
     try {
+      clearAllErrors();
+
       if (method === 'ONLINE') {
         const intentResponse = await initiatePaymentIntent(currentBooking.id, payFull ? 'FULL' : 'DEPOSIT');
 
@@ -361,6 +364,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         });
 
         if (response && response.success) {
+          clearAllErrors();
           goToStepWithCleanup('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
@@ -368,11 +372,12 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
         }
       } else {
         const response = await processDepositPayment(currentBooking.id, {
-          paymentMethod: method as any,
+          paymentMethod: method,
           paymentType: payFull ? 'FULL' : 'DEPOSIT',
         });
 
         if (response && response.success) {
+          clearAllErrors();
           goToStepWithCleanup('SUMMARY');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
@@ -388,6 +393,24 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
     setError(null);
     clearError();
   };
+
+  const resetVehicleBookingData = () => {
+    clearBookingData();
+  };
+
+  useEffect(() => {
+    if (currentStep === 'SUMMARY') {
+      shouldClearBookingDataOnUnmount.current = true;
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    return () => {
+      if (shouldClearBookingDataOnUnmount.current) {
+        resetVehicleBookingData();
+      }
+    };
+  }, []);
 
   // Vehicle and basic flow data must be loaded
   if (vehicleLoading || (flowLoading && !isInitialized)) {
@@ -560,14 +583,20 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
                     <div className="flex w-full max-w-md flex-col gap-4 pt-4 sm:flex-row">
                       <Button
-                        onClick={() => router.push('/profile?tab=active')}
+                        onClick={() => {
+                          resetVehicleBookingData();
+                          router.push('/profile?tab=active');
+                        }}
                         className="h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase"
                       >
                         {t('manageAssets')}
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => router.push('/vehicles')}
+                        onClick={() => {
+                          resetVehicleBookingData();
+                          router.push('/vehicles');
+                        }}
                         className="h-12 flex-1 rounded-xl border-2 text-xs font-black tracking-widest uppercase"
                       >
                         {t('exploreMore')}

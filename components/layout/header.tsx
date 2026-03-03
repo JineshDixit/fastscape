@@ -22,16 +22,11 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
   const t = useTranslations('navigation');
   const authData = useAuth();
   const { isAuthenticated, user, logout } = authData;
-  const { setBookingData, setFilters } = useVehicle();
+  const { clearBookingData, setFilters } = useVehicle();
 
   const handleExploreClick = () => {
     // Clear search criteria and filters
-    setBookingData({
-      pickupDate: null,
-      dropoffDate: null,
-      pickupLocation: null,
-      dropoffLocation: null,
-    });
+    clearBookingData();
     setFilters({
       make: undefined,
       model: undefined,

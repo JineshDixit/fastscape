@@ -11,7 +11,8 @@ type FloatingInputProps = React.ComponentProps<'input'> & {
 };
 
 function FloatingInput({ className, type = 'text', label, id, endContent, labelClassName, containerClassName, ...props }: FloatingInputProps) {
-  const inputId = id ?? React.useId();
+  const generatedId = React.useId();
+  const inputId = id ?? generatedId;
 
   return (
     <div className={cn("relative w-full", containerClassName)}>

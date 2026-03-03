@@ -45,16 +45,33 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
 
   const [fromQuery, setFromQuery] = useState(bookingData.pickupLocation || '');
   const [toQuery, setToQuery] = useState(bookingData.dropoffLocation || '');
+  const [fromOpen, setFromOpen] = useState(false);
+  const [toOpen, setToOpen] = useState(false);
   const [sameAddress, setSameAddress] = useState(
     bookingData.pickupLocation === bookingData.dropoffLocation && bookingData.pickupLocation !== null,
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const isSelfDrive = bookingData.bookingType === 'SELF_DRIVE';
 
   // Sync internal state with bookingData (props)
   useEffect(() => {
     setFromQuery(bookingData.pickupLocation || '');
     setToQuery(bookingData.dropoffLocation || '');
+    setSameAddress(bookingData.pickupLocation === bookingData.dropoffLocation && bookingData.pickupLocation !== null);
   }, [bookingData.pickupLocation, bookingData.dropoffLocation]);
+
+  useEffect(() => {
+    if (!isSelfDrive) {
+      setFromOpen(false);
+      setToOpen(false);
+    }
+  }, [isSelfDrive]);
+
+  useEffect(() => {
+    if (sameAddress) {
+      setToOpen(false);
+    }
+  }, [sameAddress]);
 
   const filteredFromLocations =
     fromQuery === '' ? locations : locations.filter((loc) => loc.name.toLowerCase().includes(fromQuery.toLowerCase()));
@@ -71,6 +88,51 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
 
   const handleToChange = (val: string) => {
     onLocationChange({ dropoffLocation: val });
+  };
+
+  const findMatchingLocationName = (value: string) =>
+    locations.find((loc) => loc.name.toLowerCase() === value.trim().toLowerCase())?.name;
+
+  const handleFromBlur = () => {
+    const query = fromQuery.trim();
+
+    if (!query) {
+      handleFromChange('');
+      setFromQuery('');
+      setFromOpen(false);
+      return;
+    }
+
+    const matched = findMatchingLocationName(query);
+    if (matched) {
+      handleFromChange(matched);
+      setFromQuery(matched);
+    } else if (bookingData.pickupLocation) {
+      setFromQuery(bookingData.pickupLocation);
+    }
+
+    setFromOpen(false);
+  };
+
+  const handleToBlur = () => {
+    const query = toQuery.trim();
+
+    if (!query) {
+      handleToChange('');
+      setToQuery('');
+      setToOpen(false);
+      return;
+    }
+
+    const matched = findMatchingLocationName(query);
+    if (matched) {
+      handleToChange(matched);
+      setToQuery(matched);
+    } else if (bookingData.dropoffLocation) {
+      setToQuery(bookingData.dropoffLocation);
+    }
+
+    setToOpen(false);
   };
 
   const handleSameAddressChange = (checked: boolean | 'indeterminate') => {
@@ -114,8 +176,6 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
 
   const visibleDates = isExtendedRange ? [...initialDates.slice(0, 3), end] : initialDates;
 
-  const isSelfDrive = bookingData.bookingType === 'SELF_DRIVE';
-
   return (
     <div ref={containerRef} className="relative flex flex-col gap-6">
       <div className="flex flex-col gap-3">
@@ -124,23 +184,32 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
           <div className="relative">
             {isSelfDrive ? (
               <Combobox
-                open={undefined}
                 modal={false}
+                open={fromOpen}
+                onOpenChange={setFromOpen}
                 value={
                   locations.find((l) => l.name === bookingData.pickupLocation)
                     ? { id: bookingData.pickupLocation!, label: bookingData.pickupLocation! }
                     : null
                 }
-                onValueChange={(val) => handleFromChange(val?.label || '')}
+                onValueChange={(val) => {
+                  handleFromChange(val?.label || '');
+                  setFromOpen(false);
+                }}
               >
                 <ComboboxInput
                   placeholder={tCar('from')}
                   className="bg-background h-14 w-full"
                   value={fromQuery}
-                  onChange={(e) => setFromQuery(e.target.value)}
-                  onBlur={() => {
-                    if (bookingData.pickupLocation) setFromQuery(bookingData.pickupLocation);
+                  onFocus={() => setFromOpen(true)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFromQuery(value);
+                    if (!value.trim()) {
+                      handleFromChange('');
+                    }
                   }}
+                  onBlur={handleFromBlur}
                 />
                 <ComboboxContent container={containerRef}>
                   <ComboboxList>
@@ -177,21 +246,31 @@ const AvailabilitySelector: FC<AvailabilitySelectorProps> = ({
             {isSelfDrive && !sameAddress ? (
               <Combobox
                 modal={false}
+                open={toOpen}
+                onOpenChange={setToOpen}
                 value={
                   locations.find((l) => l.name === bookingData.dropoffLocation)
                     ? { id: bookingData.dropoffLocation!, label: bookingData.dropoffLocation! }
                     : null
                 }
-                onValueChange={(val) => handleToChange(val?.label || '')}
+                onValueChange={(val) => {
+                  handleToChange(val?.label || '');
+                  setToOpen(false);
+                }}
               >
                 <ComboboxInput
                   placeholder={tCar('to')}
                   className="bg-background h-14 w-full"
                   value={toQuery}
-                  onChange={(e) => setToQuery(e.target.value)}
-                  onBlur={() => {
-                    if (bookingData.dropoffLocation) setToQuery(bookingData.dropoffLocation);
+                  onFocus={() => setToOpen(true)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setToQuery(value);
+                    if (!value.trim()) {
+                      handleToChange('');
+                    }
                   }}
+                  onBlur={handleToBlur}
                 />
                 <ComboboxContent container={containerRef}>
                   <ComboboxList>

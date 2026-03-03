@@ -30,7 +30,7 @@ export function MobileSearchSheet() {
           </SheetTitle>
         </SheetHeader>
         <div className="m-6">
-          <CarSearchForm />
+          <CarSearchForm onSearchComplete={() => setOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>

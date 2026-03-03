@@ -18,7 +18,7 @@ interface DocumentUploadFormProps {
 const getImageUrl = (path: string) => {
   if (!path) return '';
   if (path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('http')) return path;
-  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || 'http://3.111.162.90:5000';
   // Ensure we don't end up with double slashes if baseUrl ends with one or path starts with one
   const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;

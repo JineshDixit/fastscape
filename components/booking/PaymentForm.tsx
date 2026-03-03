@@ -477,7 +477,7 @@ export default function PaymentForm({
               <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
               <div>
                 <p>- Your payment is secured with 256-bit SSL encryption</p>
-                <p>- You'll receive a confirmation email after successful payment</p>
+                <p>- You&apos;ll receive a confirmation email after successful payment</p>
                 <p>- Refunds are processed within 5-7 business days</p>
                 {selectedPaymentOption === 'full' && <p>- Full payment includes 5% discount on total booking amount</p>}
               </div>

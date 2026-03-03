@@ -343,7 +343,7 @@ export default function BookingDetails({ bookingId, onClose, onPaymentRequired }
                       {t('tripInstructions')}
                     </p>
                     <p className="text-foreground/70 text-xs leading-relaxed italic">
-                      "{booking.chauffeurInstructions}"
+                      &quot;{booking.chauffeurInstructions}&quot;
                     </p>
                   </div>
                 </div>

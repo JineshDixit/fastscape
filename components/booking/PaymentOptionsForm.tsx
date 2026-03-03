@@ -99,7 +99,7 @@ export default function PaymentOptionsForm({
           <CreditCardIcon className="h-6 w-6" />
           Choose Your Payment Option
         </CardTitle>
-        <p className="text-gray-600">Select how you'd like to pay for your booking</p>
+        <p className="text-gray-600">Select how you&apos;d like to pay for your booking</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Payment Breakdown Summary */}
@@ -221,7 +221,7 @@ export default function PaymentOptionsForm({
                   <div className="mt-3 flex items-start gap-2 rounded bg-green-100 p-2 text-xs text-gray-600">
                     <InfoIcon className="mt-0.5 h-3 w-3 shrink-0" />
                     <div>
-                      <p>- Complete your payment now and you're all set</p>
+                      <p>- Complete your payment now and you&apos;re all set</p>
                       <p>- No additional payments required at dropoff</p>
                       <p>- Get a 5% discount on total booking amount</p>
                     </div>

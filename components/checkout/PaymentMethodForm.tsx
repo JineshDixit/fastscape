@@ -11,14 +11,14 @@ import { useTranslations } from 'next-intl';
 
 interface PaymentMethodFormProps {
   breakdown: PaymentBreakdown | null;
-  onNext: (method: 'ONLINE' | 'CARD' | 'CASH', payFull: boolean) => void;
+  onNext: (method: 'ONLINE' | 'PICKUP' | 'DROPOFF', payFull: boolean) => void;
   onBack: () => void;
   isLoading?: boolean;
 }
 
 const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext, onBack, isLoading }) => {
   const t = useTranslations('paymentStep');
-  const [method, setMethod] = useState<'ONLINE' | 'CARD' | 'CASH'>('ONLINE');
+  const [method, setMethod] = useState<'ONLINE' | 'PICKUP' | 'DROPOFF'>('ONLINE');
   const [payFull, setPayFull] = useState(false);
 
   if (!breakdown) {
@@ -52,12 +52,12 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ breakdown, onNext
                   icon: Wallet,
                 },
                 {
-                  id: 'CARD',
+                  id: 'PICKUP',
                   label: t('physicalTerminal'),
                   desc: t('physicalDesc'),
                   icon: CreditCard,
                 },
-                { id: 'CASH', label: t('currency'), desc: t('currencyDesc'), icon: Banknote },
+                { id: 'DROPOFF', label: t('currency'), desc: t('currencyDesc'), icon: Banknote },
               ].map((item) => {
                 const isActive = method === item.id;
                 const Icon = item.icon;
