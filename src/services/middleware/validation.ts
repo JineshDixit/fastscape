@@ -2,14 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import { body, validationResult, query, param } from 'express-validator';
 import { dbEnums } from '../../common/enum/dbEnums';
 
+const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])[^\s]{8,}$/;
+const STRONG_PASSWORD_MESSAGE =
+  'Password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one special character (e.g. #, @, !). Spaces are not allowed.';
+
 // Validation middleware to check for validation errors
 export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const extractedErrors = errors.array();
+    const firstErrorMessage = extractedErrors[0]?.msg;
+
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
-      errors: errors.array(),
+      message: typeof firstErrorMessage === 'string' ? firstErrorMessage : 'Validation failed',
+      errors: extractedErrors,
     });
   }
   next();
@@ -23,12 +30,8 @@ export const validateRegistration = [
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email address'),
 
   body('password')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage(
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-    ),
+    .matches(STRONG_PASSWORD_REGEX)
+    .withMessage(STRONG_PASSWORD_MESSAGE),
 
   body('phone')
     .trim()
@@ -214,7 +217,11 @@ export const validateVerifyOtp = [
 export const validateResetPassword = [
   body('email').isEmail().withMessage('Valid email is required'),
   body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New Password must be at least 6 characters long'),
+  body('newPassword')
+    .matches(STRONG_PASSWORD_REGEX)
+    .withMessage(
+      'New password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one special character (e.g. #, @, !). Spaces are not allowed.',
+    ),
   handleValidationErrors,
 ];
 
