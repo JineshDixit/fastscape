@@ -8,7 +8,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/app/axios';
 
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { FloatingInput } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 

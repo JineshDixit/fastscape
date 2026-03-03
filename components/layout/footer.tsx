@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/localization/navigation';
 import { useTranslations } from 'next-intl';
 
 const Footer = () => {
@@ -9,7 +9,7 @@ const Footer = () => {
     { label: t('aboutUs'), href: '/' },
     { label: t('privacyPolicy'), href: '/' },
     { label: t('refundPolicy'), href: '/' },
-    { label: t('contactUs'), href: '/' },
+    { label: t('contactUs'), href: '/contact-us' },
     { label: t('terms'), href: '/' },
   ];
 
