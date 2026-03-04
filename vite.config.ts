@@ -19,7 +19,6 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
           if (id.includes('recharts')) return 'charts';
-          if (id.includes('react-router-dom') || id.includes('@remix-run/router')) return 'router';
           if (id.includes('i18next')) return 'i18n';
           if (id.includes('@radix-ui')) return 'radix';
           if (id.includes('react-day-picker') || id.includes('date-fns')) return 'date';

@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosResponse } from 'axios';
+import { authService } from './services/auth';
 
 // API configuration
 const API_CONFIG = {
@@ -27,9 +28,6 @@ apiClient.interceptors.request.use(
     if (isPublicEndpoint) {
       return config;
     }
-
-    // Import authService here to avoid circular dependency
-    const { authService } = await import('./services/auth');
 
     // Get valid token from auth service (handles refresh automatically)
     const validToken = await authService.getValidAccessToken();
@@ -90,9 +88,6 @@ apiClient.interceptors.response.use(
           console.warn('401 detected, attempting token refresh and retry...');
         }
 
-        // Import authService here to avoid circular dependency
-        const { authService } = await import('./services/auth');
-
         // This will attempt to refresh the token
         const validToken = await authService.getValidAccessToken();
 
@@ -106,16 +101,14 @@ apiClient.interceptors.response.use(
           if (import.meta.env.DEV) {
             console.log('No valid token available - checking if refresh token expired');
           }
-          const { authService: authSvc } = await import('./services/auth');
-          if (authSvc.isRefreshTokenExpired()) {
-            authSvc.forceLogout();
+          if (authService.isRefreshTokenExpired()) {
+            authService.forceLogout();
           }
         }
       } catch (refreshError: any) {
         console.error('Token refresh failed during 401 retry:', refreshError);
         // Only force logout if it's an auth error, not network error
         if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
-          const { authService } = await import('./services/auth');
           authService.forceLogout();
         }
       }
