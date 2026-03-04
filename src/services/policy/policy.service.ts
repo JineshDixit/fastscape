@@ -4,11 +4,14 @@ import { formatPolicyResponse, getPolicyWithRoles, PolicyWithRoles } from '../..
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateArrayLength } from '../../utils/validation.utils';
 import { Op } from 'sequelize';
+import { ALL_PERMISSION_PRESETS, PERMISSION_PRESET_GROUPS } from '../../common/constants/permissionPresets';
+
+const ALLOWED_PERMISSIONS = new Set(ALL_PERMISSION_PRESETS);
 
 /**
  * Validate permissions array
  */
-const validatePermissions = (permissions: string[]): void => {
+const validatePermissions = (permissions: string[]): string[] => {
   if (!Array.isArray(permissions)) {
     throw createError('Permissions must be an array', 400);
   }
@@ -24,11 +27,24 @@ const validatePermissions = (permissions: string[]): void => {
     throw createError('All permissions must be non-empty strings', 400);
   }
 
+  const normalizedPermissions = permissions.map((permission) => permission.trim());
+
   // Check for duplicate permissions
-  const uniquePermissions = new Set(permissions);
-  if (uniquePermissions.size !== permissions.length) {
+  const uniquePermissions = new Set(normalizedPermissions);
+  if (uniquePermissions.size !== normalizedPermissions.length) {
     throw createError('Duplicate permissions are not allowed', 400);
   }
+
+  const unsupportedPermissions = normalizedPermissions.filter((permission) => !ALLOWED_PERMISSIONS.has(permission));
+
+  if (unsupportedPermissions.length > 0) {
+    throw createError(
+      `Unsupported permissions found: ${unsupportedPermissions.join(', ')}. Use permission presets only.`,
+      400,
+    );
+  }
+
+  return normalizedPermissions;
 };
 
 /**
@@ -39,7 +55,7 @@ export const create = async (policyData: CreatePolicyRequest): Promise<PolicyRes
 
   // Validate required fields
   validateRequiredFields(policyData, ['name', 'permissions']);
-  validatePermissions(permissions);
+  const normalizedPermissions = validatePermissions(permissions);
 
   // Check if policy already exists
   const existingPolicy = await Policy.findOne({ where: { name } });
@@ -50,7 +66,7 @@ export const create = async (policyData: CreatePolicyRequest): Promise<PolicyRes
   // Create policy
   const policy = await Policy.create({
     name,
-    permissions,
+    permissions: normalizedPermissions,
     description,
     isActive: true,
   });
@@ -132,7 +148,7 @@ export const update = async (policyId: string, updateData: UpdatePolicyRequest):
 
   // Validate permissions if being updated
   if (updateData.permissions) {
-    validatePermissions(updateData.permissions);
+    updateData.permissions = validatePermissions(updateData.permissions);
   }
 
   // Update policy
@@ -185,6 +201,10 @@ export const addPermission = async (policyId: string, permission: string): Promi
   }
 
   const trimmedPermission = permission.trim();
+
+  if (!ALLOWED_PERMISSIONS.has(trimmedPermission)) {
+    throw createError(`Unsupported permission: ${trimmedPermission}. Use permission presets only.`, 400);
+  }
 
   // Check if permission already exists
   if (policy.permissions.includes(trimmedPermission)) {
@@ -317,4 +337,21 @@ export const searchByPermission = async (permission: string): Promise<PolicyResp
   });
 
   return policies.map(formatPolicyResponse);
+};
+
+/**
+ * Get grouped permission presets for policy configuration.
+ */
+export const getPermissionPresets = async (): Promise<{
+  groups: Array<{ key: string; label: string; permissions: string[] }>;
+  allPermissions: string[];
+}> => {
+  return {
+    groups: PERMISSION_PRESET_GROUPS.map((group) => ({
+      key: group.key,
+      label: group.label,
+      permissions: group.permissions,
+    })),
+    allPermissions: ALL_PERMISSION_PRESETS,
+  };
 };

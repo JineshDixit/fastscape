@@ -15,8 +15,7 @@ import {
   authenticateUser,
   requireActiveUser,
   requirePermission,
-  requireAnyPermission,
-  requireOwnershipOrRole,
+  requireOwnershipOrAnyPermission,
   generalLimiter,
 } from '../services/middleware';
 
@@ -40,27 +39,6 @@ router.post('/', generalLimiter, requirePermission('admin.users.create'), create
 router.get('/', requirePermission('admin.users.read'), getAllAdminUsers);
 
 /**
- * @route   GET /api/admin-users/:id
- * @desc    Get admin user by ID
- * @access  Private - Own profile or 'admin.users.read' permission
- */
-router.get('/:id', requireAnyPermission(['admin.users.read']), getAdminUserById);
-
-/**
- * @route   PUT /api/admin-users/:id
- * @desc    Update admin user
- * @access  Private - Own profile or 'admin.users.update' permission
- */
-router.put('/:id', requireOwnershipOrRole('super-admin'), updateAdminUser);
-
-/**
- * @route   PUT /api/admin-users/:id/password
- * @desc    Update admin user password
- * @access  Private - Own profile or 'admin.users.update' permission
- */
-router.put('/:id/password', requireOwnershipOrRole('super-admin'), updateAdminUserPassword);
-
-/**
  * @route   PUT /api/admin-users/me/language
  * @desc    Update current admin user's language preference
  * @access  Private - Own profile only
@@ -73,6 +51,27 @@ router.put('/me/language', updateAdminUserLanguage);
  * @access  Private - Own profile only
  */
 router.put('/me/password', changeAdminUserPassword);
+
+/**
+ * @route   GET /api/admin-users/:id
+ * @desc    Get admin user by ID
+ * @access  Private - Own profile or 'admin.users.read' permission
+ */
+router.get('/:id', requireOwnershipOrAnyPermission(['admin.users.read']), getAdminUserById);
+
+/**
+ * @route   PUT /api/admin-users/:id
+ * @desc    Update admin user
+ * @access  Private - Own profile or 'admin.users.update' permission
+ */
+router.put('/:id', requireOwnershipOrAnyPermission(['admin.users.update']), updateAdminUser);
+
+/**
+ * @route   PUT /api/admin-users/:id/password
+ * @desc    Update admin user password
+ * @access  Private - Own profile or 'admin.users.update' permission
+ */
+router.put('/:id/password', requireOwnershipOrAnyPermission(['admin.users.update']), updateAdminUserPassword);
 
 /**
  * @route   PUT /api/admin-users/:id/activate

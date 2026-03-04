@@ -12,6 +12,7 @@ import {
   deactivate,
   getByName,
   searchByPermission,
+  getPermissionPresets,
 } from '../../services/policy/policy.service';
 import {
   sendSuccess,
@@ -233,6 +234,18 @@ export const searchPoliciesByPermission = async (req: Request, res: Response, ne
     const result = await searchByPermission(permission);
 
     sendSuccess(res, 'Policies retrieved successfully', result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get permission presets for policy creation/editing.
+ */
+export const getPolicyPermissionPresets = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const result = await getPermissionPresets();
+    sendSuccess(res, 'Permission presets retrieved successfully', result);
   } catch (error) {
     next(error);
   }

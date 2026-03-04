@@ -9,6 +9,7 @@ export {
   requireAnyPermission,
   requireAllPermissions,
   requireOwnershipOrRole,
+  requireOwnershipOrAnyPermission,
   requireActiveUser,
 } from './authorization';
 

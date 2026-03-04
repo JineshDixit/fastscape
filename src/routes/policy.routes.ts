@@ -12,6 +12,7 @@ import {
   deactivatePolicy,
   getPolicyByName,
   searchPoliciesByPermission,
+  getPolicyPermissionPresets,
 } from '../controllers/policy/policy.controller';
 import {
   authenticateUser,
@@ -39,6 +40,13 @@ router.post('/', generalLimiter, requirePermission('admin.policies.create'), cre
  * @access  Private - Requires 'admin.policies.read' permission
  */
 router.get('/', requirePermission('admin.policies.read'), getAllPolicies);
+
+/**
+ * @route   GET /api/policies/permission-presets
+ * @desc    Get permission presets for policy creation
+ * @access  Private - Requires 'admin.policies.read' permission
+ */
+router.get('/permission-presets', requirePermission('admin.policies.read'), getPolicyPermissionPresets);
 
 /**
  * @route   GET /api/policies/:id

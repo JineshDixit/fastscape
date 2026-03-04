@@ -195,6 +195,37 @@ export const requireOwnershipOrRole = (roleForBypass: string) => {
 };
 
 /**
+ * Middleware to check if admin user can access their own resource
+ * or has at least one of the required permissions.
+ */
+export const requireOwnershipOrAnyPermission = (requiredPermissions: string[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+    try {
+      const user = ensureAuthenticated(req);
+      const targetUserId = req.params.id || req.params.adminUserId || req.body.adminUserId;
+
+      if (user.userId === targetUserId || hasSuperAccess(user)) {
+        return next();
+      }
+
+      if (!user.permissions?.length) {
+        throw createError('No permissions assigned to user', 403);
+      }
+
+      const hasAnyRequiredPermission = requiredPermissions.some((permission) => user.permissions.includes(permission));
+
+      if (!hasAnyRequiredPermission) {
+        throw createError(`Access denied. Required permissions: ${requiredPermissions.join(', ')}`, 403);
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+
+/**
  * Middleware to check if admin user is active
  */
 export const requireActiveUser = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
