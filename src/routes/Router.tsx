@@ -1,27 +1,29 @@
-import LoginPage from '@/pages/auth/LoginPage';
-import Layout from '@/components/layout/Layout';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import PublicRoute from '@/components/auth/PublicRoute';
-import RoleGuard from '@/components/auth/RoleGuard';
-import Dashboard from '@/pages/Dashboard';
-import Bookings from '@/pages/Bookings/Bookings';
-import BookingDetails from '@/pages/Bookings/BookingDetails';
-import Documents from '@/pages/Documents';
-import Units from '@/pages/Units/Units';
-import Clients from '@/pages/Clients/Clients';
-import ClientDetails from '@/pages/Clients/ClientDetails';
-import ChauffeurList from '@/pages/Chauffeurs/ChauffeurList';
-import ChauffeurDetails from '@/pages/Chauffeurs/ChauffeurDetails';
-import Financials from '@/pages/Financials/Financials';
-import FinanceDetails from '@/pages/Financials/FinanceDetails';
-import ProfilePage from '@/pages/Profile/ProfilePage';
-import NotFound from '@/pages/NotFound';
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import UnitsLayout from '@/pages/Units/UnitsLayout';
-import VehicleDetails from '@/pages/Units/VehicleDetails';
-import Locations from '@/pages/Locations/Locations';
-import AdminManagement from '@/pages/AdminManagement/AdminManagement';
 import { PERMISSIONS } from '@/config/permissions';
+
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
+const Layout = lazy(() => import('@/components/layout/Layout'));
+const ProtectedRoute = lazy(() => import('@/components/auth/ProtectedRoute'));
+const PublicRoute = lazy(() => import('@/components/auth/PublicRoute'));
+const RoleGuard = lazy(() => import('@/components/auth/RoleGuard'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Bookings = lazy(() => import('@/pages/Bookings/Bookings'));
+const BookingDetails = lazy(() => import('@/pages/Bookings/BookingDetails'));
+const Documents = lazy(() => import('@/pages/Documents'));
+const Units = lazy(() => import('@/pages/Units/Units'));
+const UnitsLayout = lazy(() => import('@/pages/Units/UnitsLayout'));
+const VehicleDetails = lazy(() => import('@/pages/Units/VehicleDetails'));
+const Clients = lazy(() => import('@/pages/Clients/Clients'));
+const ClientDetails = lazy(() => import('@/pages/Clients/ClientDetails'));
+const ChauffeurList = lazy(() => import('@/pages/Chauffeurs/ChauffeurList'));
+const ChauffeurDetails = lazy(() => import('@/pages/Chauffeurs/ChauffeurDetails'));
+const Financials = lazy(() => import('@/pages/Financials/Financials'));
+const FinanceDetails = lazy(() => import('@/pages/Financials/FinanceDetails'));
+const ProfilePage = lazy(() => import('@/pages/Profile/ProfilePage'));
+const Locations = lazy(() => import('@/pages/Locations/Locations'));
+const AdminManagement = lazy(() => import('@/pages/AdminManagement/AdminManagement'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
 export const router = createBrowserRouter([
   {
@@ -208,5 +210,5 @@ export const router = createBrowserRouter([
     element: <NotFound />,
   },
 ], {
-  basename: '/admin'
+  basename: '/admin',
 });
