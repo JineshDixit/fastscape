@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, UniqueConstraintError } from 'sequelize';
 import { AdminUser, AdminRefreshToken } from '../../models';
 import {
   AdminLoginRequest,
@@ -7,6 +7,7 @@ import {
   RefreshTokenResponse,
   AdminUserResponse,
 } from '../../common/interfaces/authTypes';
+import { TokenPair } from '../../common/interfaces/jwtInterfaces';
 import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
@@ -14,6 +15,13 @@ import { formatAdminUserResponse, getAdminUserWithRolesAndPermissions } from '..
 import { createError } from '../middleware/errorHandler';
 import { validateRequiredFields, validateEmail } from '../../utils/validation.utils';
 import logger from '../../config/logger';
+
+const normalizeIpAddress = (ipAddress?: string): string | undefined => {
+  if (!ipAddress) return undefined;
+  const firstIp = ipAddress.split(',')[0]?.trim();
+  if (!firstIp) return undefined;
+  return firstIp.length > 45 ? firstIp.slice(0, 45) : firstIp;
+};
 
 /**
  * Create and store refresh token
@@ -25,18 +33,68 @@ const storeRefreshToken = async (
   deviceInfo?: string,
   ipAddress?: string,
 ): Promise<void> => {
-  logger.debug('Storing refresh token', { adminUserId, deviceInfo, ipAddress, expiresAt });
+  const normalizedIpAddress = normalizeIpAddress(ipAddress);
+  logger.debug('Storing refresh token', { adminUserId, deviceInfo, ipAddress: normalizedIpAddress, expiresAt });
 
-  await AdminRefreshToken.create({
-    adminUserId,
-    token,
-    expiresAt,
-    isRevoked: false,
-    deviceInfo,
-    ipAddress,
-  });
+  try {
+    await AdminRefreshToken.create({
+      adminUserId,
+      token,
+      expiresAt,
+      isRevoked: false,
+      deviceInfo,
+      ipAddress: normalizedIpAddress,
+    });
+  } catch (error: any) {
+    logger.error('Failed to store refresh token', {
+      adminUserId,
+      errorName: error?.name,
+      errorMessage: error?.message,
+      dbCode: error?.parent?.code,
+      dbDetail: error?.parent?.detail,
+      dbConstraint: error?.parent?.constraint,
+    });
+    throw error;
+  }
 
   logger.debug('Refresh token stored successfully', { adminUserId });
+};
+
+const issueAndStoreTokenPair = async (
+  adminUserId: string,
+  email: string,
+  deviceInfo?: string,
+  ipAddress?: string,
+): Promise<TokenPair> => {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const tokenPair = generateTokenPair({
+      userId: adminUserId,
+      email,
+    });
+
+    try {
+      await storeRefreshToken(adminUserId, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt, deviceInfo, ipAddress);
+      return tokenPair;
+    } catch (error: any) {
+      const isUniqueViolation =
+        error instanceof UniqueConstraintError || error?.name === 'SequelizeUniqueConstraintError' || error?.parent?.code === '23505';
+
+      if (isUniqueViolation && attempt < maxAttempts) {
+        logger.warn('Refresh token collision detected, retrying issuance', {
+          adminUserId,
+          attempt,
+          maxAttempts,
+        });
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw createError('Failed to issue refresh token', 500);
 };
 
 /**
@@ -90,14 +148,8 @@ export const register = async (
 
   logger.info('Admin user created successfully', { userId: user.id, email: user.email });
 
-  // Generate tokens
-  const tokenPair = generateTokenPair({
-    userId: user.id,
-    email: user.email,
-  });
-
-  // Store refresh token
-  await storeRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt, deviceInfo, ipAddress);
+  // Generate and store refresh token with collision retry
+  const tokenPair = await issueAndStoreTokenPair(user.id, user.email, deviceInfo, ipAddress);
 
   // Get user with permissions for response
   const userWithPermissions = await getAdminUserWithRolesAndPermissions(user.id);
@@ -152,14 +204,8 @@ export const login = async (
   // Revoke existing refresh tokens for security
   await revokeAllRefreshTokens(user.id);
 
-  // Generate new tokens
-  const tokenPair = generateTokenPair({
-    userId: user.id,
-    email: user.email,
-  });
-
-  // Store new refresh token
-  await storeRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt, deviceInfo, ipAddress);
+  // Generate and store refresh token with collision retry
+  const tokenPair = await issueAndStoreTokenPair(user.id, user.email, deviceInfo, ipAddress);
 
   // Get user with permissions for response
   const userWithPermissions = await getAdminUserWithRolesAndPermissions(user.id);
@@ -241,20 +287,8 @@ export const refreshToken = async (token: string): Promise<RefreshTokenResponse>
     });
   }
 
-  // Generate new token pair
-  const newTokenPair = generateTokenPair({
-    userId: user.id,
-    email: user.email,
-  });
-
-  // Store new refresh token
-  await storeRefreshToken(
-    user.id,
-    newTokenPair.refreshToken,
-    newTokenPair.refreshTokenExpiresAt,
-    storedToken.deviceInfo,
-    storedToken.ipAddress,
-  );
+  // Generate and store refresh token with collision retry
+  const newTokenPair = await issueAndStoreTokenPair(user.id, user.email, storedToken.deviceInfo, storedToken.ipAddress);
 
   logger.info('Refresh token renewed successfully', { userId: user.id });
 
