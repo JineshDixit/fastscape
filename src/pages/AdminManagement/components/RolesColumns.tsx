@@ -61,7 +61,7 @@ export const getColumns = ({
     cell: ({ row }) => {
       const policies = row.original.policies;
       return (
-        <div className="flex max-w-[250px] flex-wrap gap-1">
+        <div className="flex max-w-62.5 flex-wrap gap-1">
           {policies?.slice(0, 3).map((policy) => (
             <Badge
               key={policy.id}
@@ -161,7 +161,7 @@ export const getColumns = ({
                 onClick={() => onDelete(role)}
                 className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md font-medium"
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Erase Role
+                <Trash2 className="mr-2 h-4 w-4" /> Archive Role
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

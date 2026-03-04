@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,8 +11,8 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { policyService, type Policy } from '@/api/services/adminService';
-import { Key, Plus, X, Shield, Terminal, Zap } from 'lucide-react';
+import { policyService, type Policy, type PermissionPresetGroup } from '@/api/services/adminService';
+import { Key, X, Shield, Terminal, Zap } from 'lucide-react';
 import ManagementSheet from './ManagementSheet';
 
 const createPolicySchema = z.object({
@@ -39,27 +39,11 @@ interface PolicySheetProps {
   mode: 'create' | 'edit' | 'view';
 }
 
-const COMMON_PERMISSIONS = [
-  'admin.users.create',
-  'admin.users.read',
-  'admin.users.update',
-  'admin.users.delete',
-  'admin.roles.create',
-  'admin.roles.read',
-  'admin.roles.update',
-  'admin.roles.delete',
-  'admin.policies.create',
-  'admin.policies.read',
-  'admin.policies.update',
-  'admin.policies.delete',
-  'admin.analytics.read',
-  'admin.reports.generate',
-  'admin.system.settings',
-];
-
 const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProps) => {
   const [loading, setLoading] = useState(false);
-  const [newPermission, setNewPermission] = useState('');
+  const [presetLoading, setPresetLoading] = useState(false);
+  const [presetGroups, setPresetGroups] = useState<PermissionPresetGroup[]>([]);
+  const [presetSearch, setPresetSearch] = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
 
   const isView = mode === 'view';
@@ -78,51 +62,116 @@ const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProp
     },
   });
 
-  useEffect(() => {
-    if (open) {
-      if (isCreate) {
-        form.reset({
-          name: '',
-          description: '',
-          permissions: [],
-        });
-        setPermissions([]);
-      } else if (policy) {
-        form.reset({
-          name: policy.name,
-          description: policy.description || '',
-          permissions: policy.permissions,
-          isActive: policy.isActive,
-        });
-        setPermissions(policy.permissions);
-      }
+  const fetchPermissionPresets = async () => {
+    try {
+      setPresetLoading(true);
+      const response = await policyService.getPermissionPresets();
+      setPresetGroups(response.groups || []);
+    } catch (error) {
+      setPresetGroups([]);
+      toast.error('Failed to load permission presets');
+    } finally {
+      setPresetLoading(false);
     }
-  }, [open, policy, mode, form]);
+  };
 
-  const addPermission = (permission: string) => {
-    const trimmed = permission.trim();
-    if (trimmed && !permissions.includes(trimmed)) {
-      const updated = [...permissions, trimmed];
-      setPermissions(updated);
-      form.setValue('permissions', updated);
-      setNewPermission('');
+  useEffect(() => {
+    if (!open) {
+      return;
     }
+
+    void fetchPermissionPresets();
+
+    if (isCreate) {
+      form.reset({
+        name: '',
+        description: '',
+        permissions: [],
+      });
+      setPermissions([]);
+      setPresetSearch('');
+      return;
+    }
+
+    if (policy) {
+      form.reset({
+        name: policy.name,
+        description: policy.description || '',
+        permissions: policy.permissions,
+        isActive: policy.isActive,
+      });
+      setPermissions(policy.permissions);
+      setPresetSearch('');
+    }
+  }, [open, isCreate, policy, form]);
+
+  const allPresetPermissions = useMemo(() => {
+    const set = new Set<string>();
+    presetGroups.forEach((group) => {
+      group.permissions.forEach((permission) => set.add(permission));
+    });
+    return set;
+  }, [presetGroups]);
+
+  const unknownPermissions = useMemo(() => {
+    if (allPresetPermissions.size === 0) {
+      return [];
+    }
+
+    return permissions.filter((permission) => !allPresetPermissions.has(permission));
+  }, [permissions, allPresetPermissions]);
+
+  const filteredPresetGroups = useMemo(() => {
+    const query = presetSearch.trim().toLowerCase();
+    if (!query) {
+      return presetGroups;
+    }
+
+    return presetGroups
+      .map((group) => ({
+        ...group,
+        permissions: group.permissions.filter((permission) => permission.toLowerCase().includes(query)),
+      }))
+      .filter((group) => group.label.toLowerCase().includes(query) || group.permissions.length > 0);
+  }, [presetGroups, presetSearch]);
+
+  const updatePermissions = (updated: string[]) => {
+    setPermissions(updated);
+    form.setValue('permissions', updated, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const togglePermission = (permission: string) => {
+    if (permissions.includes(permission)) {
+      updatePermissions(permissions.filter((p) => p !== permission));
+      return;
+    }
+    updatePermissions([...permissions, permission]);
   };
 
   const removePermission = (permission: string) => {
-    const updated = permissions.filter((p) => p !== permission);
-    setPermissions(updated);
-    form.setValue('permissions', updated);
+    updatePermissions(permissions.filter((p) => p !== permission));
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: CreatePolicyFormData | EditPolicyFormData) => {
+    if (allPresetPermissions.size === 0) {
+      toast.error('Permission presets are not loaded yet');
+      return;
+    }
+
+    if (unknownPermissions.length > 0) {
+      toast.error('Remove unsupported permissions before saving');
+      return;
+    }
+
     try {
       setLoading(true);
+      const payload = { ...data, permissions };
+
       if (isCreate) {
-        await policyService.createPolicy(data);
+        await policyService.createPolicy(payload);
         toast.success('Policy launched successfully');
       } else if (policy) {
-        await policyService.updatePolicy(policy.id, data);
+        await policyService.updatePolicy(policy.id, payload);
         toast.success('Policy configuration updated');
       }
       onSuccess();
@@ -142,11 +191,14 @@ const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProp
       icon={<Key className="h-6 w-6" />}
       iconBgColor="bg-orange-500/10"
       iconColor="text-orange-600"
-      maxWidth="sm:max-w-[600px]"
+      maxWidth="sm:max-w-[680px]"
       loading={loading}
       isViewOnly={isView}
       onPrimaryAction={form.handleSubmit(onSubmit)}
       primaryActionText={isCreate ? 'Launch Policy' : 'Update Registry'}
+      primaryActionDisabled={
+        !isView && (presetLoading || allPresetPermissions.size === 0 || permissions.length === 0 || unknownPermissions.length > 0)
+      }
     >
       {isView && policy ? (
         <div className="animate-in fade-in slide-in-from-right-4 space-y-6 transition-all">
@@ -182,11 +234,7 @@ const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProp
             <div className="bg-muted/20 rounded-2xl border p-4">
               <div className="flex flex-wrap gap-2">
                 {policy.permissions.map((perm) => (
-                  <Badge
-                    key={perm}
-                    variant="secondary"
-                    className="bg-background border px-2 py-1 font-mono text-[10px]"
-                  >
+                  <Badge key={perm} variant="secondary" className="bg-background border px-2 py-1 font-mono text-[10px]">
                     {perm}
                   </Badge>
                 ))}
@@ -223,7 +271,7 @@ const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProp
                   <FormControl>
                     <Textarea
                       placeholder="Define the scope of this policy..."
-                      className="min-h-[80px] resize-none"
+                      className="min-h-20 resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -236,29 +284,54 @@ const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProp
               <div className="flex items-center justify-between">
                 <FormLabel>Permission Registry</FormLabel>
                 <Badge variant="outline" className="text-[10px] uppercase">
-                  {permissions.length} STRINGS
+                  {permissions.length} SELECTED
                 </Badge>
               </div>
 
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Terminal className="text-muted-foreground absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2" />
-                  <Input
-                    placeholder="Add custom string..."
-                    value={newPermission}
-                    onChange={(e) => setNewPermission(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addPermission(newPermission);
-                      }
-                    }}
-                    className="pl-9"
-                  />
-                </div>
-                <Button type="button" size="icon" onClick={() => addPermission(newPermission)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <Input
+                placeholder="Search permission presets..."
+                value={presetSearch}
+                onChange={(e) => setPresetSearch(e.target.value)}
+              />
+
+              <div className="space-y-3">
+                <p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+                  Preset Permission Chips
+                </p>
+                <ScrollArea className="bg-muted/10 h-64 rounded-xl border p-3">
+                  {presetLoading ? (
+                    <div className="text-muted-foreground py-10 text-center text-sm">Loading presets...</div>
+                  ) : filteredPresetGroups.length === 0 ? (
+                    <div className="text-muted-foreground py-10 text-center text-sm">No presets found.</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredPresetGroups.map((group) => (
+                        <div key={group.key} className="space-y-2">
+                          <p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+                            {group.label}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {group.permissions.map((permission) => {
+                              const selected = permissions.includes(permission);
+                              return (
+                                <Button
+                                  key={permission}
+                                  type="button"
+                                  variant={selected ? 'secondary' : 'outline'}
+                                  size="sm"
+                                  onClick={() => togglePermission(permission)}
+                                  className="h-6 rounded-full px-2.5 font-mono text-[10px]"
+                                >
+                                  {permission}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
               </div>
 
               <div className="space-y-3">
@@ -267,51 +340,42 @@ const PolicySheet = ({ open, onClose, onSuccess, policy, mode }: PolicySheetProp
                 </p>
                 <ScrollArea className="bg-muted/10 h-28 rounded-xl border p-3">
                   <div className="flex flex-wrap gap-1.5 focus:outline-none">
-                    {permissions.map((p) => (
-                      <Badge
-                        key={p}
-                        variant="secondary"
-                        className="border-none bg-orange-500/10 py-0.5 pr-1 pl-2 font-mono text-[9px] text-orange-700"
-                      >
-                        {p}
-                        <button
-                          type="button"
-                          onClick={() => removePermission(p)}
-                          className="ml-1 rounded-sm hover:bg-orange-500/20"
+                    {permissions.map((permission) => {
+                      const isUnknown = allPresetPermissions.size > 0 && !allPresetPermissions.has(permission);
+                      return (
+                        <Badge
+                          key={permission}
+                          variant="secondary"
+                          className={
+                            isUnknown
+                              ? 'border-none bg-red-500/10 py-0.5 pr-1 pl-2 font-mono text-[9px] text-red-700'
+                              : 'border-none bg-orange-500/10 py-0.5 pr-1 pl-2 font-mono text-[9px] text-orange-700'
+                          }
                         >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
+                          {permission}
+                          {isUnknown ? ' (legacy)' : ''}
+                          <button
+                            type="button"
+                            onClick={() => removePermission(permission)}
+                            className="ml-1 rounded-sm hover:bg-black/10"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
                     {permissions.length === 0 && (
-                      <span className="text-muted-foreground text-xs italic">Registry is empty.</span>
+                      <span className="text-muted-foreground text-xs italic">Select one or more preset chips.</span>
                     )}
                   </div>
                 </ScrollArea>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
-                  Standard Presets
-                </p>
-                <ScrollArea className="bg-muted/10 h-32 rounded-xl border p-1">
-                  <div className="grid grid-cols-2 gap-1 px-2 py-2">
-                    {COMMON_PERMISSIONS.map((perm) => (
-                      <Button
-                        key={perm}
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="hover:bg-background h-7 justify-start font-mono text-[10px]"
-                        onClick={() => addPermission(perm)}
-                        disabled={permissions.includes(perm)}
-                      >
-                        {perm}
-                      </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
+              {unknownPermissions.length > 0 && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                  Unsupported legacy permissions detected. Remove them before saving.
+                </div>
+              )}
             </div>
 
             {isEdit && (

@@ -151,11 +151,15 @@ const PoliciesTab = () => {
           setDeleteDialogOpen(false);
         }}
         entityName="Policy"
+        confirmButtonText="Archive"
+        loadingButtonText="Archiving..."
+        successMessage="Policy archived successfully"
+        errorMessage="Failed to archive policy"
         onDelete={() => policyService.deletePolicy(selectedPolicy!.id)}
         description={
           <>
-            This action cannot be undone. This will permanently delete the policy{' '}
-            <strong>{selectedPolicy?.name}</strong> and remove it from all roles.
+            This action will archive <strong>{selectedPolicy?.name}</strong>. Assigned policies cannot be archived
+            until removed from roles.
           </>
         }
       />

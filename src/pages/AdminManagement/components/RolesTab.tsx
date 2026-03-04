@@ -159,11 +159,15 @@ const RolesTab = () => {
           setDeleteDialogOpen(false);
         }}
         entityName="Role"
+        confirmButtonText="Archive"
+        loadingButtonText="Archiving..."
+        successMessage="Role archived successfully"
+        errorMessage="Failed to archive role"
         onDelete={() => roleService.deleteRole(selectedRole!.id)}
         description={
           <>
-            This action cannot be undone. This will permanently delete the role <strong>{selectedRole?.name}</strong>{' '}
-            and remove it from all admin users.
+            This action will archive <strong>{selectedRole?.name}</strong>. Assigned roles cannot be archived until
+            removed from admin users.
           </>
         }
       />

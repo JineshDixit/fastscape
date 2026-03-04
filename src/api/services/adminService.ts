@@ -102,6 +102,17 @@ export interface PolicyListResponse {
   totalPages: number;
 }
 
+export interface PermissionPresetGroup {
+  key: string;
+  label: string;
+  permissions: string[];
+}
+
+export interface PermissionPresetResponse {
+  groups: PermissionPresetGroup[];
+  allPermissions: string[];
+}
+
 // Filter Types
 export interface AdminUserFilters {
   page?: number;
@@ -266,6 +277,11 @@ class PolicyService extends BaseApiService {
 
   async getPolicyById(id: string): Promise<Policy> {
     const response = await this.get<Policy>(`/${id}`);
+    return response.data!;
+  }
+
+  async getPermissionPresets(): Promise<PermissionPresetResponse> {
+    const response = await this.get<PermissionPresetResponse>('/permission-presets');
     return response.data!;
   }
 

@@ -140,7 +140,7 @@ export const getColumns = ({
                 onClick={() => onDelete(policy)}
                 className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md font-medium"
               >
-                <Trash2 className="mr-2 h-4 w-4" /> Erase Policy
+                <Trash2 className="mr-2 h-4 w-4" /> Archive Policy
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

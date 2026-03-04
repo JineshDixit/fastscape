@@ -67,7 +67,7 @@ export const getColumns = ({
     cell: ({ row }) => {
       const roles = row.original.roles;
       return (
-        <div className="flex max-w-[200px] flex-wrap gap-1.5">
+        <div className="flex max-w-50 flex-wrap gap-1.5">
           {roles?.map((role) => (
             <Badge
               key={role.id}
@@ -174,7 +174,7 @@ export const getColumns = ({
                 className="text-destructive focus:bg-destructive focus:text-destructive-foreground rounded-md"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Remove Admin
+                Deactivate Admin
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

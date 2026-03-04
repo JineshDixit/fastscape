@@ -183,11 +183,15 @@ const AdminUsersTab = () => {
           handleDialogClose();
         }}
         entityName="Admin user"
+        confirmButtonText="Deactivate"
+        loadingButtonText="Deactivating..."
+        successMessage="Admin user deactivated successfully"
+        errorMessage="Failed to deactivate admin user"
         onDelete={() => adminUserService.deleteAdminUser(selectedUser!.id)}
         description={
           <>
-            This action cannot be undone. This will permanently delete the admin user{' '}
-            <strong>{selectedUser?.fullName}</strong> and remove all their access to the system.
+            This action will deactivate the admin user <strong>{selectedUser?.fullName}</strong> and revoke access
+            until reactivated.
           </>
         }
       />

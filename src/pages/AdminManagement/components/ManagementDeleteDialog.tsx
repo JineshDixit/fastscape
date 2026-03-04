@@ -19,6 +19,10 @@ interface ManagementDeleteDialogProps {
   description: React.ReactNode;
   onDelete: () => Promise<void>;
   entityName?: string;
+  confirmButtonText?: string;
+  loadingButtonText?: string;
+  successMessage?: string;
+  errorMessage?: string;
 }
 
 const ManagementDeleteDialog = ({
@@ -29,6 +33,10 @@ const ManagementDeleteDialog = ({
   description,
   onDelete,
   entityName,
+  confirmButtonText = 'Delete',
+  loadingButtonText = 'Deleting...',
+  successMessage,
+  errorMessage,
 }: ManagementDeleteDialogProps) => {
   const [loading, setLoading] = useState(false);
 
@@ -36,10 +44,10 @@ const ManagementDeleteDialog = ({
     try {
       setLoading(true);
       await onDelete();
-      toast.success(`${entityName || 'Entity'} deleted successfully`);
+      toast.success(successMessage || `${entityName || 'Entity'} updated successfully`);
       onSuccess();
     } catch (error: any) {
-      const message = error.response?.data?.message || `Failed to delete ${entityName?.toLowerCase() || 'entity'}`;
+      const message = error.response?.data?.message || errorMessage || `Failed to update ${entityName?.toLowerCase() || 'entity'}`;
       toast.error(message);
     } finally {
       setLoading(false);
@@ -63,7 +71,7 @@ const ManagementDeleteDialog = ({
             disabled={loading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {loading ? 'Deleting...' : 'Delete'}
+            {loading ? loadingButtonText : confirmButtonText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
