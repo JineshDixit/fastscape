@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import { ALL_PERMISSION_PRESETS, PERMISSION_PRESET_GROUPS } from '../../common/constants/permissionPresets';
 
 const ALLOWED_PERMISSIONS = new Set(ALL_PERMISSION_PRESETS);
+const MAX_POLICY_PERMISSION_COUNT = ALL_PERMISSION_PRESETS.length;
 
 /**
  * Validate permissions array
@@ -16,7 +17,7 @@ const validatePermissions = (permissions: string[]): string[] => {
     throw createError('Permissions must be an array', 400);
   }
 
-  validateArrayLength(permissions, 1, 50, 'Permissions');
+  validateArrayLength(permissions, 1, MAX_POLICY_PERMISSION_COUNT, 'Permissions');
 
   // Check if all permissions are strings and not empty
   const invalidPermissions = permissions.filter(
