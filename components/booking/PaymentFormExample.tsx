@@ -102,8 +102,8 @@ export default function PaymentFormExample() {
           <PaymentForm
             bookingId={bookingId}
             paymentType="deposit"
-            onPaymentSuccess={() => alert('Deposit payment successful!')}
-            onCancel={() => alert('Payment cancelled')}
+            onPaymentSuccess={() => toast.success('Deposit payment successful!')}
+            onCancel={() => toast.info('Payment cancelled')}
           />
         </div>
       </div>
@@ -119,8 +119,8 @@ export default function PaymentFormExample() {
           delayHours={2}
           chauffeurCharges={75}
           additionalCharges={exampleAdditionalCharges}
-          onPaymentSuccess={() => alert('Dropoff payment successful!')}
-          onCancel={() => alert('Payment cancelled')}
+          onPaymentSuccess={() => toast.success('Dropoff payment successful!')}
+          onCancel={() => toast.info('Payment cancelled')}
         />
       </div>
 
