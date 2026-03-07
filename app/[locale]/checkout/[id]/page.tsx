@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from '@/localization/navigation';
 import { useVehicle, useBooking, useDocument } from '@/app/axios/hooks';
 import { useBookingFlow } from '@/app/axios/hooks/useBookingFlow';
@@ -612,8 +613,11 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="sticky top-28 space-y-6">
               <Card className="overflow-hidden rounded-xl border-none ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
                 <div className="group relative h-56 w-full overflow-hidden">
-                  <img
+                  <Image
                     src={getFullUrl(vehicle.media?.[0]?.frontImage || '/placeholder-car.png')}
+                    alt={`${vehicle.make} ${vehicle.model}`}
+                    fill
+                    sizes="(max-width: 1280px) 33vw, 420px"
                     className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-gray-950/80 via-transparent to-transparent" />

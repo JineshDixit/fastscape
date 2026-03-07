@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -198,14 +199,17 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
               >
                 {preview ? (
                   <>
-                    <img
+                    <Image
                       src={
                         preview.startsWith('data:') || preview.startsWith('blob:') || preview.startsWith('http')
                           ? preview
                           : getImageUrl(preview)
                       }
                       alt={field.label}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      unoptimized={preview.startsWith('data:') || preview.startsWith('blob:')}
+                      className="object-cover"
                       onError={(e) => {
                         console.warn(`Failed to load image for ${field.id}:`, preview);
                         // Remove broken preview

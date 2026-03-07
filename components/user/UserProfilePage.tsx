@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useUser } from '@/app/axios/hooks/useUser';
@@ -341,10 +342,12 @@ export const UserProfilePage: React.FC = () => {
                       <div className="flex gap-2">
                         {profile.driverLicenseFront && (
                           <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
-                            <img
+                            <Image
                               src={getImageUrl(profile.driverLicenseFront)}
                               alt="License Front"
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="96px"
+                              className="object-cover"
                             />
                             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                               <Eye className="h-4 w-4 text-white" />
@@ -353,10 +356,12 @@ export const UserProfilePage: React.FC = () => {
                         )}
                         {profile.driverLicenseBack && (
                           <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
-                            <img
+                            <Image
                               src={getImageUrl(profile.driverLicenseBack)}
                               alt="License Back"
-                              className="h-full w-full object-cover"
+                              fill
+                              sizes="96px"
+                              className="object-cover"
                             />
                             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                               <Eye className="h-4 w-4 text-white" />
@@ -385,10 +390,12 @@ export const UserProfilePage: React.FC = () => {
                     </div>
                     {profile.passportPhoto && (
                       <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
-                        <img
+                        <Image
                           src={getImageUrl(profile.passportPhoto)}
                           alt="Passport"
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="96px"
+                          className="object-cover"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                           <Eye className="h-4 w-4 text-white" />
@@ -415,10 +422,12 @@ export const UserProfilePage: React.FC = () => {
                     </div>
                     {profile.selfieWithLicense && (
                       <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
-                        <img
+                        <Image
                           src={getImageUrl(profile.selfieWithLicense)}
                           alt="Selfie with License"
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="96px"
+                          className="object-cover"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                           <Eye className="h-4 w-4 text-white" />
@@ -445,10 +454,12 @@ export const UserProfilePage: React.FC = () => {
                     </div>
                     {profile.internationalDrivingPermit && (
                       <div className="group bg-muted relative h-16 w-24 overflow-hidden rounded border">
-                        <img
+                        <Image
                           src={getImageUrl(profile.internationalDrivingPermit)}
                           alt="International Permit"
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="96px"
+                          className="object-cover"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                           <Eye className="h-4 w-4 text-white" />

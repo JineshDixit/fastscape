@@ -1,17 +1,49 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Link } from '@/localization/navigation';
 import { useTranslations } from 'next-intl';
+import { legalService } from '@/app/axios/services/legal';
+import type { LegalDocumentSummary } from '@/common/interfaces';
 
 const Footer = () => {
   const t = useTranslations('footer');
+  const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
 
-  const FOOTER_LINKS = [
-    { label: t('aboutUs'), href: '/' },
-    { label: t('privacyPolicy'), href: '/' },
-    { label: t('refundPolicy'), href: '/' },
-    { label: t('contactUs'), href: '/contact-us' },
-    { label: t('terms'), href: '/' },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDocuments = async () => {
+      try {
+        const response = await legalService.getDocuments();
+        if (!isMounted) return;
+        setDocuments(response.data || []);
+      } catch {
+        if (!isMounted) return;
+        setDocuments([]);
+      }
+    };
+
+    loadDocuments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const legalLinks = documents.length
+    ? documents.map((document) => ({
+        label: document.title,
+        href: `/legal/${document.slug}`,
+      }))
+    : [
+        { label: t('privacyPolicy'), href: '/legal/privacy-policy' },
+        { label: t('refundPolicy'), href: '/legal/refund-cancellation-policy' },
+        { label: t('terms'), href: '/legal/terms-conditions' },
+      ];
+
+  const FOOTER_LINKS = [{ label: t('aboutUs'), href: '/' }, ...legalLinks, { label: t('contactUs'), href: '/contact-us' }];
 
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -24,6 +56,7 @@ const Footer = () => {
                 alt="Fastscape Logo"
                 width={238}
                 height={59}
+                sizes="(max-width: 640px) 96px, (max-width: 1024px) 128px, 190px"
                 className="h-6 w-auto sm:h-8 md:h-10 lg:h-12"
                 priority
               />

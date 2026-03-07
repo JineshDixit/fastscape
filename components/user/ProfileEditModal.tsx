@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useUser } from '@/app/axios/hooks/useUser';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -294,7 +295,14 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ isOpen, onCl
 
                   {filePreviews[field.key] && (
                     <div className="relative h-32 w-full overflow-hidden rounded-lg border">
-                      <img src={filePreviews[field.key]} alt={field.label} className="h-full w-full object-contain" />
+                      <Image
+                        src={filePreviews[field.key]}
+                        alt={field.label}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 720px"
+                        unoptimized
+                        className="object-contain"
+                      />
                     </div>
                   )}
                 </div>

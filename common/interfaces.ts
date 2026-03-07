@@ -251,6 +251,29 @@ export interface ContactUsResponse {
   messageId?: string;
 }
 
+export type LegalBlockKind = 'heading' | 'paragraph' | 'bullet_list' | 'numbered_list' | 'quote';
+
+export interface LegalContentBlock {
+  id: string;
+  kind: LegalBlockKind;
+  text?: string;
+  items?: string[];
+}
+
+export interface LegalDocumentSummary {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  version: number;
+  updatedAt: string;
+}
+
+export interface LegalDocument extends LegalDocumentSummary {
+  blocks: LegalContentBlock[];
+  createdAt: string;
+}
+
 export interface VehicleSearchParams {
   pickupLocation: string;
   pickupDate: string; // ISO string format

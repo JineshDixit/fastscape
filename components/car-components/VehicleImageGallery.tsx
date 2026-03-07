@@ -1,6 +1,7 @@
 'use client';
 
 import { FC, useState } from 'react';
+import Image from 'next/image';
 import { AspectRatio } from '../ui/aspect-ratio';
 import { cn } from '@/lib/utils';
 import { VehicleMedia } from '@/common/interfaces';
@@ -51,8 +52,14 @@ const VehicleImageGallery: FC<VehicleImageGalleryProps> = ({ media, model }) => 
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="relative w-full overflow-hidden rounded-2xl bg-white">
-        <AspectRatio ratio={16 / 9}>
-          <img src={getFullUrl(selectedImage)} alt={model} className="h-full w-full object-cover" />
+        <AspectRatio ratio={16 / 9} className="relative">
+          <Image
+            src={getFullUrl(selectedImage)}
+            alt={model}
+            fill
+            sizes="(max-width: 1024px) 100vw, 66vw"
+            className="object-cover"
+          />
         </AspectRatio>
       </div>
 
@@ -66,7 +73,13 @@ const VehicleImageGallery: FC<VehicleImageGalleryProps> = ({ media, model }) => 
               selectedImage === img ? 'border-primary shadow-md' : 'border-gray-200 hover:border-gray-300',
             )}
           >
-            <img src={getFullUrl(img)} alt={`${model}-${idx}`} className="h-full w-full rounded-lg object-cover" />
+            <Image
+              src={getFullUrl(img)}
+              alt={`${model}-${idx + 1}`}
+              fill
+              sizes="128px"
+              className="rounded-lg object-cover"
+            />
           </button>
         ))}
       </div>

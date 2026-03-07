@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,11 +52,13 @@ const MostPopularCar: React.FC<MostPopularCarProps> = ({ vehicle, className }) =
       </div>
 
       <div className="relative z-10 -mb-8 w-full max-w-[280px] transition-transform duration-300 hover:scale-105">
-        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg">
-          <img
+        <AspectRatio ratio={16 / 9} className="relative overflow-hidden rounded-lg">
+          <Image
             src={getDisplayImage()}
             alt={`${vehicle.make} ${vehicle.model}`}
-            className="h-full w-full object-contain"
+            fill
+            sizes="(max-width: 768px) 75vw, 280px"
+            className="object-contain"
           />
         </AspectRatio>
       </div>

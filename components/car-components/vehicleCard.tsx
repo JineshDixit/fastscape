@@ -1,5 +1,6 @@
 import { VehicleCardPropType } from '@/common/propTypes';
 import { FC } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { AspectRatio } from '../ui/aspect-ratio';
@@ -28,8 +29,14 @@ const VehicleCard: FC<VehicleCardPropType> = ({ vehicle, onClick }) => {
   return (
     <div className="relative flex w-full flex-col items-center">
       <div className="relative z-10 -mb-8 w-full max-w-60">
-        <AspectRatio ratio={16 / 9} className="overflow-hidden rounded-lg">
-          <img src={getDisplayImage()} alt={vehicle.model} className="h-full w-full object-cover" />
+        <AspectRatio ratio={16 / 9} className="relative overflow-hidden rounded-lg">
+          <Image
+            src={getDisplayImage()}
+            alt={vehicle.model}
+            fill
+            sizes="(max-width: 768px) 70vw, (max-width: 1280px) 30vw, 240px"
+            className="object-cover"
+          />
         </AspectRatio>
       </div>
 

@@ -50,22 +50,26 @@ const Home = () => {
           <CarSearchForm />
         </aside>
         <div className="space-y-6">
-          <Image
-            src="/images/hero-car-clip-img.png"
-            alt="Hero Car Image"
-            width={850}
-            height={850}
-            className="w-full object-cover"
-          />
+          <div className="relative aspect-[17/10] overflow-hidden rounded-3xl">
+            <Image
+              src="/images/hero-car-clip-img.png"
+              alt="Hero Car Image"
+              fill
+              sizes="(max-width: 1024px) 100vw, (max-width: 1280px) calc(100vw - 420px), 850px"
+              quality={90}
+              priority
+              className="object-cover"
+            />
+          </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="h-full overflow-hidden rounded-3xl">
+            <div className="relative aspect-square h-full overflow-hidden rounded-3xl">
               <Image
                 src="/images/hero-chauffeurs.png"
                 alt="Professional Chauffeur Service"
-                width={427}
-                height={427}
-                className="h-full w-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
               />
             </div>
             <div className="h-full">
@@ -98,13 +102,13 @@ const Home = () => {
                 },
               ].map((item) => (
                 <div key={item.label} className="relative flex w-full flex-col items-center">
-                  <div className="relative z-10 -mb-8">
+                  <div className="relative z-10 -mb-8 aspect-square w-full max-w-[240px]">
                     <Image
                       src={item.img}
                       alt={item.label}
-                      width={240}
-                      height={240}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 40vw, (max-width: 1024px) 28vw, 240px"
+                      className="object-contain"
                     />
                   </div>
 
@@ -142,13 +146,15 @@ const Home = () => {
                 { label: 'Hyundai', img: '/brands/hyundai-brand.png' },
               ].map((brand, index) => (
                 <div key={`${brand.label}-${index}`} className="flex items-center justify-center">
-                  <Image
-                    src={brand.img}
-                    alt={brand.label}
-                    width={90}
-                    height={90}
-                    className="aspect-7/4 w-full max-w-[90px] object-contain bg-blend-color-burn"
-                  />
+                  <div className="relative aspect-7/4 w-full max-w-[90px]">
+                    <Image
+                      src={brand.img}
+                      alt={brand.label}
+                      fill
+                      sizes="(max-width: 768px) 28vw, 90px"
+                      className="object-contain bg-blend-color-burn"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -216,13 +222,15 @@ const Home = () => {
           </section>
           <section className="mt-17">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,350px)_1fr] lg:gap-16">
-              <Image
-                src="/images/hero-driver.png"
-                alt="hero-driver"
-                width={350}
-                height={350}
-                className="mx-auto h-auto w-full max-w-[350px]"
-              />
+              <div className="relative mx-auto aspect-square w-full max-w-[350px]">
+                <Image
+                  src="/images/hero-driver.png"
+                  alt="hero-driver"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 350px"
+                  className="object-contain"
+                />
+              </div>
               <div className="my-auto space-y-3 text-start">
                 <h4 className="text-primary text-sm sm:text-base">{t('partnerships.subtitle')}</h4>
                 <h2 className="text-2xl font-bold sm:text-3xl">{t('partnerships.title')}</h2>
