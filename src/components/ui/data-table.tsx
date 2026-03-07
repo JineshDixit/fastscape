@@ -143,26 +143,26 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex w-full items-center justify-between gap-2">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           {onSearchChange ? (
             <Input
               placeholder={searchPlaceholder}
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
-              className="h-9 w-50 bg-white lg:w-75"
+              className="h-9 w-full bg-white sm:max-w-75"
             />
           ) : searchKey ? (
             <Input
               placeholder={searchPlaceholder}
               value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
               onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
-              className="h-9 w-50 bg-white lg:w-75"
+              className="h-9 w-full bg-white sm:max-w-75"
             />
           ) : null}
-          <div className="flex items-center gap-2">
-            {customActions}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+            {customActions ? <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{customActions}</div> : null}
             {showAddButton && (
-              <Button onClick={addButtonOnClick} className="gap-2">
+              <Button onClick={addButtonOnClick} className="w-full gap-2 sm:w-auto">
                 {addButtonIcon}
                 {addButtonText}
               </Button>
@@ -183,7 +183,7 @@ export function DataTable<TData, TValue>({
                     <TableHead
                       key={header.id}
                       className={`font-medium select-none ${canSort ? 'cursor-pointer' : ''} ${
-                        index === 0 ? 'pl-6' : ''
+                        index === 0 ? 'pl-3 sm:pl-6' : ''
                       }`}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                     >
@@ -207,7 +207,7 @@ export function DataTable<TData, TValue>({
                   className="border-gray-100 text-start hover:bg-gray-50/50 data-[state=selected]:bg-gray-50"
                 >
                   {row.getVisibleCells().map((cell, index) => (
-                    <TableCell key={cell.id} className={`py-3 ${index === 0 ? 'pl-6' : ''}`}>
+                    <TableCell key={cell.id} className={`py-3 ${index === 0 ? 'pl-3 sm:pl-6' : ''}`}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -230,13 +230,13 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination & Footer */}
-      <div className="flex flex-col items-center justify-between gap-4 px-2 md:flex-row">
-        <div className="text-muted-foreground flex-1 text-sm">
+      <div className="flex flex-col gap-3 px-2 md:flex-row md:items-center md:justify-between">
+        <div className="text-muted-foreground text-sm">
           {table.getFilteredSelectedRowModel().rows.length} of{' '}
           {isServerSide ? (totalRows ?? 0) : table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 lg:gap-6">
+          <div className="flex items-center gap-2">
             <p className="text-sm font-medium">Rows per page</p>
             <Select
               value={`${isServerSide ? pageSize : table.getState().pagination?.pageSize || 10}`}
@@ -260,11 +260,11 @@ export function DataTable<TData, TValue>({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex w-25 items-center justify-center text-sm font-medium">
+          <div className="flex items-center justify-center text-sm font-medium">
             Page {isServerSide ? (pageIndex ?? 0) + 1 : (table.getState().pagination?.pageIndex ?? 0) + 1} of{' '}
             {isServerSide ? pageCount : (table.getPageCount?.() ?? 1)}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               className="h-8 w-8 bg-white p-0"

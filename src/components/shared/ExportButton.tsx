@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface ExportButtonProps {
   onExport: () => Promise<Blob>;
@@ -41,7 +42,13 @@ export const ExportButton = ({ onExport, filename, disabled, className }: Export
   };
 
   return (
-    <Button onClick={handleExport} variant="outline" size="sm" className={className} disabled={disabled || isExporting}>
+    <Button
+      onClick={handleExport}
+      variant="outline"
+      size="sm"
+      className={cn('w-full sm:w-auto', className)}
+      disabled={disabled || isExporting}
+    >
       <FileDown className="mr-2 h-4 w-4" />
       Export CSV
     </Button>

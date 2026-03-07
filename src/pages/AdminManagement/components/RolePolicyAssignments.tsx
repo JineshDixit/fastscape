@@ -199,7 +199,7 @@ const RolePolicyAssignments = () => {
         </Card>
 
         {selectedRole && (
-          <Card className="border-primary/10 bg-primary/[0.02] relative overflow-hidden rounded-xl border shadow-sm">
+          <Card className="border-primary/10 bg-primary/2 relative overflow-hidden rounded-xl border shadow-sm">
             <div className="text-primary pointer-events-none absolute top-0 right-0 p-4 opacity-[0.05]">
               <Zap className="h-12 w-12" />
             </div>
@@ -253,7 +253,7 @@ const RolePolicyAssignments = () => {
       {/* Right Column: Registry View */}
       <div className="lg:col-span-8">
         {!selectedRole ? (
-          <div className="flex h-full min-h-[450px] flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/30 p-8 text-center">
+          <div className="flex h-full min-h-112.5 flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50/30 p-8 text-center">
             <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
               <Shield className="h-10 w-10 text-gray-200" />
             </div>
@@ -263,10 +263,10 @@ const RolePolicyAssignments = () => {
             </p>
           </div>
         ) : (
-          <div className="flex h-full min-h-[500px] flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-            <div className="border-b border-gray-100 bg-gray-50/50 p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+          <div className="flex h-full min-h-125 flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+            <div className="border-b border-gray-100 bg-gray-50/50 p-4 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="rounded-xl border border-orange-100 bg-orange-50 p-2.5 text-orange-600">
                     <ListChecks className="h-5 w-5" />
                   </div>
@@ -286,7 +286,7 @@ const RolePolicyAssignments = () => {
                 </Badge>
               </div>
             </div>
-            <div className="flex-1 bg-white p-6">
+            <div className="flex-1 bg-white p-4 sm:p-6">
               {loading ? (
                 <div className="flex flex-col items-center justify-center gap-4 py-24">
                   <Loader2 className="text-primary h-10 w-10 animate-spin opacity-20" />
@@ -303,7 +303,7 @@ const RolePolicyAssignments = () => {
                   </p>
                 </div>
               ) : (
-                <ScrollArea className="h-[550px] pr-4">
+                <ScrollArea className="h-137.5 pr-4">
                   <div className="grid grid-cols-1 gap-5 pb-4 md:grid-cols-2">
                     {assignedPolicies.map((policy) => (
                       <div
@@ -324,7 +324,7 @@ const RolePolicyAssignments = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleRemovePolicy(policy.id)}
-                              className="h-8 w-8 rounded-full opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+                              className="h-8 w-8 rounded-full opacity-100 transition-all sm:opacity-0 sm:group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
                             >
                               <X className="h-4 w-4" />
                             </Button>

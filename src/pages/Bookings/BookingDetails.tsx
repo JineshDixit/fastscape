@@ -157,13 +157,13 @@ const BookingDetails = () => {
   );
 
   return (
-    <div className="container space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">Booking Details</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Booking Details</h1>
               <Badge variant={getStatusVariant(booking.bookingStatus)} className="h-6">
                 {booking.bookingStatus}
               </Badge>
@@ -172,11 +172,11 @@ const BookingDetails = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
           {canUpdate('bookings') && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="h-9 gap-2">
+                <Button variant="outline" className="h-9 w-full gap-2 sm:w-auto">
                   <RefreshCcw className="h-4 w-4" /> Update Status
                 </Button>
               </DialogTrigger>
@@ -217,7 +217,7 @@ const BookingDetails = () => {
             booking.bookingStatus !== BookingStatus.COMPLETED && (
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="destructive" className="h-9 gap-2">
+                  <Button variant="destructive" className="h-9 w-full gap-2 sm:w-auto">
                     <Ban className="h-4 w-4" /> Cancel
                   </Button>
                 </DialogTrigger>
@@ -265,7 +265,7 @@ const BookingDetails = () => {
             <CardContent className="grid gap-8 md:grid-cols-2">
               <div className="space-y-4">
                 <DataRow label="Pickup Location" value={booking.pickupLocation} />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <DataRow
                     label="Pickup Date"
                     value={new Date(booking.startDatetime).toLocaleDateString()}
@@ -275,7 +275,7 @@ const BookingDetails = () => {
               </div>
               <div className="space-y-4">
                 <DataRow label="Dropoff Location" value={booking.dropoffLocation} />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <DataRow
                     label="Dropoff Date"
                     value={new Date(booking.endDatetime).toLocaleDateString()}
@@ -368,7 +368,7 @@ const BookingDetails = () => {
             </CardHeader>
             <CardContent className="space-y-1">
               <DataRow label="Model" value={`${booking.Vehicle?.make} ${booking.Vehicle?.model}`} />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <DataRow label="Year" value={booking.Vehicle?.year?.toString()} />
                 <DataRow label="Type" value={booking.Vehicle?.bodyType} />
               </div>

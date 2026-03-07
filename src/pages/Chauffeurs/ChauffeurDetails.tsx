@@ -139,12 +139,12 @@ const ChauffeurDetails = () => {
   };
 
   const DataRow = ({ label, value, icon: Icon }: { label: string; value: string | React.ReactNode; icon?: any }) => (
-    <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+    <div className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {label}
       </div>
-      <div className="text-foreground text-sm font-semibold">{value || 'Not provided'}</div>
+      <div className="text-foreground text-sm font-semibold wrap-break-word">{value || 'Not provided'}</div>
     </div>
   );
 
@@ -154,8 +154,8 @@ const ChauffeurDetails = () => {
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div className="flex items-center gap-5">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
                 {chauffeur.fullName || 'Unknown Name'}
               </h1>
               <Badge variant={getStatusVariant(chauffeur.status)} className="px-2.5 py-0.5 text-xs font-medium">
@@ -174,9 +174,13 @@ const ChauffeurDetails = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto md:justify-end">
           {canUpdate('chauffeurs') && (
-            <Button variant="outline" className="h-10 gap-2 font-medium" onClick={() => setEditDialogOpen(true)}>
+            <Button
+              variant="outline"
+              className="h-10 w-full gap-2 font-medium sm:w-auto"
+              onClick={() => setEditDialogOpen(true)}
+            >
               <Edit className="h-4 w-4" /> Edit Details
             </Button>
           )}
@@ -184,7 +188,7 @@ const ChauffeurDetails = () => {
           {canUpdate('chauffeurs') && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" className="h-10 gap-2 font-medium">
+                <Button variant="outline" className="h-10 w-full gap-2 font-medium sm:w-auto">
                   <RefreshCw className="h-4 w-4" /> Update Status
                 </Button>
               </DialogTrigger>
@@ -224,7 +228,7 @@ const ChauffeurDetails = () => {
             <Button
               onClick={handleVerify}
               disabled={processing}
-              className="h-10 gap-2 bg-black font-medium text-white hover:bg-gray-800"
+              className="h-10 w-full gap-2 bg-black font-medium text-white hover:bg-gray-800 sm:w-auto"
             >
               <UserCheck className="h-4 w-4" /> Verify Profile
             </Button>
@@ -290,26 +294,28 @@ const ChauffeurDetails = () => {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="mb-4 w-full justify-start gap-4 bg-transparent p-0">
-              <TabsTrigger
-                value="profile"
-                className="data-[state=active]:border-primary border bg-transparent px-2 pb-2 font-bold shadow-none data-[state=active]:bg-transparent"
-              >
-                Profile Overview
-              </TabsTrigger>
-              <TabsTrigger
-                value="documentation"
-                className="data-[state=active]:border-primary border bg-transparent px-2 pb-2 font-bold shadow-none data-[state=active]:bg-transparent"
-              >
-                Documentation
-              </TabsTrigger>
-              <TabsTrigger
-                value="bookings"
-                className="data-[state=active]:border-primary border bg-transparent px-2 pb-2 font-bold shadow-none data-[state=active]:bg-transparent"
-              >
-                Recent Bookings
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto pb-1">
+              <TabsList className="mb-4 w-max min-w-full justify-start gap-2 bg-transparent p-0 sm:w-full sm:gap-4">
+                <TabsTrigger
+                  value="profile"
+                  className="data-[state=active]:border-primary border bg-transparent px-2 pb-2 font-bold shadow-none data-[state=active]:bg-transparent"
+                >
+                  Profile Overview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="documentation"
+                  className="data-[state=active]:border-primary border bg-transparent px-2 pb-2 font-bold shadow-none data-[state=active]:bg-transparent"
+                >
+                  Documentation
+                </TabsTrigger>
+                <TabsTrigger
+                  value="bookings"
+                  className="data-[state=active]:border-primary border bg-transparent px-2 pb-2 font-bold shadow-none data-[state=active]:bg-transparent"
+                >
+                  Recent Bookings
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="profile" className="space-y-8">
               <Card>
@@ -487,11 +493,11 @@ const ChauffeurDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4 p-6 pt-0">
               <div className="space-y-3 font-mono text-[10px]">
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-muted-foreground uppercase">ID</span>
-                  <span className="font-bold text-gray-900">{chauffeur.id}</span>
+                  <span className="font-bold text-gray-900 break-all">{chauffeur.id}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-muted-foreground uppercase">UPDATED</span>
                   <span>{chauffeur.updatedAt ? new Date(chauffeur.updatedAt).toLocaleString() : 'N/A'}</span>
                 </div>

@@ -113,7 +113,7 @@ const Locations = () => {
         tableContainerClassName="!max-h-[calc(100vh-15rem)]"
         onSearchChange={(value) => setSearch(value)}
         customActions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <LocationFilters
               currentFilters={filters}
               onApplyFilters={(newFilters) => setFilters(newFilters)}

@@ -39,47 +39,46 @@ const AdminManagement = () => {
       <StatsOverview />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 space-y-4">
-        <TabsList
-          className="bg-muted/50 grid w-full rounded-xl p-1 backdrop-blur-sm"
-          style={{ gridTemplateColumns: `repeat(${Math.max(availableTabs.length, 1)}, minmax(0, 1fr))` }}
-        >
-          {canReadUsers && (
-            <TabsTrigger
-              value="users"
-              className="data-[state=active]:bg-background flex items-center gap-2 rounded-lg text-sm transition-all data-[state=active]:shadow-sm"
-            >
-              <Users className="h-4 w-4" />
-              <span>Users</span>
-            </TabsTrigger>
-          )}
-          {canReadRoles && (
-            <TabsTrigger
-              value="roles"
-              className="data-[state=active]:bg-background flex items-center gap-2 rounded-lg text-sm transition-all data-[state=active]:shadow-sm"
-            >
-              <Shield className="h-4 w-4" />
-              <span>Roles</span>
-            </TabsTrigger>
-          )}
-          {canReadPolicies && (
-            <TabsTrigger
-              value="policies"
-              className="data-[state=active]:bg-background flex items-center gap-2 rounded-lg text-sm transition-all data-[state=active]:shadow-sm"
-            >
-              <Key className="h-4 w-4" />
-              <span>Policies</span>
-            </TabsTrigger>
-          )}
-          {canAccessAssignments && (
-            <TabsTrigger
-              value="assignments"
-              className="data-[state=active]:bg-background flex items-center gap-2 rounded-lg text-sm transition-all data-[state=active]:shadow-sm"
-            >
-              <UserCheck className="h-4 w-4" />
-              <span>Assignments</span>
-            </TabsTrigger>
-          )}
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="bg-muted/50 inline-flex h-auto min-w-full flex-nowrap rounded-xl p-1 backdrop-blur-sm">
+            {canReadUsers && (
+              <TabsTrigger
+                value="users"
+                className="data-[state=active]:bg-background flex flex-none items-center gap-2 rounded-lg px-3 text-sm transition-all data-[state=active]:shadow-sm sm:flex-1"
+              >
+                <Users className="h-4 w-4" />
+                <span>Users</span>
+              </TabsTrigger>
+            )}
+            {canReadRoles && (
+              <TabsTrigger
+                value="roles"
+                className="data-[state=active]:bg-background flex flex-none items-center gap-2 rounded-lg px-3 text-sm transition-all data-[state=active]:shadow-sm sm:flex-1"
+              >
+                <Shield className="h-4 w-4" />
+                <span>Roles</span>
+              </TabsTrigger>
+            )}
+            {canReadPolicies && (
+              <TabsTrigger
+                value="policies"
+                className="data-[state=active]:bg-background flex flex-none items-center gap-2 rounded-lg px-3 text-sm transition-all data-[state=active]:shadow-sm sm:flex-1"
+              >
+                <Key className="h-4 w-4" />
+                <span>Policies</span>
+              </TabsTrigger>
+            )}
+            {canAccessAssignments && (
+              <TabsTrigger
+                value="assignments"
+                className="data-[state=active]:bg-background flex flex-none items-center gap-2 rounded-lg px-3 text-sm transition-all data-[state=active]:shadow-sm sm:flex-1"
+              >
+                <UserCheck className="h-4 w-4" />
+                <span>Assignments</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </div>
 
         <div className="animate-in fade-in slide-in-from-bottom-2 transition-all duration-300">
           {canReadUsers && (

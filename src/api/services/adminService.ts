@@ -72,6 +72,62 @@ export interface UpdatePolicyRequest {
   isActive?: boolean;
 }
 
+export type LegalContentType = 'privacy-policy' | 'refund-cancellation-policy' | 'terms-conditions';
+
+export type LegalBlockKind = 'heading' | 'paragraph' | 'bullet_list' | 'numbered_list' | 'quote';
+
+export interface LegalContentBlock {
+  id: string;
+  kind: LegalBlockKind;
+  text?: string;
+  items?: string[];
+}
+
+export interface LegalContent {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  blocks: LegalContentBlock[];
+  version: number;
+  isActive: boolean;
+  isDeleted: boolean;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  deletedBy?: string | null;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LegalContentVersion {
+  id: string;
+  legalContentId: string;
+  version: number;
+  title: string;
+  description?: string | null;
+  blocks: LegalContentBlock[];
+  changeNote?: string | null;
+  createdBy?: string | null;
+  createdAt: string;
+}
+
+export interface CreateLegalContentRequest {
+  slug: string;
+  title: string;
+  description?: string;
+  blocks: LegalContentBlock[];
+  isActive?: boolean;
+}
+
+export interface UpdateLegalContentRequest {
+  title?: string;
+  description?: string;
+  blocks?: LegalContentBlock[];
+  isActive?: boolean;
+  changeNote?: string;
+}
+
 // Assignment Types
 export interface AssignRoleRequest {
   adminUserId: string;
@@ -321,6 +377,67 @@ class PolicyService extends BaseApiService {
 }
 
 /**
+ * Legal Content Management Service
+ */
+class LegalContentService extends BaseApiService {
+  constructor() {
+    super('/legal-content');
+  }
+
+  async getAllLegalContent(filters?: { includeDeleted?: boolean }): Promise<LegalContent[]> {
+    const params = new URLSearchParams();
+    if (filters?.includeDeleted) {
+      params.set('includeDeleted', 'true');
+    }
+    const path = params.toString() ? `/?${params.toString()}` : '/';
+    const response = await this.get<LegalContent[]>(path);
+    return response.data || [];
+  }
+
+  async getLegalContentById(id: string, includeDeleted: boolean = true): Promise<LegalContent> {
+    const response = await this.get<LegalContent>(`/${id}?includeDeleted=${includeDeleted ? 'true' : 'false'}`);
+    return response.data!;
+  }
+
+  async getLegalContentBySlug(slug: LegalContentType | string, includeDeleted: boolean = true): Promise<LegalContent> {
+    const response = await this.get<LegalContent>(`/slug/${slug}?includeDeleted=${includeDeleted ? 'true' : 'false'}`);
+    return response.data!;
+  }
+
+  async createLegalContent(data: CreateLegalContentRequest): Promise<LegalContent> {
+    const response = await this.post<LegalContent, CreateLegalContentRequest>('/', data);
+    return response.data!;
+  }
+
+  async updateLegalContentById(id: string, data: UpdateLegalContentRequest): Promise<LegalContent> {
+    const response = await this.put<LegalContent, UpdateLegalContentRequest>(`/${id}`, data);
+    return response.data!;
+  }
+
+  async deleteLegalContentById(id: string): Promise<LegalContent> {
+    const response = await this.delete<LegalContent>(`/${id}`);
+    return response.data!;
+  }
+
+  async restoreLegalContentById(id: string): Promise<LegalContent> {
+    const response = await this.put<LegalContent>(`/${id}/restore`);
+    return response.data!;
+  }
+
+  async getLegalContentVersions(id: string): Promise<LegalContentVersion[]> {
+    const response = await this.get<LegalContentVersion[]>(`/${id}/versions`);
+    return response.data || [];
+  }
+
+  async revertLegalContentVersion(id: string, versionId: string, changeNote?: string): Promise<LegalContent> {
+    const response = await this.post<LegalContent, { changeNote?: string }>(`/${id}/revert/${versionId}`, {
+      changeNote,
+    });
+    return response.data!;
+  }
+}
+
+/**
  * Role-Policy Assignment Service
  */
 class RolePolicyService extends BaseApiService {
@@ -406,5 +523,6 @@ class AdminUserRoleService extends BaseApiService {
 export const adminUserService = new AdminUserService();
 export const roleService = new RoleService();
 export const policyService = new PolicyService();
+export const legalContentService = new LegalContentService();
 export const rolePolicyService = new RolePolicyService();
 export const adminUserRoleService = new AdminUserRoleService();

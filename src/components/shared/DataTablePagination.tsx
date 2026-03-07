@@ -25,12 +25,12 @@ const DataTablePagination: FC<DataTablePaginationProps> = ({
   const totalPages = Math.ceil(totalItems / pageSize);
 
   return (
-    <div className="flex items-center justify-between px-2">
-      <div className="text-muted-foreground flex-1 text-sm">
+    <div className="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-muted-foreground text-sm">
         {selectedCount} of {totalItems} row(s) selected.
       </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center gap-3 sm:justify-end sm:gap-4 lg:gap-6">
+        <div className="flex items-center gap-2">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
             value={`${pageSize}`}
@@ -38,7 +38,7 @@ const DataTablePagination: FC<DataTablePaginationProps> = ({
               onPageSizeChange(Number(value));
             }}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="h-8 w-17.5 bg-white">
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
@@ -50,10 +50,10 @@ const DataTablePagination: FC<DataTablePaginationProps> = ({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+        <div className="flex items-center justify-center text-sm font-medium">
           Page {currentPage} of {totalPages || 1}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"

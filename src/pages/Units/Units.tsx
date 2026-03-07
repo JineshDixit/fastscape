@@ -183,9 +183,9 @@ const Units = () => {
   // Show list view
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col items-stretch justify-between gap-6 xl:flex-row xl:items-center">
-        <div className="flex flex-1 items-center gap-4">
-          <div className="relative w-full max-w-md">
+      <div className="flex flex-col items-stretch justify-between gap-4 xl:flex-row xl:items-center">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="relative w-full sm:max-w-md">
             <Search className="text-foreground/50 absolute top-1/2 left-4 size-4 -translate-y-1/2" />
             <Input
               placeholder="Search car name..."

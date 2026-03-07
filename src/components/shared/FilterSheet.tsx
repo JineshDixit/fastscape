@@ -33,7 +33,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="h-9 w-full gap-2 sm:w-auto">
           <Filter className="size-4" />
           Filters
           {activeFilterCount > 0 && (
@@ -43,13 +43,13 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col overflow-hidden">
+      <SheetContent className="flex h-dvh w-full max-w-full flex-col overflow-hidden sm:max-w-sm">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
-        {sheetFooter && <SheetFooter className="px-6 pb-6">{sheetFooter}</SheetFooter>}
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">{children}</div>
+        {sheetFooter && <SheetFooter className="px-4 pb-4 sm:px-6 sm:pb-6">{sheetFooter}</SheetFooter>}
       </SheetContent>
     </Sheet>
   );

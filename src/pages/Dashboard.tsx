@@ -260,10 +260,10 @@ const Dashboard = () => {
         {/* Rent Status Chart */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-lg font-semibold">Rent Status</CardTitle>
               <Select value={rentPeriod} onValueChange={(value: any) => setRentPeriod(value)}>
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-full sm:w-35">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -275,7 +275,7 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
+            <div className="h-70">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -295,7 +295,7 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-4 flex items-center justify-center gap-6">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-sm bg-[#64748b]" />
                 <span className="text-muted-foreground text-sm">Complete</span>
@@ -315,10 +315,10 @@ const Dashboard = () => {
         {/* Earning Summary Chart */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-lg font-semibold">Earning Summary</CardTitle>
               <Select value={earningMonths.toString()} onValueChange={(value) => setEarningMonths(parseInt(value))}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,7 +330,7 @@ const Dashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
+            <div className="h-70">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={earningSummary}>
                   <defs>
@@ -378,10 +378,10 @@ const Dashboard = () => {
       {/* Bookings Overview */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-lg font-semibold">Bookings Overview</CardTitle>
             <Select value={bookingsYear.toString()} onValueChange={(value) => setBookingsYear(parseInt(value))}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-35">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -394,7 +394,7 @@ const Dashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[320px]">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={bookingsOverview}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

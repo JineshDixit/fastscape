@@ -14,17 +14,17 @@ const LayoutInner = () => {
     <div className="bg-background flex h-full w-full overflow-hidden">
       {isMobile && isOpen && (
         <div
-          className="bg-opacity-50 fixed inset-0 z-40 bg-transparent transition-opacity duration-300"
+          className="fixed inset-0 z-40 bg-black/40 transition-opacity duration-300"
           onClick={closeSidebar}
         />
       )}
 
       <Sidebar />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header breadcrumbs={breadcrumbs} />
 
-        <main className="flex-1 overflow-y-auto p-6 transition-all duration-300 ease-in-out">
+        <main className="flex-1 overflow-y-auto px-3 py-4 transition-all duration-300 ease-in-out sm:px-4 lg:px-6">
           <Outlet />
         </main>
       </div>

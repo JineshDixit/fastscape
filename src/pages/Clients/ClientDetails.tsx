@@ -130,13 +130,13 @@ const ClientDetails = () => {
   );
 
   return (
-    <div className="container space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">Client Details</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Client Details</h1>
               <Badge variant={getVerificationVariant(user.verificationStatus)} className="h-6">
                 {user.verificationStatus}
               </Badge>
@@ -148,12 +148,12 @@ const ClientDetails = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
           {canUpdate('clients') && (
             <>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="h-9 gap-2">
+                  <Button variant="outline" className="h-9 w-full gap-2 sm:w-auto">
                     <Shield className="h-4 w-4" /> Update Verification
                   </Button>
                 </DialogTrigger>
@@ -193,13 +193,13 @@ const ClientDetails = () => {
               </Dialog>
 
               {user.isBlocked ? (
-                <Button variant="default" className="h-9 gap-2" onClick={() => handleToggleBlock(false)}>
+                <Button variant="default" className="h-9 w-full gap-2 sm:w-auto" onClick={() => handleToggleBlock(false)}>
                   <CheckCircle className="h-4 w-4" /> Unblock User
                 </Button>
               ) : (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="destructive" className="h-9 gap-2">
+                    <Button variant="destructive" className="h-9 w-full gap-2 sm:w-auto">
                       <Ban className="h-4 w-4" /> Block User
                     </Button>
                   </DialogTrigger>
@@ -322,7 +322,7 @@ const ClientDetails = () => {
                   {user.Bookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="flex items-center justify-between rounded-lg border p-3 hover:bg-gray-50"
+                      className="flex flex-col gap-3 rounded-lg border p-3 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="flex flex-col gap-1">
                         <span className="font-mono text-xs text-gray-500">{booking.id}</span>
@@ -335,7 +335,7 @@ const ClientDetails = () => {
                           </Badge>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <div className="text-sm font-medium">
                           {new Date(booking.startDatetime).toLocaleDateString()}
                         </div>

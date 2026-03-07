@@ -23,6 +23,7 @@ const FinanceDetails = lazy(() => import('@/pages/Financials/FinanceDetails'));
 const ProfilePage = lazy(() => import('@/pages/Profile/ProfilePage'));
 const Locations = lazy(() => import('@/pages/Locations/Locations'));
 const AdminManagement = lazy(() => import('@/pages/AdminManagement/AdminManagement'));
+const LegalContentManagement = lazy(() => import('@/pages/LegalContent/LegalContentManagement'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 export const router = createBrowserRouter([
@@ -187,6 +188,30 @@ export const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: 'legal-content',
+        element: (
+          <RoleGuard
+            requiredPermissions={[
+              PERMISSIONS.ADMIN.LEGAL.READ,
+              PERMISSIONS.ADMIN.LEGAL.UPDATE,
+              PERMISSIONS.ADMIN.LEGAL.CREATE,
+              PERMISSIONS.ADMIN.LEGAL.DELETE,
+              PERMISSIONS.ADMIN.LEGAL.RESTORE,
+              PERMISSIONS.ADMIN.LEGAL.MANAGE,
+              PERMISSIONS.ADMIN.LEGAL.PRIVACY.READ,
+              PERMISSIONS.ADMIN.LEGAL.REFUND.READ,
+              PERMISSIONS.ADMIN.LEGAL.TERMS.READ,
+              PERMISSIONS.ADMIN.LEGAL.PRIVACY.UPDATE,
+              PERMISSIONS.ADMIN.LEGAL.REFUND.UPDATE,
+              PERMISSIONS.ADMIN.LEGAL.TERMS.UPDATE,
+            ]}
+            fallbackPath="/dashboard"
+          >
+            <LegalContentManagement />
+          </RoleGuard>
+        ),
       },
       {
         path: 'admin-management',

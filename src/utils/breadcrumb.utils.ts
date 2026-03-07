@@ -15,6 +15,7 @@ export const generateBreadcrumbs = (pathname: string): BreadcrumbItem[] => {
     financials: 'Financials',
     documents: 'Documents',
     locations: 'Locations',
+    'legal-content': 'Legal Content',
     'admin-management': 'Admin Management',
   };
 

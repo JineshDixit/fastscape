@@ -134,19 +134,19 @@ const FinanceDetails = () => {
   const payments = financial.Payments || [];
 
   return (
-    <div className="container space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Invoice Details</h1>
             <p className="text-sm text-gray-500">Invoice ID: {financial.bookingId.slice(0, 8).toUpperCase()}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {booking && getStatusBadge(booking.paymentStatus)}
           {canPerformAction('financials', 'generateInvoice') && (
-            <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="gap-2">
+            <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="w-full gap-2 sm:w-auto">
               <Download className="h-4 w-4" />
               Download PDF
             </Button>
@@ -166,7 +166,7 @@ const FinanceDetails = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="mb-1 text-xs text-gray-500">Full Name</p>
                   <p className="font-medium">
@@ -202,7 +202,7 @@ const FinanceDetails = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="mb-1 text-xs text-gray-500">Make & Model</p>
                   <p className="font-medium">
@@ -230,7 +230,7 @@ const FinanceDetails = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="mb-1 text-xs text-gray-500">Start Date</p>
                   <p className="font-medium">{booking?.startDatetime && formatDate(booking.startDatetime)}</p>
@@ -257,12 +257,15 @@ const FinanceDetails = () => {
               ) : (
                 <div className="space-y-3">
                   {payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                    <div
+                      key={payment.id}
+                      className="flex flex-col gap-2 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
                       <div className="flex-1">
                         <p className="text-sm font-medium">{payment.paymentType}</p>
                         <p className="text-xs text-gray-500">{formatDate(payment.createdAt)}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="font-semibold">{formatCurrency(payment.amount, financial.currency)}</p>
                         <Badge
                           variant={payment.paymentStatus === 'PAID' ? 'default' : 'secondary'}

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Users, Car, BookUser, LogOut, ChartPie, MapPin, Shield } from 'lucide-react';
+import { LayoutDashboard, Calendar, Users, Car, BookUser, LogOut, ChartPie, MapPin, Shield, FileText } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import logo from '@/assets/Logo.png';
@@ -50,6 +50,25 @@ const sidebarItems: SidebarItem[] = [
     requiredPermissions: [PERMISSIONS.LOCATIONS.LIST, PERMISSIONS.LOCATIONS.READ],
   },
   {
+    icon: FileText,
+    label: 'Legal Content',
+    path: '/legal-content',
+    requiredPermissions: [
+      PERMISSIONS.ADMIN.LEGAL.READ,
+      PERMISSIONS.ADMIN.LEGAL.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.CREATE,
+      PERMISSIONS.ADMIN.LEGAL.DELETE,
+      PERMISSIONS.ADMIN.LEGAL.RESTORE,
+      PERMISSIONS.ADMIN.LEGAL.MANAGE,
+      PERMISSIONS.ADMIN.LEGAL.PRIVACY.READ,
+      PERMISSIONS.ADMIN.LEGAL.REFUND.READ,
+      PERMISSIONS.ADMIN.LEGAL.TERMS.READ,
+      PERMISSIONS.ADMIN.LEGAL.PRIVACY.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.REFUND.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.TERMS.UPDATE,
+    ],
+  },
+  {
     icon: Shield,
     label: 'Admin',
     path: '/admin-management',
@@ -86,7 +105,7 @@ const Sidebar = () => {
       className={cn(
         'bg-background flex flex-col border-r border-gray-200 transition-all duration-300 ease-in-out',
         isCollapsed && !isMobile ? 'w-19' : 'w-64',
-        isMobile ? 'fixed inset-y-0 left-0 z-50 h-screen' : 'relative',
+        isMobile ? 'fixed inset-y-0 left-0 z-50 h-screen w-72 max-w-[85vw] shadow-xl' : 'relative',
         isMobile && !isOpen ? '-translate-x-full' : 'translate-x-0',
       )}
     >
@@ -100,8 +119,13 @@ const Sidebar = () => {
           <img src={logo} alt="Fastscape" className="h-3.5 w-auto" />
         </div>
       ) : null}
+      {isMobile ? (
+        <div className="border-b border-gray-200 px-5 py-5">
+          <img src={logo} alt="Fastscape" className="h-3.5 w-auto" />
+        </div>
+      ) : null}
 
-      <nav className="flex-1 space-y-2 p-4">
+      <nav className="flex-1 space-y-2 overflow-y-auto p-4">
         <TooltipProvider delayDuration={80}>
           {visibleSidebarItems.map((item) => {
             const Icon = item.icon;
@@ -129,7 +153,7 @@ const Sidebar = () => {
                         isActive ? `text-primary` : 'text-foreground/65 group-hover:text-foreground',
                       )}
                     />
-                    {!isCollapsed && <span className="truncate">{item.label}</span>}
+                    {(!isCollapsed || isMobile) && <span className="truncate">{item.label}</span>}
                   </>
                 )}
               </NavLink>

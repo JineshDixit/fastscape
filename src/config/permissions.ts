@@ -125,6 +125,26 @@ export const PERMISSIONS = {
       UPDATE: 'admin.content.update',
       DELETE: 'admin.content.delete',
     },
+    LEGAL: {
+      READ: 'admin.legal.read',
+      CREATE: 'admin.legal.create',
+      UPDATE: 'admin.legal.update',
+      DELETE: 'admin.legal.delete',
+      RESTORE: 'admin.legal.restore',
+      MANAGE: 'admin.legal.manage',
+      PRIVACY: {
+        READ: 'admin.legal.privacy.read',
+        UPDATE: 'admin.legal.privacy.update',
+      },
+      REFUND: {
+        READ: 'admin.legal.refund.read',
+        UPDATE: 'admin.legal.refund.update',
+      },
+      TERMS: {
+        READ: 'admin.legal.terms.read',
+        UPDATE: 'admin.legal.terms.update',
+      },
+    },
   },
 
   // Super Admin - has all permissions
@@ -149,6 +169,20 @@ export const ROUTE_PERMISSIONS = {
   '/financials': [PERMISSIONS.FINANCIALS.LIST, PERMISSIONS.FINANCIALS.READ],
   '/financials/:id': [PERMISSIONS.FINANCIALS.VIEW, PERMISSIONS.FINANCIALS.READ],
   '/documents': [PERMISSIONS.DOCUMENTS.LIST, PERMISSIONS.DOCUMENTS.READ],
+  '/legal-content': [
+    PERMISSIONS.ADMIN.LEGAL.READ,
+    PERMISSIONS.ADMIN.LEGAL.UPDATE,
+    PERMISSIONS.ADMIN.LEGAL.CREATE,
+    PERMISSIONS.ADMIN.LEGAL.DELETE,
+    PERMISSIONS.ADMIN.LEGAL.RESTORE,
+    PERMISSIONS.ADMIN.LEGAL.MANAGE,
+    PERMISSIONS.ADMIN.LEGAL.PRIVACY.READ,
+    PERMISSIONS.ADMIN.LEGAL.REFUND.READ,
+    PERMISSIONS.ADMIN.LEGAL.TERMS.READ,
+    PERMISSIONS.ADMIN.LEGAL.PRIVACY.UPDATE,
+    PERMISSIONS.ADMIN.LEGAL.REFUND.UPDATE,
+    PERMISSIONS.ADMIN.LEGAL.TERMS.UPDATE,
+  ],
   '/admin-management': [PERMISSIONS.ADMIN.USERS.READ],
 } as const;
 
@@ -207,6 +241,28 @@ export const ACTION_PERMISSIONS = {
     update: [PERMISSIONS.DOCUMENTS.UPDATE],
     delete: [PERMISSIONS.DOCUMENTS.DELETE],
     download: [PERMISSIONS.DOCUMENTS.DOWNLOAD, PERMISSIONS.DOCUMENTS.READ],
+  },
+  legalContent: {
+    read: [
+      PERMISSIONS.ADMIN.LEGAL.READ,
+      PERMISSIONS.ADMIN.LEGAL.MANAGE,
+      PERMISSIONS.ADMIN.LEGAL.PRIVACY.READ,
+      PERMISSIONS.ADMIN.LEGAL.REFUND.READ,
+      PERMISSIONS.ADMIN.LEGAL.TERMS.READ,
+      PERMISSIONS.ADMIN.LEGAL.PRIVACY.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.REFUND.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.TERMS.UPDATE,
+    ],
+    create: [PERMISSIONS.ADMIN.LEGAL.CREATE, PERMISSIONS.ADMIN.LEGAL.MANAGE],
+    update: [
+      PERMISSIONS.ADMIN.LEGAL.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.MANAGE,
+      PERMISSIONS.ADMIN.LEGAL.PRIVACY.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.REFUND.UPDATE,
+      PERMISSIONS.ADMIN.LEGAL.TERMS.UPDATE,
+    ],
+    delete: [PERMISSIONS.ADMIN.LEGAL.DELETE, PERMISSIONS.ADMIN.LEGAL.MANAGE],
+    restore: [PERMISSIONS.ADMIN.LEGAL.RESTORE, PERMISSIONS.ADMIN.LEGAL.MANAGE],
   },
   admin: {
     users: {

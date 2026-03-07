@@ -151,10 +151,10 @@ const Documents = () => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-400 flex-col space-y-8 p-8">
-      <div className="flex items-center justify-between space-y-2">
+    <div className="mx-auto flex h-full w-full max-w-screen-2xl flex-col space-y-6 px-3 py-4 sm:px-4 lg:px-6">
+      <div className="flex flex-col gap-1">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Document Verification</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Document Verification</h2>
           <p className="text-muted-foreground mt-1">Review and verify user identity documents.</p>
         </div>
       </div>

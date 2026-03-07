@@ -157,7 +157,7 @@ const Financials = () => {
   }
 
   return (
-    <div className="container space-y-6">
+    <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Completed Payment Card */}
@@ -283,7 +283,7 @@ const Financials = () => {
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         customActions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <FinanceFilters
               currentFilters={filters}
               onApplyFilters={(newFilters) => {
@@ -306,7 +306,7 @@ const Financials = () => {
                 onClick={handlePrintInvoice}
                 variant="default"
                 size="sm"
-                className="gap-2"
+                className="w-full gap-2 sm:w-auto"
                 disabled={Object.keys(rowSelection).length === 0}
               >
                 <FileDown className="h-4 w-4" />
