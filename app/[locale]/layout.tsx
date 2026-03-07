@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -7,6 +8,14 @@ import { VehicleProvider } from '@/app/context/VehicleContext';
 import LayoutClient from '@/components/layout/layoutClient';
 import '@/app/globals.css';
 import { Toaster } from '@/components/ui/sonner';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Fastscape',
+    template: '%s | Fastscape',
+  },
+  description: 'Fastscape car rental client application.',
+};
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
