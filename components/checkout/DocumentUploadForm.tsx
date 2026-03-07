@@ -191,7 +191,7 @@ const DocumentUploadForm: React.FC<DocumentUploadFormProps> = ({ initialData, on
             <div key={field.id} className="group relative flex flex-col gap-2">
               <div
                 className={cn(
-                  'relative flex aspect-4/3 flex-col items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300',
+                  'relative flex aspect-[4/3] flex-col items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300',
                   hasFile
                     ? 'border-primary/20 bg-primary/5'
                     : 'hover:border-primary/30 border-gray-100 bg-gray-50/30 hover:bg-white',

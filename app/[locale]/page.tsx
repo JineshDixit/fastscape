@@ -50,20 +50,19 @@ const Home = () => {
           <CarSearchForm />
         </aside>
         <div className="space-y-6">
-          <div className="relative aspect-[17/10] overflow-hidden rounded-3xl">
+          <div className="relative aspect-4476/1796 overflow-hidden rounded-3xl">
             <Image
               src="/images/hero-car-clip-img.png"
               alt="Hero Car Image"
               fill
-              sizes="(max-width: 1024px) 100vw, (max-width: 1280px) calc(100vw - 420px), 850px"
-              quality={90}
+              sizes="(max-width: 1024px) 100vw, (max-width: 1280px) calc(100vw - 420px), 900px"
               priority
               className="object-cover"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="relative aspect-square h-full overflow-hidden rounded-3xl">
+            <div className="relative h-full min-h-80 overflow-hidden rounded-3xl">
               <Image
                 src="/images/hero-chauffeurs.png"
                 alt="Professional Chauffeur Service"
@@ -102,7 +101,7 @@ const Home = () => {
                 },
               ].map((item) => (
                 <div key={item.label} className="relative flex w-full flex-col items-center">
-                  <div className="relative z-10 -mb-8 aspect-square w-full max-w-[240px]">
+                  <div className="relative z-10 -mb-8 h-[135px] w-60 max-w-full shrink-0">
                     <Image
                       src={item.img}
                       alt={item.label}
@@ -146,7 +145,7 @@ const Home = () => {
                 { label: 'Hyundai', img: '/brands/hyundai-brand.png' },
               ].map((brand, index) => (
                 <div key={`${brand.label}-${index}`} className="flex items-center justify-center">
-                  <div className="relative aspect-7/4 w-full max-w-[90px]">
+                  <div className="relative h-[52px] w-[90px] shrink-0">
                     <Image
                       src={brand.img}
                       alt={brand.label}

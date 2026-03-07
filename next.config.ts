@@ -21,6 +21,7 @@ const remotePatterns: NonNullable<NextConfig['images']>['remotePatterns'] = imag
 
 const nextConfig: NextConfig = {
   images: {
+    qualities: [75, 90],
     remotePatterns,
   },
 };

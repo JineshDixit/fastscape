@@ -39,7 +39,9 @@ const LegalDocumentClient = ({ slug }: Props) => {
         if (!isMounted) return;
 
         if (isAxiosError(error)) {
-          setError((error.response?.data as { message?: string } | undefined)?.message || 'Failed to load this legal page.');
+          setError(
+            (error.response?.data as { message?: string } | undefined)?.message || 'Failed to load this legal page.',
+          );
         } else if (error instanceof Error) {
           setError(error.message);
         } else {
@@ -62,9 +64,10 @@ const LegalDocumentClient = ({ slug }: Props) => {
   if (isLoading) {
     return (
       <main className="min-h-screen py-8 md:py-14">
-        <div className="global-container grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <div className="h-72 animate-pulse rounded-[1.75rem] border border-slate-200 bg-slate-100" />
-          <div className="h-[36rem] animate-pulse rounded-[1.75rem] border border-slate-200 bg-slate-100" />
+        {/* <div className="global-container grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]"> */}
+        <div className="global-container">
+          {/* <div className="h-72 animate-pulse rounded-[1.75rem] border border-slate-200 bg-slate-100" /> */}
+          <div className="h-144 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
         </div>
       </main>
     );
@@ -76,7 +79,10 @@ const LegalDocumentClient = ({ slug }: Props) => {
         <div className="global-container">
           <section className="rounded-[1.75rem] border border-red-200 bg-red-50 px-6 py-8 text-sm text-red-700">
             <p>{error || 'Legal page not found.'}</p>
-            <Link href="/legal" className="mt-4 inline-flex items-center gap-2 font-semibold text-red-800 underline-offset-4 hover:underline">
+            <Link
+              href="/legal"
+              className="mt-4 inline-flex items-center gap-2 font-semibold text-red-800 underline-offset-4 hover:underline"
+            >
               Browse legal pages
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -90,9 +96,10 @@ const LegalDocumentClient = ({ slug }: Props) => {
   const relatedDocuments = documents.filter((item) => item.slug !== document.slug);
 
   return (
-    <main className="min-h-screen py-8 md:py-14">
-      <div className="global-container grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
+    <main>
+      {/* <div className="global-container grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]"> */}
+      <div className="global-container">
+        {/* <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_18px_60px_-35px_rgba(15,23,42,0.28)]">
             <p className="text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">Documents</p>
             <div className="mt-4 space-y-2">
@@ -126,10 +133,10 @@ const LegalDocumentClient = ({ slug }: Props) => {
               </nav>
             </div>
           )}
-        </aside>
+        </aside> */}
 
-        <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_60px_-35px_rgba(15,23,42,0.28)]">
-          <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(6,176,252,0.18),_transparent_32%),linear-gradient(135deg,_#f8fcff_0%,_#ffffff_52%,_#eef8ff_100%)] px-6 py-8 md:px-10 md:py-10">
+        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_60px_-35px_rgba(15,23,42,0.28)]">
+          <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(6,176,252,0.18),transparent_32%),linear-gradient(135deg,#f8fcff_0%,#ffffff_52%,#eef8ff_100%)] px-6 py-8 md:px-10 md:py-10">
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
               <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3 py-1 text-sky-700">
                 <FileText className="h-3.5 w-3.5" />
@@ -139,8 +146,12 @@ const LegalDocumentClient = ({ slug }: Props) => {
             </div>
 
             <div className="mt-5 space-y-4">
-              <h1 className="max-w-4xl text-3xl font-black tracking-tight text-slate-950 md:text-5xl">{document.title}</h1>
-              {document.description && <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">{document.description}</p>}
+              <h1 className="max-w-4xl text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+                {document.title}
+              </h1>
+              {document.description && (
+                <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">{document.description}</p>
+              )}
               <p className="text-sm font-medium text-slate-500">Last updated {formatLegalDate(document.updatedAt)}</p>
             </div>
           </div>

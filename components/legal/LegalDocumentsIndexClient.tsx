@@ -55,7 +55,7 @@ const LegalDocumentsIndexClient = () => {
   return (
     <main className="min-h-screen py-8 md:py-14">
       <div className="global-container space-y-8 md:space-y-12">
-        <section className="overflow-hidden rounded-[2rem] border border-sky-100 bg-[radial-gradient(circle_at_top_left,_rgba(6,176,252,0.18),_transparent_32%),linear-gradient(135deg,_#f8fcff_0%,_#ffffff_58%,_#eef8ff_100%)] px-6 py-10 md:px-10 md:py-14">
+        <section className="overflow-hidden rounded-4xl border border-sky-100 bg-[radial-gradient(circle_at_top_left,rgba(6,176,252,0.18),transparent_32%),linear-gradient(135deg,#f8fcff_0%,#ffffff_58%,#eef8ff_100%)] px-6 py-10 md:px-10 md:py-14">
           <div className="max-w-3xl space-y-4">
             <span className="inline-flex rounded-full border border-sky-200 bg-white/80 px-3 py-1 text-xs font-semibold tracking-[0.22em] text-sky-700 uppercase">
               Legal
