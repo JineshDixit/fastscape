@@ -510,7 +510,7 @@ const LegalContentManagement = () => {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by title or slug"
             />
-            <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="hidden items-center justify-between rounded-md border p-3">
               <Label htmlFor="show-deleted-toggle">Show Deleted</Label>
               <Switch
                 id="show-deleted-toggle"
@@ -519,7 +519,7 @@ const LegalContentManagement = () => {
               />
             </div>
             {canCreateLegal && (
-              <Button type="button" onClick={startCreateMode} className="w-full">
+              <Button type="button" onClick={startCreateMode} className="hidden w-full">
                 <Plus className="mr-2 h-4 w-4" />
                 New Document
               </Button>
