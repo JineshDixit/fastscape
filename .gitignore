@@ -15,8 +15,8 @@ yarn-error.log*
 .env.production.example
 
 # Build output
-# dist/
-# build/
+/dist/
+dist/
 
 # TypeScript
 *.tsbuildinfo

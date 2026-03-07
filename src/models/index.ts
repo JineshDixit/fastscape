@@ -13,6 +13,8 @@ import { initChauffeurModel, Chauffeur } from './chauffeur.model';
 import { initChauffeurReviewModel, ChauffeurReview } from './chauffeurReview.model';
 import { initLocationModel, Location } from './location.model';
 import { initWebhookEventModel, WebhookEvent } from './webhookEvent.model';
+import { initLegalContentModel, LegalContent } from './legalContent.model';
+import { initLegalContentVersionModel, LegalContentVersion } from './legalContentVersion.model';
 
 let sequelize: Sequelize;
 
@@ -59,6 +61,8 @@ const initPostgres_DB = async (): Promise<void> => {
   initChauffeurReviewModel(sequelize);
   initLocationModel(sequelize);
   initWebhookEventModel(sequelize);
+  initLegalContentModel(sequelize);
+  initLegalContentVersionModel(sequelize);
 
   //Associations
   User.hasOne(UserIdentityDocument, { foreignKey: 'userId', as: 'identityDocument' });
@@ -108,6 +112,9 @@ const initPostgres_DB = async (): Promise<void> => {
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
   RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+  LegalContent.hasMany(LegalContentVersion, { foreignKey: 'legalContentId', as: 'versions' });
+  LegalContentVersion.belongsTo(LegalContent, { foreignKey: 'legalContentId', as: 'legalContent' });
 };
 
 export {
@@ -126,4 +133,6 @@ export {
   ChauffeurReview,
   Location,
   WebhookEvent,
+  LegalContent,
+  LegalContentVersion,
 };
