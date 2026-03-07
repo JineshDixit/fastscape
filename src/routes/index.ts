@@ -14,6 +14,7 @@ import userRoutes from './user.routes';
 import locationRoutes from './location.routes';
 import financeRoutes from './finance.routes';
 import dashboardRoutes from './dashboard.routes';
+import legalContentRoutes from './legalContent.routes';
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use('/users', userRoutes);
 router.use('/locations', locationRoutes);
 router.use('/finance', financeRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/legal-content', legalContentRoutes);
 
 // API info endpoint
 router.get('/', (req, res) => {
@@ -53,6 +55,7 @@ router.get('/', (req, res) => {
       locations: '/api/locations',
       finance: '/api/finance',
       dashboard: '/api/dashboard',
+      legalContent: '/api/legal-content',
       policies: '/api/policies',
       rolePolicies: '/api/role-policies',
       adminUserRoles: '/api/admin-user-roles',

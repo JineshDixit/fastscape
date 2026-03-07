@@ -92,6 +92,58 @@ export interface AssignPolicyToRoleRequest {
   policyId: string;
 }
 
+export interface LegalContentBlock {
+  id: string;
+  kind: 'heading' | 'paragraph' | 'bullet_list' | 'numbered_list' | 'quote';
+  text?: string;
+  items?: string[];
+}
+
+export interface LegalContentResponse {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  blocks: LegalContentBlock[];
+  version: number;
+  isActive: boolean;
+  isDeleted: boolean;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  deletedBy?: string | null;
+  deletedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LegalContentVersionResponse {
+  id: string;
+  legalContentId: string;
+  version: number;
+  title: string;
+  description?: string | null;
+  blocks: LegalContentBlock[];
+  changeNote?: string | null;
+  createdBy?: string | null;
+  createdAt: Date;
+}
+
+export interface CreateLegalContentRequest {
+  slug: string;
+  title: string;
+  description?: string;
+  blocks?: LegalContentBlock[];
+  isActive?: boolean;
+}
+
+export interface UpdateLegalContentRequest {
+  title?: string;
+  description?: string;
+  blocks?: LegalContentBlock[];
+  isActive?: boolean;
+  changeNote?: string;
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     userId: string;

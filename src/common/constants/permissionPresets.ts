@@ -159,6 +159,24 @@ export const PERMISSION_PRESET_GROUPS: PermissionPresetGroup[] = [
     ],
   },
   {
+    key: 'admin-legal-content',
+    label: 'Admin Legal Content',
+    permissions: [
+      'admin.legal.read',
+      'admin.legal.create',
+      'admin.legal.update',
+      'admin.legal.delete',
+      'admin.legal.restore',
+      'admin.legal.manage',
+      'admin.legal.privacy.read',
+      'admin.legal.privacy.update',
+      'admin.legal.refund.read',
+      'admin.legal.refund.update',
+      'admin.legal.terms.read',
+      'admin.legal.terms.update',
+    ],
+  },
+  {
     key: 'admin-ops',
     label: 'Admin System & Reports',
     permissions: [

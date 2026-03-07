@@ -17,6 +17,8 @@ import { ChauffeurReview, initChauffeurReviewModel } from './chauffeurReview.mod
 import { Chauffeur, initChauffeurModel } from './chauffeur.model';
 import { BookingFinancial, initBookingFinancialModel } from './bookingFinancial.model';
 import { initLocationModel, Location } from './location.model';
+import { initLegalContentModel, LegalContent } from './legalContent.model';
+import { initLegalContentVersionModel, LegalContentVersion } from './legalContentVersion.model';
 
 let sequelize: Sequelize;
 
@@ -70,6 +72,8 @@ const initPostgres_DB = (): void => {
   initChauffeurModel(sequelize);
   initBookingFinancialModel(sequelize);
   initLocationModel(sequelize);
+  initLegalContentModel(sequelize);
+  initLegalContentVersionModel(sequelize);
 
   // Associations
   AdminUser.belongsToMany(Role, {
@@ -160,6 +164,16 @@ const initPostgres_DB = (): void => {
   ChauffeurReview.belongsTo(Booking, { foreignKey: 'bookingId' });
   ChauffeurReview.belongsTo(Chauffeur, { foreignKey: 'chauffeurId' });
   ChauffeurReview.belongsTo(User, { foreignKey: 'userId' });
+
+  LegalContent.hasMany(LegalContentVersion, {
+    foreignKey: 'legalContentId',
+    as: 'versions',
+  });
+
+  LegalContentVersion.belongsTo(LegalContent, {
+    foreignKey: 'legalContentId',
+    as: 'legalContent',
+  });
 };
 
 export {
@@ -182,4 +196,6 @@ export {
   Chauffeur,
   BookingFinancial,
   Location,
+  LegalContent,
+  LegalContentVersion,
 };
