@@ -1,5 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-import { LegalContentBlock } from './legalContent.model';
+import { LegalContentBlock, LegalContentTranslations } from './legalContent.model';
 
 export class LegalContentVersion extends Model {
   public id!: string;
@@ -8,6 +8,7 @@ export class LegalContentVersion extends Model {
   public title!: string;
   public description?: string | null;
   public blocks!: LegalContentBlock[];
+  public translations!: LegalContentTranslations;
   public changeNote?: string | null;
   public createdBy?: string | null;
   public readonly createdAt!: Date;
@@ -46,6 +47,11 @@ export const initLegalContentVersionModel = (sequelize: Sequelize) => {
         type: DataTypes.JSONB,
         allowNull: false,
         defaultValue: [],
+      },
+      translations: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: {},
       },
       changeNote: {
         type: DataTypes.STRING(300),

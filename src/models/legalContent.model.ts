@@ -2,6 +2,8 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 
 export const LEGAL_BLOCK_KINDS = ['heading', 'paragraph', 'bullet_list', 'numbered_list', 'quote'] as const;
 export type LegalBlockKind = (typeof LEGAL_BLOCK_KINDS)[number];
+export const LEGAL_CONTENT_LOCALES = ['en', 'ar'] as const;
+export type LegalContentLocale = (typeof LEGAL_CONTENT_LOCALES)[number];
 
 export interface LegalContentBlock {
   id: string;
@@ -10,12 +12,21 @@ export interface LegalContentBlock {
   items?: string[];
 }
 
+export interface LocalizedLegalContent {
+  title?: string;
+  description?: string | null;
+  blocks?: LegalContentBlock[];
+}
+
+export type LegalContentTranslations = Partial<Record<LegalContentLocale, LocalizedLegalContent>>;
+
 export class LegalContent extends Model {
   public id!: string;
   public slug!: string;
   public title!: string;
   public description?: string | null;
   public blocks!: LegalContentBlock[];
+  public translations!: LegalContentTranslations;
   public isActive!: boolean;
   public isDeleted!: boolean;
   public version!: number;
@@ -63,6 +74,18 @@ export const initLegalContentModel = (sequelize: Sequelize) => {
           isValidBlocks(value: unknown) {
             if (!Array.isArray(value)) {
               throw new Error('Blocks must be an array');
+            }
+          },
+        },
+      },
+      translations: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: {},
+        validate: {
+          isValidTranslations(value: unknown) {
+            if (!value || typeof value !== 'object' || Array.isArray(value)) {
+              throw new Error('Translations must be an object');
             }
           },
         },
