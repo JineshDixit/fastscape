@@ -73,6 +73,7 @@ export interface UpdatePolicyRequest {
 }
 
 export type LegalContentType = 'privacy-policy' | 'refund-cancellation-policy' | 'terms-conditions';
+export type LegalContentLocale = 'en' | 'ar';
 
 export type LegalBlockKind = 'heading' | 'paragraph' | 'bullet_list' | 'numbered_list' | 'quote';
 
@@ -83,12 +84,21 @@ export interface LegalContentBlock {
   items?: string[];
 }
 
+export interface LocalizedLegalContent {
+  title?: string;
+  description?: string | null;
+  blocks?: LegalContentBlock[];
+}
+
+export type LegalContentTranslations = Partial<Record<LegalContentLocale, LocalizedLegalContent>>;
+
 export interface LegalContent {
   id: string;
   slug: string;
   title: string;
   description?: string | null;
   blocks: LegalContentBlock[];
+  translations: LegalContentTranslations;
   version: number;
   isActive: boolean;
   isDeleted: boolean;
@@ -107,6 +117,7 @@ export interface LegalContentVersion {
   title: string;
   description?: string | null;
   blocks: LegalContentBlock[];
+  translations: LegalContentTranslations;
   changeNote?: string | null;
   createdBy?: string | null;
   createdAt: string;
@@ -117,6 +128,7 @@ export interface CreateLegalContentRequest {
   title: string;
   description?: string;
   blocks: LegalContentBlock[];
+  translations?: LegalContentTranslations;
   isActive?: boolean;
 }
 
@@ -124,6 +136,7 @@ export interface UpdateLegalContentRequest {
   title?: string;
   description?: string;
   blocks?: LegalContentBlock[];
+  translations?: LegalContentTranslations;
   isActive?: boolean;
   changeNote?: string;
 }
@@ -208,12 +221,11 @@ class AdminUserService extends BaseApiService {
       }
     });
 
-    const response = await this.get<AdminUser[]>(`?${params.toString()}`);
-    // Backend returns array directly in data field, not wrapped in an object
+    const response = await this.getPaginated<AdminUser>(`?${params.toString()}`);
     return {
-      users: response.data || [],
-      total: (response as any).pagination?.total || 0,
-      totalPages: (response as any).pagination?.totalPages || 0,
+      users: response.data,
+      total: response.pagination.total,
+      totalPages: response.pagination.totalPages,
     };
   }
 
@@ -267,12 +279,11 @@ class RoleService extends BaseApiService {
       }
     });
 
-    const response = await this.get<Role[]>(`?${params.toString()}`);
-    // Backend returns array directly in data field, not wrapped in an object
+    const response = await this.getPaginated<Role>(`?${params.toString()}`);
     return {
-      roles: response.data || [],
-      total: (response as any).pagination?.total || 0,
-      totalPages: (response as any).pagination?.totalPages || 0,
+      roles: response.data,
+      total: response.pagination.total,
+      totalPages: response.pagination.totalPages,
     };
   }
 
@@ -322,12 +333,11 @@ class PolicyService extends BaseApiService {
       }
     });
 
-    const response = await this.get<Policy[]>(`?${params.toString()}`);
-    // Backend returns array directly in data field, not wrapped in an object
+    const response = await this.getPaginated<Policy>(`?${params.toString()}`);
     return {
-      policies: response.data || [],
-      total: (response as any).pagination?.total || 0,
-      totalPages: (response as any).pagination?.totalPages || 0,
+      policies: response.data,
+      total: response.pagination.total,
+      totalPages: response.pagination.totalPages,
     };
   }
 
@@ -391,7 +401,7 @@ class LegalContentService extends BaseApiService {
     }
     const path = params.toString() ? `/?${params.toString()}` : '/';
     const response = await this.get<LegalContent[]>(path);
-    return response.data || [];
+    return response.data;
   }
 
   async getLegalContentById(id: string, includeDeleted: boolean = true): Promise<LegalContent> {
@@ -426,7 +436,7 @@ class LegalContentService extends BaseApiService {
 
   async getLegalContentVersions(id: string): Promise<LegalContentVersion[]> {
     const response = await this.get<LegalContentVersion[]>(`/${id}/versions`);
-    return response.data || [];
+    return response.data;
   }
 
   async revertLegalContentVersion(id: string, versionId: string, changeNote?: string): Promise<LegalContent> {

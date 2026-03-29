@@ -46,11 +46,7 @@ const ChauffeurList = () => {
         sortOrder: 'DESC',
         limit: 1000,
       });
-      if (response && response.chauffeurs) {
-        setData(response.chauffeurs);
-      } else {
-        setData(Array.isArray(response) ? response : []);
-      }
+      setData(response.chauffeurs);
     } catch (error) {
       console.error('Failed to fetch Drivers:', error);
       toast.error('Failed to load Drivers. Please try again.');

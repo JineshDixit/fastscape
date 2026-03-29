@@ -43,7 +43,7 @@ const Locations = () => {
         search: search || undefined,
         ...filters,
       });
-      setData(response.data || []);
+      setData(response.locations);
     } catch (error) {
       console.error('Failed to fetch locations:', error);
       toast.error('Failed to load locations');

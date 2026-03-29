@@ -1,8 +1,16 @@
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 // Common API response types
 export interface ApiResponse<T = any> {
   data: T;
   message?: string;
   success: boolean;
+  pagination?: PaginationMeta;
 }
 
 export interface ApiError {
@@ -11,14 +19,13 @@ export interface ApiError {
   details?: any;
 }
 
+export interface PaginatedApiResponse<T> extends ApiResponse<T[]> {
+  pagination: PaginationMeta;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 // Common request types

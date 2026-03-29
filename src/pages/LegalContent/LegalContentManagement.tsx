@@ -15,18 +15,24 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, History, Plus, RotateCcw, Save, Trash2 } from 'lucide-react';
 
 type BlockKind = LegalContentBlock['kind'];
+type EditorLocale = 'en' | 'ar';
+
+interface LocalizedDraftDocument {
+  title: string;
+  description: string;
+  blocks: LegalContentBlock[];
+}
 
 interface DraftDocument {
   slug: string;
-  title: string;
-  description: string;
   isActive: boolean;
-  blocks: LegalContentBlock[];
   changeNote: string;
+  localizedContent: Record<EditorLocale, LocalizedDraftDocument>;
 }
 
 const LEGACY_READ_PERMISSIONS = [
@@ -50,6 +56,19 @@ const BLOCK_KIND_OPTIONS: Array<{ value: BlockKind; label: string }> = [
   { value: 'bullet_list', label: 'Bullet List' },
   { value: 'numbered_list', label: 'Numbered List' },
   { value: 'quote', label: 'Quote' },
+];
+
+const EDITOR_LOCALES: Array<{ value: EditorLocale; label: string; helper: string }> = [
+  {
+    value: 'en',
+    label: 'English',
+    helper: 'Default content and fallback locale used when a translation is missing.',
+  },
+  {
+    value: 'ar',
+    label: 'Arabic',
+    helper: 'Served to the Arabic client locale when translated content is available.',
+  },
 ];
 
 const generateClientId = (): string => {
@@ -79,6 +98,12 @@ const createEmptyBlock = (kind: BlockKind = 'paragraph'): LegalContentBlock => (
   kind,
   text: kind === 'bullet_list' || kind === 'numbered_list' ? undefined : '',
   items: kind === 'bullet_list' || kind === 'numbered_list' ? [''] : undefined,
+});
+
+const createEmptyLocalizedDraft = (): LocalizedDraftDocument => ({
+  title: '',
+  description: '',
+  blocks: [createEmptyBlock('paragraph')],
 });
 
 const normalizeBlocksForEditor = (blocks: LegalContentBlock[]): LegalContentBlock[] => {
@@ -120,22 +145,74 @@ const serializeBlocksForApi = (blocks: LegalContentBlock[]): LegalContentBlock[]
     };
   });
 
+const createLocalizedDraft = (content?: { title?: string; description?: string | null; blocks?: LegalContentBlock[] }): LocalizedDraftDocument => ({
+  title: content?.title || '',
+  description: content?.description || '',
+  blocks: normalizeBlocksForEditor(content?.blocks || []),
+});
+
+const isBlockMeaningful = (block: LegalContentBlock): boolean => {
+  if (block.kind === 'bullet_list' || block.kind === 'numbered_list') {
+    return (block.items || []).some((item) => item.trim().length > 0);
+  }
+
+  return Boolean(block.text?.trim());
+};
+
+const serializeMeaningfulBlocksForApi = (blocks: LegalContentBlock[]): LegalContentBlock[] =>
+  serializeBlocksForApi(blocks).filter((block) =>
+    block.kind === 'bullet_list' || block.kind === 'numbered_list'
+      ? Boolean(block.items && block.items.length > 0)
+      : Boolean(block.text),
+  );
+
+const hasLocalizedContent = (content: LocalizedDraftDocument): boolean =>
+  Boolean(content.title.trim() || content.description.trim() || content.blocks.some(isBlockMeaningful));
+
+const buildTranslationsPayload = (
+  localizedContent: Record<EditorLocale, LocalizedDraftDocument>,
+): Partial<Record<Exclude<EditorLocale, 'en'>, { title?: string; description?: string; blocks?: LegalContentBlock[] }>> => {
+  const payload: Partial<Record<Exclude<EditorLocale, 'en'>, { title?: string; description?: string; blocks?: LegalContentBlock[] }>> = {};
+
+  (['ar'] as const).forEach((locale) => {
+    const content = localizedContent[locale];
+    if (!hasLocalizedContent(content)) {
+      return;
+    }
+
+    const localizedBlocks = serializeMeaningfulBlocksForApi(content.blocks);
+    payload[locale] = {
+      ...(content.title.trim() ? { title: content.title.trim() } : {}),
+      ...(content.description.trim() ? { description: content.description.trim() } : {}),
+      ...(localizedBlocks.length > 0 ? { blocks: localizedBlocks } : {}),
+    };
+  });
+
+  return payload;
+};
+
 const toDraft = (document: LegalContent): DraftDocument => ({
   slug: document.slug,
-  title: document.title,
-  description: document.description || '',
   isActive: document.isActive,
-  blocks: normalizeBlocksForEditor(document.blocks || []),
   changeNote: '',
+  localizedContent: {
+    en: createLocalizedDraft({
+      title: document.title,
+      description: document.description,
+      blocks: document.blocks,
+    }),
+    ar: createLocalizedDraft(document.translations?.ar),
+  },
 });
 
 const newDocumentDraft = (): DraftDocument => ({
   slug: '',
-  title: '',
-  description: '',
   isActive: true,
-  blocks: [createEmptyBlock('paragraph')],
   changeNote: '',
+  localizedContent: {
+    en: createEmptyLocalizedDraft(),
+    ar: createEmptyLocalizedDraft(),
+  },
 });
 
 const LegalContentManagement = () => {
@@ -145,6 +222,7 @@ const LegalContentManagement = () => {
   const [includeDeleted, setIncludeDeleted] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftDocument>(newDocumentDraft());
+  const [editorLocale, setEditorLocale] = useState<EditorLocale>('en');
   const [createMode, setCreateMode] = useState(false);
   const [versions, setVersions] = useState<LegalContentVersion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -161,6 +239,8 @@ const LegalContentManagement = () => {
     () => documents.find((doc) => doc.id === selectedId) || null,
     [documents, selectedId],
   );
+  const currentLocalizedDraft = draft.localizedContent[editorLocale];
+  const currentLocaleConfig = EDITOR_LOCALES.find((locale) => locale.value === editorLocale) || EDITOR_LOCALES[0];
 
   const canEditSelected = useMemo(() => {
     if (createMode) {
@@ -264,6 +344,7 @@ const LegalContentManagement = () => {
     if (!canCreateLegal) {
       return;
     }
+    setEditorLocale('en');
     setCreateMode(true);
     setSelectedId(null);
     setDraft(newDocumentDraft());
@@ -271,15 +352,26 @@ const LegalContentManagement = () => {
   };
 
   const cancelCreateMode = () => {
+    setEditorLocale('en');
     setCreateMode(false);
     if (documents.length > 0) {
       setSelectedId(documents[0].id);
     }
   };
 
+  const updateCurrentLocalizedDraft = (updater: (content: LocalizedDraftDocument) => LocalizedDraftDocument) => {
+    setDraft((prev) => ({
+      ...prev,
+      localizedContent: {
+        ...prev.localizedContent,
+        [editorLocale]: updater(prev.localizedContent[editorLocale]),
+      },
+    }));
+  };
+
   const updateBlockKind = (index: number, kind: BlockKind) => {
-    setDraft((prev) => {
-      const next = [...prev.blocks];
+    updateCurrentLocalizedDraft((content) => {
+      const next = [...content.blocks];
       const existing = next[index];
       const updated: LegalContentBlock = {
         id: existing.id || generateClientId(),
@@ -291,78 +383,81 @@ const LegalContentManagement = () => {
         updated.text = existing.text || '';
       }
       next[index] = updated;
-      return { ...prev, blocks: next };
+      return { ...content, blocks: next };
     });
   };
 
   const updateBlockText = (index: number, text: string) => {
-    setDraft((prev) => {
-      const next = [...prev.blocks];
+    updateCurrentLocalizedDraft((content) => {
+      const next = [...content.blocks];
       next[index] = {
         ...next[index],
         text,
       };
-      return { ...prev, blocks: next };
+      return { ...content, blocks: next };
     });
   };
 
   const updateBlockItems = (index: number, lines: string) => {
     const items = lines.split('\n');
-    setDraft((prev) => {
-      const next = [...prev.blocks];
+    updateCurrentLocalizedDraft((content) => {
+      const next = [...content.blocks];
       next[index] = {
         ...next[index],
         items,
       };
-      return { ...prev, blocks: next };
+      return { ...content, blocks: next };
     });
   };
 
   const addBlock = (kind: BlockKind = 'paragraph') => {
-    setDraft((prev) => ({
-      ...prev,
-      blocks: [...prev.blocks, createEmptyBlock(kind)],
+    updateCurrentLocalizedDraft((content) => ({
+      ...content,
+      blocks: [...content.blocks, createEmptyBlock(kind)],
     }));
   };
 
   const removeBlock = (index: number) => {
-    setDraft((prev) => {
-      const next = prev.blocks.filter((_, i) => i !== index);
+    updateCurrentLocalizedDraft((content) => {
+      const next = content.blocks.filter((_, i) => i !== index);
       return {
-        ...prev,
+        ...content,
         blocks: next.length > 0 ? next : [createEmptyBlock('paragraph')],
       };
     });
   };
 
   const moveBlock = (index: number, direction: -1 | 1) => {
-    setDraft((prev) => {
+    updateCurrentLocalizedDraft((content) => {
       const target = index + direction;
-      if (target < 0 || target >= prev.blocks.length) {
-        return prev;
+      if (target < 0 || target >= content.blocks.length) {
+        return content;
       }
-      const next = [...prev.blocks];
+      const next = [...content.blocks];
       [next[index], next[target]] = [next[target], next[index]];
-      return { ...prev, blocks: next };
+      return { ...content, blocks: next };
     });
   };
 
-  const validateDraft = (): boolean => {
-    if (!draft.slug.trim()) {
-      toast.error('Slug is required');
-      return false;
+  const validateLocalizedDraft = (content: LocalizedDraftDocument, label: string, required: boolean): boolean => {
+    const meaningfulBlocks = serializeMeaningfulBlocksForApi(content.blocks);
+    const hasMeaningfulContentForLocale = hasLocalizedContent(content);
+
+    if (!required && !hasMeaningfulContentForLocale) {
+      return true;
     }
-    if (!draft.title.trim()) {
-      toast.error('Title is required');
-      return false;
-    }
-    if (draft.blocks.length === 0) {
-      toast.error('At least one content block is required');
+
+    if (!content.title.trim()) {
+      toast.error(`${label} title is required`);
       return false;
     }
 
-    const serialized = serializeBlocksForApi(draft.blocks);
-    const hasInvalidBlock = serialized.some((block) => {
+    if (meaningfulBlocks.length === 0) {
+      toast.error(`${label} content blocks are required`);
+      return false;
+    }
+
+    const hasInvalidBlock = serializeBlocksForApi(content.blocks).some((block) => {
       if (block.kind === 'bullet_list' || block.kind === 'numbered_list') {
         return !block.items || block.items.length === 0;
       }
@@ -370,11 +465,23 @@ const LegalContentManagement = () => {
     });
 
     if (hasInvalidBlock) {
-      toast.error('Every block must contain content');
+      toast.error(`Every ${label.toLowerCase()} block must contain content`);
       return false;
     }
 
     return true;
+  };
+
+  const validateDraft = (): boolean => {
+    if (!draft.slug.trim()) {
+      toast.error('Slug is required');
+      return false;
+    }
+
+    return (
+      validateLocalizedDraft(draft.localizedContent.en, 'English', true) &&
+      validateLocalizedDraft(draft.localizedContent.ar, 'Arabic', false)
+    );
   };
 
   const saveDocument = async () => {
@@ -387,11 +494,13 @@ const LegalContentManagement = () => {
 
     try {
       setSaving(true);
+      const englishContent = draft.localizedContent.en;
       const payload = {
         slug: draft.slug.trim(),
-        title: draft.title.trim(),
-        description: draft.description.trim() || undefined,
-        blocks: serializeBlocksForApi(draft.blocks),
+        title: englishContent.title.trim(),
+        description: englishContent.description.trim() || undefined,
+        blocks: serializeMeaningfulBlocksForApi(englishContent.blocks),
+        translations: buildTranslationsPayload(draft.localizedContent),
         isActive: draft.isActive,
         changeNote: draft.changeNote.trim() || undefined,
       };
@@ -407,6 +516,7 @@ const LegalContentManagement = () => {
           title: payload.title,
           description: payload.description,
           blocks: payload.blocks,
+          translations: payload.translations,
           isActive: payload.isActive,
           changeNote: payload.changeNote,
         });
@@ -583,11 +693,28 @@ const LegalContentManagement = () => {
                   <Label htmlFor="legal-title">Title</Label>
                   <Input
                     id="legal-title"
-                    value={draft.title}
+                    value={currentLocalizedDraft.title}
                     disabled={!canEditSelected || saving}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-                    placeholder="Document title"
+                    onChange={(event) =>
+                      updateCurrentLocalizedDraft((content) => ({ ...content, title: event.target.value }))
+                    }
+                    placeholder={`${currentLocaleConfig.label} document title`}
                   />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Tabs value={editorLocale} onValueChange={(value) => setEditorLocale(value as EditorLocale)}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    {EDITOR_LOCALES.map((locale) => (
+                      <TabsTrigger key={locale.value} value={locale.value}>
+                        {locale.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+                <div className="text-muted-foreground rounded-md border bg-slate-50 px-3 py-2 text-sm">
+                  {currentLocaleConfig.helper}
                 </div>
               </div>
 
@@ -595,10 +722,12 @@ const LegalContentManagement = () => {
                 <Label htmlFor="legal-description">Description</Label>
                 <Textarea
                   id="legal-description"
-                  value={draft.description}
+                  value={currentLocalizedDraft.description}
                   disabled={!canEditSelected || saving}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
-                  placeholder="Short internal description"
+                  onChange={(event) =>
+                    updateCurrentLocalizedDraft((content) => ({ ...content, description: event.target.value }))
+                  }
+                  placeholder={`Short ${currentLocaleConfig.label.toLowerCase()} description`}
                   className="min-h-24"
                 />
               </div>
@@ -617,7 +746,7 @@ const LegalContentManagement = () => {
 
                 <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">Content Blocks</h3>
+                  <h3 className="text-sm font-semibold">{currentLocaleConfig.label} Content Blocks</h3>
                   {canEditSelected && (
                     <Button type="button" variant="outline" size="sm" onClick={() => addBlock('paragraph')} className="w-full sm:w-auto">
                       <Plus className="mr-2 h-3 w-3" />
@@ -627,7 +756,7 @@ const LegalContentManagement = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {draft.blocks.map((block, index) => (
+                  {currentLocalizedDraft.blocks.map((block, index) => (
                     <div key={block.id} className="space-y-2 rounded-lg border p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <select
@@ -659,7 +788,7 @@ const LegalContentManagement = () => {
                               type="button"
                               variant="outline"
                               size="sm"
-                              disabled={index === draft.blocks.length - 1 || saving}
+                              disabled={index === currentLocalizedDraft.blocks.length - 1 || saving}
                               onClick={() => moveBlock(index, 1)}
                               className="flex-1 sm:flex-none"
                             >

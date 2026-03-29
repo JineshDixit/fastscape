@@ -1,4 +1,5 @@
 import apiClient from '../client';
+import type { PaginatedApiResponse, PaginationMeta } from '@/common/interface/apiInterface';
 
 export const VerificationStatus = {
   PENDING: 'PENDING',
@@ -74,16 +75,11 @@ export interface User {
 
 export interface UserListResponse {
   users: User[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export const userService = {
-  getAllUsers: async (filters: UserFilters = {}) => {
+  getAllUsers: async (filters: UserFilters = {}): Promise<UserListResponse> => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
@@ -91,7 +87,7 @@ export const userService = {
       }
     });
 
-    const response = await apiClient.get<any>(`/users?${params.toString()}`);
+    const response = await apiClient.get<PaginatedApiResponse<User>>(`/users?${params.toString()}`);
     return {
       users: response.data.data,
       pagination: response.data.pagination,

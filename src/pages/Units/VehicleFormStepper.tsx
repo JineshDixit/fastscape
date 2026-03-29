@@ -101,16 +101,9 @@ const VehicleFormStepper: FC<VehicleFormStepperProps> = ({
         setLocationsError(null);
         const response = await locationService.getAllLocations({ limit: 1000, isActive: true });
 
-        // Normalize possible API shapes: { data: Location[] } or { locations: Location[] }
-        const rawLocations = Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray((response as any)?.locations)
-            ? (response as any).locations
-            : [];
-
-        const sanitizedLocations = rawLocations
-          .filter((loc: any) => Boolean(loc?.id))
-          .map((loc: any) => ({ ...loc, id: String(loc.id) }));
+        const sanitizedLocations = response.locations
+          .filter((location) => Boolean(location.id))
+          .map((location) => ({ ...location, id: String(location.id) }));
 
         setLocations(sanitizedLocations);
       } catch (error) {

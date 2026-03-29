@@ -279,7 +279,7 @@ const VehicleFilters: React.FC<VehicleFiltersProps> = ({ currentFilters, onApply
   const fetchLocations = async () => {
     try {
       const response = await locationService.getAllLocations({ isActive: true, limit: 100 });
-      setLocations(response.data || []);
+      setLocations(response.locations);
     } catch (error) {
       console.error('Failed to fetch locations:', error);
     }

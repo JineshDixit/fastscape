@@ -1,4 +1,5 @@
 import apiClient from '../client';
+import type { PaginatedApiResponse, PaginationMeta } from '@/common/interface/apiInterface';
 
 export const ChauffeurStatus = {
   AVAILABLE: 'AVAILABLE',
@@ -60,16 +61,11 @@ export interface Chauffeur {
 
 export interface ChauffeurListResponse {
   chauffeurs: Chauffeur[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export const chauffeurService = {
-  getAllChauffeurs: async (filters: ChauffeurFilters = {}) => {
+  getAllChauffeurs: async (filters: ChauffeurFilters = {}): Promise<ChauffeurListResponse> => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
@@ -77,8 +73,11 @@ export const chauffeurService = {
       }
     });
 
-    const response = await apiClient.get<any>(`/chauffeurs?${params.toString()}`);
-    return response.data.data;
+    const response = await apiClient.get<PaginatedApiResponse<Chauffeur>>(`/chauffeurs?${params.toString()}`);
+    return {
+      chauffeurs: response.data.data,
+      pagination: response.data.pagination,
+    };
   },
 
   getChauffeurById: async (id: string) => {

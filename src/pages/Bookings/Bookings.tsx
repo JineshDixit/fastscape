@@ -53,17 +53,9 @@ const Bookings = () => {
         ...filters,
       });
 
-      if (bookings && Array.isArray(bookings)) {
-        setData(bookings);
-        if (pagination) {
-          setPageCount(pagination.pages || pagination.totalPages || 0);
-          setTotalRows(pagination.total || 0);
-        }
-      } else {
-        setData([]);
-        setPageCount(0);
-        setTotalRows(0);
-      }
+      setData(bookings);
+      setPageCount(pagination.totalPages);
+      setTotalRows(pagination.total);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
       toast.error('Failed to load bookings. Please try again.');

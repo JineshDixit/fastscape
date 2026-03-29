@@ -1,4 +1,5 @@
 import apiClient from '../client';
+import type { PaginatedApiResponse, PaginationMeta } from '@/common/interface/apiInterface';
 
 export const BookingStatus = {
   PENDING: 'PENDING',
@@ -130,13 +131,7 @@ export interface Booking {
 
 export interface BookingListResponse {
   bookings: Booking[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number; // API has totalPages
-    totalPages?: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export const bookingService = {
@@ -148,8 +143,7 @@ export const bookingService = {
       }
     });
 
-    const response = await apiClient.get<any>(`/bookings?${params.toString()}`);
-    // API returns { success: true, data: Booking[], pagination: {...} }
+    const response = await apiClient.get<PaginatedApiResponse<Booking>>(`/bookings?${params.toString()}`);
     return {
       bookings: response.data.data,
       pagination: response.data.pagination,

@@ -1,4 +1,5 @@
 import apiClient from '../client';
+import type { PaginatedApiResponse, PaginationMeta } from '@/common/interface/apiInterface';
 
 export interface LocationFilters {
   city?: string;
@@ -22,16 +23,11 @@ export interface Location {
 
 export interface LocationListResponse {
   locations: Location[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export const locationService = {
-  getAllLocations: async (filters: LocationFilters = {}) => {
+  getAllLocations: async (filters: LocationFilters = {}): Promise<LocationListResponse> => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== '') {
@@ -39,8 +35,11 @@ export const locationService = {
       }
     });
 
-    const response = await apiClient.get<any>(`/locations?${params.toString()}`);
-    return response.data;
+    const response = await apiClient.get<PaginatedApiResponse<Location>>(`/locations?${params.toString()}`);
+    return {
+      locations: response.data.data,
+      pagination: response.data.pagination,
+    };
   },
 
   getAllCities: async () => {

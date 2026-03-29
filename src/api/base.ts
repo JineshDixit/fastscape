@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import apiClient from './client';
-import type { ApiResponse, PaginatedResponse, RequestConfig } from '../common/interface/apiInterface';
+import type { ApiResponse, PaginatedApiResponse, PaginatedResponse, RequestConfig } from '../common/interface/apiInterface';
 
 /**
  * Base API service class with common CRUD operations
@@ -17,6 +17,14 @@ export class BaseApiService {
    */
   async get<T>(path: string = '', config?: RequestConfig): Promise<ApiResponse<T>> {
     const response: AxiosResponse<ApiResponse<T>> = await apiClient.get(`${this.endpoint}${path}`, config);
+    return response.data;
+  }
+
+  /**
+   * GET request with required pagination metadata
+   */
+  async getPaginated<T>(path: string = '', config?: RequestConfig): Promise<PaginatedApiResponse<T>> {
+    const response: AxiosResponse<PaginatedApiResponse<T>> = await apiClient.get(`${this.endpoint}${path}`, config);
     return response.data;
   }
 
@@ -56,8 +64,11 @@ export class BaseApiService {
    * Get all items with pagination
    */
   async getAll<T>(params?: Record<string, any>): Promise<PaginatedResponse<T>> {
-    const response: AxiosResponse<PaginatedResponse<T>> = await apiClient.get(this.endpoint, { params });
-    return response.data;
+    const response = await this.getPaginated<T>('', { params });
+    return {
+      data: response.data,
+      pagination: response.pagination,
+    };
   }
 
   /**
