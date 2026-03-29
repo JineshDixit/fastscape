@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Link } from '@/localization/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { legalService } from '@/app/axios/services/legal';
-import type { LegalDocumentSummary } from '@/common/interfaces';
+import type { LegalContentLocale, LegalDocumentSummary } from '@/common/interfaces';
+import { getLocalizedLegalDocumentLabel } from '@/components/legal/legalDocumentLabel';
 
 const Footer = () => {
   const t = useTranslations('footer');
+  const locale = useLocale() as LegalContentLocale;
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
 
   useEffect(() => {
@@ -16,7 +18,7 @@ const Footer = () => {
 
     const loadDocuments = async () => {
       try {
-        const response = await legalService.getDocuments();
+        const response = await legalService.getDocuments(locale);
         if (!isMounted) return;
         setDocuments(response.data || []);
       } catch {
@@ -30,11 +32,11 @@ const Footer = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [locale]);
 
   const legalLinks = documents.length
     ? documents.map((document) => ({
-        label: document.title,
+        label: getLocalizedLegalDocumentLabel(document, locale, t),
         href: `/legal/${document.slug}`,
       }))
     : [

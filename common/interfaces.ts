@@ -252,6 +252,7 @@ export interface ContactUsResponse {
 }
 
 export type LegalBlockKind = 'heading' | 'paragraph' | 'bullet_list' | 'numbered_list' | 'quote';
+export type LegalContentLocale = 'en' | 'ar';
 
 export interface LegalContentBlock {
   id: string;
@@ -266,6 +267,8 @@ export interface LegalDocumentSummary {
   title: string;
   description?: string | null;
   version: number;
+  resolvedLocale?: LegalContentLocale;
+  availableLocales?: LegalContentLocale[];
   updatedAt: string;
 }
 

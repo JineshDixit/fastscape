@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { Scale, ShieldCheck, WalletCards, FileText } from 'lucide-react';
 import { isAxiosError } from 'axios';
+import { useLocale } from 'next-intl';
 import { Link } from '@/localization/navigation';
 import { legalService } from '@/app/axios/services/legal';
-import type { LegalDocumentSummary } from '@/common/interfaces';
+import type { LegalContentLocale, LegalDocumentSummary } from '@/common/interfaces';
 import { formatLegalDate } from './LegalContentRenderer';
 
 const icons = [ShieldCheck, WalletCards, Scale, FileText];
 
 const LegalDocumentsIndexClient = () => {
+  const locale = useLocale() as LegalContentLocale;
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ const LegalDocumentsIndexClient = () => {
         setIsLoading(true);
         setError(null);
 
-        const response = await legalService.getDocuments();
+        const response = await legalService.getDocuments(locale);
 
         if (!isMounted) return;
 
@@ -50,7 +52,7 @@ const LegalDocumentsIndexClient = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [locale]);
 
   return (
     <main className="min-h-screen py-8 md:py-14">

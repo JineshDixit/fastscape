@@ -586,7 +586,7 @@ const CheckoutPage = ({ params }: { params: Promise<{ id: string }> }) => {
                       <Button
                         onClick={() => {
                           resetVehicleBookingData();
-                          router.push('/profile?tab=active');
+                          router.push('/bookings?tab=active');
                         }}
                         className="h-12 flex-1 rounded-xl text-xs font-black tracking-widest uppercase"
                       >

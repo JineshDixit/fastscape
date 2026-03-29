@@ -43,12 +43,12 @@ const Header: FC<HeaderPropType> = ({ onLoginClick }) => {
     },
     {
       label: t('activeBookings'),
-      href: '/profile?tab=active',
+      href: '/bookings?tab=active',
       public: false,
     },
     {
       label: t('bookingHistory'),
-      href: '/profile?tab=history',
+      href: '/bookings?tab=history',
       public: false,
     },
   ];

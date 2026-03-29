@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
 import { ChevronRight, FileText } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { Link } from '@/localization/navigation';
 import { legalService } from '@/app/axios/services/legal';
-import type { LegalDocument, LegalDocumentSummary } from '@/common/interfaces';
+import type { LegalContentLocale, LegalDocument, LegalDocumentSummary } from '@/common/interfaces';
 import LegalContentRenderer, { formatLegalDate, getHeadingBlocks } from './LegalContentRenderer';
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 };
 
 const LegalDocumentClient = ({ slug }: Props) => {
+  const locale = useLocale() as LegalContentLocale;
   const [document, setDocument] = useState<LegalDocument | null>(null);
   const [documents, setDocuments] = useState<LegalDocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,8 +29,8 @@ const LegalDocumentClient = ({ slug }: Props) => {
         setError(null);
 
         const [documentResponse, documentsResponse] = await Promise.all([
-          legalService.getDocumentBySlug(slug),
-          legalService.getDocuments(),
+          legalService.getDocumentBySlug(slug, locale),
+          legalService.getDocuments(locale),
         ]);
 
         if (!isMounted) return;
@@ -59,7 +61,7 @@ const LegalDocumentClient = ({ slug }: Props) => {
     return () => {
       isMounted = false;
     };
-  }, [slug]);
+  }, [locale, slug]);
 
   if (isLoading) {
     return (
