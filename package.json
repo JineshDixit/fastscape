@@ -8,6 +8,7 @@
     "watch-ts": "tsc --watch",
     "watch-node": "cross-env NODE_ENV=development nodemon --delay 1000ms dist/src/server.js",
     "build": "tsc",
+    "check:drift": "node ../../scripts/check-backend-drift.js",
     "pretty": "npx prettier --write .",
     "sync:db": "cross-env NODE_ENV=development ts-node src/scripts/syncDatabase.ts",
     "seed:superadmin": "cross-env NODE_ENV=development ts-node src/seeders/adminSeeder.ts",

@@ -4,13 +4,19 @@ import { LegalContent, LegalContentVersion } from '../../models';
 import {
   CreateLegalContentRequest,
   LegalContentBlock,
+  LegalContentLocale,
   LegalContentResponse,
+  LegalContentTranslations,
   LegalContentVersionResponse,
+  LocalizedLegalContent,
   UpdateLegalContentRequest,
 } from '../../common/interfaces/authTypes';
+import { LEGAL_CONTENT_LOCALES } from '../../models/legalContent.model';
 import { createError } from '../middleware/errorHandler';
 
 export const SYSTEM_LEGAL_SLUGS = ['privacy-policy', 'refund-cancellation-policy', 'terms-conditions'] as const;
+const DEFAULT_LEGAL_CONTENT_LOCALE: LegalContentLocale = 'en';
+let localizationColumnsReady = false;
 
 const VALID_BLOCK_KINDS = new Set(['heading', 'paragraph', 'bullet_list', 'numbered_list', 'quote']);
 
@@ -81,6 +87,9 @@ const buildDefaultBlocks = (lines: string[]): LegalContentBlock[] =>
     text: line,
   }));
 
+const isSupportedLocale = (locale: string): locale is LegalContentLocale =>
+  LEGAL_CONTENT_LOCALES.includes(locale as LegalContentLocale);
+
 const createEmptyParagraphBlock = (): LegalContentBlock => ({
   id: uuidv4(),
   kind: 'paragraph',
@@ -93,6 +102,7 @@ const formatLegalContent = (document: LegalContent): LegalContentResponse => ({
   title: document.title,
   description: document.description ?? null,
   blocks: document.blocks || [],
+  translations: document.translations || {},
   version: document.version,
   isActive: document.isActive,
   isDeleted: document.isDeleted,
@@ -111,6 +121,7 @@ const formatLegalContentVersion = (version: LegalContentVersion): LegalContentVe
   title: version.title,
   description: version.description ?? null,
   blocks: version.blocks || [],
+  translations: version.translations || {},
   changeNote: version.changeNote ?? null,
   createdBy: version.createdBy ?? null,
   createdAt: version.createdAt,
@@ -171,6 +182,47 @@ const normalizeDescription = (description?: string): string | null => {
   }
   if (normalized.length > MAX_DESCRIPTION_LENGTH) {
     throw createError(`Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters`, 400);
+  }
+
+  return normalized;
+};
+
+const normalizeLocalizedTitle = (title: unknown): string | undefined => {
+  if (title === undefined) {
+    return undefined;
+  }
+  if (typeof title !== 'string') {
+    throw createError('Localized title must be a string', 400);
+  }
+
+  const normalized = title.trim();
+  if (!normalized) {
+    return undefined;
+  }
+  if (normalized.length > MAX_TITLE_LENGTH) {
+    throw createError(`Localized title cannot exceed ${MAX_TITLE_LENGTH} characters`, 400);
+  }
+
+  return normalized;
+};
+
+const normalizeLocalizedDescription = (description: unknown): string | null | undefined => {
+  if (description === undefined) {
+    return undefined;
+  }
+  if (description === null) {
+    return null;
+  }
+  if (typeof description !== 'string') {
+    throw createError('Localized description must be a string', 400);
+  }
+
+  const normalized = description.trim();
+  if (!normalized) {
+    return null;
+  }
+  if (normalized.length > MAX_DESCRIPTION_LENGTH) {
+    throw createError(`Localized description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters`, 400);
   }
 
   return normalized;
@@ -262,12 +314,96 @@ const normalizeBlocks = (blocks?: LegalContentBlock[]): LegalContentBlock[] => {
   });
 };
 
+const normalizeTranslations = (translations?: LegalContentTranslations): LegalContentTranslations => {
+  if (translations === undefined) {
+    return {};
+  }
+  if (!translations || typeof translations !== 'object' || Array.isArray(translations)) {
+    throw createError('Translations must be an object', 400);
+  }
+
+  const normalizedTranslations: LegalContentTranslations = {};
+
+  for (const [rawLocale, value] of Object.entries(translations)) {
+    const locale = rawLocale.trim().toLowerCase();
+    if (!isSupportedLocale(locale)) {
+      throw createError(`Unsupported translation locale: ${rawLocale}`, 400);
+    }
+    if (locale === DEFAULT_LEGAL_CONTENT_LOCALE) {
+      continue;
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw createError(`Translation payload is invalid for locale ${locale}`, 400);
+    }
+
+    const translation = value as LocalizedLegalContent;
+    const normalizedTranslation: LocalizedLegalContent = {};
+
+    if ('title' in translation) {
+      const title = normalizeLocalizedTitle(translation.title);
+      if (title !== undefined) {
+        normalizedTranslation.title = title;
+      }
+    }
+
+    if ('description' in translation) {
+      normalizedTranslation.description = normalizeLocalizedDescription(translation.description);
+    }
+
+    if ('blocks' in translation) {
+      const blocks = normalizeBlocks(translation.blocks);
+      if (blocks.length > 0) {
+        normalizedTranslation.blocks = blocks;
+      }
+    }
+
+    if (Object.keys(normalizedTranslation).length > 0) {
+      normalizedTranslations[locale] = normalizedTranslation;
+    }
+  }
+
+  return normalizedTranslations;
+};
+
 const ensureSequelize = () => {
   const sequelizeInstance = LegalContent.sequelize;
   if (!sequelizeInstance) {
     throw createError('Database is not initialized', 500);
   }
   return sequelizeInstance;
+};
+
+const ensureLocalizationColumns = async (): Promise<void> => {
+  if (localizationColumnsReady) {
+    return;
+  }
+
+  const sequelizeInstance = ensureSequelize();
+
+  const requiredColumns = [
+    { table: 'legal_content_documents', column: 'translations' },
+    { table: 'legal_content_versions', column: 'translations' },
+  ];
+
+  for (const { table, column } of requiredColumns) {
+    const existingColumns = await sequelizeInstance.query<{ column_name: string }>(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = :table AND column_name = :column`,
+      {
+        replacements: { table, column },
+        type: QueryTypes.SELECT,
+      },
+    );
+
+    if (existingColumns.length === 0) {
+      await sequelizeInstance.query(
+        `ALTER TABLE "${table}" ADD COLUMN "${column}" JSONB NOT NULL DEFAULT '{}'::jsonb`,
+      );
+    }
+  }
+
+  localizationColumnsReady = true;
 };
 
 const createVersionSnapshot = async (
@@ -283,6 +419,7 @@ const createVersionSnapshot = async (
       title: document.title,
       description: document.description ?? null,
       blocks: document.blocks || [],
+      translations: document.translations || {},
       changeNote: changeNote ?? null,
       createdBy: createdBy ?? null,
     },
@@ -356,6 +493,7 @@ const migrateLegacyContentIfAvailable = async (transaction: Transaction): Promis
 };
 
 const ensureSystemDocuments = async (): Promise<void> => {
+  await ensureLocalizationColumns();
   const sequelizeInstance = ensureSequelize();
   const transaction = await sequelizeInstance.transaction();
 
@@ -445,6 +583,7 @@ export const createLegalContent = async (
   const title = normalizeTitle(payload.title);
   const description = normalizeDescription(payload.description);
   const blocks = normalizeBlocks(payload.blocks);
+  const translations = normalizeTranslations(payload.translations);
 
   if (blocks.length === 0) {
     throw createError('At least one block is required', 400);
@@ -465,6 +604,7 @@ export const createLegalContent = async (
         title,
         description,
         blocks,
+        translations,
         isActive: payload.isActive ?? true,
         isDeleted: false,
         version: 1,
@@ -503,6 +643,7 @@ export const updateLegalContent = async (
     payload.title !== undefined ||
     payload.description !== undefined ||
     payload.blocks !== undefined ||
+    payload.translations !== undefined ||
     payload.isActive !== undefined;
 
   if (!hasAnyField) {
@@ -515,6 +656,7 @@ export const updateLegalContent = async (
     title: string;
     description: string | null;
     blocks: LegalContentBlock[];
+    translations: LegalContentTranslations;
     isActive: boolean;
     updatedBy: string | null;
     version: number;
@@ -534,6 +676,9 @@ export const updateLegalContent = async (
       throw createError('At least one block is required', 400);
     }
     updateData.blocks = blocks;
+  }
+  if (payload.translations !== undefined) {
+    updateData.translations = normalizeTranslations(payload.translations);
   }
   if (payload.isActive !== undefined) {
     if (typeof payload.isActive !== 'boolean') {
@@ -608,6 +753,7 @@ export const restoreLegalContent = async (id: string, restoredBy?: string): Prom
 };
 
 export const listLegalContentVersions = async (legalContentId: string): Promise<LegalContentVersionResponse[]> => {
+  await ensureLocalizationColumns();
   const document = (await LegalContent.findByPk(legalContentId, {
     include: [
       {
@@ -632,6 +778,7 @@ export const revertLegalContentVersion = async (
   updatedBy?: string,
   changeNote?: string,
 ): Promise<LegalContentResponse> => {
+  await ensureLocalizationColumns();
   const document = await LegalContent.findByPk(legalContentId);
   if (!document) {
     throw createError('Legal content not found', 404);
@@ -661,6 +808,7 @@ export const revertLegalContentVersion = async (
         title: version.title,
         description: version.description ?? null,
         blocks: normalizeBlocks(version.blocks || []),
+        translations: normalizeTranslations(version.translations || {}),
         version: document.version + 1,
         updatedBy: updatedBy || null,
       },

@@ -99,12 +99,23 @@ export interface LegalContentBlock {
   items?: string[];
 }
 
+export type LegalContentLocale = 'en' | 'ar';
+
+export interface LocalizedLegalContent {
+  title?: string;
+  description?: string | null;
+  blocks?: LegalContentBlock[];
+}
+
+export type LegalContentTranslations = Partial<Record<LegalContentLocale, LocalizedLegalContent>>;
+
 export interface LegalContentResponse {
   id: string;
   slug: string;
   title: string;
   description?: string | null;
   blocks: LegalContentBlock[];
+  translations: LegalContentTranslations;
   version: number;
   isActive: boolean;
   isDeleted: boolean;
@@ -123,6 +134,7 @@ export interface LegalContentVersionResponse {
   title: string;
   description?: string | null;
   blocks: LegalContentBlock[];
+  translations: LegalContentTranslations;
   changeNote?: string | null;
   createdBy?: string | null;
   createdAt: Date;
@@ -133,6 +145,7 @@ export interface CreateLegalContentRequest {
   title: string;
   description?: string;
   blocks?: LegalContentBlock[];
+  translations?: LegalContentTranslations;
   isActive?: boolean;
 }
 
@@ -140,6 +153,7 @@ export interface UpdateLegalContentRequest {
   title?: string;
   description?: string;
   blocks?: LegalContentBlock[];
+  translations?: LegalContentTranslations;
   isActive?: boolean;
   changeNote?: string;
 }
