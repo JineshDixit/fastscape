@@ -23,6 +23,7 @@ import { loadOpenApiDocument } from './config/swagger/swagger.config';
 
 const server = express();
 const { PORT } = process.env;
+const enableHttpsCspUpgrade = process.env.ENABLE_HTTPS_CSP_UPGRADE === 'true';
 
 // HTTP Logging
 server.use(httpLogger);
@@ -31,6 +32,12 @@ server.use(httpLogger);
 server.use(
   helmet({
     crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        // Keep Swagger assets on HTTP unless the deployment explicitly serves HTTPS.
+        'upgrade-insecure-requests': enableHttpsCspUpgrade ? [] : null,
+      },
+    },
   }),
 );
 server.use(preventParameterPollution);
