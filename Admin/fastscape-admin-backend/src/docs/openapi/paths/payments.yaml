@@ -1,0 +1,132 @@
+/payments:
+  get:
+    tags:
+      - Payments
+    summary: Get all payments with filters
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: userId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: paymentStatus
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of payments
+
+/payments/overdue:
+  get:
+    tags:
+      - Payments
+    summary: Get all overdue payments
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of overdue payments
+
+/payments/summary/{bookingId}:
+  get:
+    tags:
+      - Payments
+    summary: Get payment summary for a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Payment summary
+
+/payments/{id}:
+  get:
+    tags:
+      - Payments
+    summary: Get single payment details
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Payment details
+
+/payments/{id}/mark-paid:
+  put:
+    tags:
+      - Payments
+    summary: Mark a payment as paid (admin override)
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              paidAt:
+                type: string
+                format: date-time
+              notes:
+                type: string
+    responses:
+      '200':
+        description: Payment marked as paid
+
+/payments/refund/{bookingId}:
+  post:
+    tags:
+      - Payments
+    summary: Process a refund for a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              refundAmount:
+                type: number
+              reason:
+                type: string
+              stripeRefundId:
+                type: string
+    responses:
+      '200':
+        description: Refund processed

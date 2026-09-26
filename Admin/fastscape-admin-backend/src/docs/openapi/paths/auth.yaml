@@ -1,0 +1,146 @@
+/auth/register:
+  post:
+    tags:
+      - Auth
+    summary: Register a new admin user
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+            required:
+              - firstName
+              - lastName
+              - email
+              - password
+    responses:
+      '201':
+        description: User registered
+      '400':
+        description: Bad request
+
+/auth/login:
+  post:
+    tags:
+      - Auth
+    summary: Login admin user
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+            required:
+              - email
+              - password
+    responses:
+      '200':
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                token:
+                  type: string
+                user:
+                  $ref: '#/components/schemas/User'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/auth/refresh:
+  post:
+    tags:
+      - Auth
+    summary: Refresh access token
+    responses:
+      '200':
+        description: Token refreshed
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                token:
+                  type: string
+
+/auth/logout:
+  post:
+    tags:
+      - Auth
+    summary: Logout admin user
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Logout successful
+
+/auth/logout-all:
+  post:
+    tags:
+      - Auth
+    summary: Logout from all devices
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Logout from all devices successful
+
+/auth/profile:
+  get:
+    tags:
+      - Auth
+    summary: Get admin user profile
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Profile data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+  put:
+    tags:
+      - Auth
+    summary: Update admin user profile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+    responses:
+      '200':
+        description: Profile updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'

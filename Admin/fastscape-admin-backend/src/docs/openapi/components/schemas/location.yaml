@@ -1,0 +1,26 @@
+Location:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    address:
+      type: string
+    city:
+      type: string
+    state:
+      type: string
+    zipCode:
+      type: string
+    country:
+      type: string
+    isActive:
+      type: boolean
+  required:
+    - id
+    - name
+    - address
+    - city
+    - country

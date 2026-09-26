@@ -1,0 +1,46 @@
+Chauffeur:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    fullName:
+      type: string
+    email:
+      type: string
+      format: email
+    phone:
+      type: string
+    dateOfBirth:
+      type: string
+      format: date
+    nationality:
+      type: string
+    profilePhoto:
+      type: string
+    licenseNumber:
+      type: string
+    experienceLevel:
+      type: string
+      enum: [BEGINNER, INTERMEDIATE, EXPERT, ELITE]
+    yearsOfExperience:
+      type: integer
+    languages:
+      type: array
+      items:
+        type: string
+    status:
+      type: string
+      enum: [AVAILABLE, BUSY, ON_LEAVE, INACTIVE]
+    rating:
+      type: number
+    isVerified:
+      type: boolean
+    joinedAt:
+      type: string
+      format: date-time
+  required:
+    - id
+    - fullName
+    - email
+    - phone

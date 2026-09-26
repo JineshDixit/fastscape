@@ -1,0 +1,148 @@
+/admin-user-roles/assign:
+  post:
+    tags:
+      - RBAC Assignments
+    summary: Assign role to admin user
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              adminUserId:
+                type: string
+                format: uuid
+              roleId:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Role assigned
+
+/admin-user-roles/remove:
+  post:
+    tags:
+      - RBAC Assignments
+    summary: Remove role from admin user
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              adminUserId:
+                type: string
+                format: uuid
+              roleId:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Role removed
+
+/admin-user-roles/user/{adminUserId}/roles:
+  get:
+    tags:
+      - RBAC Assignments
+    summary: Get all roles assigned to an admin user
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: adminUserId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: List of roles
+
+/admin-user-roles/role/{roleId}/users:
+  get:
+    tags:
+      - RBAC Assignments
+    summary: Get all admin users assigned to a role
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: List of admin users
+
+/role-policies/assign:
+  post:
+    tags:
+      - RBAC Assignments
+    summary: Assign policy to role
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              roleId:
+                type: string
+                format: uuid
+              policyId:
+                type: string
+                format: uuid
+    responses:
+      '200':
+        description: Policy assigned
+
+/role-policies/role/{roleId}/policies:
+  get:
+    tags:
+      - RBAC Assignments
+    summary: Get all policies assigned to a role
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: List of policies
+
+/role-policies/check/role/{roleId}/permission/{permission}:
+  get:
+    tags:
+      - RBAC Assignments
+    summary: Check if role has specific permission
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: permission
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Check result
