@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -145,10 +145,21 @@ const Units = () => {
     }
   }, [searchParams, fetchVehicleById, showAddForm]);
 
-  // When vehicle is loaded from fetchVehicleById, show the form
+  // When vehicle is loaded from fetchVehicleById, show the form.
+  // Guarded to fire once per distinct editId: setSearchParams({}) (router)
+  // and setShowAddForm(false) (React state) don't always land in the same
+  // batch, so there's a render where the URL still has the stale ?edit=<id>
+  // right after a successful save - without this guard that reopens the
+  // form (with fresh post-update `vehicle`) instead of returning to the list.
+  const autoOpenedEditIdRef = useRef<string | null>(null);
   useEffect(() => {
     const editId = searchParams.get('edit');
-    if (editId && vehicle && vehicle.id === editId && !showAddForm) {
+    if (!editId) {
+      autoOpenedEditIdRef.current = null;
+      return;
+    }
+    if (vehicle && vehicle.id === editId && !showAddForm && autoOpenedEditIdRef.current !== editId) {
+      autoOpenedEditIdRef.current = editId;
       setSelectedVehicle(vehicle);
       setShowAddForm(true);
     }
