@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const vehicle_controller_1 = require("../controllers/vehicle/vehicle.controller");
+const multerConfig_1 = require("../config/multer/multerConfig");
+const vehicleValidation_1 = require("../services/middleware/vehicleValidation");
+const middleware_1 = require("../services/middleware");
+const router = (0, express_1.Router)();
+router.use(middleware_1.authenticateUser);
+router.use(middleware_1.requireActiveUser);
+router.get('/', (0, middleware_1.requireAnyPermission)(['vehicle:read', 'vehicle:list', 'admin:all']), vehicleValidation_1.vehicleQueryValidation, vehicle_controller_1.getVehiclesController);
+router.get('/stats', (0, middleware_1.requireAnyPermission)(['vehicle:read', 'vehicle:stats', 'admin:all']), vehicle_controller_1.getVehicleStatsController);
+router.get('/enums', (0, middleware_1.requireAnyPermission)(['vehicle:read', 'vehicle:list', 'admin:all']), vehicle_controller_1.getVehicleEnumsController);
+router.get('/:id', (0, middleware_1.requireAnyPermission)(['vehicle:read', 'vehicle:view', 'admin:all']), vehicleValidation_1.vehicleIdValidation, vehicle_controller_1.getVehicleByIdController);
+router.post('/', (0, middleware_1.requireAnyPermission)(['vehicle:create', 'vehicle:write', 'admin:all']), multerConfig_1.vehicleImageUpload, multerConfig_1.handleMulterError, vehicleValidation_1.createVehicleValidation, vehicle_controller_1.createVehicleController);
+router.put('/:id', (0, middleware_1.requireAnyPermission)(['vehicle:update', 'vehicle:write', 'admin:all']), multerConfig_1.vehicleImageUpload, multerConfig_1.handleMulterError, vehicleValidation_1.updateVehicleValidation, vehicle_controller_1.updateVehicleController);
+router.delete('/:id', (0, middleware_1.requireAnyPermission)(['vehicle:delete', 'admin:all']), vehicleValidation_1.vehicleIdValidation, vehicle_controller_1.deleteVehicleController);
+router.patch('/:id/toggle-availability', (0, middleware_1.requireAnyPermission)(['vehicle:update', 'vehicle:write', 'admin:all']), vehicleValidation_1.vehicleIdValidation, vehicle_controller_1.toggleAvailabilityController);
+router.patch('/bulk/update-availability', (0, middleware_1.requireAnyPermission)(['vehicle:update', 'vehicle:write', 'admin:all']), vehicleValidation_1.bulkUpdateAvailabilityValidation, vehicle_controller_1.bulkUpdateAvailabilityController);
+exports.default = router;
+//# sourceMappingURL=vehicle.routes.js.map

@@ -1,0 +1,39 @@
+User:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    firstName:
+      type: string
+    lastName:
+      type: string
+    email:
+      type: string
+      format: email
+    phone:
+      type: string
+    city:
+      type: string
+    state:
+      type: string
+    zipCode:
+      type: string
+    country:
+      type: string
+    verificationStatus:
+      type: string
+      enum: [PENDING, VERIFIED, REJECTED]
+    isBlocked:
+      type: boolean
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+  required:
+    - id
+    - firstName
+    - lastName
+    - email

@@ -1,0 +1,26 @@
+Finance:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    bookingId:
+      type: string
+      format: uuid
+    baseAmount:
+      type: number
+    totalAmount:
+      type: number
+    paidAmount:
+      type: number
+    remainingAmount:
+      type: number
+    currency:
+      type: string
+    status:
+      type: string
+  required:
+    - id
+    - bookingId
+    - totalAmount
+    - remainingAmount

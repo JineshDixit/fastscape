@@ -1,0 +1,194 @@
+/vehicles:
+  get:
+    tags:
+      - Vehicles
+    summary: Get all vehicles
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+      - name: search
+        in: query
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of vehicles
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Vehicle'
+
+  post:
+    tags:
+      - Vehicles
+    summary: Create a new vehicle
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              make:
+                type: string
+              model:
+                type: string
+              year:
+                type: integer
+              pricePerDay:
+                type: number
+              image:
+                type: string
+                format: binary
+    responses:
+      '201':
+        description: Vehicle created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehicle'
+
+/vehicles/stats:
+  get:
+    tags:
+      - Vehicles
+    summary: Get vehicle statistics
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Vehicle stats
+
+/vehicles/enums:
+  get:
+    tags:
+      - Vehicles
+    summary: Get vehicle enums (options)
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Vehicle enums
+
+/vehicles/{id}:
+  get:
+    tags:
+      - Vehicles
+    summary: Get vehicle by ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Vehicle details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehicle'
+
+  put:
+    tags:
+      - Vehicles
+    summary: Update vehicle
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        multipart/form-data:
+          schema:
+            $ref: '#/components/schemas/Vehicle'
+    responses:
+      '200':
+        description: Vehicle updated
+
+  delete:
+    tags:
+      - Vehicles
+    summary: Delete vehicle
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Vehicle deleted
+
+/vehicles/{id}/toggle-availability:
+  patch:
+    tags:
+      - Vehicles
+    summary: Toggle vehicle availability
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Availability toggled
+
+/vehicles/bulk/update-availability:
+  patch:
+    tags:
+      - Vehicles
+    summary: Bulk update vehicle availability
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              vehicleIds:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              isAvailable:
+                type: boolean
+    responses:
+      '200':
+        description: Bulk update successful

@@ -1,0 +1,203 @@
+/admin-users:
+  get:
+    tags:
+      - Admin Users
+    summary: Get all admin users with pagination
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of admin users
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AdminUser'
+
+  post:
+    tags:
+      - Admin Users
+    summary: Create a new admin user
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminUser'
+    responses:
+      '201':
+        description: Admin user created
+
+/admin-users/me/language:
+  put:
+    tags:
+      - Admin Users
+    summary: Update current admin user's language preference
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              language:
+                type: string
+    responses:
+      '200':
+        description: Language updated
+
+/admin-users/me/password:
+  put:
+    tags:
+      - Admin Users
+    summary: Change current admin user's password
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              currentPassword:
+                type: string
+              newPassword:
+                type: string
+    responses:
+      '200':
+        description: Password changed
+
+/admin-users/{id}:
+  get:
+    tags:
+      - Admin Users
+    summary: Get admin user by ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Admin user details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUser'
+
+  put:
+    tags:
+      - Admin Users
+    summary: Update admin user
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AdminUser'
+    responses:
+      '200':
+        description: Admin user updated
+
+  delete:
+    tags:
+      - Admin Users
+    summary: Delete admin user
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Admin user deleted
+
+/admin-users/{id}/password:
+  put:
+    tags:
+      - Admin Users
+    summary: Update admin user password (Admin)
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+    responses:
+      '200':
+        description: Password updated
+
+/admin-users/{id}/activate:
+  put:
+    tags:
+      - Admin Users
+    summary: Activate admin user
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: User activated
+
+/admin-users/{id}/deactivate:
+  put:
+    tags:
+      - Admin Users
+    summary: Deactivate admin user
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: User deactivated

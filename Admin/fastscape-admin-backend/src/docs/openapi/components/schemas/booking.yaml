@@ -1,0 +1,70 @@
+Booking:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    userId:
+      type: string
+      format: uuid
+    vehicleId:
+      type: string
+      format: uuid
+    chauffeurId:
+      type: string
+      format: uuid
+      nullable: true
+    startDatetime:
+      type: string
+      format: date-time
+    endDatetime:
+      type: string
+      format: date-time
+    actualPickupDatetime:
+      type: string
+      format: date-time
+      nullable: true
+    actualDropoffDatetime:
+      type: string
+      format: date-time
+      nullable: true
+    pickupLocation:
+      type: string
+    dropoffLocation:
+      type: string
+    bookingType:
+      type: string
+    bookingStatus:
+      type: string
+    paymentStatus:
+      type: string
+    paymentMethod:
+      type: string
+    delayChargeApplied:
+      type: boolean
+    delayHours:
+      type: number
+    chauffeurInstructions:
+      type: string
+      nullable: true
+    notes:
+      type: string
+      nullable: true
+    expiresAt:
+      type: string
+      format: date-time
+      nullable: true
+    version:
+      type: integer
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+  required:
+    - id
+    - userId
+    - vehicleId
+    - startDatetime
+    - endDatetime
