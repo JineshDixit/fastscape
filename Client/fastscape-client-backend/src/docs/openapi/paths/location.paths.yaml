@@ -1,0 +1,42 @@
+/locations:
+  get:
+    tags:
+      - Locations
+    summary: List all predefined locations
+    responses:
+      '200':
+        description: List of locations
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Location'
+/locations/places/autocomplete:
+  get:
+    tags:
+      - Locations
+    summary: Google Places autocomplete suggestions
+    parameters:
+      - name: input
+        in: query
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Autocomplete suggestions
+/locations/places/details:
+  get:
+    tags:
+      - Locations
+    summary: Get details for a Google Place ID
+    parameters:
+      - name: placeId
+        in: query
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Place details

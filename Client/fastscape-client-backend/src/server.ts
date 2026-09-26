@@ -1,0 +1,93 @@
+// Set timezone to UTC before any other code runs
+// This ensures consistent behavior across US and Dubai deployments
+process.env.TZ = 'UTC';
+
+import './config/env/envConfig';
+import express from 'express';
+import cors from 'cors';
+import passport from 'passport';
+import helmet from 'helmet';
+import compression from 'compression';
+import path from 'path';
+import { initPostgres_DB } from './models';
+import { configPassport } from './config/passport';
+import routes from './routes';
+import { sanitizeInput, preventParameterPollution } from './services/middleware/security';
+import { startTokenCleanupJob } from './services/cleanup/tokenCleanup.service';
+import { scheduleBookingCleanup } from './services/cleanup/bookingCleanup.service';
+import { errorHandler, notFoundHandler } from './services/middleware/errorHandler';
+import Logger from './utils/logger';
+import httpLogger from './services/middleware/httpLogger';
+import swaggerUi from 'swagger-ui-express';
+import { loadOpenApiDocument } from './config/swagger/swagger.config';
+
+const server = express();
+const { PORT } = process.env;
+
+// HTTP Logging
+server.use(httpLogger);
+
+// Security middleware
+server.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  }),
+);
+server.use(preventParameterPollution);
+
+// Static files
+server.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+// Performance middleware
+server.use(compression());
+
+// Configure CORS
+server.use(
+  cors({
+    origin: process.env.FRONTEND_URL?.split(','),
+    credentials: true,
+    optionsSuccessStatus: 200,
+  }),
+);
+
+// Body parsing middleware
+server.use(express.json({ limit: '10mb' }));
+server.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization
+server.use(sanitizeInput);
+
+// Initialize Passport
+server.use(passport.initialize());
+configPassport();
+
+// API routes
+server.use('/api/v1', routes);
+
+// Swagger Documentation
+const openApiDoc = loadOpenApiDocument();
+server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
+
+// 404 handler
+server.use(notFoundHandler);
+
+// Global error handler
+server.use(errorHandler);
+
+server.listen(PORT, () => {
+  Logger.info(`Server is running on port ${PORT}`);
+});
+
+(async () => {
+  try {
+    initPostgres_DB();
+
+    startTokenCleanupJob();
+    scheduleBookingCleanup();
+
+    Logger.info('Database initialized successfully');
+  } catch (error) {
+    Logger.error('Failed to initialize database');
+    process.exit(1);
+  }
+})();

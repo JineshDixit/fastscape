@@ -1,0 +1,54 @@
+Payment:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    bookingId:
+      type: string
+      format: uuid
+    userId:
+      type: string
+      format: uuid
+    amount:
+      type: number
+    gatewayFeeAmount:
+      type: number
+    platformChargeAmount:
+      type: number
+    currency:
+      type: string
+    stripePaymentIntentId:
+      type: string
+      nullable: true
+    stripeChargeId:
+      type: string
+      nullable: true
+    stripeRefundId:
+      type: string
+      nullable: true
+    paymentType:
+      type: string
+      enum: [DEPOSIT, BALANCE, DELAY_CHARGE, REFUND, FULL]
+    paymentStatus:
+      type: string
+      enum: [UNPAID, PARTIALLY_PAID, PAID, REFUNDED, OVERDUE]
+    paymentMethod:
+      type: string
+      enum: [PICKUP, DROPOFF, ONLINE]
+    metadata:
+      type: object
+      nullable: true
+    paidAt:
+      type: string
+      format: date-time
+      nullable: true
+    failureReason:
+      type: string
+      nullable: true
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
