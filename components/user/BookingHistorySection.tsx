@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useBooking } from '@/app/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,19 +28,36 @@ import type { Booking } from '@/common/interfaces';
 export const BookingHistorySection: React.FC = () => {
   const t = useTranslations('bookingHistory');
   const tBooking = useTranslations('booking');
-  const { bookingHistory, fetchBookingHistory, isLoading, error } = useBooking();
+  const { bookingHistory, fetchBookingHistory } = useBooking();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [yearFilter, setYearFilter] = useState<string>(new Date().getFullYear().toString());
+  // Local loading/error, guarded against out-of-order responses: switching
+  // filters quickly could otherwise let an older, slower request land last
+  // and overwrite the list with results for a filter combo no longer selected.
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const requestRef = useRef(0);
 
   useEffect(() => {
+    const requestId = ++requestRef.current;
     const params: any = {
       year: parseInt(yearFilter),
     };
     if (statusFilter !== 'all') {
       params.status = statusFilter;
     }
-    fetchBookingHistory(params);
+
+    setIsLoading(true);
+    setError(null);
+
+    fetchBookingHistory(params).then((result) => {
+      if (requestId !== requestRef.current) return; // superseded by a newer filter change
+      setIsLoading(false);
+      if (result && !result.success) {
+        setError(result.message || 'Failed to fetch booking history');
+      }
+    });
   }, [fetchBookingHistory, statusFilter, yearFilter]);
 
   if (selectedBooking) {

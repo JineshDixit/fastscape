@@ -15,13 +15,29 @@ import { useRouter } from '@/localization/navigation';
 export const ActiveBookingsSection: React.FC = () => {
   const t = useTranslations('activeBookings');
   const router = useRouter();
-  const { upcomingBookings, activeBookings, fetchUpcomingBookings, fetchActiveBookings, isLoading, error } =
-    useBooking();
+  const { upcomingBookings, activeBookings, fetchUpcomingBookings, fetchActiveBookings } = useBooking();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  // Local loading/error: the two fetches below share the hook's global
+  // isFetchingInfo flag, which flips to false as soon as EITHER resolves -
+  // not when both have. Track completion of both here instead.
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUpcomingBookings();
-    fetchActiveBookings();
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+
+    Promise.all([fetchUpcomingBookings(), fetchActiveBookings()]).then((results) => {
+      if (cancelled) return;
+      setIsLoading(false);
+      const failed = results.find((r) => r && !r.success);
+      if (failed) setError(failed.message || 'Failed to fetch bookings');
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [fetchUpcomingBookings, fetchActiveBookings]);
 
   if (selectedBooking) {
