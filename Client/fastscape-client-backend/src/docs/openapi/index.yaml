@@ -1,0 +1,36 @@
+openapi: 3.0.0
+info:
+  title: Fastscape API
+  description: API documentation for the Fastscape car rental platform.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@fastscape.com
+servers:
+  - url: /api/v1
+    description: v1 API Server
+tags:
+  - name: Authentication
+    description: User registration and login operations
+  - name: Users
+    description: User profile and document management
+  - name: Vehicles
+    description: Vehicle listings and availability
+  - name: Bookings
+    description: Booking management
+  - name: Payments
+    description: Payment processing and status
+  - name: Chauffeurs
+    description: Chauffeur management and assignment
+  - name: Locations
+    description: Location search and autocomplete
+  - name: Contact
+    description: Public contact and support requests
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

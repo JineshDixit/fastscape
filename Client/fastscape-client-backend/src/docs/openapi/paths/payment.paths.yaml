@@ -1,0 +1,183 @@
+/payments/webhook:
+  post:
+    tags:
+      - Payments
+    summary: Stripe webhook handler
+    responses:
+      '200':
+        description: Webhook processed
+/payments/calculate/{bookingId}:
+  get:
+    tags:
+      - Payments
+    summary: Calculate pricing breakdown for a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Payment calculation result
+/payments/intent/{bookingId}:
+  post:
+    tags:
+      - Payments
+    summary: Create a Stripe PaymentIntent
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - paymentType
+            properties:
+              paymentType:
+                type: string
+                enum: [DEPOSIT, BALANCE, FULL]
+    responses:
+      '200':
+        description: PaymentIntent created
+/payments/deposit/{bookingId}:
+  post:
+    tags:
+      - Payments
+    summary: Process deposit payment
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Deposit processed
+/payments/balance/{bookingId}:
+  post:
+    tags:
+      - Payments
+    summary: Process balance payment
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Balance processed
+/payments/delay-charge/{bookingId}:
+  post:
+    tags:
+      - Payments
+    summary: Apply delay charges
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Delay charges applied
+/payments/summary/{bookingId}:
+  get:
+    tags:
+      - Payments
+    summary: Get payment summary for a booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Payment summary data
+/payments/complete/{paymentId}:
+  put:
+    tags:
+      - Payments
+    summary: Manually mark a payment as completed
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: paymentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Payment marked as complete
+/payments/pickup/{bookingId}:
+  put:
+    tags:
+      - Payments
+    summary: Mark vehicle as picked up
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Pickup confirmed
+/payments/dropoff/{bookingId}:
+  put:
+    tags:
+      - Payments
+    summary: Mark vehicle as dropped off
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Dropoff confirmed
+/payments/overdue:
+  get:
+    tags:
+      - Payments
+    summary: List all overdue payments (Admin)
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of overdue payments

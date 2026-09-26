@@ -1,0 +1,164 @@
+/chauffeurs:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Get all chauffeurs (Admin)
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of all chauffeurs
+  post:
+    tags:
+      - Chauffeurs
+    summary: Create a new chauffeur (Admin)
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Chauffeur'
+    responses:
+      '201':
+        description: Chauffeur created
+/chauffeurs/available:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Find available chauffeurs
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: startDatetime
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: endDatetime
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date-time
+    responses:
+      '200':
+        description: List of available chauffeurs
+/chauffeurs/auto-assign/{bookingId}:
+  post:
+    tags:
+      - Chauffeurs
+    summary: Automatically assign best chauffeur
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur auto-assigned
+/chauffeurs/assign/{bookingId}/{chauffeurId}:
+  post:
+    tags:
+      - Chauffeurs
+    summary: Manually assign specific chauffeur
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: chauffeurId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur assigned
+/chauffeurs/remove/{bookingId}:
+  delete:
+    tags:
+      - Chauffeurs
+    summary: Remove chauffeur from booking
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur removed
+/chauffeurs/{chauffeurId}:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Get chauffeur profile
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: chauffeurId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Chauffeur details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Chauffeur'
+  put:
+    tags:
+      - Chauffeurs
+    summary: Update chauffeur profile
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: chauffeurId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Chauffeur'
+    responses:
+      '200':
+        description: Chauffeur updated
+/chauffeurs/{chauffeurId}/metrics:
+  get:
+    tags:
+      - Chauffeurs
+    summary: Get chauffeur performance metrics (Admin)
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: chauffeurId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Performance metrics data
