@@ -5,6 +5,9 @@ import { notFound } from 'next/navigation';
 import { locales, localeDirections } from '@/localization/i18n';
 import { AuthProvider } from '@/app/context/AuthContext';
 import { VehicleProvider } from '@/app/context/VehicleContext';
+import { UserProvider } from '@/app/context/UserContext';
+import { DocumentProvider } from '@/app/context/DocumentContext';
+import { BookingProvider } from '@/app/context/BookingContext';
 import LayoutClient from '@/components/layout/layoutClient';
 import '@/app/globals.css';
 import { Toaster } from '@/components/ui/sonner';
@@ -43,8 +46,14 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <VehicleProvider>
-              <LayoutClient>{children}</LayoutClient>
-              <Toaster />
+              <UserProvider>
+                <DocumentProvider>
+                  <BookingProvider>
+                    <LayoutClient>{children}</LayoutClient>
+                    <Toaster />
+                  </BookingProvider>
+                </DocumentProvider>
+              </UserProvider>
             </VehicleProvider>
           </AuthProvider>
         </NextIntlClientProvider>

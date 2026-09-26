@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { bookingService } from '../services/booking';
 import { paymentService } from '../services/payment';
+import { useBookingContext, BookingState } from '@/app/context/BookingContext';
 import type {
   Booking,
   BookingListResponse,
@@ -21,30 +22,48 @@ import type {
 } from '../../../common/interfaces';
 
 export const useBooking = () => {
-  // Booking State
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
-  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
-  const [activeBookings, setActiveBookings] = useState<Booking[]>([]);
-  const [bookingStats, setBookingStats] = useState<BookingStats | null>(null);
-  const [bookingHistory, setBookingHistory] = useState<Booking[]>([]);
-
-  // Payment State
-  const [paymentBreakdown, setPaymentBreakdown] = useState<PaymentBreakdown | null>(null);
-  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
-
-  // Loading States
-  const [isFetchingInfo, setIsFetchingInfo] = useState(false);
-  const [isCreatingBooking, setIsCreatingBooking] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { setState, ...state } = useBookingContext();
+  const {
+    bookings,
+    currentBooking,
+    upcomingBookings,
+    activeBookings,
+    bookingStats,
+    bookingHistory,
+    paymentBreakdown,
+    paymentSummary,
+    isFetchingInfo,
+    isCreatingBooking,
+    isProcessingPayment,
+    error,
+    clientSecret,
+    intentId,
+  } = state;
 
   // Derive global loading state
   const isLoading = isFetchingInfo || isCreatingBooking || isProcessingPayment;
 
-  // Error State
-  const [error, setError] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [intentId, setIntentId] = useState<string | null>(null);
+  const makeSetter = useCallback(
+    <K extends keyof BookingState>(key: K) =>
+      (value: BookingState[K]) =>
+        setState((prev) => ({ ...prev, [key]: value })),
+    [setState],
+  );
+
+  const setBookings = makeSetter('bookings');
+  const setCurrentBooking = makeSetter('currentBooking');
+  const setUpcomingBookings = makeSetter('upcomingBookings');
+  const setActiveBookings = makeSetter('activeBookings');
+  const setBookingStats = makeSetter('bookingStats');
+  const setBookingHistory = makeSetter('bookingHistory');
+  const setPaymentBreakdown = makeSetter('paymentBreakdown');
+  const setPaymentSummary = makeSetter('paymentSummary');
+  const setIsFetchingInfo = makeSetter('isFetchingInfo');
+  const setIsCreatingBooking = makeSetter('isCreatingBooking');
+  const setIsProcessingPayment = makeSetter('isProcessingPayment');
+  const setError = makeSetter('error');
+  const setClientSecret = makeSetter('clientSecret');
+  const setIntentId = makeSetter('intentId');
 
   // Helper function to handle API calls with enhanced error handling
   const handleApiCall = useCallback(

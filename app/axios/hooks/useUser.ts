@@ -1,14 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { userService } from '../services/user';
+import { useUserContext, UserState } from '@/app/context/UserContext';
 import type { UserProfile, UpdateProfileRequest } from '@/common/interfaces';
-
-interface UserState {
-  profile: UserProfile | null;
-  isLoading: boolean;
-  error: string | null;
-}
 
 interface UseUserReturn extends UserState {
   fetchProfile: () => Promise<UserProfile | null>;
@@ -24,21 +19,20 @@ interface UseUserReturn extends UserState {
 }
 
 export const useUser = (): UseUserReturn => {
-  const [state, setState] = useState<UserState>({
-    profile: null,
-    isLoading: false,
-    error: null,
-  });
+  const { setState, ...state } = useUserContext();
 
-  const clearError = useCallback(() => setState((prev) => ({ ...prev, error: null })), []);
+  const clearError = useCallback(() => setState((prev) => ({ ...prev, error: null })), [setState]);
 
-  const handleError = (error: any, fallbackMessage: string) => {
-    setState((prev) => ({
-      ...prev,
-      error: error?.response?.data?.message || error?.message || fallbackMessage,
-      isLoading: false,
-    }));
-  };
+  const handleError = useCallback(
+    (error: any, fallbackMessage: string) => {
+      setState((prev) => ({
+        ...prev,
+        error: error?.response?.data?.message || error?.message || fallbackMessage,
+        isLoading: false,
+      }));
+    },
+    [setState],
+  );
 
   /**
    * Fetch user profile
@@ -67,7 +61,7 @@ export const useUser = (): UseUserReturn => {
       handleError(err, 'Failed to fetch profile');
       return null;
     }
-  }, []);
+  }, [setState, handleError]);
 
   /**
    * Update user profile
@@ -96,7 +90,7 @@ export const useUser = (): UseUserReturn => {
       handleError(err, 'Failed to update profile');
       return null;
     }
-  }, []);
+  }, [setState, handleError]);
 
   /**
    * Check booking eligibility
@@ -121,7 +115,7 @@ export const useUser = (): UseUserReturn => {
       handleError(err, 'Failed to check eligibility');
       return null;
     }
-  }, []);
+  }, [setState, handleError]);
 
   return {
     ...state,

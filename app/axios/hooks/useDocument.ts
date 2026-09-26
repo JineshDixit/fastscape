@@ -1,22 +1,9 @@
-import { useState, useCallback } from 'react';
-import {
-  documentService,
-  type DocumentUploadRequest,
-  type DocumentStatus,
-  type ValidationResult,
-  type RequiredDocument,
-  type EligibilityResult,
-} from '../services/document';
+import { useCallback } from 'react';
+import { documentService, type DocumentUploadRequest, type EligibilityResult } from '../services/document';
+import { useDocumentContext, DocumentState } from '@/app/context/DocumentContext';
 import type { ApiResponse } from '@/common/interfaces';
 
-export interface UseDocumentReturn {
-  documentStatus: DocumentStatus | null;
-  validationResult: ValidationResult | null;
-  requiredDocuments: RequiredDocument[];
-  eligibilityResult: EligibilityResult | null;
-  isLoading: boolean;
-  error: string | null;
-
+export interface UseDocumentReturn extends DocumentState {
   // Actions
   checkDocumentCompleteness: () => Promise<void>;
   getRequiredDocuments: (bookingType?: 'SELF_DRIVE' | 'CHAUFFEUR') => Promise<void>;
@@ -33,12 +20,27 @@ export interface UseDocumentReturn {
 }
 
 export const useDocument = (): UseDocumentReturn => {
-  const [documentStatus, setDocumentStatus] = useState<DocumentStatus | null>(null);
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
-  const [requiredDocuments, setRequiredDocuments] = useState<RequiredDocument[]>([]);
-  const [eligibilityResult, setEligibilityResult] = useState<EligibilityResult | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { setState, ...state } = useDocumentContext();
+  const { documentStatus, validationResult, requiredDocuments, eligibilityResult, isLoading, error } = state;
+
+  const setIsLoading = useCallback((loading: boolean) => setState((prev) => ({ ...prev, isLoading: loading })), [setState]);
+  const setError = useCallback((err: string | null) => setState((prev) => ({ ...prev, error: err })), [setState]);
+  const setDocumentStatus = useCallback(
+    (value: DocumentState['documentStatus']) => setState((prev) => ({ ...prev, documentStatus: value })),
+    [setState],
+  );
+  const setValidationResult = useCallback(
+    (value: DocumentState['validationResult']) => setState((prev) => ({ ...prev, validationResult: value })),
+    [setState],
+  );
+  const setRequiredDocuments = useCallback(
+    (value: DocumentState['requiredDocuments']) => setState((prev) => ({ ...prev, requiredDocuments: value })),
+    [setState],
+  );
+  const setEligibilityResult = useCallback(
+    (value: DocumentState['eligibilityResult']) => setState((prev) => ({ ...prev, eligibilityResult: value })),
+    [setState],
+  );
 
   const checkDocumentCompleteness = useCallback(async () => {
     try {
