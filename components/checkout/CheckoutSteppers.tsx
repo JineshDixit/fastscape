@@ -66,7 +66,7 @@ const CheckoutSteppers: React.FC<CheckoutSteppersProps> = ({ currentStep, steps 
               </div>
 
               {/* Label */}
-              <div className="absolute top-10 hidden flex-col items-center sm:flex">
+              <div className="mt-3 hidden flex-col items-center sm:flex">
                 <span
                   className={cn(
                     'text-[9px] font-black tracking-[0.2em] uppercase transition-all duration-500',
