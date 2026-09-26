@@ -69,20 +69,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.log('API error, but keeping current auth state');
       }
     } catch (error: any) {
-      console.error('Error fetching user:', error);
       const status = error?.response?.status;
       if (status === 401) {
+        // Expected for a guest / expired session (e.g. browsing vehicles while
+        // logged out) - not an application error, don't log it as one.
         const hasRefreshToken = !!authCookies.getRefreshToken();
 
         // Preserve session if refresh token exists; axios/auth refresh flow can recover.
         if (!hasRefreshToken) {
-          console.log('401 without refresh token, clearing auth state');
           clearAuthState();
-        } else {
-          console.log('401 with refresh token present, preserving auth state for refresh recovery');
         }
       } else {
-        console.log('Non-401 error, keeping current auth state');
+        console.error('Error fetching user:', error);
       }
     }
   }, [clearAuthState]);

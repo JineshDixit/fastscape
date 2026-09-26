@@ -64,7 +64,13 @@ apiClient.interceptors.response.use(
         });
       }
 
-      // Add small random delay to reduce race condition likelihood
+      // Claim the refresh slot synchronously (before any await) so that
+      // concurrent 401s from parallel requests can't all slip past the
+      // `isRefreshing` guard above and each fire their own refresh call.
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      // Add small random delay to reduce race condition likelihood with other tabs
       await new Promise((resolve) => setTimeout(resolve, Math.random() * 50));
 
       // Check if another tab is currently refreshing
@@ -75,7 +81,6 @@ apiClient.interceptors.response.use(
 
         // If it was less than 10 seconds ago, consider it active
         if (now - refreshTime < 10000) {
-          isRefreshing = true;
           return new Promise((resolve, reject) => {
             // Listen for storage event from other tab
             const handleStorageChange = (e: StorageEvent) => {
@@ -122,12 +127,12 @@ apiClient.interceptors.response.use(
         }
       }
 
-      originalRequest._retry = true;
-      isRefreshing = true;
       localStorage.setItem(LS_THROTTLE_REFRESH, Date.now().toString());
 
+      const attemptedRefreshToken = authCookies.getRefreshToken();
+
       try {
-        const refreshToken = authCookies.getRefreshToken();
+        const refreshToken = attemptedRefreshToken;
         if (refreshToken) {
           // Use separate refresh client to avoid interceptor loops
           const response = await refreshClient.post('/auth/refresh-token', {
@@ -167,16 +172,20 @@ apiClient.interceptors.response.use(
           processQueue(null);
         }
       } catch (refreshError: any) {
-        // Refresh failed - clear session only on definitive auth failure and no replacement tokens.
+        // Refresh failed - clear session on definitive auth failure, unless a
+        // concurrent refresh (another request/tab) already replaced the token
+        // we attempted with a new, presumably valid one.
         const isAuthError = refreshError.response?.status === 401 || refreshError.response?.status === 400;
-        const hasSessionAfterFailure = !!authCookies.getAccessToken() && !!authCookies.getRefreshToken();
+        const currentRefreshToken = authCookies.getRefreshToken();
+        const alreadyRotatedElsewhere = !!currentRefreshToken && currentRefreshToken !== attemptedRefreshToken;
 
         if (isAuthError) {
           localStorage.removeItem(LS_THROTTLE_REFRESH);
           localStorage.removeItem(LS_NEW_ACCESS_TOKEN);
           processQueue(null);
-          console.error('Token refresh failed (Unauthorized):', refreshError);
-          if (!hasSessionAfterFailure) {
+          // Expected when a session has genuinely expired/been revoked - not a crash.
+          console.warn('Token refresh failed (session expired), logging out:', refreshError.message);
+          if (!alreadyRotatedElsewhere) {
             authCookies.clearAll();
           }
         } else {
