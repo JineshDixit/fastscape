@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
   images: {
     qualities: [75, 90],
     remotePatterns,
+    // Local dev only: vehicle images live on the admin backend at
+    // localhost, which Next's image optimizer blocks by default (SSRF guard).
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
   },
 };
 
