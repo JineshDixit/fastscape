@@ -1,0 +1,102 @@
+/*
+ * MANUAL MIGRATION QUERY:
+ * ALTER TABLE vehicles ADD COLUMN passenger_capacity INTEGER DEFAULT 5;
+ * ALTER TABLE vehicles ADD COLUMN city VARCHAR(100) DEFAULT 'Dubai';
+ */
+
+import { DataTypes, Model, Sequelize } from 'sequelize';
+import { dbEnums } from '../common/enum/dbEnums';
+
+export class Vehicle extends Model {
+  public id!: string;
+  public make!: string;
+  public model!: string;
+  public trim!: string;
+  public year!: number;
+  public exteriorColor!: string;
+  public interiorColor!: string;
+  public bodyType!: (typeof dbEnums.VEHICLE_BODY_TYPE)[number];
+  public transmission!: (typeof dbEnums.TRANSMISSION_TYPE)[number];
+  public drivetrain!: (typeof dbEnums.DRIVETRAIN_TYPE)[number];
+  public engine!: string;
+  public horsepower!: number;
+  public fuelType!: (typeof dbEnums.FUEL_TYPE)[number];
+  public fuelConsumption!: string;
+  public pricePerDay!: number;
+  public delayChargePerHour!: number;
+  public depositPercentage!: number;
+  public currency!: string;
+  public isAvailable!: boolean;
+  public passengerCapacity!: number;
+  public city!: string;
+}
+
+export const initVehicleModel = (sequelize: Sequelize) => {
+  Vehicle.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      make: DataTypes.STRING,
+      model: DataTypes.STRING,
+      trim: DataTypes.STRING,
+      year: DataTypes.INTEGER,
+      exteriorColor: DataTypes.STRING,
+      interiorColor: DataTypes.STRING,
+      bodyType: DataTypes.ENUM(...dbEnums.VEHICLE_BODY_TYPE),
+      transmission: DataTypes.ENUM(...dbEnums.TRANSMISSION_TYPE),
+      drivetrain: DataTypes.ENUM(...dbEnums.DRIVETRAIN_TYPE),
+      engine: DataTypes.STRING,
+      horsepower: DataTypes.INTEGER,
+      fuelType: DataTypes.ENUM(...dbEnums.FUEL_TYPE),
+      fuelConsumption: DataTypes.STRING,
+      pricePerDay: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      delayChargePerHour: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        comment: 'Hourly charge for late return',
+      },
+      depositPercentage: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: false,
+        defaultValue: 20.0,
+        comment: 'Default deposit percentage for this vehicle',
+      },
+      currency: {
+        type: DataTypes.STRING(3),
+        allowNull: false,
+        defaultValue: 'USD',
+      },
+      isAvailable: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+      passengerCapacity: {
+        type: DataTypes.INTEGER,
+        defaultValue: 5,
+        allowNull: false,
+      },
+      city: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        defaultValue: 'Dubai',
+      },
+    },
+    {
+      sequelize,
+      freezeTableName: true,
+      timestamps: true,
+      createdAt: true,
+      updatedAt: true,
+      underscored: true,
+      tableName: 'vehicles',
+      modelName: 'Vehicle',
+    },
+  );
+};

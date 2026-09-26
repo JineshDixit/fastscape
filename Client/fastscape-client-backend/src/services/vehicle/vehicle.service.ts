@@ -1,0 +1,414 @@
+import { PaginationOptions, VehicleFilterOptions, VehicleSearchQuery } from '../../common/types/vehicalType';
+import { Vehicle, VehicleMedia, Booking } from '../../models';
+import { createError } from '../middleware/errorHandler';
+import { Op } from 'sequelize';
+import Logger from '../../utils/logger';
+
+export const getVehicleById = async (vehicleId: string): Promise<Vehicle> => {
+  const vehicle = await Vehicle.findByPk(vehicleId, {
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+  });
+
+  if (!vehicle) {
+    throw createError('Vehicle not found', 404);
+  }
+
+  return vehicle;
+};
+
+export const getVehicles = async (
+  filters: VehicleFilterOptions = {},
+  pagination: PaginationOptions = {},
+): Promise<{
+  vehicles: Vehicle[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> => {
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
+
+  const offset = (page - 1) * limit;
+
+  const whereClause: any = {};
+
+  if (filters.make !== undefined && filters.make !== null) {
+    if (Array.isArray(filters.make)) {
+      whereClause.make = filters.make.length > 0 ? { [Op.in]: filters.make } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.make = { [Op.iLike]: `%${filters.make}%` };
+    }
+  }
+
+  if (filters.model !== undefined && filters.model !== null) {
+    if (Array.isArray(filters.model)) {
+      whereClause.model = filters.model.length > 0 ? { [Op.in]: filters.model } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.model = { [Op.iLike]: `%${filters.model}%` };
+    }
+  }
+
+  if (filters.bodyType !== undefined && filters.bodyType !== null) {
+    if (Array.isArray(filters.bodyType)) {
+      whereClause.bodyType = filters.bodyType.length > 0 ? { [Op.in]: filters.bodyType } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.bodyType = filters.bodyType;
+    }
+  }
+
+  if (filters.transmission) {
+    whereClause.transmission = filters.transmission;
+  }
+
+  if (filters.fuelType) {
+    whereClause.fuelType = filters.fuelType;
+  }
+
+  if (filters.isAvailable !== undefined) {
+    whereClause.isAvailable = filters.isAvailable;
+  }
+
+  if (filters.minPrice || filters.maxPrice) {
+    whereClause.pricePerDay = {};
+    if (filters.minPrice) {
+      whereClause.pricePerDay[Op.gte] = filters.minPrice;
+    }
+    if (filters.maxPrice) {
+      whereClause.pricePerDay[Op.lte] = filters.maxPrice;
+    }
+  }
+
+  if (filters.year) {
+    whereClause.year = filters.year;
+  }
+
+  if (filters.search) {
+    whereClause[Op.or] = [
+      { make: { [Op.iLike]: `%${filters.search}%` } },
+      { model: { [Op.iLike]: `%${filters.search}%` } },
+      { trim: { [Op.iLike]: `%${filters.search}%` } },
+      { exteriorColor: { [Op.iLike]: `%${filters.search}%` } },
+    ];
+  }
+
+  const { count, rows } = await Vehicle.findAndCountAll({
+    where: whereClause,
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]],
+  });
+
+  return {
+    vehicles: rows,
+    total: count,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
+  };
+};
+
+export const getAvailableVehicles = async (
+  searchQuery: VehicleSearchQuery,
+  pagination: PaginationOptions = {},
+): Promise<{
+  vehicles: Vehicle[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> => {
+  const { pickupLocation, pickupDate, dropoffDate, ...otherFilters } = searchQuery;
+  const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = pagination;
+  const offset = (page - 1) * limit;
+
+  const start = new Date(pickupDate);
+  const end = new Date(dropoffDate);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    throw createError('Invalid pickup or dropoff date', 400);
+  }
+
+  if (start >= end) {
+    throw createError('Pickup date must be before dropoff date', 400);
+  }
+
+  // 1. Find all vehicles that have conflicting bookings in the given range
+  const conflictingBookings = await Booking.findAll({
+    attributes: ['vehicleId'],
+    where: {
+      bookingStatus: {
+        [Op.notIn]: ['CANCELLED', 'COMPLETED'],
+      },
+      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
+    },
+    raw: true,
+  });
+
+  const unavailableVehicleIds = conflictingBookings.map((b) => b.vehicleId);
+
+  // 2. Build where clause for available vehicles
+  const whereClause: any = {
+    isAvailable: true,
+    id: { [Op.notIn]: unavailableVehicleIds },
+  };
+
+  if (pickupLocation) {
+    whereClause.city = { [Op.iLike]: `%${pickupLocation}%` };
+  }
+
+  // Apply additional filters
+  if (otherFilters.make !== undefined && otherFilters.make !== null) {
+    if (Array.isArray(otherFilters.make)) {
+      whereClause.make = otherFilters.make.length > 0 ? { [Op.in]: otherFilters.make } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.make = { [Op.iLike]: `%${otherFilters.make}%` };
+    }
+  }
+  if (otherFilters.model !== undefined && otherFilters.model !== null) {
+    if (Array.isArray(otherFilters.model)) {
+      whereClause.model = otherFilters.model.length > 0 ? { [Op.in]: otherFilters.model } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.model = { [Op.iLike]: `%${otherFilters.model}%` };
+    }
+  }
+  if (otherFilters.bodyType !== undefined && otherFilters.bodyType !== null) {
+    if (Array.isArray(otherFilters.bodyType)) {
+      whereClause.bodyType =
+        otherFilters.bodyType.length > 0 ? { [Op.in]: otherFilters.bodyType } : { [Op.eq]: '__NONE__' };
+    } else {
+      whereClause.bodyType = otherFilters.bodyType;
+    }
+  }
+  if (otherFilters.transmission) whereClause.transmission = otherFilters.transmission;
+  if (otherFilters.fuelType) whereClause.fuelType = otherFilters.fuelType;
+
+  if (otherFilters.minPrice || otherFilters.maxPrice) {
+    whereClause.pricePerDay = {};
+    if (otherFilters.minPrice) whereClause.pricePerDay[Op.gte] = otherFilters.minPrice;
+    if (otherFilters.maxPrice) whereClause.pricePerDay[Op.lte] = otherFilters.maxPrice;
+  }
+
+  if (otherFilters.search) {
+    whereClause[Op.or] = [
+      { make: { [Op.iLike]: `%${otherFilters.search}%` } },
+      { model: { [Op.iLike]: `%${otherFilters.search}%` } },
+      { trim: { [Op.iLike]: `%${otherFilters.search}%` } },
+    ];
+  }
+
+  // 3. Query vehicles
+  const { count, rows } = await Vehicle.findAndCountAll({
+    where: whereClause,
+    include: [
+      {
+        model: VehicleMedia,
+        as: 'media',
+      },
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]],
+  });
+
+  return {
+    vehicles: rows,
+    total: count,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
+  };
+};
+
+/**
+ * Check if a specific vehicle is available for a date range
+ */
+export const checkAvailability = async (vehicleId: string, startDate: string, endDate: string) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  Logger.info('Checking vehicle availability', {
+    vehicleId,
+    startDate,
+    endDate,
+    parsedStart: start,
+    parsedEnd: end
+  });
+
+  const conflictingBookings = await Booking.findAll({
+    where: {
+      vehicleId,
+      bookingStatus: {
+        [Op.notIn]: ['CANCELLED', 'COMPLETED'],
+      },
+      [Op.and]: [{ startDatetime: { [Op.lt]: end } }, { endDatetime: { [Op.gt]: start } }],
+    },
+    attributes: ['id', 'startDatetime', 'endDatetime', 'bookingStatus'],
+  });
+
+  Logger.info('Found conflicting bookings', {
+    vehicleId,
+    conflictingBookingsCount: conflictingBookings.length,
+    conflictingBookings: conflictingBookings.map(b => ({
+      id: b.id,
+      startDatetime: b.startDatetime,
+      endDatetime: b.endDatetime,
+      bookingStatus: b.bookingStatus
+    }))
+  });
+
+  return {
+    isAvailable: conflictingBookings.length === 0,
+    vehicleId,
+    requestedPeriod: { start, end },
+    conflictingBookings: conflictingBookings.map(b => ({
+      id: b.id,
+      startDatetime: b.startDatetime,
+      endDatetime: b.endDatetime,
+      bookingStatus: b.bookingStatus
+    }))
+  };
+};
+
+export const getVehicleStats = async (): Promise<{
+  total: number;
+  available: number;
+  unavailable: number;
+  byBodyType: Record<string, number>;
+  byFuelType: Record<string, number>;
+  averagePrice: number;
+}> => {
+  const total = await Vehicle.count();
+  const available = await Vehicle.count({ where: { isAvailable: true } });
+  const unavailable = total - available;
+
+  const bodyTypeStats = await Vehicle.findAll({
+    attributes: ['body_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    group: ['body_type'],
+    raw: true,
+  });
+
+  const byBodyType: Record<string, number> = {};
+  bodyTypeStats.forEach((stat: any) => {
+    byBodyType[stat.body_type] = parseInt(stat.count);
+  });
+
+  const fuelTypeStats = await Vehicle.findAll({
+    attributes: ['fuel_type', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    group: ['fuel_type'],
+    raw: true,
+  });
+
+  const byFuelType: Record<string, number> = {};
+  fuelTypeStats.forEach((stat: any) => {
+    byFuelType[stat.fuel_type] = parseInt(stat.count);
+  });
+
+  const avgPriceResult = await Vehicle.findOne({
+    attributes: [[Vehicle.sequelize!.fn('AVG', Vehicle.sequelize!.col('price_per_day')), 'avgPrice']],
+    raw: true,
+  });
+
+  const averagePrice = parseFloat((avgPriceResult as any)?.avgPrice || '0');
+
+  return {
+    total,
+    available,
+    unavailable,
+    byBodyType,
+    byFuelType,
+    averagePrice,
+  };
+};
+
+export const getVehicleBodyTypeSummary = async (): Promise<{ bodyType: string; count: number }[]> => {
+  const results = await Vehicle.findAll({
+    attributes: ['bodyType', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: { isAvailable: true },
+    group: ['bodyType'],
+    raw: true,
+  });
+
+  return results.map((r: any) => ({
+    bodyType: r.bodyType,
+    count: Number(r.count),
+  }));
+};
+
+export const getVehicleFilterMetadata = async () => {
+  const bodyTypeRaw = await Vehicle.findAll({
+    attributes: ['bodyType', 'make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: { isAvailable: true },
+    group: ['bodyType', 'make', 'model'],
+    raw: true,
+  });
+
+  const brandRaw = await Vehicle.findAll({
+    attributes: ['make', 'model', [Vehicle.sequelize!.fn('COUNT', Vehicle.sequelize!.col('id')), 'count']],
+    where: { isAvailable: true },
+    group: ['make', 'model'],
+    raw: true,
+  });
+
+  // Process Body Types
+  const bodyTypeMap = new Map<string, { count: number; models: Set<string> }>();
+
+  (bodyTypeRaw as any[]).forEach((item) => {
+    const { bodyType, model, count } = item;
+    const numCount = Number(count);
+
+    if (!bodyTypeMap.has(bodyType)) {
+      bodyTypeMap.set(bodyType, { count: 0, models: new Set() });
+    }
+
+    const entry = bodyTypeMap.get(bodyType)!;
+    entry.count += numCount;
+    entry.models.add(model);
+  });
+
+  // Process Brands
+  const brandMap = new Map<string, { count: number; models: Set<string> }>();
+
+  (brandRaw as any[]).forEach((item) => {
+    const { make, model, count } = item;
+    const numCount = Number(count);
+
+    if (!brandMap.has(make)) {
+      brandMap.set(make, { count: 0, models: new Set() });
+    }
+
+    const entry = brandMap.get(make)!;
+    entry.count += numCount;
+    // For brands, we just list the model names, not Make + Model
+    entry.models.add(model);
+  });
+
+  // Format Body Type Output
+  const bodyTypes = Array.from(bodyTypeMap.entries()).map(([type, data]) => ({
+    bodyType: type,
+    count: data.count,
+    models: Array.from(data.models).sort(),
+  }));
+
+  // Format Brand Output
+  const brands = Array.from(brandMap.entries()).map(([make, data]) => ({
+    make: make,
+    count: data.count,
+    models: Array.from(data.models).sort(),
+  }));
+
+  return {
+    bodyTypes: bodyTypes.sort((a, b) => b.count - a.count),
+    brands: brands.sort((a, b) => b.count - a.count),
+  };
+};
