@@ -1,0 +1,26 @@
+Policy:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    permissions:
+      type: array
+      items:
+        type: string
+    description:
+      type: string
+    isActive:
+      type: boolean
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+  required:
+    - id
+    - name
+    - permissions

@@ -1,0 +1,43 @@
+# Node.js dependencies
+node_modules/
+
+#database seed files
+src/seeders/
+
+#postman collection
+postman/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.development
+.env.production
+
+# Build output
+/dist
+/build
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Miscellaneous
+*.bak
+*.tmp

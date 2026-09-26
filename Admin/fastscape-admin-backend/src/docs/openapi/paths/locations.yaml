@@ -1,0 +1,159 @@
+/locations:
+  get:
+    tags:
+      - Locations
+    summary: Get all locations with filters
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: city
+        in: query
+        schema:
+          type: string
+      - name: isActive
+        in: query
+        schema:
+          type: boolean
+      - name: search
+        in: query
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: List of locations
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Location'
+
+  post:
+    tags:
+      - Locations
+    summary: Create a new location
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Location'
+    responses:
+      '201':
+        description: Location created
+
+/locations/export:
+  get:
+    tags:
+      - Locations
+    summary: Export locations to CSV
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: CSV file download
+
+/locations/cities:
+  get:
+    tags:
+      - Locations
+    summary: Get all unique cities
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of cities
+
+/locations/{id}:
+  get:
+    tags:
+      - Locations
+    summary: Get single location by ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Location details
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+
+  put:
+    tags:
+      - Locations
+    summary: Update location details
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Location'
+    responses:
+      '200':
+        description: Location updated
+
+  delete:
+    tags:
+      - Locations
+    summary: Delete location
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Location deleted
+
+/locations/{id}/toggle-status:
+  patch:
+    tags:
+      - Locations
+    summary: Toggle location active status
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Status toggled

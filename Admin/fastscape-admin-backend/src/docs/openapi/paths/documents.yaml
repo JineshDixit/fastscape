@@ -1,0 +1,81 @@
+/documents/pending:
+  get:
+    tags:
+      - Documents
+    summary: Get all users with PENDING document verification
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of pending users
+
+/documents/user/{userId}:
+  get:
+    tags:
+      - Documents
+    summary: Get user's identity documents
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: User documents
+
+/documents/{id}/verify:
+  put:
+    tags:
+      - Documents
+    summary: Verify (approve) user documents
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              notes:
+                type: string
+    responses:
+      '200':
+        description: Documents verified
+
+/documents/{id}/reject:
+  put:
+    tags:
+      - Documents
+    summary: Reject user documents
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              rejectionReason:
+                type: string
+    responses:
+      '200':
+        description: Documents rejected

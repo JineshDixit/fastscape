@@ -1,0 +1,60 @@
+/dashboard/stats:
+  get:
+    tags:
+      - Dashboard
+    summary: Get dashboard summary statistics
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Dashboard summary statistics
+
+/dashboard/rent-status:
+  get:
+    tags:
+      - Dashboard
+    summary: Get rent status breakdown
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum: [week, month, year]
+    responses:
+      '200':
+        description: Rent status breakdown
+
+/dashboard/earning-summary:
+  get:
+    tags:
+      - Dashboard
+    summary: Get earning summary over time
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: months
+        in: query
+        schema:
+          type: integer
+          default: 8
+    responses:
+      '200':
+        description: Earning summary
+
+/dashboard/bookings-overview:
+  get:
+    tags:
+      - Dashboard
+    summary: Get bookings overview by month
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: year
+        in: query
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Bookings overview
