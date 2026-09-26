@@ -28,7 +28,10 @@ export const generateRefreshToken = (payload: Omit<JwtPayload, 'type'>): string 
     throw new Error('JWT_REFRESH_SECRET is not defined');
   }
 
-  return jwt.sign({ ...payload, type: 'refresh' as const }, refreshSecret, { expiresIn } as jwt.SignOptions);
+  return jwt.sign({ ...payload, type: 'refresh' as const }, refreshSecret, {
+    expiresIn,
+    jwtid: crypto.randomUUID(),
+  } as jwt.SignOptions);
 };
 
 /**

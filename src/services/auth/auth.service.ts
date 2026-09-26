@@ -1,5 +1,7 @@
+import { UniqueConstraintError } from 'sequelize';
 import { User, RefreshToken } from '../../models';
 import { LoginRequest, RegisterRequest, AuthResponse, RefreshTokenResponse } from '../../common/types/authTypes';
+import { TokenPair } from '../../common/types/jwtTypes';
 import { generateTokenPair, verifyRefreshToken } from '../../utils/jwt.utils';
 import { hashPassword, comparePassword } from '../../utils/password.utils';
 import { sanitizeEmail } from '../../utils/security.utils';
@@ -19,6 +21,35 @@ const createRefreshToken = async (userId: string, token: string, expiresAt: Date
     expiresAt,
     isRevoked: false,
   });
+};
+
+/**
+ * Generate a token pair and store it, retrying on the rare chance of a
+ * refresh-token collision (e.g. concurrent refreshes in the same second).
+ */
+const issueAndStoreTokenPair = async (userId: string, email: string): Promise<TokenPair> => {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const tokenPair = generateTokenPair({ userId, email });
+
+    try {
+      await createRefreshToken(userId, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
+      return tokenPair;
+    } catch (error: any) {
+      const isUniqueViolation =
+        error instanceof UniqueConstraintError || error?.name === 'SequelizeUniqueConstraintError' || error?.parent?.code === '23505';
+
+      if (isUniqueViolation && attempt < maxAttempts) {
+        Logger.warn('Refresh token collision detected, retrying issuance', { userId, attempt, maxAttempts });
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw createError('Failed to issue refresh token', 500);
 };
 
 /**
@@ -84,14 +115,8 @@ export const registerUser = async (registerData: RegisterRequest): Promise<AuthR
     resetPasswordOtpExpires: null,
   });
 
-  // Generate tokens
-  const tokenPair = generateTokenPair({
-    userId: user.id,
-    email: user.email,
-  });
-
-  // Store refresh token
-  await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
+  // Generate and store refresh token with collision retry
+  const tokenPair = await issueAndStoreTokenPair(user.id, user.email);
 
   Logger.info('User registered successfully', { userId: user.id, email: user.email });
 
@@ -141,14 +166,8 @@ export const loginUser = async (loginData: LoginRequest): Promise<AuthResponse> 
   // Revoke existing refresh tokens for security
   await revokeUserTokens(user.id);
 
-  // Generate new tokens
-  const tokenPair = generateTokenPair({
-    userId: user.id,
-    email: user.email,
-  });
-
-  // Store new refresh token
-  await createRefreshToken(user.id, tokenPair.refreshToken, tokenPair.refreshTokenExpiresAt);
+  // Generate and store refresh token with collision retry
+  const tokenPair = await issueAndStoreTokenPair(user.id, user.email);
 
   Logger.info('User logged in successfully', { userId: user.id });
 
@@ -241,14 +260,8 @@ export const refreshAccessToken = async (token: string): Promise<RefreshTokenRes
     rotatedAt: new Date(),
   });
 
-  // Generate new token pair
-  const newTokenPair = generateTokenPair({
-    userId: user.id,
-    email: user.email,
-  });
-
-  // Store new refresh token
-  await createRefreshToken(user.id, newTokenPair.refreshToken, newTokenPair.refreshTokenExpiresAt);
+  // Generate and store refresh token with collision retry
+  const newTokenPair = await issueAndStoreTokenPair(user.id, user.email);
 
   Logger.info('Token refreshed successfully', { userId: user.id });
 
