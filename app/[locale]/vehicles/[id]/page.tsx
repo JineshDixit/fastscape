@@ -1,7 +1,7 @@
 'use client';
 
 import { useVehicle } from '@/app/axios';
-import { useEffect, use, useState, useCallback } from 'react';
+import { useEffect, use, useState, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { vehicleService } from '@/app/axios/services/vehicle';
 import VehicleImageGallery from '@/components/car-components/VehicleImageGallery';
@@ -22,6 +22,7 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
   const [isChecking, setIsChecking] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState<boolean | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const availabilityRequestRef = useRef(0);
 
   // Ensure client-side hydration
   useEffect(() => {
@@ -31,20 +32,34 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
   const checkVehicleAvailability = useCallback(
     async (start: string, end: string) => {
       if (!id) return;
+      const requestId = ++availabilityRequestRef.current;
       setIsChecking(true);
       try {
         const response = await vehicleService.checkAvailability(id, start, end);
+        if (requestId !== availabilityRequestRef.current) return; // a newer check superseded this one
         if (response.success) {
           setAvailabilityStatus(response.data?.isAvailable ?? false);
         }
       } catch (err) {
+        if (requestId !== availabilityRequestRef.current) return;
         console.error('Availability check failed', err);
       } finally {
-        setIsChecking(false);
+        if (requestId === availabilityRequestRef.current) {
+          setIsChecking(false);
+        }
       }
     },
     [id],
   );
+
+  // Reset per-vehicle state when navigating between vehicle detail pages
+  // (Next.js reuses this component instance across `id` changes, so stale
+  // availability from the previous vehicle must not leak into the new one).
+  useEffect(() => {
+    availabilityRequestRef.current++;
+    setAvailabilityStatus(null);
+    setIsChecking(false);
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -52,6 +67,10 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
     }
   }, [fetchVehicleById, id]);
 
+  // Triggers the availability check whenever dates change (both on initial
+  // mount with pre-existing dates, and after `handleDateChange` resets
+  // `availabilityStatus` to null). Do not also call checkVehicleAvailability
+  // directly elsewhere - that caused duplicate, racing requests.
   useEffect(() => {
     if (bookingData.pickupDate && bookingData.dropoffDate && id && availabilityStatus === null) {
       checkVehicleAvailability(bookingData.pickupDate, bookingData.dropoffDate);
@@ -76,10 +95,10 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
     const pickupDate = formatDateForAPI(start);
     const dropoffDate = end ? formatDateForAPI(end) : null;
 
+    // Resetting availabilityStatus to null above, combined with the effect
+    // watching bookingData dates, is what triggers the re-check - don't also
+    // call checkVehicleAvailability here or it fires twice per date change.
     setBookingData({ pickupDate, dropoffDate });
-    if (pickupDate && dropoffDate) {
-      checkVehicleAvailability(pickupDate, dropoffDate);
-    }
   };
 
   const handleLocationChange = (data: { pickupLocation?: string; dropoffLocation?: string }) => {
@@ -125,6 +144,14 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
   );
   const canProceedToCheckout = isFormValid && !isChecking;
 
+  // Single source of truth for the availability badge: null before/while a
+  // check is in flight (renders as "checking"), otherwise the checked status
+  // once we have one, falling back to the vehicle's baseline availability.
+  // Deriving this once (instead of two separate ternary chains for variant +
+  // label) keeps the badge's color and text from ever disagreeing.
+  const isCheckingAvailability = isClient && isChecking;
+  const displayAvailability = isCheckingAvailability ? null : (availabilityStatus ?? vehicle.isAvailable);
+
   return (
     <main className="global-container py-8 md:py-16">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-24">
@@ -144,36 +171,10 @@ const VehicleDetailsPage = ({ params }: { params: Promise<{ id: string }> }) => 
                 {vehicle.make} {vehicle.model}
               </h1>
               <Badge
-                variant={
-                  !isClient
-                    ? vehicle.isAvailable
-                      ? 'success'
-                      : 'destructive'
-                    : isChecking
-                      ? 'secondary'
-                      : availabilityStatus === true
-                        ? 'success'
-                        : availabilityStatus === false
-                          ? 'destructive'
-                          : vehicle.isAvailable
-                            ? 'success'
-                            : 'destructive'
-                }
+                variant={isCheckingAvailability ? 'secondary' : displayAvailability ? 'success' : 'destructive'}
                 className="px-4 py-1.5 text-sm font-semibold capitalize"
               >
-                {!isClient
-                  ? vehicle.isAvailable
-                    ? t('available')
-                    : t('unavailable')
-                  : isChecking
-                    ? t('checking')
-                    : availabilityStatus === true
-                      ? t('available')
-                      : availabilityStatus === false
-                        ? t('unavailable')
-                        : vehicle.isAvailable
-                          ? t('available')
-                          : t('unavailable')}
+                {isCheckingAvailability ? t('checking') : displayAvailability ? t('available') : t('unavailable')}
               </Badge>
             </div>
             <p className="text-lg font-medium text-gray-500">
