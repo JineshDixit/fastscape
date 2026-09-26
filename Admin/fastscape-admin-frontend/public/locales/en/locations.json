@@ -1,0 +1,41 @@
+{
+  "title": "Locations",
+  "addLocation": "Add Location",
+  "editLocation": "Edit Location",
+  "locationDetails": "Location Details",
+  "fields": {
+    "locationId": "Location ID",
+    "name": "Name",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "country": "Country",
+    "zipCode": "Zip Code",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "type": "Type",
+    "status": "Status",
+    "contactPerson": "Contact Person",
+    "contactPhone": "Contact Phone",
+    "operatingHours": "Operating Hours",
+    "facilities": "Facilities"
+  },
+  "types": {
+    "office": "Office",
+    "pickup": "Pickup Point",
+    "dropoff": "Dropoff Point",
+    "parking": "Parking",
+    "service": "Service Center"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "maintenance": "Maintenance"
+  },
+  "messages": {
+    "confirmDelete": "Are you sure you want to delete this location?",
+    "deleteSuccess": "Location deleted successfully",
+    "updateSuccess": "Location updated successfully",
+    "createSuccess": "Location created successfully"
+  }
+}

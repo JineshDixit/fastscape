@@ -1,0 +1,65 @@
+{
+  "title": "Bookings",
+  "addBooking": "Add Booking",
+  "editBooking": "Edit Booking",
+  "bookingDetails": "Booking Details",
+  "fields": {
+    "bookingId": "Booking ID",
+    "customer": "Customer",
+    "vehicle": "Vehicle",
+    "chauffeur": "Chauffeur",
+    "pickupLocation": "Pickup Location",
+    "dropoffLocation": "Dropoff Location",
+    "pickupDate": "Pickup Date",
+    "dropoffDate": "Dropoff Date",
+    "pickupTime": "Pickup Time",
+    "dropoffTime": "Dropoff Time",
+    "duration": "Duration",
+    "totalAmount": "Total Amount",
+    "paidAmount": "Paid Amount",
+    "remainingAmount": "Remaining Amount",
+    "paymentStatus": "Payment Status",
+    "bookingStatus": "Booking Status",
+    "notes": "Notes",
+    "specialRequests": "Special Requests"
+  },
+  "status": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "pickedup": "Picked Up",
+    "droppedoff": "Dropped Off",
+    "cancelled": "Cancelled",
+    "completed": "Completed"
+  },
+  "paymentStatus": {
+    "unpaid": "Unpaid",
+    "partiallypaid": "Partially Paid",
+    "paid": "Paid",
+    "refunded": "Refunded",
+    "overdue": "Overdue"
+  },
+  "paymentMethod": {
+    "pickup": "At Pickup",
+    "dropoff": "At Dropoff",
+    "online": "Online"
+  },
+  "bookingType": {
+    "selfdrive": "Self Drive",
+    "chauffeur": "With Chauffeur"
+  },
+  "filters": {
+    "all": "All Bookings",
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "byStatus": "By Status",
+    "byPayment": "By Payment",
+    "dateRange": "Date Range"
+  },
+  "messages": {
+    "confirmCancel": "Are you sure you want to cancel this booking?",
+    "cancelSuccess": "Booking cancelled successfully",
+    "updateSuccess": "Booking updated successfully",
+    "createSuccess": "Booking created successfully"
+  }
+}

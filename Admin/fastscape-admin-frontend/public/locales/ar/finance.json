@@ -1,0 +1,77 @@
+{
+  "title": "المالية",
+  "financials": "الشؤون المالية",
+  "transactions": "المعاملات",
+  "reports": "التقارير",
+  "fields": {
+    "transactionId": "رقم المعاملة",
+    "bookingId": "رقم الحجز",
+    "customer": "العميل",
+    "amount": "المبلغ",
+    "type": "النوع",
+    "method": "طريقة الدفع",
+    "status": "الحالة",
+    "date": "التاريخ",
+    "description": "الوصف",
+    "reference": "المرجع",
+    "invoice": "الفاتورة",
+    "receipt": "الإيصال"
+  },
+  "types": {
+    "payment": "دفع",
+    "refund": "استرداد",
+    "deposit": "إيداع",
+    "balance": "رصيد",
+    "delaycharge": "رسوم التأخير",
+    "withdrawal": "سحب"
+  },
+  "methods": {
+    "pickup": "عند الاستلام",
+    "dropoff": "عند التسليم",
+    "online": "دفع إلكتروني",
+    "cash": "نقدي",
+    "card": "بطاقة",
+    "banktransfer": "تحويل بنكي",
+    "wallet": "محفظة"
+  },
+  "status": {
+    "unpaid": "غير مدفوع",
+    "partiallypaid": "مدفوع جزئياً",
+    "paid": "مدفوع",
+    "refunded": "مسترد",
+    "overdue": "متأخر",
+    "pending": "قيد الانتظار",
+    "completed": "مكتمل",
+    "failed": "فشل",
+    "succeeded": "نجح"
+  },
+  "reports": {
+    "daily": "تقرير يومي",
+    "weekly": "تقرير أسبوعي",
+    "monthly": "تقرير شهري",
+    "yearly": "تقرير سنوي",
+    "custom": "تقرير مخصص",
+    "revenue": "تقرير الإيرادات",
+    "expenses": "تقرير المصروفات",
+    "profit": "تقرير الأرباح"
+  },
+  "filters": {
+    "dateRange": "نطاق التاريخ",
+    "type": "النوع",
+    "method": "الطريقة",
+    "status": "الحالة",
+    "customer": "العميل"
+  },
+  "actions": {
+    "exportPDF": "تصدير PDF",
+    "exportCSV": "تصدير CSV",
+    "generateInvoice": "إنشاء فاتورة",
+    "sendReceipt": "إرسال إيصال",
+    "processRefund": "معالجة الاسترداد"
+  },
+  "messages": {
+    "exportSuccess": "تم تصدير التقرير بنجاح",
+    "refundSuccess": "تم معالجة الاسترداد بنجاح",
+    "invoiceGenerated": "تم إنشاء الفاتورة بنجاح"
+  }
+}

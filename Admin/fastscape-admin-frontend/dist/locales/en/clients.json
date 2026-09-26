@@ -1,0 +1,57 @@
+{
+  "title": "Clients",
+  "addClient": "Add Client",
+  "editClient": "Edit Client",
+  "clientDetails": "Client Details",
+  "fields": {
+    "clientId": "Client ID",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "dateOfBirth": "Date of Birth",
+    "nationality": "Nationality",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "country": "Country",
+    "zipCode": "Zip Code",
+    "totalBookings": "Total Bookings",
+    "totalSpent": "Total Spent",
+    "status": "Status",
+    "isBlocked": "Blocked",
+    "verificationStatus": "Verification Status",
+    "joinedDate": "Joined Date",
+    "lastBooking": "Last Booking",
+    "documents": "Documents",
+    "drivingLicense": "Driving License",
+    "licenseNumber": "License Number",
+    "licenseExpiry": "License Expiry"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "blocked": "Blocked",
+    "suspended": "Suspended"
+  },
+  "verificationStatus": {
+    "pending": "Pending",
+    "verified": "Verified",
+    "rejected": "Rejected",
+    "PENDING": "Pending",
+    "VERIFIED": "Verified",
+    "REJECTED": "Rejected"
+  },
+  "messages": {
+    "confirmBlock": "Are you sure you want to block this client?",
+    "confirmUnblock": "Are you sure you want to unblock this client?",
+    "confirmDelete": "Are you sure you want to delete this client?",
+    "blockSuccess": "Client blocked successfully",
+    "unblockSuccess": "Client unblocked successfully",
+    "updateSuccess": "Client updated successfully",
+    "verifySuccess": "Client verified successfully",
+    "rejectSuccess": "Client verification rejected",
+    "deleteSuccess": "Client deleted successfully"
+  }
+}

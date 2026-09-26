@@ -1,0 +1,251 @@
+import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { authService } from '@/api/services/auth';
+import { authCookies } from '@/utils/cookies';
+import type { User, LoginResponse } from '@/common/interface/authInterface';
+// import i18next from 'i18next';
+// import { adminUserService } from '@/api/services/adminUserService';
+
+interface AuthContextType {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  login: (credentials: any) => Promise<LoginResponse>;
+  logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  clearError: () => void;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  hasRole: (roleName: string) => boolean;
+  isSuperAdmin: () => boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const clearError = useCallback(() => setError(null), []);
+
+  const isSuperAdmin = useCallback((): boolean => {
+    if (!user) return false;
+
+    const hasSuperAdminRole =
+      user.roles?.some((role) => role.isActive !== false && role.name?.toLowerCase() === 'super-admin') || false;
+    const hasSuperAdminPermission = user.permissions?.includes('admin:all') || false;
+
+    return hasSuperAdminRole || hasSuperAdminPermission;
+  }, [user]);
+
+  const hasPermission = useCallback(
+    (permission: string) => {
+      if (!user) return false;
+      if (isSuperAdmin()) return true;
+      return user.permissions?.includes(permission) || false;
+    },
+    [user, isSuperAdmin],
+  );
+
+  const hasAnyPermission = useCallback(
+    (permissions: string[]) => {
+      if (!user) return false;
+      if (isSuperAdmin()) return true;
+      return permissions.some((p) => user.permissions?.includes(p)) || false;
+    },
+    [user, isSuperAdmin],
+  );
+
+  const hasRole = useCallback(
+    (roleName: string) => {
+      const normalized = roleName.toLowerCase();
+      return user?.roles?.some((r) => r.name?.toLowerCase() === normalized && r.isActive !== false) || false;
+    },
+    [user],
+  );
+
+  const refreshProfile = useCallback(async () => {
+    // First check if we have any form of authentication (access or refresh token)
+    if (!authCookies.isAuthenticated()) {
+      setIsAuthenticated(false);
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Try to get a valid access token (this will handle refresh automatically)
+      const validToken = await authService.getValidAccessToken();
+
+      if (!validToken) {
+        const hasRefreshToken = !!authCookies.getRefreshToken();
+        const refreshExpired = authService.isRefreshTokenExpired();
+
+        // Only hard logout if refresh token is truly invalid.
+        if (!hasRefreshToken || refreshExpired) {
+          setIsAuthenticated(false);
+          setUser(null);
+          authService.clearTokens();
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
+      /* i18n disabled for now
+      // Get current i18n language (user's current selection, possibly from login page)
+      const currentLanguage = i18next.language;
+
+      // Now fetch the profile with the valid token
+      const response = await authService.getProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+        setIsAuthenticated(true);
+
+        const dbLanguage = response.data.preferredLanguage;
+
+        // Compare current language with database language
+        if (currentLanguage !== dbLanguage) {
+          // User selected a different language (e.g., on login page)
+          // Update database to match user's current choice
+          console.log(`Language mismatch: current=${currentLanguage}, db=${dbLanguage}. Updating database...`);
+
+          try {
+            await adminUserService.updateLanguage(currentLanguage);
+            console.log('Database language updated successfully');
+          } catch (error) {
+            console.error('Failed to update database language:', error);
+            // Don't fail the login process if language update fails
+            // User can still change it later from settings
+          }
+        } else {
+          // Languages match, no action needed
+          console.log(`Language in sync: ${currentLanguage}`);
+        }
+
+        // Ensure i18n is set to current language (should already be, but just in case)
+        if (i18next.language !== currentLanguage) {
+          await i18next.changeLanguage(currentLanguage);
+        }
+      } else {
+        throw new Error(response.message || 'Failed to fetch profile');
+      }
+      */
+
+      // Basic profile fetch while i18n is disabled
+      const response = await authService.getProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+        setIsAuthenticated(true);
+      } else {
+        throw new Error(response.message || 'Failed to fetch profile');
+      }
+    } catch (err: any) {
+      console.error('Failed to sync profile:', err);
+      if (err.response?.status === 401) {
+        const hasRefreshToken = !!authCookies.getRefreshToken();
+        const refreshExpired = authService.isRefreshTokenExpired();
+
+        if (!hasRefreshToken || refreshExpired) {
+          setIsAuthenticated(false);
+          setUser(null);
+          authService.clearTokens();
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // Remove unstable i18n dependency
+
+  const login = async (credentials: any): Promise<LoginResponse> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await authService.login(credentials);
+      if (response.success && response.data) {
+        // After successful login, we have tokens in cookies.
+        // The core requirement is to fetch profile fresh.
+        // Although login returns user, the request said call /profile in layout.
+        // We'll call refreshProfile immediately to ensure fresh data and consistency.
+        setIsAuthenticated(true);
+        await refreshProfile();
+        return response.data;
+      } else {
+        const errorMsg = response.message || 'Login failed';
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Login failed';
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    }
+  };
+
+  // 1. Initial authentication check (Only on mount)
+  useEffect(() => {
+    refreshProfile();
+  }, []); // Run ONLY once on mount
+
+  // 2. Real-time tab synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth_logout_timestamp') {
+        if (import.meta.env.DEV) console.log('🚪 Logout detected from another tab');
+        setIsAuthenticated(false);
+        setUser(null);
+        authService.clearTokens({ broadcast: false });
+      } else if (e.key === 'auth_sync_timestamp') {
+        if (import.meta.env.DEV) console.log('🔄 Token update detected from another tab, syncing profile...');
+        refreshProfile();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [refreshProfile]);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isLoading,
+        error,
+        login,
+        logout,
+        refreshProfile,
+        clearError,
+        hasPermission,
+        hasAnyPermission,
+        hasRole,
+        isSuperAdmin,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuthContext = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
+};

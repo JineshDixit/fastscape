@@ -1,0 +1,55 @@
+{
+  "title": "Admin Management",
+  "users": "Admin Users",
+  "roles": "Roles",
+  "permissions": "Permissions",
+  "addUser": "Add Admin User",
+  "editUser": "Edit Admin User",
+  "userDetails": "User Details",
+  "fields": {
+    "userId": "User ID",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "email": "Email",
+    "role": "Role",
+    "roles": "Roles",
+    "permissions": "Permissions",
+    "status": "Status",
+    "lastLogin": "Last Login",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "language": "Preferred Language"
+  },
+  "roles": {
+    "superAdmin": "Super Admin",
+    "admin": "Admin",
+    "manager": "Manager",
+    "staff": "Staff",
+    "viewer": "Viewer"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "suspended": "Suspended"
+  },
+  "actions": {
+    "assignRole": "Assign Role",
+    "removeRole": "Remove Role",
+    "resetPassword": "Reset Password",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "suspend": "Suspend"
+  },
+  "messages": {
+    "confirmDelete": "Are you sure you want to delete this admin user?",
+    "confirmDeactivate": "Are you sure you want to deactivate this admin user?",
+    "deleteSuccess": "Admin user deleted successfully",
+    "updateSuccess": "Admin user updated successfully",
+    "createSuccess": "Admin user created successfully",
+    "activateSuccess": "Admin user activated successfully",
+    "deactivateSuccess": "Admin user deactivated successfully",
+    "roleAssigned": "Role assigned successfully",
+    "passwordReset": "Password reset successfully"
+  }
+}
