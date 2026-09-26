@@ -1,0 +1,57 @@
+{
+  "title": "العملاء",
+  "addClient": "إضافة عميل",
+  "editClient": "تعديل العميل",
+  "clientDetails": "تفاصيل العميل",
+  "fields": {
+    "clientId": "رقم العميل",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "dateOfBirth": "تاريخ الميلاد",
+    "nationality": "الجنسية",
+    "address": "العنوان",
+    "city": "المدينة",
+    "state": "الولاية",
+    "country": "الدولة",
+    "zipCode": "الرمز البريدي",
+    "totalBookings": "إجمالي الحجوزات",
+    "totalSpent": "إجمالي الإنفاق",
+    "status": "الحالة",
+    "isBlocked": "محظور",
+    "verificationStatus": "حالة التحقق",
+    "joinedDate": "تاريخ الانضمام",
+    "lastBooking": "آخر حجز",
+    "documents": "المستندات",
+    "drivingLicense": "رخصة القيادة",
+    "licenseNumber": "رقم الرخصة",
+    "licenseExpiry": "انتهاء الرخصة"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "blocked": "محظور",
+    "suspended": "موقوف"
+  },
+  "verificationStatus": {
+    "pending": "قيد الانتظار",
+    "verified": "موثق",
+    "rejected": "مرفوض",
+    "PENDING": "قيد الانتظار",
+    "VERIFIED": "موثق",
+    "REJECTED": "مرفوض"
+  },
+  "messages": {
+    "confirmBlock": "هل أنت متأكد من حظر هذا العميل؟",
+    "confirmUnblock": "هل أنت متأكد من إلغاء حظر هذا العميل؟",
+    "confirmDelete": "هل أنت متأكد من حذف هذا العميل؟",
+    "blockSuccess": "تم حظر العميل بنجاح",
+    "unblockSuccess": "تم إلغاء حظر العميل بنجاح",
+    "updateSuccess": "تم تحديث العميل بنجاح",
+    "verifySuccess": "تم توثيق العميل بنجاح",
+    "rejectSuccess": "تم رفض توثيق العميل",
+    "deleteSuccess": "تم حذف العميل بنجاح"
+  }
+}

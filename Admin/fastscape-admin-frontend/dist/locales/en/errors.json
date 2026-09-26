@@ -1,0 +1,16 @@
+{
+  "general": "An error occurred. Please try again.",
+  "network": "Network error. Please check your connection.",
+  "server": "Server error. Please try again later.",
+  "unauthorized": "You are not authorized to perform this action.",
+  "forbidden": "Access denied.",
+  "notFound": "Resource not found.",
+  "timeout": "Request timeout. Please try again.",
+  "validation": "Please check the form for errors.",
+  "sessionExpired": "Your session has expired. Please login again.",
+  "fileUpload": "File upload failed. Please try again.",
+  "invalidCredentials": "Invalid email or password.",
+  "accountDeactivated": "Your account has been deactivated.",
+  "accountSuspended": "Your account has been suspended.",
+  "tooManyRequests": "Too many requests. Please try again later."
+}

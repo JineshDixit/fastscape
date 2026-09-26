@@ -1,0 +1,59 @@
+{
+  "title": "المستندات",
+  "uploadDocument": "رفع مستند",
+  "documentDetails": "تفاصيل المستند",
+  "fields": {
+    "documentId": "رقم المستند",
+    "name": "الاسم",
+    "type": "النوع",
+    "category": "الفئة",
+    "uploadedBy": "رفع بواسطة",
+    "uploadDate": "تاريخ الرفع",
+    "size": "الحجم",
+    "status": "الحالة",
+    "expiryDate": "تاريخ الانتهاء",
+    "description": "الوصف"
+  },
+  "types": {
+    "license": "رخصة",
+    "drivinglicense": "رخصة قيادة",
+    "insurance": "تأمين",
+    "registration": "تسجيل",
+    "identity": "هوية",
+    "nationalid": "الهوية الوطنية",
+    "passport": "جواز السفر",
+    "visa": "تأشيرة",
+    "contract": "عقد",
+    "invoice": "فاتورة",
+    "receipt": "إيصال",
+    "vehicleregistration": "تسجيل المركبة",
+    "vehicleinsurance": "تأمين المركبة",
+    "other": "أخرى"
+  },
+  "verificationStatus": {
+    "pending": "قيد الانتظار",
+    "verified": "موثق",
+    "rejected": "مرفوض",
+    "expired": "منتهي"
+  },
+  "status": {
+    "pending": "قيد المراجعة",
+    "approved": "موافق عليه",
+    "rejected": "مرفوض",
+    "expired": "منتهي"
+  },
+  "actions": {
+    "download": "تحميل",
+    "view": "عرض",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "delete": "حذف"
+  },
+  "messages": {
+    "uploadSuccess": "تم رفع المستند بنجاح",
+    "approveSuccess": "تم الموافقة على المستند بنجاح",
+    "rejectSuccess": "تم رفض المستند بنجاح",
+    "deleteSuccess": "تم حذف المستند بنجاح",
+    "confirmDelete": "هل أنت متأكد من حذف هذا المستند؟"
+  }
+}

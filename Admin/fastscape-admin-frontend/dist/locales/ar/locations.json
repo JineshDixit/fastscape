@@ -1,0 +1,41 @@
+{
+  "title": "المواقع",
+  "addLocation": "إضافة موقع",
+  "editLocation": "تعديل الموقع",
+  "locationDetails": "تفاصيل الموقع",
+  "fields": {
+    "locationId": "رقم الموقع",
+    "name": "الاسم",
+    "address": "العنوان",
+    "city": "المدينة",
+    "state": "الولاية",
+    "country": "الدولة",
+    "zipCode": "الرمز البريدي",
+    "latitude": "خط العرض",
+    "longitude": "خط الطول",
+    "type": "النوع",
+    "status": "الحالة",
+    "contactPerson": "الشخص المسؤول",
+    "contactPhone": "هاتف الاتصال",
+    "operatingHours": "ساعات العمل",
+    "facilities": "المرافق"
+  },
+  "types": {
+    "office": "مكتب",
+    "pickup": "نقطة استلام",
+    "dropoff": "نقطة تسليم",
+    "parking": "موقف",
+    "service": "مركز خدمة"
+  },
+  "status": {
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "maintenance": "صيانة"
+  },
+  "messages": {
+    "confirmDelete": "هل أنت متأكد من حذف هذا الموقع؟",
+    "deleteSuccess": "تم حذف الموقع بنجاح",
+    "updateSuccess": "تم تحديث الموقع بنجاح",
+    "createSuccess": "تم إنشاء الموقع بنجاح"
+  }
+}
